@@ -1,34 +1,28 @@
 ﻿using CommandLine;
-using Rdmp.Core.CohortCommitting;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.DataExport.DataExtraction.Pipeline;
 using Rdmp.Core.DataExport.DataExtraction.Pipeline.Destinations;
 using Rdmp.Core.QueryBuilding;
-using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Rdmp.Core.Reports.ExtractionTime
 {
     class DatasetVariableReportGenerator
     {
-        private ICatalogue _catalogue;
-        private ExtractionPipelineUseCase _executor;
-        private IExecuteDatasetExtractionDestination _destination;
-        private List<ExtractableColumn> _columnstoExtract;
-        private List<ReleaseIdentifierSubstitution> _releaseSubs;
+        private readonly ICatalogue _catalogue;
+        private readonly IExecuteDatasetExtractionDestination _destination;
+        private readonly List<ExtractableColumn> _columnsToExtract;
+        private readonly List<ReleaseIdentifierSubstitution> _releaseSubs;
 
 
         public DatasetVariableReportGenerator(ExtractionPipelineUseCase executer) {
-            _executor = executer;
             _destination = executer.Destination;
             _catalogue = executer.Source.Request.Catalogue;
-            _columnstoExtract = executer.Source.Request.ColumnsToExtract.Select(c => c.Cast<ExtractableColumn>()).ToList();
+            _columnsToExtract = executer.Source.Request.ColumnsToExtract.Select(c => c.Cast<ExtractableColumn>()).ToList();
             _releaseSubs = executer.Source.Request.ReleaseIdentifierSubstitutions;
         }
 
@@ -36,7 +30,7 @@ namespace Rdmp.Core.Reports.ExtractionTime
         {
             var csv = new StringBuilder();
             WriteHeaders(csv);
-            foreach(var column in _columnstoExtract)
+            foreach(var column in _columnsToExtract)
             {
                 WriteColumn(column, csv);
             }
@@ -66,8 +60,8 @@ namespace Rdmp.Core.Reports.ExtractionTime
             bool isIdentifier = catalogueItem.ExtractionInformation.IsExtractionIdentifier;
             var lookups = _catalogue.CatalogueRepository.GetAllObjectsWhere<Lookup>("ForeignKey_ID",column.ColumnInfo.ID);
             var lookupString = "";
-            if (lookups.Any()) lookupString = string.Join(';', lookups.Select(l => LookupStringGenerator(l)));
-            sb.AppendLine($"\"{column.GetRuntimeName()}\",\"{column.ColumnInfo.Data_type}\",{isNull},\"{catalogueItem.Description}\",{isIdentifier},{lookups.Any()},{lookupString}");
+            if (lookups.Length != 0) lookupString = string.Join(';', lookups.Select(l => LookupStringGenerator(l)));
+            sb.AppendLine($"\"{column.GetRuntimeName()}\",\"{column.ColumnInfo.Data_type}\",{isNull},\"{catalogueItem.Description}\",{isIdentifier},{lookups.Length != 0},{lookupString}");
         }
 
         private void WriteReleaseSubs(ReleaseIdentifierSubstitution releaseIdentifierSubstitution,StringBuilder sb)
@@ -76,12 +70,12 @@ namespace Rdmp.Core.Reports.ExtractionTime
             var catalogueItem = _catalogue.CatalogueItems.Where(c => c.ColumnInfo_ID == column.ID).First();
             var lookups = _catalogue.CatalogueRepository.GetAllObjectsWhere<Lookup>("ForeignKey_ID", column.ID);
             var lookupString = "";
-            if (lookups.Any()) lookupString = string.Join(';', lookups.Select(l => LookupStringGenerator(l)));
+            if (lookups.Length != 0) lookupString = string.Join(';', lookups.Select(l => LookupStringGenerator(l)));
             sb.AppendLine($"\"{releaseIdentifierSubstitution.Alias}\",\"{column.Data_type}\",{false},\"{catalogueItem.Description}\",{releaseIdentifierSubstitution.IsExtractionIdentifier},{lookups.Any()},{lookupString}");
 
         }
 
-        private void WriteHeaders(StringBuilder sb)
+        private static void WriteHeaders(StringBuilder sb)
         {
             sb.AppendLine("Variable Name, Type, Null possible(Y/N),Description,Identifier,HasLookups,Lookups");
         }
