@@ -38,7 +38,7 @@ namespace Rdmp.Core.Reports.ExtractionTime
             {
                 WriteReleaseSubs(sub, csv);
             }
-            File.WriteAllText(new FileInfo(Path.Combine(_destination.DirectoryPopulated.FullName,
+            File.WriteAllText(new FileInfo(Path.Join(_destination.DirectoryPopulated.FullName,
                 $"{_destination.GetFilename()}Variables.csv")).ToString(), csv.ToString());
         }
 

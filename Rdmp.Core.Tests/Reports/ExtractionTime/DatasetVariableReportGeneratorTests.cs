@@ -15,7 +15,7 @@ namespace Rdmp.Core.Tests.Reports.ExtractionTime
             this.Execute(out ExtractionPipelineUseCase pipelineUseCase,out var results);
             var report = new DatasetVariableReportGenerator(pipelineUseCase);
             report.GenerateDatasetVariableReport();
-            var filename = Path.Combine(
+            var filename = Path.Join(
                 pipelineUseCase.Destination.DirectoryPopulated.FullName,
                 $"{pipelineUseCase.Destination.GetFilename()}Variables.csv"
             );
