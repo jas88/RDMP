@@ -55,7 +55,9 @@ namespace Rdmp.Core.Reports.ExtractionTime
 
         private void WriteColumn(ExtractableColumn column, StringBuilder sb)
         {
-            var catalogueItem = _catalogue.CatalogueItems.Where(c => c.ColumnInfo_ID == column.ColumnInfo.ID).First();
+            if (_catalogue.CatalogueItems.Length == 0) return;
+            var catalogueItem = _catalogue.CatalogueItems.FirstOrDefault(c => c.ColumnInfo_ID == column.ColumnInfo.ID);
+            if (catalogueItem is null || catalogueItem.ExtractionInformation is null) return;
             bool isNull = !catalogueItem.ExtractionInformation.IsPrimaryKey;
             bool isIdentifier = catalogueItem.ExtractionInformation.IsExtractionIdentifier;
             var lookups = _catalogue.CatalogueRepository.GetAllObjectsWhere<Lookup>("ForeignKey_ID",column.ColumnInfo.ID);
