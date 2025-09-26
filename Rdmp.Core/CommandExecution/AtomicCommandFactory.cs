@@ -129,12 +129,6 @@ public class AtomicCommandFactory : CommandFactoryBase
             };
             if (!isApiCall)
             {
-                yield return new ExecuteCommandChangeExtractability(_activator, c)
-                {
-                    Weight = -99.0010f,
-                    SuggestedCategory = Extraction
-                };
-
                 yield return c.IsInternalDataset ?
                     new ExecuteCommandMakeCatalogueNotInternal(_activator, c)
                     {
