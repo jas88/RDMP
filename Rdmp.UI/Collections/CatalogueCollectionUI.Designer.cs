@@ -29,12 +29,10 @@ namespace Rdmp.UI.Collections
             olvFilters = new OLVColumn();
             olvOrder = new OLVColumn();
             imageList_RightClickIcons = new ImageList(components);
-            gbColdStorage = new GroupBox();
             catalogueCollectionFilterUI1 = new CatalogueCollectionFilterUI();
             panel2 = new Panel();
             tbFilter = new TextBox();
             ((ISupportInitialize)tlvCatalogues).BeginInit();
-            gbColdStorage.SuspendLayout();
             panel2.SuspendLayout();
             SuspendLayout();
             // 
@@ -90,18 +88,6 @@ namespace Rdmp.UI.Collections
             imageList_RightClickIcons.Images.SetKeyName(3, "LOG");
             imageList_RightClickIcons.Images.SetKeyName(4, "aggregates.png");
             // 
-            // gbColdStorage
-            // 
-            gbColdStorage.Controls.Add(tbFilter);
-            gbColdStorage.Controls.Add(catalogueCollectionFilterUI1);
-            gbColdStorage.Dock = DockStyle.Bottom;
-            gbColdStorage.Location = new System.Drawing.Point(0, 414);
-            gbColdStorage.Name = "gbColdStorage";
-            gbColdStorage.Size = new System.Drawing.Size(500, 65);
-            gbColdStorage.TabIndex = 1;
-            gbColdStorage.TabStop = false;
-            gbColdStorage.Text = "Show";
-            // 
             // catalogueCollectionFilterUI1
             // 
             catalogueCollectionFilterUI1.Dock = DockStyle.Fill;
@@ -113,7 +99,6 @@ namespace Rdmp.UI.Collections
             // panel2
             // 
             panel2.Controls.Add(tlvCatalogues);
-            panel2.Controls.Add(gbColdStorage);
             panel2.Dock = DockStyle.Fill;
             panel2.Location = new System.Drawing.Point(0, 0);
             panel2.Name = "panel2";
@@ -133,8 +118,6 @@ namespace Rdmp.UI.Collections
             Name = "CatalogueCollectionUI";
             Size = new System.Drawing.Size(500, 479);
             ((ISupportInitialize)tlvCatalogues).EndInit();
-            gbColdStorage.ResumeLayout(false);
-            gbColdStorage.PerformLayout();
             panel2.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -145,7 +128,6 @@ namespace Rdmp.UI.Collections
         private ImageList imageList_RightClickIcons;
         private OLVColumn olvColumn1;
         private OLVColumn olvFilters;
-        private GroupBox gbColdStorage;
         private OLVColumn olvOrder;
         private CatalogueCollectionFilterUI catalogueCollectionFilterUI1;
         private Panel panel2;

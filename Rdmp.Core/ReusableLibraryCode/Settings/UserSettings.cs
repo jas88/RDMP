@@ -215,12 +215,6 @@ public static class UserSettings
         set => AppSettings.AddOrUpdateValue("ShowDeprecatedCatalogues", value);
     }
 
-    public static bool ShowColdStorageCatalogues
-    {
-        get => AppSettings.GetValueOrDefault("ShowColdStorageCatalogues", true);
-        set => AppSettings.AddOrUpdateValue("ShowColdStorageCatalogues", value);
-    }
-
     public static bool ShowProjectSpecificCatalogues
     {
         get => AppSettings.GetValueOrDefault("ShowProjectSpecificCatalogues", true);

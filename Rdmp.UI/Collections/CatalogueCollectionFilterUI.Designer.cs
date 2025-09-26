@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.cbShowColdStorage = new System.Windows.Forms.CheckBox();
             this.cbShowDeprecated = new System.Windows.Forms.CheckBox();
             this.cbShowInternal = new System.Windows.Forms.CheckBox();
             this.cbProjectSpecific = new System.Windows.Forms.CheckBox();
@@ -36,17 +35,6 @@
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.flowLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // cbShowColdStorage
-            // 
-            this.cbShowColdStorage.AutoSize = true;
-            this.cbShowColdStorage.Location = new System.Drawing.Point(3, 3);
-            this.cbShowColdStorage.Name = "cbShowColdStorage";
-            this.cbShowColdStorage.Size = new System.Drawing.Size(87, 17);
-            this.cbShowColdStorage.TabIndex = 5;
-            this.cbShowColdStorage.Text = "Cold Storage";
-            this.cbShowColdStorage.UseVisualStyleBackColor = true;
-            this.cbShowColdStorage.CheckedChanged += new System.EventHandler(this.OnCheckboxChanged);
             // 
             // cbShowDeprecated
             // 
@@ -94,7 +82,6 @@
             // 
             // flowLayoutPanel1
             // 
-            this.flowLayoutPanel1.Controls.Add(this.cbShowColdStorage);
             this.flowLayoutPanel1.Controls.Add(this.cbShowInternal);
             this.flowLayoutPanel1.Controls.Add(this.cbShowDeprecated);
             this.flowLayoutPanel1.Controls.Add(this.cbProjectSpecific);
@@ -118,7 +105,6 @@
 
         #endregion
 
-        private System.Windows.Forms.CheckBox cbShowColdStorage;
         private System.Windows.Forms.CheckBox cbShowDeprecated;
         private System.Windows.Forms.CheckBox cbShowInternal;
         private System.Windows.Forms.CheckBox cbProjectSpecific;
