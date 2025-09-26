@@ -21,7 +21,6 @@ public class CatalogueCollectionFilter : IModelFilter
     private readonly bool _isInternal;
     private readonly bool _isDeprecated;
     private readonly bool _isProjectSpecific;
-    private readonly bool _isNonExtractable;
 
     public CatalogueCollectionFilter(ICoreChildProvider childProvider)
     {
@@ -29,10 +28,9 @@ public class CatalogueCollectionFilter : IModelFilter
         _isInternal = UserSettings.ShowInternalCatalogues;
         _isDeprecated = UserSettings.ShowDeprecatedCatalogues;
         _isProjectSpecific = UserSettings.ShowProjectSpecificCatalogues;
-        _isNonExtractable = UserSettings.ShowNonExtractableCatalogues;
     }
 
     public bool Filter(object modelObject) => SearchablesMatchScorer.Filter(modelObject,
         ChildProvider.GetDescendancyListIfAnyFor(modelObject), _isInternal, _isDeprecated,
-        _isProjectSpecific, _isNonExtractable);
+        _isProjectSpecific);
 }

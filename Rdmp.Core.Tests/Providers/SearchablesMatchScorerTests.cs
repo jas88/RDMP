@@ -141,20 +141,6 @@ internal class SearchablesMatchScorerTests : UnitTests
     [TestCase(true, false, false)]
     [TestCase(false, true, true)]
     [TestCase(false, false, true)]
-    public void TestScoringCatalogueFlag_IsExtractable(bool notExtractable, bool shouldShow, bool expectedResult)
-    {
-        TestScoringFlag((c, eds) =>
-        {
-            if (notExtractable) eds.DeleteInDatabase();
-
-            UserSettings.ShowNonExtractableCatalogues = shouldShow;
-        }, expectedResult);
-    }
-
-    [TestCase(true, true, true)]
-    [TestCase(true, false, false)]
-    [TestCase(false, true, true)]
-    [TestCase(false, false, true)]
     public void TestScoringCatalogueFlag_IsProjectSpecific(bool projectSpecific, bool shouldShow, bool expectedResult)
     {
         TestScoringFlag((c, eds) =>
@@ -181,7 +167,6 @@ internal class SearchablesMatchScorerTests : UnitTests
         //
         // So set all to false to except the condition we are testing
         UserSettings.ShowDeprecatedCatalogues = false;
-        UserSettings.ShowNonExtractableCatalogues = false;
         UserSettings.ShowProjectSpecificCatalogues = false;
         UserSettings.ShowInternalCatalogues = false;
 

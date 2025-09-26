@@ -22,7 +22,6 @@ public partial class CatalogueCollectionFilterUI : UserControl
         cbShowInternal.Checked = UserSettings.ShowInternalCatalogues;
         cbShowDeprecated.Checked = UserSettings.ShowDeprecatedCatalogues;
         cbProjectSpecific.Checked = UserSettings.ShowProjectSpecificCatalogues;
-        cbShowNonExtractable.Checked = UserSettings.ShowNonExtractableCatalogues;
 
         _loading = false;
     }
@@ -37,7 +36,6 @@ public partial class CatalogueCollectionFilterUI : UserControl
         UserSettings.ShowInternalCatalogues = cbShowInternal.Checked;
         UserSettings.ShowDeprecatedCatalogues = cbShowDeprecated.Checked;
         UserSettings.ShowProjectSpecificCatalogues = cbProjectSpecific.Checked;
-        UserSettings.ShowNonExtractableCatalogues = cbShowNonExtractable.Checked;
 
         FiltersChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -53,8 +51,6 @@ public partial class CatalogueCollectionFilterUI : UserControl
 
         var isExtractable = c.GetExtractabilityStatus(null);
 
-        cbShowNonExtractable.Checked = cbShowNonExtractable.Checked || isExtractable == null ||
-                                       isExtractable.IsExtractable == false;
     }
 
     /// <summary>
@@ -71,8 +67,5 @@ public partial class CatalogueCollectionFilterUI : UserControl
 
         if (cbProjectSpecific.Checked != UserSettings.ShowProjectSpecificCatalogues)
             cbProjectSpecific.Checked = UserSettings.ShowProjectSpecificCatalogues;
-
-        if (cbShowNonExtractable.Checked != UserSettings.ShowNonExtractableCatalogues)
-            cbShowNonExtractable.Checked = UserSettings.ShowNonExtractableCatalogues;
     }
 }

@@ -31,7 +31,6 @@
             this.cbShowDeprecated = new System.Windows.Forms.CheckBox();
             this.cbShowInternal = new System.Windows.Forms.CheckBox();
             this.cbProjectSpecific = new System.Windows.Forms.CheckBox();
-            this.cbShowNonExtractable = new System.Windows.Forms.CheckBox();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.flowLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
@@ -69,23 +68,11 @@
             this.cbProjectSpecific.UseVisualStyleBackColor = true;
             this.cbProjectSpecific.CheckedChanged += new System.EventHandler(this.OnCheckboxChanged);
             // 
-            // cbShowNonExtractable
-            // 
-            this.cbShowNonExtractable.AutoSize = true;
-            this.cbShowNonExtractable.Location = new System.Drawing.Point(109, 26);
-            this.cbShowNonExtractable.Name = "cbShowNonExtractable";
-            this.cbShowNonExtractable.Size = new System.Drawing.Size(102, 17);
-            this.cbShowNonExtractable.TabIndex = 9;
-            this.cbShowNonExtractable.Text = "Non Extractable";
-            this.cbShowNonExtractable.UseVisualStyleBackColor = true;
-            this.cbShowNonExtractable.CheckedChanged += new System.EventHandler(this.OnCheckboxChanged);
-            // 
             // flowLayoutPanel1
             // 
             this.flowLayoutPanel1.Controls.Add(this.cbShowInternal);
             this.flowLayoutPanel1.Controls.Add(this.cbShowDeprecated);
             this.flowLayoutPanel1.Controls.Add(this.cbProjectSpecific);
-            this.flowLayoutPanel1.Controls.Add(this.cbShowNonExtractable);
             this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
@@ -108,7 +95,6 @@
         private System.Windows.Forms.CheckBox cbShowDeprecated;
         private System.Windows.Forms.CheckBox cbShowInternal;
         private System.Windows.Forms.CheckBox cbProjectSpecific;
-        private System.Windows.Forms.CheckBox cbShowNonExtractable;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
     }
 }

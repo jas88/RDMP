@@ -221,12 +221,6 @@ public static class UserSettings
         set => AppSettings.AddOrUpdateValue("ShowProjectSpecificCatalogues", value);
     }
 
-    public static bool ShowNonExtractableCatalogues
-    {
-        get => AppSettings.GetValueOrDefault("ShowNonExtractableCatalogues", true);
-        set => AppSettings.AddOrUpdateValue("ShowNonExtractableCatalogues", value);
-    }
-
     /// <summary>
     /// True to apply theme changes to context menus and tool strips.
     /// </summary>

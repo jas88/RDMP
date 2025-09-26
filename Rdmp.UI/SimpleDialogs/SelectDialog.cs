@@ -450,8 +450,6 @@ public partial class SelectDialog<T> : Form, IVirtualListDataSource where T : cl
                 v => UserSettings.ShowDeprecatedCatalogues = v, "D", "Include Deprecated");
             AddUserSettingCheckbox(() => UserSettings.ShowProjectSpecificCatalogues,
                 v => UserSettings.ShowProjectSpecificCatalogues = v, "P", "Include Project Specific");
-            AddUserSettingCheckbox(() => UserSettings.ShowNonExtractableCatalogues,
-                v => UserSettings.ShowNonExtractableCatalogues = v, "E", "Include Extractable");
         }
     }
 
