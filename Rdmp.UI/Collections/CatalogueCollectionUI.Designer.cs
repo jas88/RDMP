@@ -29,10 +29,12 @@ namespace Rdmp.UI.Collections
             olvFilters = new OLVColumn();
             olvOrder = new OLVColumn();
             imageList_RightClickIcons = new ImageList(components);
+            gbCatalogueFilters = new GroupBox();
             catalogueCollectionFilterUI1 = new CatalogueCollectionFilterUI();
             panel2 = new Panel();
             tbFilter = new TextBox();
             ((ISupportInitialize)tlvCatalogues).BeginInit();
+            gbCatalogueFilters.SuspendLayout();
             panel2.SuspendLayout();
             SuspendLayout();
             // 
@@ -88,6 +90,18 @@ namespace Rdmp.UI.Collections
             imageList_RightClickIcons.Images.SetKeyName(3, "LOG");
             imageList_RightClickIcons.Images.SetKeyName(4, "aggregates.png");
             // 
+            // gbCatalogueFilters
+            // 
+            gbCatalogueFilters.Controls.Add(tbFilter);
+            gbCatalogueFilters.Controls.Add(catalogueCollectionFilterUI1);
+            gbCatalogueFilters.Dock = DockStyle.Bottom;
+            gbCatalogueFilters.Location = new System.Drawing.Point(0, 414);
+            gbCatalogueFilters.Name = "gbCatalogueFilters";
+            gbCatalogueFilters.Size = new System.Drawing.Size(500, 65);
+            gbCatalogueFilters.TabIndex = 1;
+            gbCatalogueFilters.TabStop = false;
+            gbCatalogueFilters.Text = "Show";
+            // 
             // catalogueCollectionFilterUI1
             // 
             catalogueCollectionFilterUI1.Dock = DockStyle.Fill;
@@ -99,6 +113,7 @@ namespace Rdmp.UI.Collections
             // panel2
             // 
             panel2.Controls.Add(tlvCatalogues);
+            panel2.Controls.Add(gbCatalogueFilters);
             panel2.Dock = DockStyle.Fill;
             panel2.Location = new System.Drawing.Point(0, 0);
             panel2.Name = "panel2";
@@ -118,6 +133,8 @@ namespace Rdmp.UI.Collections
             Name = "CatalogueCollectionUI";
             Size = new System.Drawing.Size(500, 479);
             ((ISupportInitialize)tlvCatalogues).EndInit();
+            gbCatalogueFilters.ResumeLayout(false);
+            gbCatalogueFilters.PerformLayout();
             panel2.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -128,6 +145,7 @@ namespace Rdmp.UI.Collections
         private ImageList imageList_RightClickIcons;
         private OLVColumn olvColumn1;
         private OLVColumn olvFilters;
+        private GroupBox gbCatalogueFilters;
         private OLVColumn olvOrder;
         private CatalogueCollectionFilterUI catalogueCollectionFilterUI1;
         private Panel panel2;
