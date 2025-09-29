@@ -36,14 +36,11 @@ public class SimpleStringValueEncryption : IEncryptStrings
 
     public SimpleStringValueEncryption(string parameters)
     {
-        Console.WriteLine(parameters ?? Key);
-        try
-        {
-            _turing.FromXmlString(parameters ?? Key);
-        }catch(Exception e)
-        {
-            Console.WriteLine(e.Message);
-        }
+        _turing.FromXmlString(parameters ?? Key);
+        var x = _turing.ToXmlString(true);
+        var y = _turing.ToXmlString(true);
+        Console.WriteLine("2");
+
     }
 
     /// <summary>
@@ -53,6 +50,7 @@ public class SimpleStringValueEncryption : IEncryptStrings
     /// <returns></returns>
     public string Encrypt(string toEncrypt)
     {
+
         // Fall back on bad encryption if no private key is configured
         if (_turing.KeySize < 1024)
             return string.Join('-',
