@@ -81,6 +81,9 @@ jobs:
       - name: Test (DB)
         shell: bash
         run: |
+          $SavePath=".\keys"
+          $RDMP_KEY_LOCATION="$SavePath\private-key.xml"
+          $env:RDMP_KEY_LOCATION="$SavePath\private-key.xml"
           rm -rf coverage
           curl -L "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" > minio.exe
           ./minio.exe server ./minio --console-address :9001 &
