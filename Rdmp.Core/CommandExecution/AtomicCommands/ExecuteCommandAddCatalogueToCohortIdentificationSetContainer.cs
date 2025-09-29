@@ -113,7 +113,6 @@ public class ExecuteCommandAddCatalogueToCohortIdentificationSetContainer : Basi
         // if user hasn't picked a Catalogue yet
         if (_catalogueCombineable == null)
         {
-            //todo only show projects that are either non-specific or in linke project
             var cic = _targetCohortAggregateContainer.GetCohortIdentificationConfiguration();
             List<int> associatedProjectCataloguesIDs= new();
             var pcica = BasicActivator.RepositoryLocator.DataExportRepository.GetAllObjects<ProjectCohortIdentificationConfigurationAssociation>().Where(pcica => pcica.CohortIdentificationConfiguration_ID == cic.ID).FirstOrDefault();
