@@ -36,7 +36,14 @@ public class SimpleStringValueEncryption : IEncryptStrings
 
     public SimpleStringValueEncryption(string parameters)
     {
-        _turing.FromXmlString(parameters ?? Key);
+        Console.WriteLine(parameters ?? Key);
+        try
+        {
+            _turing.FromXmlString(parameters ?? Key);
+        }catch(Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
     }
 
     /// <summary>
