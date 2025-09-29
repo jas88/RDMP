@@ -36,10 +36,8 @@ public class SimpleStringValueEncryption : IEncryptStrings
 
     public SimpleStringValueEncryption(string parameters)
     {
+        Console.WriteLine(parameters ?? Key);
         _turing.FromXmlString(parameters ?? Key);
-        var x = _turing.ToXmlString(true);
-        var y = _turing.ToXmlString(true);
-        Console.WriteLine("2");
 
     }
 
