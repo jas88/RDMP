@@ -344,11 +344,11 @@ public class SearchablesMatchScorer
 
         var isProjectSpecific = cata.IsProjectSpecific(null);
 
-        return (!cata.IsDeprecated && !cata.IsInternalDataset &&
-                !isProjectSpecific) ||
-               (includeDeprecated && cata.IsDeprecated) ||
-               (includeInternal && cata.IsInternalDataset) ||
-               (includeProjectSpecific && isProjectSpecific);
+        var isVisible = !cata.IsDeprecated && !cata.IsInternalDataset && !isProjectSpecific;
+        var showDeprecated = includeDeprecated && cata.IsDeprecated;
+        var showInternal = includeInternal && cata.IsInternalDataset;
+        var showProjectSpecific = includeProjectSpecific && isProjectSpecific;
+        return isVisible || showDeprecated || showInternal || showProjectSpecific;
     }
 
     /// <summary>
