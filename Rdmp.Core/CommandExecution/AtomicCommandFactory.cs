@@ -141,15 +141,14 @@ public class AtomicCommandFactory : CommandFactoryBase
                     };
 
 
-                if (!c.IsProjectSpecific(_activator.RepositoryLocator.DataExportRepository))
+
+                yield return new ExecuteCommandMakeCatalogueProjectSpecific(_activator, c, null, false)
                 {
-                    yield return new ExecuteCommandMakeCatalogueProjectSpecific(_activator, c, null, false)
-                    {
-                        Weight = -99.0009f,
-                        SuggestedCategory = Extraction
-                    };
-                }
-                else
+                    Weight = -99.0009f,
+                    SuggestedCategory = Extraction
+                };
+
+                if (c.IsProjectSpecific(_activator.RepositoryLocator.DataExportRepository))
                 {
                     yield return new ExecuteCommandMakeProjectSpecificCatalogueNormalAgain(_activator, c, null)
                     {
