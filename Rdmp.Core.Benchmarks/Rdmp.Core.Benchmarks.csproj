@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <ProjectGuid>A1B2C3D4-E5F6-7890-ABCD-EF1234567890</ProjectGuid>
+        <AssemblyTitle>Rdmp.Core.Benchmarks</AssemblyTitle>
+        <Product>Rdmp.Core.Benchmarks</Product>
+        <Copyright>Copyright © 2024</Copyright>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <DebugType>embedded</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
+        <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.12" />
+        <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
+        <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
+    </ItemGroup>
+</Project>
