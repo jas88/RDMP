@@ -92,12 +92,21 @@ public class RepositoryPool : IDisposable
             // If no more references, dispose after a delay to allow for immediate reuse
             if (instance.ReferenceCount <= 0)
             {
-                Task.Delay(TimeSpan.FromSeconds(30)).ContinueWith(_ =>
+                var _ = Task.Run(async () =>
                 {
-                    if (_repositories.TryGetValue(key, out var delayedInstance) && delayedInstance.ReferenceCount <= 0)
+                    try
                     {
-                        delayedInstance.Dispose();
-                        _repositories.TryRemove(key, out _);
+                        await Task.Delay(TimeSpan.FromSeconds(30));
+                        if (_repositories.TryGetValue(key, out var delayedInstance) && delayedInstance.ReferenceCount <= 0)
+                        {
+                            delayedInstance.Dispose();
+                            _repositories.TryRemove(key, out _);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log or handle exception as appropriate for test utility
+                        Console.Error.WriteLine($"Exception during delayed repository disposal: {ex}");
                     }
                 });
             }
