@@ -184,7 +184,7 @@ jobs:
         with:
           languages: csharp
           config-file: ./.github/configs/codeql.yml
-          queries: security-and-quality
+          queries: +security-and-quality
       - name: BundleSource
         shell: bash
         run: |
