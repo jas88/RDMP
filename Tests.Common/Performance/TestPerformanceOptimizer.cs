@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading;
 using NUnit.Framework;
 using Rdmp.Core.CommandLine.DatabaseCreation;
+using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Repositories;
 
 namespace Tests.Common.Performance;

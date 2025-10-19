@@ -7,7 +7,10 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Threading;
+using FAnsi;
+using FAnsi.Connections;
 using FAnsi.Discovery;
 using NUnit.Framework;
 using Rdmp.Core.CommandLine.DatabaseCreation;
@@ -15,6 +18,7 @@ using Rdmp.Core.Curation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Startup;
+using Rdmp.Core.Startup.Events;
 
 namespace Tests.Common.Performance;
 

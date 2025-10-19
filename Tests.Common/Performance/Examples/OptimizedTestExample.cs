@@ -6,6 +6,7 @@
 
 using System;
 using System.Linq;
+using FAnsi;
 using FAnsi.Discovery;
 using NUnit.Framework;
 using Rdmp.Core.CommandLine.DatabaseCreation;
@@ -54,7 +55,7 @@ public class OptimizedTestExample : DatabaseTestFixtureBase
     public void TestCatalogueCreationWithCaching()
     {
         // Use cached object creation
-        var catalogue = ObjectCache.GetOrCreate<Catalogue>(Repository);
+        var catalogue = ObjectCache.GetOrCreate<Catalogue>(RepositoryLocator.CatalogueRepository);
 
         Assert.That(catalogue, Is.Not.Null);
         Assert.That(catalogue.Name, Is.Not.Null);

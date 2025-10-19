@@ -257,10 +257,8 @@ public partial class DatabaseTests
         return new YamlRepository(dir);
     }
 
-    protected override void OneTimeSetUp()
+    protected virtual void OneTimeSetUp()
     {
-        base.OneTimeSetUp();
-
         // Only run the first time
         if (_startup != null) return;
 
@@ -489,21 +487,6 @@ public partial class DatabaseTests
     [SetUp]
     protected virtual void SetUp()
     {
-    }
-
-    [TearDown]
-    protected void TearDown()
-    {
-        foreach (var discoveredDatabase in forCleanup)
-            try
-            {
-                if (discoveredDatabase.Exists())
-                    discoveredDatabase.Drop();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Ignoring exception {e.Message} during db clean up");
-            }
     }
 
     private void StartupOnDatabaseFound(object sender, PlatformDatabaseFoundEventArgs args)

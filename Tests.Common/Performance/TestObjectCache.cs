@@ -9,6 +9,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using Rdmp.Core.Curation.Data;
+using Rdmp.Core.Curation.Data.Aggregation;
+using Rdmp.Core.Curation.Data.DataLoad;
+using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Repositories;
 
@@ -40,7 +45,7 @@ public class TestObjectCache : IDisposable
 
     private readonly ConcurrentDictionary<Type, ConcurrentQueue<DatabaseEntity>> _objectPools = new();
     private readonly ConcurrentDictionary<Type, Func<DatabaseEntity>> _factoryMethods = new();
-    private readonly object _cacheLock = new();
+    private readonly SemaphoreSlim _cacheLock = new(1, 1);
     private bool _disposed;
     private int _cacheHits;
     private int _cacheMisses;
