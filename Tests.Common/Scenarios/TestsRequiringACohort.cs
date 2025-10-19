@@ -75,6 +75,7 @@ public class TestsRequiringACohort : TestsRequiringA
             }
 
             using var con = GetCohortDatabaseConnection();
+            con.Open();
 
             EmptyCohortTables(con);
             SetupCohortDefinitionAndCustomTable(con);
