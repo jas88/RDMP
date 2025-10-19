@@ -184,21 +184,7 @@ jobs:
         with:
           languages: csharp
           config-file: ./.github/configs/codeql.yml
-          queries: +security-and-quality
-      - name: Build for CodeQL Analysis
-        run: |
-          dotnet build --configuration Release --verbosity minimal
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:csharp"
-          upload: false
-          output: sarif-results
-      - name: Upload SARIF Results (if any issues found)
-        if: hashFiles('sarif-results/**/*')
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: sarif-results/
+          queries: security-and-quality
       - name: BundleSource
         shell: bash
         run: |
@@ -212,6 +198,10 @@ jobs:
           dotnet publish Application/ResearchDataManagementPlatform/ResearchDataManagementPlatform.csproj -r win-x64 --self-contained -c Release -o PublishWinForms -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --verbosity minimal --nologo
           dotnet publish Tools/rdmp/rdmp.csproj -r win-x64 --self-contained -c Release -o PublishWindows -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true --verbosity minimal -p:IncludeNativeLibrariesForSelfExtract=true --nologo
           dotnet publish Tools/rdmp/rdmp.csproj -r linux-x64 --self-contained -c Release -o PublishLinux -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true --verbosity minimal --nologo
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"
       - name: Temporary Bundle of ddls for auto-updater
         shell: bash
         run: |
