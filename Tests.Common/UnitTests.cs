@@ -850,15 +850,9 @@ public class UnitTests
         // Return commonly used objects to cache for reuse
         // Note: This is a simplified approach - in practice, you might want more sophisticated
         // caching logic based on test patterns
-        try
-        {
-            // Clean up any objects that should be returned to cache
-            // This would be implemented based on specific usage patterns
-        }
-        catch
-        {
-            // Ignore cleanup errors to avoid affecting test results
-        }
+        // Clean up any objects that should be returned to cache
+        // This would be implemented based on specific usage patterns
+        // Ignore cleanup errors to avoid affecting test results
     }
 
     [OneTimeTearDown]
