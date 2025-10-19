@@ -77,11 +77,14 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         var documented = new AllImportantClassesDocumented();
         documented.FindProblems(_csFilesFound);
 
-        // Note: UserInterfaceStandardisationChecker and RDMPFormInitializationTests are UI-specific
-        // and remain in Rdmp.UI.Tests. They are not included here since this test is cross-platform.
+        // Note: UserInterfaceStandardisationChecker remains in Rdmp.UI.Tests as it requires UI assemblies
 
         var crossExamination = new DocumentationCrossExaminationTest(solutionDir);
         crossExamination.FindProblems(_csFilesFound);
+
+        //Assuming all files are present and correct we can now evaluate the RDMP specific stuff:
+        var otherTestRunner = new RDMPFormInitializationTests();
+        otherTestRunner.FindUninitializedForms(_csFilesFound);
 
         var propertyChecker = new SuspiciousRelationshipPropertyUse();
         propertyChecker.FindPropertyMisuse(_csFilesFound);
