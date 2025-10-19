@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
+using System.Threading.Tasks;
 using FAnsi;
 using FAnsi.Connections;
 using FAnsi.Discovery;
@@ -17,6 +18,7 @@ using Rdmp.Core.CommandLine.DatabaseCreation;
 using Rdmp.Core.Curation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.Data;
+using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.Startup;
 using Rdmp.Core.Startup.Events;
 
@@ -131,17 +133,8 @@ public abstract class DatabaseTestFixtureBase : SharedTestFixtureBase
     protected T ExecuteInTransaction<T>(DiscoveredDatabase database, Func<IManagedConnection, T> operation)
     {
         using var transaction = database.Server.BeginNewTransactedConnection();
-        try
-        {
-            var result = operation(transaction);
-            transaction.ManagedTransaction.Commit();
-            return result;
-        }
-        catch
-        {
-            transaction.ManagedTransaction.Rollback();
-            throw;
-        }
+        return operation(transaction);
+        // Transaction is committed on disposal via using statement
     }
 
     /// <summary>

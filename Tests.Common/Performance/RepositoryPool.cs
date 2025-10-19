@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Rdmp.Core.CommandLine.DatabaseCreation;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.Startup;

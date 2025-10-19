@@ -13,6 +13,7 @@ using NUnit.Framework;
 using Rdmp.Core.CommandLine.DatabaseCreation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Repositories;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 
 namespace Tests.Common.Performance;
 
