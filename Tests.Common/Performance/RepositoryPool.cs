@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using NUnit.Framework;
 using Rdmp.Core.CommandLine.DatabaseCreation;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.Startup;
@@ -93,7 +94,7 @@ public class RepositoryPool : IDisposable
             // If no more references, dispose after a delay to allow for immediate reuse
             if (instance.ReferenceCount <= 0)
             {
-                var _ = Task.Run(async () =>
+                var delayedTask = Task.Run(async () =>
                 {
                     try
                     {

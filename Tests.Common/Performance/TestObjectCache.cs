@@ -118,8 +118,7 @@ public class TestObjectCache : IDisposable
     /// </summary>
     public void ClearCache()
     {
-        _cacheLock.Wait();
-        try
+        lock (_cacheLock)
         {
             foreach (var pool in _objectPools.Values)
             {
@@ -132,10 +131,6 @@ public class TestObjectCache : IDisposable
             _objectPools.Clear();
             _cacheHits = 0;
             _cacheMisses = 0;
-        }
-        finally
-        {
-            _cacheLock.Release();
         }
     }
 
@@ -199,7 +194,7 @@ public class TestObjectCache : IDisposable
     {
         // Register factory methods for common types that can benefit from caching
         _factoryMethods[typeof(Catalogue)] = () => new Catalogue(null, "CachedCatalogue");
-        _factoryMethods[typeof(TableInfo)] = () => new TableInfo(null, "CachedTable") { DatabaseType = DatabaseType.MicrosoftSQLServer };
+        _factoryMethods[typeof(TableInfo)] = () => new TableInfo(null, "CachedTable");
         _factoryMethods[typeof(ExternalDatabaseServer)] = () => new ExternalDatabaseServer(null, "CachedServer", null);
         _factoryMethods[typeof(Project)] = () => new Project(null, "CachedProject");
         _factoryMethods[typeof(ExtractionConfiguration)] = () => new ExtractionConfiguration(null, null);
@@ -210,7 +205,6 @@ public class TestObjectCache : IDisposable
         if (_disposed) return;
 
         ClearCache();
-        _cacheLock?.Dispose();
         _disposed = true;
     }
 }

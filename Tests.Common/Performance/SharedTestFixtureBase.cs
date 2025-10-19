@@ -16,6 +16,7 @@ using Rdmp.Core.CommandLine.DatabaseCreation;
 using Rdmp.Core.Curation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.Data;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.Startup;
 using Tests.Common.Performance;
@@ -36,7 +37,7 @@ public abstract class SharedTestFixtureBase
 
     private static readonly object _lock = new();
     private static bool _oneTimeSetupCompleted;
-    private static readonly Dictionary<string, Lazy<object>> _lazyResources = new();
+    private static readonly Dictionary<string, object> _lazyResources = new();
 
     /// <summary>
     /// Gets the shared repository locator, creating it if necessary.
@@ -99,9 +100,19 @@ public abstract class SharedTestFixtureBase
                 // Clear lazy resources
                 foreach (var lazyResource in _lazyResources.Values)
                 {
-                    if (lazyResource.IsValueCreated && lazyResource.Value is IDisposable disposable)
+                    // Use reflection to check if it's a Lazy<T> that has been created and dispose if needed
+                    var lazyType = lazyResource?.GetType();
+                    if (lazyType != null && lazyType.IsGenericType && lazyType.GetGenericTypeDefinition() == typeof(Lazy<>))
                     {
-                        disposable.Dispose();
+                        var isValueCreatedProp = lazyType.GetProperty("IsValueCreated");
+                        if (isValueCreatedProp?.GetValue(lazyResource) is bool isCreated && isCreated)
+                        {
+                            var valueProp = lazyType.GetProperty("Value");
+                            if (valueProp?.GetValue(lazyResource) is IDisposable disposable)
+                            {
+                                disposable.Dispose();
+                            }
+                        }
                     }
                 }
                 _lazyResources.Clear();
@@ -163,8 +174,9 @@ public abstract class SharedTestFixtureBase
         {
             if (!_lazyResources.TryGetValue(key, out var lazyResource))
             {
-                lazyResource = new Lazy<T>(factory, LazyThreadSafetyMode.ExecutionAndPublication);
-                _lazyResources[key] = lazyResource;
+                var typedLazy = new Lazy<T>(factory, LazyThreadSafetyMode.ExecutionAndPublication);
+                _lazyResources[key] = typedLazy;
+                return typedLazy;
             }
 
             return (Lazy<T>)lazyResource;
@@ -179,8 +191,8 @@ public abstract class SharedTestFixtureBase
     private DiscoveredDatabase CreateSharedTestDatabase()
     {
         var repository = SharedRepositoryLocator;
-        var server = repository.CatalogueRepository is ICatalogueRepository cataRepo
-            ? cataRepo.DiscoveredServer
+        var server = repository.CatalogueRepository is TableRepository tableRepo
+            ? tableRepo.DiscoveredServer
             : throw new InvalidOperationException("Cannot get server from repository");
 
         var dbName = $"SharedTestDb_{Guid.NewGuid():N}";
@@ -227,8 +239,8 @@ public abstract class SharedTestFixtureBase
     protected DiscoveredDatabase GetCleanDatabase(DatabaseType databaseType, string databaseName = null)
     {
         var repository = SharedRepositoryLocator;
-        var server = repository.CatalogueRepository is ICatalogueRepository cataRepo
-            ? cataRepo.DiscoveredServer
+        var server = repository.CatalogueRepository is TableRepository tableRepo
+            ? tableRepo.DiscoveredServer
             : throw new InvalidOperationException("Cannot get server from repository");
 
         databaseName ??= $"CleanDb_{Guid.NewGuid():N}";
@@ -237,7 +249,7 @@ public abstract class SharedTestFixtureBase
         if (database.Exists())
         {
             // Clean existing database
-            foreach (var table in database.DiscoverTables())
+            foreach (var table in database.DiscoverTables(false))
             {
                 table.Drop();
             }
@@ -258,8 +270,8 @@ public abstract class SharedTestFixtureBase
     protected void ExecuteSql(string sql, params (string name, object value)[] parameters)
     {
         var repository = SharedRepositoryLocator;
-        var server = repository.CatalogueRepository is ICatalogueRepository cataRepo
-            ? cataRepo.DiscoveredServer
+        var server = repository.CatalogueRepository is TableRepository tableRepo
+            ? tableRepo.DiscoveredServer
             : throw new InvalidOperationException("Cannot get server from repository");
 
         using var connection = server.GetConnection();

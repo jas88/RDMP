@@ -139,7 +139,7 @@ public static class TestPerformanceOptimizer
                 {
                     OperationName = operationName,
                     Count = measurements.Count,
-                    TotalTime = measurements.Sum(),
+                    TotalTime = TimeSpan.FromTicks(measurements.Sum(m => m.Ticks)),
                     AverageTime = TimeSpan.FromTicks((long)measurements.Average(m => m.Ticks)),
                     MinTime = measurements.Min(),
                     MaxTime = measurements.Max()
@@ -178,25 +178,21 @@ public static class TestPerformanceOptimizer
         // Benchmark with pooling
         for (int i = 0; i < iterations; i++)
         {
-            var pooledTime = MeasureOperation($"Repository_Pooled_{i}", () =>
-            {
-                var repository = RepositoryPool.Instance.GetOrCreateRepository(options, false);
-                RepositoryPool.Instance.ReleaseRepository(repository);
-                return repository;
-            });
+            StartTiming($"Repository_Pooled_{i}");
+            var repository = RepositoryPool.Instance.GetOrCreateRepository(options, false);
+            RepositoryPool.Instance.ReleaseRepository(repository);
+            var pooledTime = StopTiming($"Repository_Pooled_{i}");
             pooledTimes.Add(pooledTime);
         }
 
         // Benchmark without pooling
         for (int i = 0; i < iterations; i++)
         {
-            var nonPooledTime = MeasureOperation($"Repository_NonPooled_{i}", () =>
-            {
-                var repository = new PlatformDatabaseCreationRepositoryFinder(options);
-                if (repository is IDisposable disposable)
-                    disposable.Dispose();
-                return repository;
-            });
+            StartTiming($"Repository_NonPooled_{i}");
+            var repository = new PlatformDatabaseCreationRepositoryFinder(options);
+            if (repository is IDisposable disposable)
+                disposable.Dispose();
+            var nonPooledTime = StopTiming($"Repository_NonPooled_{i}");
             nonPooledTimes.Add(nonPooledTime);
         }
 
@@ -227,22 +223,19 @@ public static class TestPerformanceOptimizer
         // Benchmark with caching
         for (int i = 0; i < iterations; i++)
         {
-            var cachedTime = MeasureOperation($"Object_Cached_{typeof(T).Name}_{i}", () =>
-            {
-                var obj = TestObjectCache.Instance.GetOrCreate<T>(repository);
-                TestObjectCache.Instance.ReturnToCache(obj);
-                return obj;
-            });
+            StartTiming($"Object_Cached_{typeof(T).Name}_{i}");
+            var obj = TestObjectCache.Instance.GetOrCreate<T>(repository);
+            TestObjectCache.Instance.ReturnToCache(obj);
+            var cachedTime = StopTiming($"Object_Cached_{typeof(T).Name}_{i}");
             cachedTimes.Add(cachedTime);
         }
 
         // Benchmark without caching
         for (int i = 0; i < iterations; i++)
         {
-            var nonCachedTime = MeasureOperation($"Object_NonCached_{typeof(T).Name}_{i}", () =>
-            {
-                return UnitTests.WhenIHaveA<T>(repository);
-            });
+            StartTiming($"Object_NonCached_{typeof(T).Name}_{i}");
+            var obj = UnitTests.WhenIHaveA<T>(repository);
+            var nonCachedTime = StopTiming($"Object_NonCached_{typeof(T).Name}_{i}");
             nonCachedTimes.Add(nonCachedTime);
         }
 
