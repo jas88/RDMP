@@ -41,7 +41,7 @@ RepositoryPool.Instance.ClearAll();
 
 **Location**: `TestObjectCache.cs`
 
-**Purpose**: Caches frequently created test objects (Catalogue, TableInfo, ColumnInfo, etc.) to reduce object creation overhead.
+**Purpose**: Caches frequently created test objects ([Catalogue], [TableInfo], [ColumnInfo], etc.) to reduce object creation overhead.
 
 **Key Features**:
 - Type-safe caching for common database entities
@@ -303,3 +303,7 @@ RepositoryPool.Instance.DebugMode = true;
 ### Contact
 
 For issues or suggestions regarding these performance optimizations, please contact the RDMP development team.
+
+[Catalogue]: ../../Documentation/CodeTutorials/Glossary.md#Catalogue
+[TableInfo]: ../../Documentation/CodeTutorials/Glossary.md#TableInfo
+[ColumnInfo]: ../../Documentation/CodeTutorials/Glossary.md#ColumnInfo
