@@ -157,7 +157,7 @@ public partial class DatabaseTests
         };
 
         // Use repository pooling for better performance
-        RepositoryLocator = RepositoryPool.GetOrCreateRepository(opts, TestDatabaseSettings.UseFileSystemRepo);
+        RepositoryLocator = RepositoryPool.Instance.GetOrCreateRepository(opts, TestDatabaseSettings.UseFileSystemRepo);
 
         if (CatalogueRepository is TableRepository cataRepo)
         {
@@ -285,7 +285,7 @@ public partial class DatabaseTests
         // Return repository to pool for reuse
         try
         {
-            RepositoryPool.ReleaseRepository(RepositoryLocator);
+            RepositoryPool.Instance.ReleaseRepository(RepositoryLocator);
         }
         catch (Exception e)
         {
@@ -299,7 +299,7 @@ public partial class DatabaseTests
         // Clear repository pool when all tests in this class are complete
         try
         {
-            RepositoryPool.ClearAll();
+            RepositoryPool.Instance.ClearAll();
         }
         catch (Exception e)
         {
