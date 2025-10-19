@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Rdmp.UI.Tests.DesignPatternTests.ClassFileEvaluation;
+namespace Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 
 internal class DocumentationCrossExaminationTest
 {

@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 
-namespace Rdmp.UI.Tests.DesignPatternTests;
+namespace Rdmp.Core.Tests.DesignPatternTests;
 
 internal class CsProjFileTidy
 {

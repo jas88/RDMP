@@ -1,4 +1,4 @@
-﻿// Copyright (c) The University of Dundee 2018-2019
+﻿// Copyright (c) The University of Dundee 2018-2025
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -13,10 +13,10 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.VisualStudioSolutionFileProcessing;
-using Rdmp.UI.Tests.DesignPatternTests.ClassFileEvaluation;
+using Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 using Tests.Common;
 
-namespace Rdmp.UI.Tests.DesignPatternTests;
+namespace Rdmp.Core.Tests.DesignPatternTests;
 
 public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
 {
@@ -77,15 +77,11 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         var documented = new AllImportantClassesDocumented();
         documented.FindProblems(_csFilesFound);
 
-        var uiStandardisationTest = new UserInterfaceStandardisationChecker();
-        uiStandardisationTest.FindProblems(_csFilesFound);
+        // Note: UserInterfaceStandardisationChecker and RDMPFormInitializationTests are UI-specific
+        // and remain in Rdmp.UI.Tests. They are not included here since this test is cross-platform.
 
         var crossExamination = new DocumentationCrossExaminationTest(solutionDir);
         crossExamination.FindProblems(_csFilesFound);
-
-        //Assuming all files are present and correct we can now evaluate the RDMP specific stuff:
-        var otherTestRunner = new RDMPFormInitializationTests();
-        otherTestRunner.FindUninitializedForms(_csFilesFound);
 
         var propertyChecker = new SuspiciousRelationshipPropertyUse();
         propertyChecker.FindPropertyMisuse(_csFilesFound);
@@ -217,14 +213,15 @@ public class CopyrightHeaderEvaluator
 
             var sbSuggestedText = new StringBuilder();
 
-            var text = File.ReadLines(file).First();
+            var allLines = File.ReadAllLines(file);
+            var firstLine = allLines.FirstOrDefault() ?? "";
 
-            if (!text.StartsWith("// Copyright (c) The University of Dundee 2018-20")
-                && text !=
+            if (!firstLine.StartsWith("// Copyright (c) The University of Dundee 2018-20")
+                && firstLine !=
                 @"// This code is adapted from https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications")
             {
                 changes = true;
-                sbSuggestedText.AppendLine(@"// Copyright (c) The University of Dundee 2018-2023");
+                sbSuggestedText.AppendLine(@"// Copyright (c) The University of Dundee 2018-2025");
                 sbSuggestedText.AppendLine(@"// This file is part of the Research Data Management Platform (RDMP).");
                 sbSuggestedText.AppendLine(
                     @"// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.");
@@ -233,14 +230,23 @@ public class CopyrightHeaderEvaluator
                 sbSuggestedText.AppendLine(
                     @"// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.");
                 sbSuggestedText.AppendLine();
-                sbSuggestedText.AppendJoin(Environment.NewLine, text);
+                // Append the rest of the file after the copyright header
+                sbSuggestedText.AppendJoin(Environment.NewLine, allLines);
             }
 
             if (changes)
                 suggestedNewFileContents.Add(file, sbSuggestedText.ToString());
         }
 
-        Assert.That(suggestedNewFileContents, Is.Empty, $"The following files did not contain copyright:{Environment.NewLine}{string.Join(Environment.NewLine, suggestedNewFileContents.Keys.Select(Path.GetFileName))}");
+        // Instead of checking if dictionary is empty, compare each file's actual vs expected content
+        // This provides much more helpful error messages showing the exact differences
+        foreach (var kvp in suggestedNewFileContents)
+        {
+            var actualContent = File.ReadAllText(kvp.Key);
+            var expectedContent = kvp.Value;
+            Assert.That(actualContent, Is.EqualTo(expectedContent),
+                $"File {Path.GetFileName(kvp.Key)} has incorrect copyright header or formatting");
+        }
 
         //drag your debugger stack pointer to here to mess up all your files to match the suggestedNewFileContents :)
         foreach (var suggestedNewFileContent in suggestedNewFileContents)
