@@ -6,6 +6,10 @@ paths-ignore:
   - "**/obj/**"
   - "**/bin/**"
   - "**/*.Designer.cs"
+  - "**/*.g.cs"
+  - "**/*Generated.cs"
+  - "**/*.g.i.cs"
+  - "**/*.designer.cs"
  
 query-filters:
   - exclude:
