@@ -166,6 +166,10 @@ jobs:
   bundle:
     name: Bundle Build
     runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -179,6 +183,12 @@ jobs:
         uses: actions/setup-dotnet@v5.0.0
         with:
           dotnet-version: 7.0.x
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          config-file: ./.github/configs/codeql.yml
+          queries: +security-and-quality
       - name: BundleSource
         shell: bash
         run: |
@@ -192,6 +202,38 @@ jobs:
           dotnet publish Application/ResearchDataManagementPlatform/ResearchDataManagementPlatform.csproj -r win-x64 --self-contained -c Release -o PublishWinForms -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --verbosity minimal --nologo
           dotnet publish Tools/rdmp/rdmp.csproj -r win-x64 --self-contained -c Release -o PublishWindows -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true --verbosity minimal -p:IncludeNativeLibrariesForSelfExtract=true --nologo
           dotnet publish Tools/rdmp/rdmp.csproj -r linux-x64 --self-contained -c Release -o PublishLinux -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true --verbosity minimal --nologo
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"
+          upload: false
+          output: sarif-results
+      - name: Filter SARIF for generated files
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -**/*.Designer.cs
+            -**/*.g.cs
+            -**/*Generated.cs
+            -**/*.g.i.cs
+            -**/*.designer.cs
+            -**/obj/**
+            -**/bin/**
+          input: sarif-results/csharp.sarif
+          output: sarif-results/csharp.sarif
+      - name: Upload CodeQL Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sarif-results/csharp.sarif
+          category: "/language:csharp"
+      - name: Run markdown link check
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'no'
+          use-verbose-mode: 'yes'
+          check-modified-files-only: 'yes'
+          config-file: 'deadlinksconfig.json'
+          base-branch: 'develop'
       - name: Temporary Bundle of ddls for auto-updater
         shell: bash
         run: |
