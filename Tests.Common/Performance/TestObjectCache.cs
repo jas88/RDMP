@@ -70,12 +70,21 @@ public class TestObjectCache : IDisposable
             return CreateNew<T>(repository);
         }
 
-        if (_objectPools.TryGetValue(type, out var pool) && pool.TryDequeue(out var cachedObject))
+        // Ensure atomicity between TryDequeue and statistics update
+        _cacheLock.Wait();
+        try
         {
-            Interlocked.Increment(ref _cacheHits);
+            if (_objectPools.TryGetValue(type, out var pool) && pool.TryDequeue(out var cachedObject))
+            {
+                Interlocked.Increment(ref _cacheHits);
 
-            // For cached objects, we need to reset their state or create a fresh instance
-            return ResetOrClone<T>(cachedObject, repository);
+                // For cached objects, we need to reset their state or create a fresh instance
+                return ResetOrClone<T>(cachedObject, repository);
+            }
+        }
+        finally
+        {
+            _cacheLock.Release();
         }
 
         Interlocked.Increment(ref _cacheMisses);
