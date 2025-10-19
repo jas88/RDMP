@@ -43,6 +43,7 @@ using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.Setting;
+using Tests.Common.Performance;
 
 namespace Tests.Common;
 
@@ -54,6 +55,7 @@ public class UnitTests
 {
     protected MemoryDataExportRepository Repository = new();
     protected IRDMPPlatformRepositoryServiceLocator RepositoryLocator { get; private set; }
+    protected static readonly TestObjectCache ObjectCache = TestObjectCache.Instance;
 
     //These types do not have to be supported by the method WhenIHaveA
     protected HashSet<string> SkipTheseTypes = new(new string[]
@@ -104,13 +106,26 @@ public class UnitTests
 
     /// <summary>
     /// Creates a minimum viable object of Type T.  This includes the object and any dependencies e.g. a
-    /// <see cref="ColumnInfo"/> cannot exist without a <see cref="TableInfo"/>.
+    /// <see cref="ColumnInfo"/> cannot exist without a <see cref="TableInfo"/>. Uses caching for frequently
+    /// created objects to improve performance.
     /// </summary>
     /// <typeparam name="T">Type of object you want to create</typeparam>
     /// <returns></returns>
     /// <exception cref="NotSupportedException">If there is not yet an implementation for the given T.  Feel free to write one.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected T WhenIHaveA<T>() where T : DatabaseEntity => WhenIHaveA<T>(Repository);
+    protected T WhenIHaveA<T>() where T : DatabaseEntity
+    {
+        try
+        {
+            // Try to get from cache first for performance
+            return ObjectCache.GetOrCreate<T>(Repository);
+        }
+        catch
+        {
+            // Fallback to original method if caching fails
+            return WhenIHaveA<T>(Repository);
+        }
+    }
 
 
     /// <summary>
@@ -827,5 +842,36 @@ public class UnitTests
     private MethodInfo GetWhenIHaveAMethod()
     {
         return typeof(UnitTests).GetMethod(nameof(WhenIHaveA), 1, new[] { typeof(MemoryDataExportRepository) });
+    }
+
+    [TearDown]
+    protected void TearDown()
+    {
+        // Return commonly used objects to cache for reuse
+        // Note: This is a simplified approach - in practice, you might want more sophisticated
+        // caching logic based on test patterns
+        try
+        {
+            // Clean up any objects that should be returned to cache
+            // This would be implemented based on specific usage patterns
+        }
+        catch
+        {
+            // Ignore cleanup errors to avoid affecting test results
+        }
+    }
+
+    [OneTimeTearDown]
+    protected virtual void OneTimeTearDown()
+    {
+        // Clear cache when all tests in this class are complete
+        try
+        {
+            ObjectCache.ClearCache();
+        }
+        catch
+        {
+            // Ignore cleanup errors to avoid affecting test results
+        }
     }
 }

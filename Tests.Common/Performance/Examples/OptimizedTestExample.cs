@@ -1,0 +1,281 @@
+// Copyright (c) The University of Dundee 2018-2019
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
+using System;
+using System.Linq;
+using FAnsi.Discovery;
+using NUnit.Framework;
+using Rdmp.Core.CommandLine.DatabaseCreation;
+using Rdmp.Core.Curation.Data;
+using Rdmp.Core.DataExport.Data;
+using Tests.Common;
+using Tests.Common.Performance;
+
+namespace Tests.Common.Performance.Examples;
+
+/// <summary>
+/// Example test class demonstrating the use of performance optimizations.
+/// This class shows how to effectively use the optimization components to improve test performance.
+/// </summary>
+[TestFixture]
+[Category("Performance")]
+public class OptimizedTestExample : DatabaseTestFixtureBase
+{
+    // Example 1: Using lazy-loaded shared resources
+    private Lazy<ICatalogue> _sharedCatalogue;
+    private Lazy<DiscoveredDatabase> _testDatabase;
+
+    protected override void PerformOneTimeSetup()
+    {
+        base.PerformOneTimeSetup();
+
+        // Initialize lazy resources that will be shared across tests
+        _sharedCatalogue = new Lazy<ICatalogue>(() => CreateSampleCatalogue());
+        _testDatabase = new Lazy<DiscoveredDatabase>(() => CreateTestDatabase());
+    }
+
+    protected override PlatformDatabaseCreationOptions GetDefaultDatabaseOptions()
+    {
+        return new PlatformDatabaseCreationOptions
+        {
+            ServerName = Environment.GetEnvironmentVariable("RDMP_TEST_SERVER") ?? "localhost",
+            Prefix = "PERF_TEST_",
+            Username = Environment.GetEnvironmentVariable("RDMP_TEST_USER"),
+            Password = Environment.GetEnvironmentVariable("RDMP_TEST_PASSWORD"),
+            ValidateCertificate = false
+        };
+    }
+
+    [Test]
+    [MeasurePerformance("Catalogue_Creation_With_Caching")]
+    public void TestCatalogueCreationWithCaching()
+    {
+        // Use cached object creation
+        var catalogue = ObjectCache.GetOrCreate<Catalogue>(Repository);
+
+        Assert.That(catalogue, Is.Not.Null);
+        Assert.That(catalogue.Name, Is.Not.Null);
+
+        // Return to cache for reuse
+        ObjectCache.ReturnToCache(catalogue);
+    }
+
+    [Test]
+    [MeasurePerformance("Database_Operation_With_Pooling")]
+    public void TestDatabaseOperationWithPooling()
+    {
+        // Use pooled database
+        var database = GetPooledDatabase(DatabaseType.MicrosoftSQLServer, "TestOperation");
+
+        try
+        {
+            // Execute operations in transaction for better isolation
+            var result = ExecuteInTransaction(database, connection =>
+            {
+                // Create a test table
+                using var cmd = database.Server.GetCommand(@"
+                    CREATE TABLE TestTable (
+                        ID INT PRIMARY KEY,
+                        Name NVARCHAR(100),
+                        CreatedDate DATETIME
+                    )", connection);
+                cmd.ExecuteNonQuery();
+
+                // Insert test data
+                using var insertCmd = database.Server.GetCommand(@"
+                    INSERT INTO TestTable (ID, Name, CreatedDate)
+                    VALUES (1, 'Test', GETDATE())", connection);
+                return insertCmd.ExecuteNonQuery();
+            });
+
+            Assert.That(result, Is.EqualTo(1));
+        }
+        finally
+        {
+            // Return database to pool
+            ReturnDatabaseToPool(database);
+        }
+    }
+
+    [Test]
+    [MeasurePerformance("Batch_Object_Creation")]
+    public void TestBatchObjectCreation()
+    {
+        // Create multiple objects to demonstrate caching benefits
+        var objects = new DatabaseEntity[10];
+
+        MeasureOperation("Batch_Creation", () =>
+        {
+            for (int i = 0; i < objects.Length; i++)
+            {
+                objects[i] = ObjectCache.GetOrCreate<Catalogue>(Repository);
+            }
+        });
+
+        // Verify all objects were created successfully
+        Assert.That(objects.All(o => o != null), Is.True);
+        Assert.That(objects.All(o => o is Catalogue), Is.True);
+
+        // Return objects to cache
+        foreach (var obj in objects)
+        {
+            ObjectCache.ReturnToCache(obj);
+        }
+    }
+
+    [Test]
+    [MeasurePerformance("Repository_Access_With_Pooling")]
+    public void TestRepositoryAccessWithPooling()
+    {
+        // Multiple repository accesses to demonstrate pooling benefits
+        MeasureOperation("Multiple_Repository_Access", () =>
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                var repository = RepositoryPool.GetOrCreateRepository(GetDefaultDatabaseOptions(), false);
+
+                // Use repository for simple operations
+                var catalogues = repository.CatalogueRepository.GetAllObjects<Catalogue>();
+                Assert.That(catalogues, Is.Not.Null);
+
+                RepositoryPool.ReleaseRepository(repository);
+            }
+        });
+    }
+
+    [Test]
+    [MeasurePerformance("Shared_Resource_Usage")]
+    public void TestSharedResourceUsage()
+    {
+        // Use pre-initialized lazy resources
+        var catalogue = _sharedCatalogue.Value;
+        var database = _testDatabase.Value;
+
+        Assert.That(catalogue, Is.Not.Null);
+        Assert.That(database.Exists(), Is.True);
+
+        // Perform operations using shared resources
+        using var connection = database.Server.GetConnection();
+        connection.Open();
+
+        using var cmd = database.Server.GetCommand(
+            "SELECT 1 as TestValue", connection);
+        var result = cmd.ExecuteScalar();
+
+        Assert.That(result, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void TestPerformanceBenchmarking()
+    {
+        // Benchmark repository creation
+        var repoBenchmark = TestPerformanceOptimizer.BenchmarkRepositoryCreation(
+            GetDefaultDatabaseOptions(), iterations: 5);
+
+        TestContext.Out.WriteLine($"Repository Benchmark: {repoBenchmark}");
+
+        // Benchmark object creation
+        var objBenchmark = TestPerformanceOptimizer.BenchmarkObjectCreation<Catalogue>(
+            Repository, iterations: 20);
+
+        TestContext.Out.WriteLine($"Object Creation Benchmark: {objBenchmark}");
+
+        // Verify improvements
+        Assert.That(repoBenchmark.ImprovementPercent, Is.GreaterThan(0));
+        Assert.That(objBenchmark.ImprovementPercent, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void TestCacheStatistics()
+    {
+        // Clear cache to start fresh
+        ObjectCache.ClearCache();
+
+        // Perform some operations
+        var obj1 = ObjectCache.GetOrCreate<Catalogue>(Repository);
+        var obj2 = ObjectCache.GetOrCreate<Catalogue>(Repository);
+        var obj3 = ObjectCache.GetOrCreate<TableInfo>(Repository);
+
+        // Return objects to cache
+        ObjectCache.ReturnToCache(obj1);
+        ObjectCache.ReturnToCache(obj2);
+
+        // Get statistics
+        var stats = TestObjectCache.Instance.GetStatistics();
+
+        Assert.That(stats.ContainsKey("CacheHits"), Is.True);
+        Assert.That(stats.ContainsKey("CacheMisses"), Is.True);
+        Assert.That(stats.ContainsKey("HitRate"), Is.True);
+
+        TestContext.Out.WriteLine($"Cache Statistics: {System.Text.Json.JsonSerializer.Serialize(stats)}");
+    }
+
+    [Test]
+    public void TestMemoryUsageAndCleanup()
+    {
+        // Create multiple objects to test memory management
+        var objects = new DatabaseEntity[50];
+
+        for (int i = 0; i < objects.Length; i++)
+        {
+            objects[i] = ObjectCache.GetOrCreate<Catalogue>(Repository);
+        }
+
+        // Return objects to cache
+        foreach (var obj in objects)
+        {
+            ObjectCache.ReturnToCache(obj);
+        }
+
+        // Clear cache and verify cleanup
+        ObjectCache.ClearCache();
+
+        var stats = TestObjectCache.Instance.GetStatistics();
+        Assert.That((long)stats["TotalObjectsCached"], Is.LessThan(10)); // Should be mostly empty
+    }
+
+    private ICatalogue CreateSampleCatalogue()
+    {
+        var catalogue = new Catalogue(Repository.CatalogueRepository, "SampleCatalogue");
+        catalogue.SaveToDatabase();
+        return catalogue;
+    }
+
+    private DiscoveredDatabase CreateTestDatabase()
+    {
+        var database = GetCleanDatabase(DatabaseType.MicrosoftSQLServer, "SharedTestDb");
+
+        // Create some basic schema
+        using var connection = database.Server.GetConnection();
+        connection.Open();
+
+        using var cmd = database.Server.GetCommand(@"
+            CREATE TABLE SampleTable (
+                ID INT PRIMARY KEY,
+                Name NVARCHAR(100),
+                Value DECIMAL(10,2),
+                CreatedDate DATETIME DEFAULT GETDATE()
+            )", connection);
+        cmd.ExecuteNonQuery();
+
+        return database;
+    }
+
+    [OneTimeTearDown]
+    public void OneTimeTearDown()
+    {
+        // Clean up lazy resources
+        if (_sharedCatalogue?.IsValueCreated == true && _sharedCatalogue.Value is IDisposable disposable1)
+        {
+            disposable1.Dispose();
+        }
+
+        if (_testDatabase?.IsValueCreated == true && _testDatabase.Value.Exists())
+        {
+            _testDatabase.Value.Drop();
+        }
+    }
+}

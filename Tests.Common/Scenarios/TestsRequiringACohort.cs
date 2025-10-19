@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Threading;
 using FAnsi;
 using FAnsi.Discovery;
 using NUnit.Framework;
@@ -16,6 +17,7 @@ using Rdmp.Core.Curation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.ReusableLibraryCode;
+using Tests.Common.Performance;
 
 namespace Tests.Common.Scenarios;
 
@@ -49,25 +51,48 @@ public class TestsRequiringACohort : TestsRequiringA
     protected readonly Dictionary<string, string> _cohortKeysGenerated = new();
 
 
+    private static readonly SemaphoreSlim _cohortSetupLock = new(1, 1);
+    private static bool _cohortDatabaseInitialized;
+    private static DiscoveredDatabase _sharedCohortDatabase;
+
     [OneTimeSetUp]
     protected override void OneTimeSetUp()
     {
         base.OneTimeSetUp();
 
-        using var con = CreateCohortDatabase();
+        _cohortSetupLock.Wait();
+        try
+        {
+            if (!_cohortDatabaseInitialized)
+            {
+                InitializeSharedCohortDatabase();
+                _cohortDatabaseInitialized = true;
+            }
+            else
+            {
+                // Reuse existing database
+                _cohortDatabase = _sharedCohortDatabase;
+            }
 
-        EmptyCohortTables(con);
-        SetupCohortDefinitionAndCustomTable(con);
+            using var con = GetCohortDatabaseConnection();
 
-        CreateExternalCohortTableReference();
-        CreateExtractableCohort();
+            EmptyCohortTables(con);
+            SetupCohortDefinitionAndCustomTable(con);
 
-        InsertIntoCohortTable(con, "Priv_12345", "Pub_54321");
-        InsertIntoCohortTable(con, "Priv_66666", "Pub_66666");
-        InsertIntoCohortTable(con, "Priv_54321", "Pub_12345");
-        InsertIntoCohortTable(con, "Priv_66999", "Pub_99666");
-        InsertIntoCohortTable(con, "Priv_14722", "Pub_22741");
-        InsertIntoCohortTable(con, "Priv_wtf11", "Pub_11ftw");
+            CreateExternalCohortTableReference();
+            CreateExtractableCohort();
+
+            InsertIntoCohortTable(con, "Priv_12345", "Pub_54321");
+            InsertIntoCohortTable(con, "Priv_66666", "Pub_66666");
+            InsertIntoCohortTable(con, "Priv_54321", "Pub_12345");
+            InsertIntoCohortTable(con, "Priv_66999", "Pub_99666");
+            InsertIntoCohortTable(con, "Priv_14722", "Pub_22741");
+            InsertIntoCohortTable(con, "Priv_wtf11", "Pub_11ftw");
+        }
+        finally
+        {
+            _cohortSetupLock.Release();
+        }
     }
 
     [SetUp]
@@ -76,22 +101,28 @@ public class TestsRequiringACohort : TestsRequiringA
         base.SetUp();
     }
 
-    private DbConnection CreateCohortDatabase()
+    private void InitializeSharedCohortDatabase()
     {
-        _cohortDatabase = DiscoveredServerICanCreateRandomDatabasesAndTablesOn.ExpectDatabase(CohortDatabaseName);
+        _sharedCohortDatabase = DiscoveredServerICanCreateRandomDatabasesAndTablesOn.ExpectDatabase(CohortDatabaseName);
 
-        if (_cohortDatabase.Exists())
-            DeleteTables(_cohortDatabase);
-        else
-            _cohortDatabase.Create();
+        if (!_sharedCohortDatabase.Exists())
+        {
+            _sharedCohortDatabase.Create();
+            CreateCohortSchema(_sharedCohortDatabase);
+        }
 
+        _cohortDatabase = _sharedCohortDatabase;
+    }
+
+    private void CreateCohortSchema(DiscoveredDatabase database)
+    {
         const string sql = @"
 
 CREATE TABLE [dbo].[Cohort](
        [PrivateID] [varchar](10) NOT NULL,
        [ReleaseID] [varchar](10) NULL,
        [cohortDefinition_id] [int] NOT NULL,
-CONSTRAINT [PK_Cohort] PRIMARY KEY CLUSTERED 
+CONSTRAINT [PK_Cohort] PRIMARY KEY CLUSTERED
 (
        [PrivateID] ASC,
        [cohortDefinition_id] ASC
@@ -105,7 +136,7 @@ CREATE TABLE [dbo].[CohortDefinition](
        [version] [int] NOT NULL,
        [description] [varchar](4000) NOT NULL,
        [dtCreated] [date] NOT NULL,
-CONSTRAINT [PK_CohortDefinition] PRIMARY KEY NONCLUSTERED 
+CONSTRAINT [PK_CohortDefinition] PRIMARY KEY NONCLUSTERED
 (
        [id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -121,10 +152,17 @@ ALTER TABLE [dbo].[Cohort] CHECK CONSTRAINT [FK_Cohort_CohortDefinition]
 GO
 ";
 
-        var con = _cohortDatabase.Server.GetConnection();
+        using var con = database.Server.GetConnection();
         con.Open();
         UsefulStuff.ExecuteBatchNonQuery(sql, con, timeout: 15);
-        return con;
+    }
+
+    private DbConnection GetCohortDatabaseConnection()
+    {
+        if (_cohortDatabase == null)
+            throw new InvalidOperationException("Cohort database not initialized");
+
+        return _cohortDatabase.Server.GetConnection();
     }
 
 
@@ -237,5 +275,21 @@ GO
 
         using var insertRecord = _cohortDatabase.Server.GetCommand(insertIntoList, con);
         Assert.That(insertRecord.ExecuteNonQuery(),Is.EqualTo(1));
+    }
+
+    [OneTimeTearDown]
+    protected override void OneTimeTearDown()
+    {
+        base.OneTimeTearDown();
+
+        // Clean up static resources to prevent memory leaks
+        try
+        {
+            _cohortSetupLock?.Dispose();
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
     }
 }
