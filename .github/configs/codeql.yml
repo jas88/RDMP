@@ -1,16 +1,8 @@
 name: CodeQL Configuration
 
-paths-ignore:
-  - "**/*.md"
-  - "**/*.txt"
-  - "**/obj/**"
-  - "**/bin/**"
-  - "**/*.Designer.cs"
-  - "**/*.g.cs"
-  - "**/*Generated.cs"
-  - "**/*.g.i.cs"
-  - "**/*.designer.cs"
- 
+# Note: path filtering is done via filter-sarif action in the workflow
+# as paths-ignore doesn't work reliably for C# generated files
+
 query-filters:
   - exclude:
       id: cs/catch-of-all-exceptions
