@@ -25,7 +25,7 @@ using Rdmp.UI.CommandExecution;
 using Rdmp.UI.CommandExecution.Proposals;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.Menus;
-using Rdmp.UI.Tests.DesignPatternTests.ClassFileEvaluation;
+using Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 using Rdmp.UI.TestsAndSetup.ServicePropogation;
 
 namespace Rdmp.UI.Tests.DesignPatternTests;
