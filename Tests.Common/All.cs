@@ -4,6 +4,8 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using System;
+using System.Linq;
 using FAnsi;
 using NUnit.Framework;
 
@@ -12,29 +14,50 @@ namespace Tests.Common;
 public class All
 {
     /// <summary>
-    /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all DBMS
+    /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all configured DBMS.
+    /// This property dynamically filters to only include database types that are configured
+    /// in TestDatabases.txt, preventing slow test case generation and "Inconclusive" results
+    /// for unconfigured databases.
     /// </summary>
-    public static DatabaseType[] DatabaseTypes =
-    {
-        DatabaseType.MicrosoftSQLServer,
-        DatabaseType.MySql,
-        DatabaseType.Oracle,
-        DatabaseType.PostgreSql
-    };
+    public static DatabaseType[] DatabaseTypes =>
+        Enum.GetValues<DatabaseType>()
+            .Where(IsConfigured)
+            .ToArray();
 
     /// <summary>
-    /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all DBMS
-    /// with both permutations of true/false.  Matches exhaustively method signature (DatabaseType,bool)
+    /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all configured DBMS
+    /// with both permutations of true/false. Matches exhaustively method signature (DatabaseType,bool).
+    /// This property dynamically filters to only include database types that are configured.
     /// </summary>
-    public static object[] DatabaseTypesWithBoolFlags =
+    public static object[] DatabaseTypesWithBoolFlags =>
+        Enum.GetValues<DatabaseType>()
+            .Where(IsConfigured)
+            .SelectMany(type => new[]
+            {
+                new object[] { type, true },
+                new object[] { type, false }
+            })
+            .ToArray();
+
+    /// <summary>
+    /// Checks if a database type is configured in TestDatabases.txt without attempting to connect.
+    /// SQL Server is always considered configured as it's required. Other types are checked against
+    /// the TestDatabaseSettings.
+    /// </summary>
+    private static bool IsConfigured(DatabaseType type)
     {
-        new object[] { DatabaseType.MicrosoftSQLServer, true },
-        new object[] { DatabaseType.MySql, true },
-        new object[] { DatabaseType.Oracle, true },
-        new object[] { DatabaseType.PostgreSql, true },
-        new object[] { DatabaseType.MicrosoftSQLServer, false },
-        new object[] { DatabaseType.MySql, false },
-        new object[] { DatabaseType.Oracle, false },
-        new object[] { DatabaseType.PostgreSql, false }
-    };
+        // SQL Server is always required and configured
+        if (type == DatabaseType.MicrosoftSQLServer)
+            return true;
+
+        // Check if the connection string is configured for optional database types
+        var settings = TestDatabaseSettings.GetSettings();
+        return type switch
+        {
+            DatabaseType.MySql => settings.MySql != null,
+            DatabaseType.Oracle => settings.Oracle != null,
+            DatabaseType.PostgreSql => settings.PostgreSql != null,
+            _ => false
+        };
+    }
 }
