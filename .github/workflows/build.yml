@@ -165,7 +165,7 @@ jobs:
 
   bundle:
     name: Bundle Build
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
@@ -194,9 +194,9 @@ jobs:
         run: |
           mkdir -p Tools/BundleUpSourceIntoZip/output
           rm -f Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.zip
-          echo "dir /s/b *.cs *.xml > srcbitsa.txt" | cmd
-          perl -pe '$_=reverse' < srcbitsa.txt | sort -t'\' -k1,1 -u | perl -pe '$_=reverse' > srcbits.txt
-          echo 7z a -mx=9 Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.zip @srcbits.txt | cmd
+          find . -type f \( -name '*.cs' -o -name '*.xml' \) > srcbitsa.txt
+          perl -pe '$_=reverse' < srcbitsa.txt | sort -t'/' -k1,1 -u | perl -pe '$_=reverse' > srcbits.txt
+          7z a -mx=9 -mmt Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.zip @srcbits.txt
       - name: Package
         run: |
           dotnet publish Application/ResearchDataManagementPlatform/ResearchDataManagementPlatform.csproj -r win-x64 --self-contained -c Release -o PublishWinForms -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --verbosity minimal --nologo
@@ -234,17 +234,23 @@ jobs:
           check-modified-files-only: 'yes'
           config-file: 'deadlinksconfig.json'
           base-branch: 'develop'
-      - name: Temporary Bundle of ddls for auto-updater
+      - name: Install compression tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pixz p7zip-full
+      - name: Temporary Bundle of DLLs for auto-updater
         shell: bash
         run: |
-          cp -r Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64/runtimes ./PublishWinForms
-          cp -r Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64/x64 ./PublishWinForms
-          cp Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64/D3DCompiler_47_cor3.dll ./PublishWinForms
-          cp Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64/PenImc_cor3.dll ./PublishWinForms
-          cp Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64/PresentationNative_cor3.dll ./PublishWinForms
-          cp Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64/vcruntime140_cor3.dll ./PublishWinForms
-          cp Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64/WebView2Loader.dll ./PublishWinForms
-          cp Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64/wpfgfx_cor3.dll ./PublishWinForms
+          BINDIR=Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64
+          cp -rt ./PublishWinForms \
+            $BINDIR/runtimes \
+            $BINDIR/x64 \
+            $BINDIR/D3DCompiler_47_cor3.dll \
+            $BINDIR/PenImc_cor3.dll \
+            $BINDIR/PresentationNative_cor3.dll \
+            $BINDIR/vcruntime140_cor3.dll \
+            $BINDIR/WebView2Loader.dll \
+            $BINDIR/wpfgfx_cor3.dll
       - name: Install Plugins
         shell: bash
         run: |
@@ -254,67 +260,26 @@ jobs:
             NAME="$(curl -s $plugin | grep "browser_download_url.*$PluginName.*rdmp" | cut -d : -f 2,3 | cut -d "\"" -f 2)"
             curl -OL  $NAME
           done
+          # Use hardlinks instead of copying to save space
           for platform in PublishWindows PublishLinux PublishWinForms
           do
-            cp *.rdmp $platform
+            for rdmp in *.rdmp; do
+              ln "$rdmp" "$platform/$rdmp"
+            done
           done
           rm *.rdmp
       - name: Sign & zip
         shell: bash
         run: |
-          dotnet tool install --global AzureSignTool 
+          dotnet tool install --global AzureSignTool
           AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v PublishWindows/rdmp.exe
           AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v PublishWinForms/ResearchDataManagementPlatform.exe
           mkdir -p dist
-          (cd PublishWindows ; echo 7z a -mx=9 ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-win-x64.zip . | cmd)
-          (cd PublishLinux ; echo 7z a -mx=0 ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.zip . | cmd)
+          (cd PublishWindows && 7z a -mx=9 -mmt ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-win-x64.zip .)
+          (cd PublishLinux && 7z a -mx=0 -mmt ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.zip .)
           mv PublishLinux rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux
-          echo 7z a dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux | cmd
-          (cd PublishWinForms ; echo 7z a -mx=9 ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-client.zip . | cmd)
-
-
-      - name: Install Perl dependencies
-        uses: shogo82148/actions-setup-perl@v1.34.0
-        with:
-          install-modules-with: cpanm
-          install-modules: Archive::Zip Archive::Tar
-      - name: Fix execute permissions
-        if: contains(github.ref, 'refs/tags/v') || contains('refs/heads/main refs/heads/develop',github.ref)
-        shell: perl {0}
-        run: |
-          use strict;
-          use warnings;
-          use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
-          use Archive::Tar;
-
-          my ($tarname,$zipname)=('dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar','dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.zip');
-
-          # Find rdmp in .tar, set permissions 0755
-          my $tar=Archive::Tar->new($tarname) || die "read $tarname:$!\n";
-          my @tarbits=$tar->get_files();
-          foreach my $bit (@tarbits) {
-            $bit->chmod('0755') if $bit->name =~ /\/rdmp$/;
-          }
-          $tar->write( $tarname );
-
-          # Find rdmp in .zip, set permissions 0755
-          my $srczip = Archive::Zip->new($zipname);
-          my $zip=Archive::Zip->new();
-          foreach my $bit ($srczip->members()) {
-            print "Adding ",$bit->fileName(),"\n";
-            my $m=$zip->addString($bit->contents(),$bit->fileName());
-            $m->fileName($bit->fileName());
-            my $iszip=$bit->fileName() =~ /\.zip$/i;
-            $m->desiredCompressionMethod($iszip ? COMPRESSION_STORED : COMPRESSION_DEFLATED);
-            $m->desiredCompressionLevel($iszip ? 0 :  9 );
-          }
-          $zip->memberNamed('rdmp')->unixFileAttributes( 0755 );
-          $zip->overwriteAs($zipname);
-      - name: Compress tar
-        if: contains(github.ref, 'refs/tags/v') || contains('refs/heads/main refs/heads/develop',github.ref)
-        run: |
-          7z a -txz dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar.xz dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar
-          rm dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar
+          (cd rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux && chmod +x rdmp && tar -cf - .) | pixz > dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar.xz
+          (cd PublishWinForms && 7z a -mx=9 -mmt ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-client.zip .)
       - name: Build Nuget packages
         if: contains(github.ref, 'refs/tags/v')
         shell: bash
@@ -325,7 +290,10 @@ jobs:
           done
       - name: Calculate SHA256SUMS
         if: contains(github.ref, 'refs/tags/v')
-        run: '&{foreach ($i in Get-ChildItem dist -Exclude *SUMS|Get-FileHash) { echo "$($i.Hash) $(echo $i | Split-Path -Leaf)" }} > dist/SHA256SUMS'
+        shell: bash
+        run: |
+          cd dist
+          sha256sum * 2>/dev/null | grep -v 'SHA256SUMS' > SHA256SUMS || true
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
