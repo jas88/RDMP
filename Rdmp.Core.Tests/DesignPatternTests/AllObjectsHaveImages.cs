@@ -30,8 +30,17 @@ public class AllObjectsHaveImages : DatabaseTests
             "ExtractionFilterParameter",
             //handled by CatalogueIconProvider just like AnyTableSqlParameter by looking for the ISqlParameter classes
 
-            "StackFrame"
+            "StackFrame",
             //not required , it's only ever dependent on itself and it doesn't have any visualisation on Catalogue / Export
+
+            // Proxy classes - don't require separate icons as they represent other objects
+            "ObjectProxy_12",
+            "ObjectProxy_22",
+            "ObjectProxy_28",
+            "ObjectProxy_30",
+            "ObjectProxy_31",
+            "ObjectProxy_32",
+            "LoadMetadataProxy"
         };
 
         var missingConcepts = Core.Repositories.MEF.GetAllTypes()
