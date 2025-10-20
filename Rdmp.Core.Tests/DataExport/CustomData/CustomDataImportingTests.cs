@@ -37,7 +37,9 @@ public class CustomDataImportingTests : TestsRequiringAnExtractionConfiguration
                 new ExtractableDatasetBundle(CustomExtractableDataSet));
             Execute(out _, out var results);
 
-            var customDataCsv = results.DirectoryPopulated.GetFiles().Single(f => f.Name.Equals("custTable99.csv"));
+            // Use the actual custom table name (now generated with unique Guid for parallel execution safety)
+            var expectedFileName = $"{CustomTable.GetRuntimeName()}.csv";
+            var customDataCsv = results.DirectoryPopulated.GetFiles().Single(f => f.Name.Equals(expectedFileName));
 
             Assert.That(customDataCsv, Is.Not.Null);
 
@@ -90,7 +92,8 @@ public class CustomDataImportingTests : TestsRequiringAnExtractionConfiguration
         //generate a new request (this will include the newly created column)
         _request = new ExtractDatasetCommand(_configuration, new ExtractableDatasetBundle(_extractableDataSet));
 
-        var tbl = Database.ExpectTable("TestTable");
+        // Use the actual test table (now with unique name for parallel execution safety)
+        var tbl = Database.ExpectTable(_tableInfo.GetRuntimeName());
         tbl.Truncate();
 
         using (var blk = tbl.BeginBulkInsert())
@@ -107,10 +110,11 @@ public class CustomDataImportingTests : TestsRequiringAnExtractionConfiguration
 
         Execute(out _, out var results);
 
-        var mainDataTableCsv = results.DirectoryPopulated.GetFiles().Single(f => f.Name.Equals("TestTable.csv"));
+        var expectedTableFileName = $"{_tableInfo.GetRuntimeName()}.csv";
+        var mainDataTableCsv = results.DirectoryPopulated.GetFiles().Single(f => f.Name.Equals(expectedTableFileName));
 
         Assert.That(mainDataTableCsv, Is.Not.Null);
-        Assert.That(mainDataTableCsv.Name, Is.EqualTo("TestTable.csv"));
+        Assert.That(mainDataTableCsv.Name, Is.EqualTo(expectedTableFileName));
 
         var lines = File.ReadAllLines(mainDataTableCsv.FullName);
 
@@ -169,7 +173,8 @@ public class CustomDataImportingTests : TestsRequiringAnExtractionConfiguration
         //generate a new request (this will include the newly created column)
         _request = new ExtractDatasetCommand(_configuration, new ExtractableDatasetBundle(_extractableDataSet));
 
-        var tbl = Database.ExpectTable("TestTable");
+        // Use the actual test table (now with unique name for parallel execution safety)
+        var tbl = Database.ExpectTable(_tableInfo.GetRuntimeName());
         tbl.Truncate();
 
         using (var blk = tbl.BeginBulkInsert())
