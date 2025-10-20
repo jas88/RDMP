@@ -41,23 +41,7 @@ public class All
 
     /// <summary>
     /// Checks if a database type is configured in TestDatabases.txt without attempting to connect.
-    /// SQL Server is always considered configured as it's required. Other types are checked against
-    /// the TestDatabaseSettings.
+    /// Delegates to DatabaseTests.IsDatabaseConfigured().
     /// </summary>
-    private static bool IsConfigured(DatabaseType type)
-    {
-        // SQL Server is always required and configured
-        if (type == DatabaseType.MicrosoftSQLServer)
-            return true;
-
-        // Check if the connection string is configured for optional database types
-        var settings = TestDatabaseSettings.GetSettings();
-        return type switch
-        {
-            DatabaseType.MySql => settings.MySql != null,
-            DatabaseType.Oracle => settings.Oracle != null,
-            DatabaseType.PostgreSql => settings.PostgreSql != null,
-            _ => false
-        };
-    }
+    private static bool IsConfigured(DatabaseType type) => DatabaseTests.IsDatabaseConfigured(type);
 }

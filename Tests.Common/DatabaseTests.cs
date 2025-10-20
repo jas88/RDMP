@@ -66,6 +66,20 @@ public partial class DatabaseTests
     public ICatalogueRepository CatalogueRepository => RepositoryLocator.CatalogueRepository;
 
     /// <summary>
+    /// Checks if a database type is configured in TestDatabases.txt without attempting to connect.
+    /// SQL Server is always considered configured as it's required.
+    /// </summary>
+    public static bool IsDatabaseConfigured(DatabaseType type) =>
+        type switch
+        {
+            DatabaseType.MicrosoftSQLServer => true, // Always required and configured
+            DatabaseType.MySql => TestDatabaseSettings?.MySql != null,
+            DatabaseType.Oracle => TestDatabaseSettings?.Oracle != null,
+            DatabaseType.PostgreSql => TestDatabaseSettings?.PostgreSql != null,
+            _ => false
+        };
+
+    /// <summary>
     /// Gets an <see cref="ICatalogueRepository"/> that points to a
     /// database server or throws with <see cref="Assert.Inconclusive()"/>
     /// </summary>
