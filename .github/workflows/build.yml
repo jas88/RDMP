@@ -275,11 +275,15 @@ jobs:
           AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v PublishWindows/rdmp.exe
           AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v PublishWinForms/ResearchDataManagementPlatform.exe
           mkdir -p dist
+          # Set execute permissions on Linux binary before archiving
+          chmod +x PublishLinux/rdmp
+          # Create archives with multithreaded compression
           (cd PublishWindows && 7z a -mx=9 -mmt ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-win-x64.zip .)
           (cd PublishLinux && 7z a -mx=0 -mmt ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.zip .)
-          mv PublishLinux rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux
-          (cd rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux && chmod +x rdmp && tar -cf - .) | pixz > dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar.xz
           (cd PublishWinForms && 7z a -mx=9 -mmt ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-client.zip .)
+          # Create tar.xz for Linux (permissions already set above)
+          mv PublishLinux rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux
+          (cd rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux && tar -cf - .) | pixz > dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar.xz
       - name: Build Nuget packages
         if: contains(github.ref, 'refs/tags/v')
         shell: bash
