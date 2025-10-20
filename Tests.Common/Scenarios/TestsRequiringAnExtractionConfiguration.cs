@@ -50,6 +50,9 @@ public class TestsRequiringAnExtractionConfiguration : TestsRequiringACohort
     protected SelectedDataSets _selectedDataSet;
     protected ColumnInfo[] _columnInfos;
 
+    // Unique table name per test fixture to avoid conflicts in parallel execution
+    private readonly string _testTableName = $"TestTable{Guid.NewGuid():N}";
+
     /// <summary>
     /// Called when pipeline components are created during <see cref="SetupPipeline"/>.  Allows you to make last minute changes to them e.g. before pipeline is executed
     /// </summary>
@@ -136,7 +139,7 @@ public class TestsRequiringAnExtractionConfiguration : TestsRequiringACohort
 
         dt.Rows.Add(new object[] { _cohortKeysGenerated.Keys.First(), "Dave", "2001-01-01" });
 
-        var tbl = Database.CreateTable("TestTable", dt,
+        var tbl = Database.CreateTable(_testTableName, dt,
             new[] { new DatabaseColumnRequest("Name", new DatabaseTypeRequest(typeof(string), 50)) });
 
         _catalogue = Import(tbl, out _tableInfo, out _columnInfos, out _, out _extractionInformations);

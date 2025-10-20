@@ -108,10 +108,50 @@ public class TestsRequiringACohort : TestsRequiringA
     {
         _sharedCohortDatabase = DiscoveredServerICanCreateRandomDatabasesAndTablesOn.ExpectDatabase(CohortDatabaseName);
 
+        // Create database if it doesn't exist (idempotent - safe for parallel execution)
         if (!_sharedCohortDatabase.Exists())
         {
-            _sharedCohortDatabase.Create();
-            CreateCohortSchema(_sharedCohortDatabase);
+            try
+            {
+                _sharedCohortDatabase.Create();
+            }
+            catch
+            {
+                // Another process may have created it - that's fine
+                if (!_sharedCohortDatabase.Exists())
+                    throw; // Re-throw if it still doesn't exist
+            }
+        }
+
+        // Check if schema exists before attempting to create it
+        try
+        {
+            using var testCon = _sharedCohortDatabase.Server.GetConnection();
+            testCon.Open();
+            using var cmd = _sharedCohortDatabase.Server.GetCommand(
+                $"SELECT COUNT(*) FROM [{CohortDatabaseName}].INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Cohort'",
+                testCon);
+            var tableCount = Convert.ToInt32(cmd.ExecuteScalar());
+
+            if (tableCount == 0)
+            {
+                // Schema doesn't exist, create it
+                CreateCohortSchema(_sharedCohortDatabase);
+            }
+        }
+        catch
+        {
+            // If schema creation fails, another process may have created it
+            // Verify tables exist before continuing
+            using var verifyCon = _sharedCohortDatabase.Server.GetConnection();
+            verifyCon.Open();
+            using var verifyCmd = _sharedCohortDatabase.Server.GetCommand(
+                $"SELECT COUNT(*) FROM [{CohortDatabaseName}].INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME IN ('Cohort', 'CohortDefinition')",
+                verifyCon);
+            var tableCount = Convert.ToInt32(verifyCmd.ExecuteScalar());
+
+            if (tableCount < 2)
+                throw new InvalidOperationException("Failed to create or verify cohort database schema");
         }
 
         _cohortDatabase = _sharedCohortDatabase;
@@ -120,38 +160,44 @@ public class TestsRequiringACohort : TestsRequiringA
     private void CreateCohortSchema(DiscoveredDatabase database)
     {
         const string sql = @"
+-- Create CohortDefinition table first (no dependencies)
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'CohortDefinition')
+BEGIN
+    CREATE TABLE [dbo].[CohortDefinition](
+           [id] [int] IDENTITY(1,1) NOT NULL,
+           [projectNumber] [int] NOT NULL,
+           [version] [int] NOT NULL,
+           [description] [varchar](4000) NOT NULL,
+           [dtCreated] [date] NOT NULL,
+    CONSTRAINT [PK_CohortDefinition] PRIMARY KEY NONCLUSTERED
+    (
+           [id] ASC
+    )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+    ) ON [PRIMARY]
 
-CREATE TABLE [dbo].[Cohort](
-       [PrivateID] [varchar](10) NOT NULL,
-       [ReleaseID] [varchar](10) NULL,
-       [cohortDefinition_id] [int] NOT NULL,
-CONSTRAINT [PK_Cohort] PRIMARY KEY CLUSTERED
-(
-       [PrivateID] ASC,
-       [cohortDefinition_id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
+    ALTER TABLE [dbo].[CohortDefinition] ADD  CONSTRAINT [DF_CohortDefinition_dtCreated]  DEFAULT (getdate()) FOR [dtCreated]
+END
 GO
 
-CREATE TABLE [dbo].[CohortDefinition](
-       [id] [int] IDENTITY(1,1) NOT NULL,
-       [projectNumber] [int] NOT NULL,
-       [version] [int] NOT NULL,
-       [description] [varchar](4000) NOT NULL,
-       [dtCreated] [date] NOT NULL,
-CONSTRAINT [PK_CohortDefinition] PRIMARY KEY NONCLUSTERED
-(
-       [id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
+-- Create Cohort table (depends on CohortDefinition)
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Cohort')
+BEGIN
+    CREATE TABLE [dbo].[Cohort](
+           [PrivateID] [varchar](10) NOT NULL,
+           [ReleaseID] [varchar](10) NULL,
+           [cohortDefinition_id] [int] NOT NULL,
+    CONSTRAINT [PK_Cohort] PRIMARY KEY CLUSTERED
+    (
+           [PrivateID] ASC,
+           [cohortDefinition_id] ASC
+    )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+    ) ON [PRIMARY]
 
-GO
-ALTER TABLE [dbo].[CohortDefinition] ADD  CONSTRAINT [DF_CohortDefinition_dtCreated]  DEFAULT (getdate()) FOR [dtCreated]
-GO
-ALTER TABLE [dbo].[Cohort]  WITH CHECK ADD  CONSTRAINT [FK_Cohort_CohortDefinition] FOREIGN KEY([cohortDefinition_id])
-REFERENCES [dbo].[CohortDefinition] ([id])
-GO
-ALTER TABLE [dbo].[Cohort] CHECK CONSTRAINT [FK_Cohort_CohortDefinition]
+    ALTER TABLE [dbo].[Cohort]  WITH CHECK ADD  CONSTRAINT [FK_Cohort_CohortDefinition] FOREIGN KEY([cohortDefinition_id])
+    REFERENCES [dbo].[CohortDefinition] ([id])
+
+    ALTER TABLE [dbo].[Cohort] CHECK CONSTRAINT [FK_Cohort_CohortDefinition]
+END
 GO
 ";
 
