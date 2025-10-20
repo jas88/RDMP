@@ -55,6 +55,9 @@ public class TestsRequiringACohort : TestsRequiringA
     private static DiscoveredDatabase _sharedCohortDatabase;
     private static readonly object _initLock = new();
 
+    // Unique table name per test fixture to avoid conflicts in parallel execution
+    private readonly string _customTableName = $"custTable{Guid.NewGuid():N}";
+
     [OneTimeSetUp]
     protected override void OneTimeSetUp()
     {
@@ -228,7 +231,7 @@ GO
             dt.Rows.Add(new[] { "monkeys can all secretly fly", "Priv_12345" });
             dt.Rows.Add(new[] { "the wizard of OZ was a man behind a machine", "Priv_wtf11" });
 
-            CustomTable = _cohortDatabase.CreateTable("custTable99", dt);
+            CustomTable = _cohortDatabase.CreateTable(_customTableName, dt);
         }
 
         new TableInfoImporter(CatalogueRepository, CustomTable).DoImport(out CustomTableInfo, out var cols);
