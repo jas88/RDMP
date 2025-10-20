@@ -35,6 +35,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
     [TestCase(DatabaseType.MicrosoftSQLServer, typeof(DataQualityEnginePatcher))]
     public void Create_QueryCache(DatabaseType dbType, Type patcherType)
     {
+        Assume.That(All.DatabaseTypes.Contains(dbType), $"{dbType} not configured");
         var db = GetCleanedServer(dbType);
 
         var patcher = (Patcher)Activator.CreateInstance(patcherType);
@@ -333,6 +334,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
     [TestCase(DatabaseType.MicrosoftSQLServer, false)]
     public void Join_PatientIndexTable_OptionalCacheOnSameServer(DatabaseType dbType, bool createQueryCache)
     {
+        Assume.That(All.DatabaseTypes.Contains(dbType), $"{dbType} not configured");
         /*
          *           Server1
                    _____________

@@ -22,6 +22,7 @@ internal class ExecuteCommandAlterTableMakeDistinctTests : DatabaseTests
     [TestCase(DatabaseType.PostgreSql)]
     public void Test(DatabaseType dbType)
     {
+        Assume.That(All.DatabaseTypes.Contains(dbType), $"{dbType} not configured");
         var db = GetCleanedServer(dbType);
 
         var dt = new DataTable();

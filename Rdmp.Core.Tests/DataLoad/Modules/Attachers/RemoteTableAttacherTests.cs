@@ -236,6 +236,7 @@ internal class RemoteTableAttacherTests : DatabaseTests
     [TestCase(DatabaseType.PostgreSql, AttacherHistoricalDurations.DeltaReading)]
     public void TestRemoteTableAttacher_DateFilters(DatabaseType dbType, AttacherHistoricalDurations duration)
     {
+        Assume.That(All.DatabaseTypes.Contains(dbType), $"{dbType} not configured");
         var db = GetCleanedServer(dbType);
 
         var attacher = new RemoteTableAttacher

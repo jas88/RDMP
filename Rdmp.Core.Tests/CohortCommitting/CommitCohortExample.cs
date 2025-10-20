@@ -27,6 +27,7 @@ internal class CommitCohortExample : DatabaseTests
     [TestCase(DatabaseType.Oracle, "varchar2(10)")]
     public void CommitCohortExampleTest(DatabaseType dbType, string privateDataType)
     {
+        Assume.That(All.DatabaseTypes.Contains(dbType), $"{dbType} not configured");
         RunBlitzDatabases(RepositoryLocator);
 
         //find the test server (where we will create the store schema)

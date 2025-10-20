@@ -83,6 +83,7 @@ internal class CrossDatabaseDataLoadTests : DataLoadEngineTestsBase
     [TestCase(DatabaseType.MySql, TestCase.WithDiffColumnIgnoreRegex)]
     public void Load(DatabaseType databaseType, TestCase testCase)
     {
+        Assume.That(All.DatabaseTypes.Contains(databaseType), $"{databaseType} not configured");
         var defaults = CatalogueRepository;
         var logServer = defaults.GetDefaultFor(PermissableDefaults.LiveLoggingServer_ID);
         var logManager = new LogManager(logServer);

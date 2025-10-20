@@ -61,6 +61,7 @@ internal class ExecuteCommandAlterColumnTypeTests : DatabaseTests
     [UITimeout(10000)]
     public void AlterColumnType_WithArchive(DatabaseType dbType)
     {
+        Assume.That(All.DatabaseTypes.Contains(dbType), $"{dbType} not configured");
         var db = GetCleanedServer(dbType);
         var tbl = db.CreateTable("MyTbl",
             new[] { new DatabaseColumnRequest("mycol", new DatabaseTypeRequest(typeof(string), 10)) });

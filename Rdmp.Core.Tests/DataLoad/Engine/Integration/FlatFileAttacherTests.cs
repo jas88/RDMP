@@ -455,6 +455,7 @@ public class FlatFileAttacherTests : DatabaseTests
     public void Test_FlatFileAttacher_AmbiguousDates(DatabaseType type, string val, string attacherCulture,
         string threadCulture)
     {
+        Assume.That(All.DatabaseTypes.Contains(type), $"{type} not configured");
         Thread.CurrentThread.CurrentCulture = new CultureInfo(threadCulture);
 
         var filename = Path.Combine(_loadDirectory.ForLoading.FullName, "bob.csv");

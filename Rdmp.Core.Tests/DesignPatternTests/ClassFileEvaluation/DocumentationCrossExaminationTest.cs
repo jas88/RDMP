@@ -390,7 +390,7 @@ internal class DocumentationCrossExaminationTest
     private static void EnsureCodeBlocksCompile(string mdFile, List<string> problems)
     {
         var codeBlocks = Path.Combine(TestContext.CurrentContext.TestDirectory,
-            "../../../DesignPatternTests/MarkdownCodeBlockTests.cs");
+            "../../../../Rdmp.UI.Tests/DesignPatternTests/MarkdownCodeBlockTests.cs");
 
         Console.WriteLine($"Starting {mdFile}");
 

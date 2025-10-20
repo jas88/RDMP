@@ -739,6 +739,7 @@ ALTER TABLE DroppedColumnsTable add color varchar(1)
     [TestCase(DatabaseType.Oracle, "didn't")]
     public void Test_SingleQuote_InText(DatabaseType dbType, string testValue)
     {
+        Assume.That(All.DatabaseTypes.Contains(dbType), $"{dbType} not configured");
         var db = GetCleanedServer(dbType);
 
         var dt = new DataTable("TestFreeText");
