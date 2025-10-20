@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
-using System.Threading;
 using FAnsi;
 using FAnsi.Discovery;
 using NUnit.Framework;
@@ -51,27 +50,31 @@ public class TestsRequiringACohort : TestsRequiringA
     protected readonly Dictionary<string, string> _cohortKeysGenerated = new();
 
 
-    private static readonly SemaphoreSlim _cohortSetupLock = new(1, 1);
+    private static readonly object _cohortSetupLock = new();
     private static bool _cohortDatabaseInitialized;
     private static DiscoveredDatabase _sharedCohortDatabase;
+    private static readonly object _initLock = new();
 
     [OneTimeSetUp]
     protected override void OneTimeSetUp()
     {
         base.OneTimeSetUp();
 
-        _cohortSetupLock.Wait();
-        try
+        lock (_cohortSetupLock)
         {
-            if (!_cohortDatabaseInitialized)
+            // Use lock for thread-safe initialization check
+            lock (_initLock)
             {
-                InitializeSharedCohortDatabase();
-                _cohortDatabaseInitialized = true;
-            }
-            else
-            {
-                // Reuse existing database
-                _cohortDatabase = _sharedCohortDatabase;
+                if (!_cohortDatabaseInitialized)
+                {
+                    InitializeSharedCohortDatabase();
+                    _cohortDatabaseInitialized = true;
+                }
+                else
+                {
+                    // Reuse existing database
+                    _cohortDatabase = _sharedCohortDatabase;
+                }
             }
 
             using var con = GetCohortDatabaseConnection();
@@ -89,10 +92,6 @@ public class TestsRequiringACohort : TestsRequiringA
             InsertIntoCohortTable(con, "Priv_66999", "Pub_99666");
             InsertIntoCohortTable(con, "Priv_14722", "Pub_22741");
             InsertIntoCohortTable(con, "Priv_wtf11", "Pub_11ftw");
-        }
-        finally
-        {
-            _cohortSetupLock.Release();
         }
     }
 
@@ -282,15 +281,6 @@ GO
     protected override void OneTimeTearDown()
     {
         base.OneTimeTearDown();
-
-        // Clean up static resources to prevent memory leaks
-        try
-        {
-            _cohortSetupLock?.Dispose();
-        }
-        catch
-        {
-            // Ignore cleanup errors
-        }
+        // No cleanup needed for lock objects
     }
 }

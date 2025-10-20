@@ -8,7 +8,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Rdmp.Core.CommandLine.DatabaseCreation;
@@ -30,7 +29,7 @@ public class RepositoryPool : IDisposable
     private static readonly object _lock = new();
 
     private readonly ConcurrentDictionary<string, RepositoryInstance> _repositories = new();
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _semaphores = new();
+    private readonly ConcurrentDictionary<string, object> _locks = new();
     private bool _disposed;
 
     /// <summary>
@@ -53,10 +52,9 @@ public class RepositoryPool : IDisposable
     {
         var key = GenerateKey(options, useFileSystemRepo);
 
-        var semaphore = _semaphores.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+        var lockObject = _locks.GetOrAdd(key, _ => new object());
 
-        semaphore.Wait();
-        try
+        lock (lockObject)
         {
             if (_repositories.TryGetValue(key, out var instance) && !instance.IsDisposed)
             {
@@ -70,10 +68,6 @@ public class RepositoryPool : IDisposable
 
             _repositories.TryAdd(key, newInstance);
             return newLocator;
-        }
-        finally
-        {
-            semaphore.Release();
         }
     }
 
@@ -126,12 +120,7 @@ public class RepositoryPool : IDisposable
             instance.Dispose();
         }
         _repositories.Clear();
-
-        foreach (var semaphore in _semaphores.Values)
-        {
-            semaphore.Dispose();
-        }
-        _semaphores.Clear();
+        _locks.Clear();
     }
 
     /// <summary>

@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Threading;
 using System.Threading.Tasks;
 using FAnsi;
 using FAnsi.Connections;
@@ -271,7 +270,7 @@ public abstract class DatabaseTestFixtureBase : SharedTestFixtureBase
         private readonly Action<DiscoveredDatabase> _schema;
         private readonly Queue<DiscoveredDatabase> _availableDatabases = new();
         private readonly HashSet<DiscoveredDatabase> _usedDatabases = new();
-        private readonly SemaphoreSlim _semaphore = new(1, 1);
+        private readonly object _lock = new();
         private bool _disposed;
 
         public DatabasePool(DatabaseType databaseType, string databaseName, Action<DiscoveredDatabase> schema = null)
@@ -283,8 +282,7 @@ public abstract class DatabaseTestFixtureBase : SharedTestFixtureBase
 
         public DiscoveredDatabase GetDatabase()
         {
-            _semaphore.Wait();
-            try
+            lock (_lock)
             {
                 if (_availableDatabases.TryDequeue(out var database))
                 {
@@ -297,18 +295,13 @@ public abstract class DatabaseTestFixtureBase : SharedTestFixtureBase
                 _usedDatabases.Add(database);
                 return database;
             }
-            finally
-            {
-                _semaphore.Release();
-            }
         }
 
         public void ReturnDatabase(DiscoveredDatabase database)
         {
             if (database == null || _disposed) return;
 
-            _semaphore.Wait();
-            try
+            lock (_lock)
             {
                 if (_usedDatabases.Remove(database))
                 {
@@ -316,10 +309,6 @@ public abstract class DatabaseTestFixtureBase : SharedTestFixtureBase
                     CleanupDatabase(database);
                     _availableDatabases.Enqueue(database);
                 }
-            }
-            finally
-            {
-                _semaphore.Release();
             }
         }
 
@@ -353,9 +342,11 @@ public abstract class DatabaseTestFixtureBase : SharedTestFixtureBase
         {
             if (_disposed) return;
 
-            _semaphore.Wait();
-            try
+            lock (_lock)
             {
+                // Mark as disposed first to prevent new operations
+                _disposed = true;
+
                 // Dispose all databases
                 foreach (var database in _availableDatabases)
                 {
@@ -383,12 +374,6 @@ public abstract class DatabaseTestFixtureBase : SharedTestFixtureBase
 
                 _availableDatabases.Clear();
                 _usedDatabases.Clear();
-                _disposed = true;
-            }
-            finally
-            {
-                _semaphore.Release();
-                _semaphore.Dispose();
             }
         }
     }
