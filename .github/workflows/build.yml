@@ -72,10 +72,8 @@ jobs:
       - name: Setup MinIO
         shell: bash
         run: |
-          docker run -d -p 9000:9000 -p 9001:9001 \
-            -e "MINIO_ROOT_USER=minioadmin" \
-            -e "MINIO_ROOT_PASSWORD=minioadmin" \
-            mosuka/minio:latest
+          curl -sL "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" > minio.exe
+          ./minio.exe server ./minio --console-address :9001 &
           mkdir -p ~/.aws
           echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
       - name: Test (DB)
@@ -150,10 +148,8 @@ jobs:
       - name: Setup MinIO
         shell: bash
         run: |
-          docker run -d -p 9000:9000 -p 9001:9001 \
-            -e "MINIO_ROOT_USER=minioadmin" \
-            -e "MINIO_ROOT_PASSWORD=minioadmin" \
-            mosuka/minio:latest
+          curl -sL "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" > minio.exe
+          ./minio.exe server ./minio --console-address :9001 &
           mkdir -p ~/.aws
           echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
       - name: Test with local file system
