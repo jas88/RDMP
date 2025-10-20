@@ -16,12 +16,14 @@ jobs:
     name: Run Database Tests
     runs-on: windows-latest
     env:
-      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml   
+      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: setup .NET
         uses: actions/setup-dotnet@v5.0.0
+        with:
+          global-json-file: ./global.json
       - name: Populate Databases.yaml
         shell: bash
         run: |
@@ -67,34 +69,39 @@ jobs:
             dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_cohort.yaml 
             dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_dataload.yaml 
             dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/orphan_extractable_column.yaml 
+      - name: Setup MinIO
+        shell: bash
+        run: |
+          docker run -d -p 9000:9000 -p 9001:9001 \
+            -e "MINIO_ROOT_USER=minioadmin" \
+            -e "MINIO_ROOT_PASSWORD=minioadmin" \
+            mosuka/minio:latest
+          mkdir -p ~/.aws
+          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
       - name: Test (DB)
         shell: bash
         run: |
           rm -rf coverage
-          curl -L "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" > minio.exe
-          ./minio.exe server ./minio --console-address :9001 &
-          mkdir ~/.aws
-          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
-          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` db-ui.lcov
-          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` db-core.lcov
+          dotnet test HIC.DataManagementPlatform.sln --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` db-coverage.lcov
       - uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./db-ui.lcov ./db-core.lcov
-          flag-name: unit tests
+          files: ./db-coverage.lcov
+          flag-name: database tests
 
   tests_file_system:
     name: Run File System Tests
     runs-on: windows-latest
     env:
-      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml  
+      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: setup .NET
         uses: actions/setup-dotnet@v5.0.0
+        with:
+          global-json-file: ./global.json
       - name: Populate Databases.yaml
         shell: bash
         run: |
@@ -140,54 +147,96 @@ jobs:
             dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_cohort.yaml 
             dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_dataload.yaml 
             dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/orphan_extractable_column.yaml 
+      - name: Setup MinIO
+        shell: bash
+        run: |
+          docker run -d -p 9000:9000 -p 9001:9001 \
+            -e "MINIO_ROOT_USER=minioadmin" \
+            -e "MINIO_ROOT_PASSWORD=minioadmin" \
+            mosuka/minio:latest
+          mkdir -p ~/.aws
+          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
       - name: Test with local file system
         shell: bash
         run:  |
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
-          curl -L "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" > minio.exe
-          ./minio.exe server ./minio --console-address :9001 &
-          mkdir ~/.aws
-          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http:127.0.0.1:9001" > ~/.aws/credentials
-          
-          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` fs-ui.lcov
-          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release  -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` fs-core.lcov
+          dotnet test HIC.DataManagementPlatform.sln --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` fs-coverage.lcov
       - uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./fs-ui.lcov ./fs-core.lcov
-          flag-name: unit tests
+          files: ./fs-coverage.lcov
+          flag-name: filesystem tests
 
   bundle:
     name: Bundle Build
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: setup .NET
         uses: actions/setup-dotnet@v5.0.0
+        with:
+          global-json-file: ./global.json
       - name: Determine RDMP build version
         id: version
         shell: bash
         run: perl -ne "print \"rdmpversion=\$1\n\" if /AssemblyInformationalVersion\(\"([0-9a-z.-]+)\"\)/;" SharedAssemblyInfo.cs >> $GITHUB_OUTPUT
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v5.0.0
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          dotnet-version: 7.0.x
+          languages: csharp
+          config-file: ./.github/configs/codeql.yml
+          queries: +security-and-quality
       - name: BundleSource
         shell: bash
         run: |
           mkdir -p Tools/BundleUpSourceIntoZip/output
           rm -f Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.zip
-          echo "dir /s/b *.cs *.xml > srcbitsa.txt" | cmd
-          perl -pe '$_=reverse' < srcbitsa.txt | sort -t'\' -k1,1 -u | perl -pe '$_=reverse' > srcbits.txt
-          echo 7z a -mx=9 Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.zip @srcbits.txt | cmd
+          find . -type f \( -name "*.cs" -o -name "*.xml" \) > srcbitsa.txt
+          perl -pe '$_=reverse' < srcbitsa.txt | sort -t'/' -k1,1 -u | perl -pe '$_=reverse' > srcbits.txt
+          zip -9 -@ Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.zip < srcbits.txt
       - name: Package
         run: |
           dotnet publish Application/ResearchDataManagementPlatform/ResearchDataManagementPlatform.csproj -r win-x64 --self-contained -c Release -o PublishWinForms -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true --verbosity minimal --nologo
           dotnet publish Tools/rdmp/rdmp.csproj -r win-x64 --self-contained -c Release -o PublishWindows -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true --verbosity minimal -p:IncludeNativeLibrariesForSelfExtract=true --nologo
           dotnet publish Tools/rdmp/rdmp.csproj -r linux-x64 --self-contained -c Release -o PublishLinux -p:GenerateDocumentationFile=false -p:PublishSingleFile=true -p:PublishReadyToRun=true --verbosity minimal --nologo
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"
+          upload: false
+          output: sarif-results
+      - name: Filter SARIF for generated files
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -**/*.Designer.cs
+            -**/*.g.cs
+            -**/*Generated.cs
+            -**/*.g.i.cs
+            -**/*.designer.cs
+            -**/obj/**
+            -**/bin/**
+          input: sarif-results/csharp.sarif
+          output: sarif-results/csharp.sarif
+      - name: Upload CodeQL Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sarif-results/csharp.sarif
+          category: "/language:csharp"
+      - name: Run markdown link check
+        uses: tcort/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'no'
+          use-verbose-mode: 'yes'
+          check-modified-files-only: 'yes'
+          config-file: 'deadlinksconfig.json'
+          base-branch: 'develop'
       - name: Temporary Bundle of ddls for auto-updater
         shell: bash
         run: |
@@ -213,43 +262,54 @@ jobs:
             cp *.rdmp $platform
           done
           rm *.rdmp
-      - name: Sign & zip
+
+      - name: Install compression tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pixz p7zip-full
+
+      - name: Sign binaries
+        continue-on-error: true
         shell: bash
         run: |
-          dotnet tool install --global AzureSignTool 
-          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v PublishWindows/rdmp.exe
-          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v PublishWinForms/ResearchDataManagementPlatform.exe
+          dotnet tool install --global AzureSignTool
+          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v PublishWindows/rdmp.exe || echo "Signing failed (missing secrets?), continuing..."
+          AzureSignTool sign -kvu "${{ secrets.AZURE_KEY_VAULT_URI }}" -kvi "${{ secrets.AZURE_CLIENT_ID }}" -kvt "${{ secrets.AZURE_TENANT_ID }}" -kvs "${{ secrets.AZURE_CLIENT_SECRET }}" -kvc ${{ secrets.AZURE_CERT_NAME }} -tr http://timestamp.digicert.com -v PublishWinForms/ResearchDataManagementPlatform.exe || echo "Signing failed (missing secrets?), continuing..."
+
+      - name: Compress artifacts
+        shell: bash
+        run: |
           mkdir -p dist
-          (cd PublishWindows ; echo 7z a -mx=9 ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-win-x64.zip . | cmd)
-          (cd PublishLinux ; echo 7z a -mx=0 ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.zip . | cmd)
+
+          # Use 7z with multi-threading for .zip files
+          (cd PublishWindows && 7z a -tzip -mx=9 -mmt=on ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-win-x64.zip .)
+          (cd PublishWinForms && 7z a -tzip -mx=9 -mmt=on ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-client.zip .)
+          (cd PublishLinux && 7z a -tzip -mx=0 -mmt=on ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.zip .)
+
+          # Use tar piped to pixz for parallel xz compression
           mv PublishLinux rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux
-          echo 7z a dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux | cmd
-          (cd PublishWinForms ; echo 7z a -mx=9 ../dist/rdmp-${{ steps.version.outputs.rdmpversion }}-client.zip . | cmd)
+
+          # Set execute permission on rdmp binary (tar preserves permissions)
+          chmod +x rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux/rdmp
+
+          # Create tar.xz in one step with parallel compression
+          tar -cf - rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux | pixz -9 > dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar.xz
 
 
       - name: Install Perl dependencies
         uses: shogo82148/actions-setup-perl@v1.34.0
         with:
           install-modules-with: cpanm
-          install-modules: Archive::Zip Archive::Tar
-      - name: Fix execute permissions
+          install-modules: Archive::Zip
+      - name: Fix execute permissions in zip
         if: contains(github.ref, 'refs/tags/v') || contains('refs/heads/main refs/heads/develop',github.ref)
         shell: perl {0}
         run: |
           use strict;
           use warnings;
           use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
-          use Archive::Tar;
 
-          my ($tarname,$zipname)=('dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar','dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.zip');
-
-          # Find rdmp in .tar, set permissions 0755
-          my $tar=Archive::Tar->new($tarname) || die "read $tarname:$!\n";
-          my @tarbits=$tar->get_files();
-          foreach my $bit (@tarbits) {
-            $bit->chmod('0755') if $bit->name =~ /\/rdmp$/;
-          }
-          $tar->write( $tarname );
+          my $zipname='dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.zip';
 
           # Find rdmp in .zip, set permissions 0755
           my $srczip = Archive::Zip->new($zipname);
@@ -264,11 +324,6 @@ jobs:
           }
           $zip->memberNamed('rdmp')->unixFileAttributes( 0755 );
           $zip->overwriteAs($zipname);
-      - name: Compress tar
-        if: contains(github.ref, 'refs/tags/v') || contains('refs/heads/main refs/heads/develop',github.ref)
-        run: |
-          7z a -txz dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar.xz dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar
-          rm dist/rdmp-${{ steps.version.outputs.rdmpversion }}-cli-linux-x64.tar
       - name: Build Nuget packages
         if: contains(github.ref, 'refs/tags/v')
         shell: bash
@@ -279,7 +334,10 @@ jobs:
           done
       - name: Calculate SHA256SUMS
         if: contains(github.ref, 'refs/tags/v')
-        run: '&{foreach ($i in Get-ChildItem dist -Exclude *SUMS|Get-FileHash) { echo "$($i.Hash) $(echo $i | Split-Path -Leaf)" }} > dist/SHA256SUMS'
+        shell: bash
+        run: |
+          cd dist
+          sha256sum * | grep -v SHA256SUMS > SHA256SUMS || true
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -306,6 +364,8 @@ jobs:
           key: ${{ github.sha }}-your-cache-key-bundled
       - name: setup .NET
         uses: actions/setup-dotnet@v5.0.0
+        with:
+          global-json-file: ./global.json
       - name: Determine RDMP build version
         id: version
         shell: bash

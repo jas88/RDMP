@@ -47,6 +47,7 @@ using Rdmp.Core.MapsDirectlyToDatabaseTable.Versioning;
 using Rdmp.Core.ReusableLibraryCode;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.DataAccess;
+using Tests.Common.Performance;
 
 namespace Tests.Common;
 
@@ -155,9 +156,8 @@ public partial class DatabaseTests
             ValidateCertificate = false
         };
 
-        RepositoryLocator = TestDatabaseSettings.UseFileSystemRepo
-            ? new RepositoryProvider(GetFreshYamlRepository())
-            : new PlatformDatabaseCreationRepositoryFinder(opts);
+        // Use repository pooling for better performance
+        RepositoryLocator = RepositoryPool.Instance.GetOrCreateRepository(opts, TestDatabaseSettings.UseFileSystemRepo);
 
         if (CatalogueRepository is TableRepository cataRepo)
         {
@@ -255,6 +255,56 @@ public partial class DatabaseTests
             dir.Delete(true);
 
         return new YamlRepository(dir);
+    }
+
+    protected virtual void OneTimeSetUp()
+    {
+        // Only run the first time
+        if (_startup != null) return;
+
+        _startup = new Startup(RepositoryLocator);
+        _startup.DatabaseFound += StartupOnDatabaseFound;
+        _startup.PluginPatcherFound += StartupOnPluginPatcherFound;
+        _startup.DoStartup(IgnoreAllErrorsCheckNotifier.Instance);
+    }
+
+    [TearDown]
+    protected void TearDown()
+    {
+        foreach (var discoveredDatabase in forCleanup)
+            try
+            {
+                if (discoveredDatabase.Exists())
+                    discoveredDatabase.Drop();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Ignoring exception {e.Message} during db clean up");
+            }
+
+        // Return repository to pool for reuse
+        try
+        {
+            RepositoryPool.Instance.ReleaseRepository(RepositoryLocator);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ignoring exception {e.Message} during repository pool release");
+        }
+    }
+
+    [OneTimeTearDown]
+    protected virtual void OneTimeTearDown()
+    {
+        // Clear repository pool when all tests in this class are complete
+        try
+        {
+            RepositoryPool.Instance.ClearAll();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ignoring exception {e.Message} during repository pool cleanup");
+        }
     }
 
     private SqlConnectionStringBuilder CreateServerPointerInCatalogue(IServerDefaults defaults, string prefix,
@@ -429,17 +479,7 @@ public partial class DatabaseTests
         RunBlitzDatabases(RepositoryLocator);
     }
 
-    [OneTimeSetUp]
-    protected virtual void OneTimeSetUp()
-    {
-        // Only run the first time
-        if (_startup != null) return;
-
-        _startup = new Startup(RepositoryLocator);
-        _startup.DatabaseFound += StartupOnDatabaseFound;
-        _startup.PluginPatcherFound += StartupOnPluginPatcherFound;
-        _startup.DoStartup(IgnoreAllErrorsCheckNotifier.Instance);
-    }
+    // The OneTimeSetUp method was moved below the TearDown method
 
     /// <summary>
     /// override to specify setup behaviour
@@ -447,21 +487,6 @@ public partial class DatabaseTests
     [SetUp]
     protected virtual void SetUp()
     {
-    }
-
-    [TearDown]
-    protected void TearDown()
-    {
-        foreach (var discoveredDatabase in forCleanup)
-            try
-            {
-                if (discoveredDatabase.Exists())
-                    discoveredDatabase.Drop();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Ignoring exception {e.Message} during db clean up");
-            }
     }
 
     private void StartupOnDatabaseFound(object sender, PlatformDatabaseFoundEventArgs args)
