@@ -6,6 +6,7 @@
 
 using NUnit.Framework;
 
-// Disable parallel execution for UI tests to prevent database conflicts
+// Disable parallel execution to prevent database deadlocks
 // UI tests share TEST_Catalogue database with Core tests and must run sequentially
 [assembly: NonParallelizable]
+[assembly: LevelOfParallelism(1)]

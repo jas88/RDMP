@@ -9,9 +9,9 @@ using NUnit.Framework;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("13825638-5252-413c-98bc-1aef3b1cb9e4")]
 
-// Enable parallel test execution for UnitTests (tests with no database dependencies)
-// - Fixtures run in parallel (different test classes can run simultaneously)
-// - Tests within a fixture run sequentially (tests in the same class run one at a time)
-// - DatabaseTests remain [NonParallelizable] and will run sequentially
-[assembly: Parallelizable(ParallelScope.Fixtures)]
-[assembly: LevelOfParallelism(8)]
+// Disable parallel test execution to prevent database deadlocks
+// - Multiple test assemblies share TEST_Catalogue database
+// - Running database tests in parallel causes deadlocks and foreign key violations
+// - Tests must run sequentially to avoid resource conflicts
+[assembly: NonParallelizable]
+[assembly: LevelOfParallelism(1)]
