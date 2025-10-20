@@ -19,6 +19,7 @@
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
         <IsPackable>true</IsPackable>
+        <IsTestProject>false</IsTestProject>
     </PropertyGroup>
     <ItemGroup>
         <None Remove="TestDatabases.txt" />
