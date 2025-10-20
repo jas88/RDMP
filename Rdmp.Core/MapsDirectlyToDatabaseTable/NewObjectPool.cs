@@ -12,15 +12,12 @@ namespace Rdmp.Core.MapsDirectlyToDatabaseTable;
 
 public static class NewObjectPool
 {
+    [ThreadStatic]
     private static Scope CurrentScope;
-    private static object currentScopeLock = new();
 
     public static void Add(IMapsDirectlyToDatabaseTable toCreate)
     {
-        lock (currentScopeLock)
-        {
-            CurrentScope?.Objects.Add(toCreate);
-        }
+        CurrentScope?.Objects.Add(toCreate);
     }
 
     /// <summary>
@@ -32,37 +29,28 @@ public static class NewObjectPool
     /// <returns></returns>
     public static IMapsDirectlyToDatabaseTable Latest(IEnumerable<IMapsDirectlyToDatabaseTable> from)
     {
-        lock (currentScopeLock)
-        {
-            //prevent multiple enumeration
-            var fromArray = from.ToArray();
+        //prevent multiple enumeration
+        var fromArray = from.ToArray();
 
-            return CurrentScope?.Objects.AsEnumerable().Reverse().FirstOrDefault(fromArray.Contains);
-        }
+        return CurrentScope?.Objects.AsEnumerable().Reverse().FirstOrDefault(fromArray.Contains);
     }
 
     /// <summary>
     /// Starts a new session tracking all new objects created.  Make sure you wrap the
-    /// returned session in a using statement.
+    /// returned session in a using statement. Sessions are thread-local, allowing parallel test execution.
     /// </summary>
-    /// <exception cref="Exception">If there is already a session ongoing</exception>
+    /// <exception cref="Exception">If there is already a session ongoing in this thread</exception>
     /// <returns></returns>
     public static IDisposable StartSession()
     {
-        lock (currentScopeLock)
-        {
-            return CurrentScope != null
-                ? throw new Exception("An existing session is already underway")
-                : (IDisposable)(CurrentScope = new Scope());
-        }
+        return CurrentScope != null
+            ? throw new Exception("An existing session is already underway")
+            : (IDisposable)(CurrentScope = new Scope());
     }
 
     private static void EndSession()
     {
-        lock (currentScopeLock)
-        {
-            CurrentScope = null;
-        }
+        CurrentScope = null;
     }
 
     private class Scope : IDisposable

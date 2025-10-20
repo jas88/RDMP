@@ -28,7 +28,9 @@ public class DelimitedFileSourceTests
     [SetUp]
     public void SetUp()
     {
-        filename = Path.Combine(TestContext.CurrentContext.TestDirectory, "DelimitedFileSourceTests.txt");
+        // Use unique filename for each test run to support parallel execution
+        var uniqueId = Guid.NewGuid().ToString("N");
+        filename = Path.Combine(TestContext.CurrentContext.TestDirectory, $"DelimitedFileSourceTests_{uniqueId}.txt");
 
         if (File.Exists(filename))
             File.Delete(filename);
@@ -39,6 +41,23 @@ public class DelimitedFileSourceTests
         sb.AppendLine("0101010101,5,2001-01-05");
 
         File.WriteAllText(filename, sb.ToString());
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        // Clean up the unique file after each test
+        if (filename != null && File.Exists(filename))
+        {
+            try
+            {
+                File.Delete(filename);
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
     }
 
     [Test]

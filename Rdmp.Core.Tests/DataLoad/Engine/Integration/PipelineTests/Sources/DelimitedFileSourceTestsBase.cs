@@ -7,6 +7,7 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.DataFlowPipeline.Requirements;
@@ -20,7 +21,9 @@ public abstract class DelimitedFileSourceTestsBase
 {
     protected static FlatFileToLoad CreateTestFile(params string[] contents)
     {
-        var filename = Path.Combine(TestContext.CurrentContext.TestDirectory, "DelimitedFileSourceTests.txt");
+        // Use unique filename for each test to support parallel execution
+        var uniqueId = Guid.NewGuid().ToString("N");
+        var filename = Path.Combine(TestContext.CurrentContext.TestDirectory, $"DelimitedFileSourceTests_{uniqueId}.txt");
 
         if (File.Exists(filename))
             File.Delete(filename);
@@ -32,10 +35,16 @@ public abstract class DelimitedFileSourceTestsBase
 
     protected static void AssertDivertFileIsExactly(string expectedContents)
     {
-        var filename = Path.Combine(TestContext.CurrentContext.TestDirectory, "DelimitedFileSourceTests_Errors.txt");
+        // The divert file will be named based on the source file with _Errors suffix
+        // We need to find it by pattern since we don't know the exact GUID
+        var directory = TestContext.CurrentContext.TestDirectory;
+        var divertFiles = Directory.GetFiles(directory, "DelimitedFileSourceTests_*_Errors.txt");
 
-        if (!File.Exists(filename))
-            Assert.Fail($"No Divert file was generated at expected path {filename}");
+        if (divertFiles.Length == 0)
+            Assert.Fail($"No Divert file was generated in {directory}");
+
+        // Get the most recently modified divert file (in case there are multiple)
+        var filename = divertFiles.OrderByDescending(f => new FileInfo(f).LastWriteTime).First();
 
         var contents = File.ReadAllText(filename);
         Assert.That(contents, Is.EqualTo(expectedContents));

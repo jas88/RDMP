@@ -23,7 +23,7 @@ public class DelimitedFileSourceTests_ResolvedAccordingToStrategy : DelimitedFil
         {
             var ex = Assert.Throws<FlatFileLoadException>(() =>
                 RunGetChunk(file, BadDataHandlingStrategy.ThrowException, true));
-            Assert.That(ex?.Message, Is.EqualTo("File DelimitedFileSourceTests.txt is empty"));
+            Assert.That(ex?.Message, Does.Contain("is empty"));
         }
         else
         {
@@ -35,15 +35,15 @@ public class DelimitedFileSourceTests_ResolvedAccordingToStrategy : DelimitedFil
     [TestCase(false)]
     public void EmptyFile_AllWhitespace(bool throwOnEmpty)
     {
-        var file = CreateTestFile(@" 
-     
+        var file = CreateTestFile(@"
+
     ");
 
         if (throwOnEmpty)
         {
             var ex = Assert.Throws<FlatFileLoadException>(() =>
                 RunGetChunk(file, BadDataHandlingStrategy.ThrowException, true));
-            Assert.That(ex?.Message, Does.StartWith("File DelimitedFileSourceTests.txt is empty"));
+            Assert.That(ex?.Message, Does.Contain("is empty"));
         }
         else
         {
@@ -58,14 +58,14 @@ public class DelimitedFileSourceTests_ResolvedAccordingToStrategy : DelimitedFil
     {
         var file = CreateTestFile(@"Name,Address
 
- 
-     
+
+
     ");
 
         if (throwOnEmpty)
         {
             var ex = Assert.Throws<FlatFileLoadException>(() => RunGetChunk(file, s => s.ThrowOnEmptyFiles = true));
-            Assert.That(ex.Message, Is.EqualTo("File DelimitedFileSourceTests.txt is empty"));
+            Assert.That(ex.Message, Does.Contain("is empty"));
         }
         else
         {
@@ -79,8 +79,8 @@ public class DelimitedFileSourceTests_ResolvedAccordingToStrategy : DelimitedFil
     {
         var file = CreateTestFile(@"Name,Address
 
- 
-     
+
+
     ");
 
         if (throwOnEmpty)
@@ -92,7 +92,7 @@ public class DelimitedFileSourceTests_ResolvedAccordingToStrategy : DelimitedFil
                     s.ForceHeaders = "Name,Address";
                     s.ForceHeadersReplacesFirstLineInFile = true;
                 }));
-            Assert.That(ex.Message, Is.EqualTo("File DelimitedFileSourceTests.txt is empty"));
+            Assert.That(ex.Message, Does.Contain("is empty"));
         }
         else
         {
