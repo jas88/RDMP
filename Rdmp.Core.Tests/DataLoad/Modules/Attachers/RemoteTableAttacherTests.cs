@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using FAnsi;
 using FAnsi.Discovery;
 using NSubstitute;

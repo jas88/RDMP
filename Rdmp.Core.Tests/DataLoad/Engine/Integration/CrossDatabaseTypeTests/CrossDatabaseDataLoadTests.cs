@@ -30,6 +30,7 @@ using Rdmp.Core.DataLoad.Triggers;
 using Rdmp.Core.Logging;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
+using Tests.Common;
 using TypeGuesser;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration.CrossDatabaseTypeTests;

@@ -292,3 +292,6 @@ Visual Studio 2017/
 # Claude configuration
 CLAUDE.md
 .claude/
+
+# Claude Flow metrics and data
+.claude-flow/

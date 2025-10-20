@@ -10,6 +10,7 @@ using Rdmp.Core.CommandExecution.AtomicCommands.Alter;
 using Rdmp.Core.CommandLine.Interactive;
 using System;
 using System.Data;
+using System.Linq;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Tests.Common;
 
