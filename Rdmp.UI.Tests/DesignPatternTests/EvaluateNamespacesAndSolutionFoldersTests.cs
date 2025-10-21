@@ -244,22 +244,11 @@ public class CopyrightHeaderEvaluator
                 suggestedNewFileContents.Add(file, sbSuggestedText.ToString());
         }
 
-        if (suggestedNewFileContents.Count > 0)
+        foreach (var kvp in suggestedNewFileContents)
         {
-            var errorMessages = new StringBuilder();
-            errorMessages.AppendLine("The following files did not contain correct copyright:");
-            foreach (var issue in copyrightIssues)
-            {
-                errorMessages.AppendLine($"  {Path.GetFileName(issue.Key)}:");
-                errorMessages.AppendLine($"    Actual:   {issue.Value.actual}");
-                errorMessages.AppendLine($"    Expected: {issue.Value.expected}");
-            }
-
-            //drag your debugger stack pointer to here to mess up all your files to match the suggestedNewFileContents :)
-            foreach (var suggestedNewFileContent in suggestedNewFileContents)
-                File.WriteAllText(suggestedNewFileContent.Key, suggestedNewFileContent.Value);
-
-            Assert.Fail(errorMessages.ToString());
+            var actualContents = File.ReadAllText(kvp.Key);
+            var suggestedContents = kvp.Value;
+            Assert.That(actualContents, Is.EqualTo(suggestedContents), $"Copyright header mismatch in {kvp.Key}");
         }
     }
 }
@@ -378,14 +367,11 @@ public partial class AutoCommentsEvaluator
 
 
         //drag your debugger stack pointer to here to mess up all your files to match the suggestedNewFileContents :)
-        if (suggestedNewFileContents.Count > 0)
+        foreach (var kvp in suggestedNewFileContents)
         {
-            var errorMessage = $"The following files need auto-comment fixes:{Environment.NewLine}{string.Join(Environment.NewLine, suggestedNewFileContents.Keys.Select(Path.GetFileName))}";
-
-            foreach (var suggestedNewFileContent in suggestedNewFileContents)
-                File.WriteAllText(suggestedNewFileContent.Key, suggestedNewFileContent.Value);
-
-            Assert.Fail(errorMessage);
+            var actualContents = File.ReadAllText(kvp.Key);
+            var suggestedContents = kvp.Value;
+            Assert.That(actualContents, Is.EqualTo(suggestedContents), $"Auto-comment mismatch in {kvp.Key}");
         }
     }
 
