@@ -207,6 +207,7 @@ public class CopyrightHeaderEvaluator
     public static void FindProblems(List<string> csFilesFound)
     {
         var suggestedNewFileContents = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+        var copyrightIssues = new Dictionary<string, (string actual, string expected)>(StringComparer.CurrentCultureIgnoreCase);
 
         foreach (var file in csFilesFound)
         {
@@ -224,7 +225,10 @@ public class CopyrightHeaderEvaluator
                 @"// This code is adapted from https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications")
             {
                 changes = true;
-                sbSuggestedText.AppendLine($"// Copyright (c) The University of Dundee 2018-{DateTime.Now.Year}");
+                var expectedCopyright = $"// Copyright (c) The University of Dundee 2018-{DateTime.Now.Year}";
+                copyrightIssues.Add(file, (text, expectedCopyright));
+
+                sbSuggestedText.AppendLine(expectedCopyright);
                 sbSuggestedText.AppendLine(@"// This file is part of the Research Data Management Platform (RDMP).");
                 sbSuggestedText.AppendLine(
                     @"// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.");
@@ -242,13 +246,20 @@ public class CopyrightHeaderEvaluator
 
         if (suggestedNewFileContents.Count > 0)
         {
-            var errorMessage = $"The following files did not contain correct copyright:{Environment.NewLine}{string.Join(Environment.NewLine, suggestedNewFileContents.Keys.Select(Path.GetFileName))}";
+            var errorMessages = new StringBuilder();
+            errorMessages.AppendLine("The following files did not contain correct copyright:");
+            foreach (var issue in copyrightIssues)
+            {
+                errorMessages.AppendLine($"  {Path.GetFileName(issue.Key)}:");
+                errorMessages.AppendLine($"    Actual:   {issue.Value.actual}");
+                errorMessages.AppendLine($"    Expected: {issue.Value.expected}");
+            }
 
             //drag your debugger stack pointer to here to mess up all your files to match the suggestedNewFileContents :)
             foreach (var suggestedNewFileContent in suggestedNewFileContents)
                 File.WriteAllText(suggestedNewFileContent.Key, suggestedNewFileContent.Value);
 
-            Assert.Fail(errorMessage);
+            Assert.Fail(errorMessages.ToString());
         }
     }
 }
