@@ -77,7 +77,7 @@ internal class CsProjFileTidy
         var contents = File.ReadAllText(csFile.FullName);
 
         var rNamespace = new Regex(@"^namespace ([A-Za-z0-9.]*)", RegexOptions.Multiline);
-        var rPublicClasses = new Regex(@"^\s*public (class|interface) ([A-Za-z0-9_]*)", RegexOptions.Multiline);
+        var rPublicClasses = new Regex(@"^\s*public\s+(?:static\s+)?(class|interface) ([A-Za-z0-9_]*)", RegexOptions.Multiline);
 
         var classes = rPublicClasses.Matches(contents);
         var namespaces = rNamespace.Matches(contents);
