@@ -39,12 +39,6 @@ public abstract class TableRepository : ITableRepository, IDisposable
     private UpdateCommandStore _updateCommandStore = new();
     public bool SupportsCommits => true;
 
-    /// <summary>
-    /// Thread-local reusable connection for non-transactional queries.
-    /// Reduces connection churn by maintaining one connection per thread for the lifetime of the repository.
-    /// </summary>
-    private readonly ThreadLocal<IManagedConnection> _threadLocalConnection;
-
     //'accessors'
     public string ConnectionString => _connectionStringBuilder.ConnectionString;
     public DbConnectionStringBuilder ConnectionStringBuilder => _connectionStringBuilder;
@@ -64,7 +58,6 @@ public abstract class TableRepository : ITableRepository, IDisposable
     public TableRepository()
     {
         _tables = new Lazy<DiscoveredTable[]>(() => DiscoveredServer.GetCurrentDatabase().DiscoverTables(false));
-        _threadLocalConnection = new ThreadLocal<IManagedConnection>(trackAllValues: true);
     }
 
     public TableRepository(IObscureDependencyFinder obscureDependencyFinder,
@@ -709,27 +702,8 @@ public abstract class TableRepository : ITableRepository, IDisposable
             return ongoingConnection;
         }
 
-        // For non-transactional queries, use the thread-local long-lived connection
-        var threadConnection = _threadLocalConnection.Value;
-
-        // Check if we have a valid connection for this thread
-        if (threadConnection?.Connection.State == ConnectionState.Open)
-        {
-            // Return a non-disposing wrapper so using() blocks don't close our long-lived connection
-            var wrapper = threadConnection.Clone();
-            wrapper.CloseOnDispose = false;
-            return wrapper;
-        }
-
-        // Create a new long-lived connection for this thread
-        var newConnection = DiscoveredServer.GetManagedConnection(null);
-        newConnection.CloseOnDispose = false; // Don't close on dispose - we manage the lifetime
-        _threadLocalConnection.Value = newConnection;
-
-        // Return a non-disposing wrapper
-        var returnWrapper = newConnection.Clone();
-        returnWrapper.CloseOnDispose = false;
-        return returnWrapper;
+        // For non-transactional queries, use the global connection pool
+        return DiscoveredServer.GetPooledConnection();
     }
 
     private void GetOngoingActivitiesFromThreadsDictionary(out IManagedConnection ongoingConnection,
@@ -907,28 +881,7 @@ public abstract class TableRepository : ITableRepository, IDisposable
         {
             if (disposing)
             {
-                // Dispose all thread-local connections
-                if (_threadLocalConnection != null)
-                {
-                    foreach (var connection in _threadLocalConnection.Values)
-                    {
-                        try
-                        {
-                            if (connection?.Connection.State == ConnectionState.Open)
-                            {
-                                connection.Connection.Close();
-                                connection.Connection.Dispose();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Warn(ex, "Error disposing thread-local connection");
-                        }
-                    }
-                    _threadLocalConnection.Dispose();
-                }
-
-                // Clean up any ongoing connections
+                // Clean up any ongoing transaction connections
                 lock (ongoingConnectionsLock)
                 {
                     foreach (var kvp in ongoingConnections)
@@ -949,6 +902,10 @@ public abstract class TableRepository : ITableRepository, IDisposable
                     ongoingConnections.Clear();
                     ongoingTransactions.Clear();
                 }
+
+                // Note: Pooled connections are managed by ManagedConnectionPool
+                // and will be cleaned up via ManagedConnectionPool.ClearAllConnections()
+                // during application shutdown
             }
 
             _disposed = true;
