@@ -19,7 +19,7 @@ jobs:
       RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml   
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: setup .NET
         uses: actions/setup-dotnet@v5.0.0
       - name: Populate Databases.yaml
@@ -94,7 +94,7 @@ jobs:
       RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml  
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: setup .NET
         uses: actions/setup-dotnet@v5.0.0
       - name: Populate Databases.yaml
@@ -173,7 +173,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup .NET
         uses: actions/setup-dotnet@v5.0.0
       - name: Initialize CodeQL
