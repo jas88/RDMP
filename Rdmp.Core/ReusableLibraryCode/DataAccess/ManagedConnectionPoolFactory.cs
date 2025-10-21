@@ -21,7 +21,7 @@ namespace Rdmp.Core.ReusableLibraryCode.DataAccess;
 /// NOTE: This is a temporary implementation for RDMP. Once FAnsi natively supports
 /// GetPooledConnection, this extension will be removed. Check FAnsi first before using.
 /// </summary>
-public static class ManagedConnectionPool
+public static class ManagedConnectionPoolFactory
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private static readonly bool _fAnsiHasPooling;
@@ -33,7 +33,7 @@ public static class ManagedConnectionPool
     private static readonly ThreadLocal<ConcurrentDictionary<string, IManagedConnection>> _threadLocalConnections =
         new(() => new ConcurrentDictionary<string, IManagedConnection>(), trackAllValues: true);
 
-    static ManagedConnectionPool()
+    static ManagedConnectionPoolFactory()
     {
         // Check if FAnsi already has GetPooledConnection method
         _fAnsiHasPooling = typeof(DiscoveredServer).GetMethod("GetPooledConnection") != null;
@@ -44,7 +44,7 @@ public static class ManagedConnectionPool
         }
         else
         {
-            _logger.Info("Using RDMP ManagedConnectionPool extension for connection pooling");
+            _logger.Info("Using RDMP ManagedConnectionPoolFactory extension for connection pooling");
         }
     }
 
