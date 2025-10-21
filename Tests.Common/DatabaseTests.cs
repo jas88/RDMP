@@ -968,9 +968,3 @@ GO
     private static partial Regex Spaces();
 }
 
-public static class TestDatabaseNames
-{
-    public static string Prefix;
-
-    public static string GetConsistentName(string databaseName) => Prefix + databaseName;
-}
