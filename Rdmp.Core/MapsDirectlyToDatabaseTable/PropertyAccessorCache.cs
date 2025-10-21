@@ -6,6 +6,8 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Frozen;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -14,37 +16,32 @@ namespace Rdmp.Core.MapsDirectlyToDatabaseTable;
 /// <summary>
 /// High-performance property accessor cache using compiled expression trees.
 /// Provides ~1000-10000x faster property access compared to reflection after initial compilation.
-/// Thread-safe with per-type caching for optimal performance and minimal contention.
-/// Each type gets its own dedicated ConcurrentDictionary, improving cache locality.
+/// Thread-safe with per-type pre-populated FrozenDictionary for optimal read performance.
+/// All properties for a type are compiled upfront and stored in a read-optimized frozen dictionary.
 /// </summary>
 public static class PropertyAccessorCache
 {
-    // Per-type cache: each Type gets its own ConcurrentDictionary<string, PropertyAccessor>
-    private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyAccessor>> TypeCaches = new();
+    // Per-type frozen cache: each Type gets its own FrozenDictionary with all properties pre-populated
+    private static readonly ConcurrentDictionary<Type, FrozenDictionary<string, PropertyAccessor>> TypeCaches = new();
 
     /// <summary>
     /// Gets a cached property accessor for the specified type and property name.
-    /// First access compiles the expression tree (~100-200x faster than reflection).
-    /// Subsequent accesses return the cached compiled accessor (~1000-10000x faster).
+    /// On first access to a type, compiles expression trees for ALL public instance properties.
+    /// Subsequent accesses use the frozen dictionary for optimal read performance.
     /// </summary>
     public static PropertyAccessor GetAccessor(Type type, string propertyName)
     {
         if (type == null)
             throw new ArgumentNullException(nameof(type));
 
-        // Get or create the cache for this specific type
-        var cache = TypeCaches.GetOrAdd(type, _ => new ConcurrentDictionary<string, PropertyAccessor>());
+        // Get or create the frozen cache for this type (pre-populated with all properties)
+        var cache = TypeCaches.GetOrAdd(type, BuildFrozenCacheForType);
 
-        // Get or create the accessor for this property
-        return cache.GetOrAdd(propertyName, name =>
-        {
-            var property = type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+        // Lookup in the frozen dictionary (optimized for reads)
+        if (!cache.TryGetValue(propertyName, out var accessor))
+            throw new ArgumentException($"Property '{propertyName}' not found on type '{type.FullName}'");
 
-            if (property == null)
-                throw new ArgumentException($"Property '{name}' not found on type '{type.FullName}'");
-
-            return new PropertyAccessor(property);
-        });
+        return accessor;
     }
 
     /// <summary>
@@ -56,6 +53,20 @@ public static class PropertyAccessorCache
             throw new ArgumentNullException(nameof(obj));
 
         return GetAccessor(obj.GetType(), propertyName);
+    }
+
+    /// <summary>
+    /// Builds a frozen dictionary containing PropertyAccessors for all public instance properties of the given type.
+    /// This is called once per type and the result is cached permanently.
+    /// </summary>
+    private static FrozenDictionary<string, PropertyAccessor> BuildFrozenCacheForType(Type type)
+    {
+        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        return properties.ToFrozenDictionary(
+            p => p.Name,
+            p => new PropertyAccessor(p)
+        );
     }
 }
 
