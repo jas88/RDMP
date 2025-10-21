@@ -240,11 +240,16 @@ public class CopyrightHeaderEvaluator
                 suggestedNewFileContents.Add(file, sbSuggestedText.ToString());
         }
 
-        Assert.That(suggestedNewFileContents, Is.Empty, $"The following files did not contain copyright:{Environment.NewLine}{string.Join(Environment.NewLine, suggestedNewFileContents.Keys.Select(Path.GetFileName))}");
+        if (suggestedNewFileContents.Count > 0)
+        {
+            var errorMessage = $"The following files did not contain correct copyright:{Environment.NewLine}{string.Join(Environment.NewLine, suggestedNewFileContents.Keys.Select(Path.GetFileName))}";
 
-        //drag your debugger stack pointer to here to mess up all your files to match the suggestedNewFileContents :)
-        foreach (var suggestedNewFileContent in suggestedNewFileContents)
-            File.WriteAllText(suggestedNewFileContent.Key, suggestedNewFileContent.Value);
+            //drag your debugger stack pointer to here to mess up all your files to match the suggestedNewFileContents :)
+            foreach (var suggestedNewFileContent in suggestedNewFileContents)
+                File.WriteAllText(suggestedNewFileContent.Key, suggestedNewFileContent.Value);
+
+            Assert.Fail(errorMessage);
+        }
     }
 }
 
