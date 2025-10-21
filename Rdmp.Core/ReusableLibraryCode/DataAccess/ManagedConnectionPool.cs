@@ -195,18 +195,18 @@ public static class ManagedConnectionPool
 
         return stats;
     }
-}
 
-/// <summary>
-/// Statistics about the connection pool state
-/// </summary>
-public class ConnectionPoolStatistics
-{
-    public int TotalThreadsWithConnections { get; set; }
-    public int TotalPooledConnections { get; set; }
-    public int OpenConnections { get; set; }
-    public int ClosedConnections { get; set; }
+    /// <summary>
+    /// Statistics about the connection pool state
+    /// </summary>
+    public class ConnectionPoolStatistics
+    {
+        public int TotalThreadsWithConnections { get; set; }
+        public int TotalPooledConnections { get; set; }
+        public int OpenConnections { get; set; }
+        public int ClosedConnections { get; set; }
 
-    public override string ToString() =>
-        $"Threads: {TotalThreadsWithConnections}, Total: {TotalPooledConnections}, Open: {OpenConnections}, Closed: {ClosedConnections}";
+        public override string ToString() =>
+            $"Threads: {TotalThreadsWithConnections}, Total: {TotalPooledConnections}, Open: {OpenConnections}, Closed: {ClosedConnections}";
+    }
 }
