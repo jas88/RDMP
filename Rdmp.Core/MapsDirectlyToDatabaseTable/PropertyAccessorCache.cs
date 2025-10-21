@@ -14,11 +14,13 @@ namespace Rdmp.Core.MapsDirectlyToDatabaseTable;
 /// <summary>
 /// High-performance property accessor cache using compiled expression trees.
 /// Provides ~1000-10000x faster property access compared to reflection after initial compilation.
-/// Thread-safe and optimized for concurrent access patterns.
+/// Thread-safe with per-type caching for optimal performance and minimal contention.
+/// Each type gets its own dedicated ConcurrentDictionary, improving cache locality.
 /// </summary>
 public static class PropertyAccessorCache
 {
-    private static readonly ConcurrentDictionary<(Type, string), PropertyAccessor> Cache = new();
+    // Per-type cache: each Type gets its own ConcurrentDictionary<string, PropertyAccessor>
+    private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, PropertyAccessor>> TypeCaches = new();
 
     /// <summary>
     /// Gets a cached property accessor for the specified type and property name.
@@ -27,13 +29,19 @@ public static class PropertyAccessorCache
     /// </summary>
     public static PropertyAccessor GetAccessor(Type type, string propertyName)
     {
-        return Cache.GetOrAdd((type, propertyName), key =>
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+
+        // Get or create the cache for this specific type
+        var cache = TypeCaches.GetOrAdd(type, _ => new ConcurrentDictionary<string, PropertyAccessor>());
+
+        // Get or create the accessor for this property
+        return cache.GetOrAdd(propertyName, name =>
         {
-            var (t, name) = key;
-            var property = t.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+            var property = type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
 
             if (property == null)
-                throw new ArgumentException($"Property '{name}' not found on type '{t.FullName}'");
+                throw new ArgumentException($"Property '{name}' not found on type '{type.FullName}'");
 
             return new PropertyAccessor(property);
         });
@@ -49,11 +57,6 @@ public static class PropertyAccessorCache
 
         return GetAccessor(obj.GetType(), propertyName);
     }
-
-    /// <summary>
-    /// Clears the property accessor cache. Useful for testing or when types are dynamically loaded/unloaded.
-    /// </summary>
-    public static void Clear() => Cache.Clear();
 }
 
 /// <summary>

@@ -30,12 +30,6 @@ public class PropertyAccessorCacheTests
         Value3
     }
 
-    [SetUp]
-    public void SetUp()
-    {
-        PropertyAccessorCache.Clear();
-    }
-
     [Test]
     public void GetAccessor_ValidProperty_ReturnsAccessor()
     {
@@ -273,14 +267,14 @@ public class PropertyAccessorCacheTests
     }
 
     [Test]
-    public void Clear_RemovesAllCachedAccessors()
+    public void GetAccessor_MultipleCalls_ReturnsSameCachedInstance()
     {
+        // Verify that the cache is working by ensuring multiple calls return the same instance
         var accessor1 = PropertyAccessorCache.GetAccessor(typeof(TestEntity), nameof(TestEntity.IntProperty));
-
-        PropertyAccessorCache.Clear();
-
         var accessor2 = PropertyAccessorCache.GetAccessor(typeof(TestEntity), nameof(TestEntity.IntProperty));
+        var accessor3 = PropertyAccessorCache.GetAccessor(typeof(TestEntity), nameof(TestEntity.IntProperty));
 
-        Assert.That(accessor1, Is.Not.SameAs(accessor2), "Accessor should be recreated after clear");
+        Assert.That(accessor1, Is.SameAs(accessor2), "Multiple calls should return same cached instance");
+        Assert.That(accessor2, Is.SameAs(accessor3), "Multiple calls should return same cached instance");
     }
 }
