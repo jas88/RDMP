@@ -106,22 +106,24 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
 
     private static string Within(AttacherHistoricalDurations duration)
     {
+        const string format = "yyyy-MM-dd HH:mm:ss.fff";
+
         switch (duration)
         {
             case AttacherHistoricalDurations.Past24Hours:
-                return DateTime.Now.AddHours(-1).ToString();
+                return DateTime.UtcNow.AddHours(-1).ToString(format);
             case AttacherHistoricalDurations.Past7Days:
-                return DateTime.Now.AddHours(-1).ToString();
+                return DateTime.UtcNow.AddHours(-1).ToString(format);
             case AttacherHistoricalDurations.PastMonth:
-                return DateTime.Now.AddHours(-1).ToString();
+                return DateTime.UtcNow.AddHours(-1).ToString(format);
             case AttacherHistoricalDurations.PastYear:
-                return DateTime.Now.AddHours(-1).ToString();
+                return DateTime.UtcNow.AddHours(-1).ToString(format);
             case AttacherHistoricalDurations.SinceLastUse:
-                return DateTime.Now.AddHours(-1).ToString();
+                return DateTime.UtcNow.AddHours(-1).ToString(format);
             case AttacherHistoricalDurations.Custom:
-                return DateTime.Now.AddDays(-1).ToString();
+                return DateTime.UtcNow.AddDays(-1).ToString(format);
             case AttacherHistoricalDurations.DeltaReading:
-                return DateTime.Now.AddDays(-4).ToString();
+                return DateTime.UtcNow.AddDays(-4).ToString(format);
             default:
                 return "fail";
         }
@@ -129,22 +131,24 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
 
     private static string Outwith(AttacherHistoricalDurations duration)
     {
+        const string format = "yyyy-MM-dd HH:mm:ss.fff";
+
         switch (duration)
         {
             case AttacherHistoricalDurations.Past24Hours:
-                return DateTime.Now.AddDays(-2).ToString();
+                return DateTime.UtcNow.AddDays(-2).ToString(format);
             case AttacherHistoricalDurations.Past7Days:
-                return DateTime.Now.AddDays(-8).ToString();
+                return DateTime.UtcNow.AddDays(-8).ToString(format);
             case AttacherHistoricalDurations.PastMonth:
-                return DateTime.Now.AddMonths(-2).ToString();
+                return DateTime.UtcNow.AddMonths(-2).ToString(format);
             case AttacherHistoricalDurations.PastYear:
-                return DateTime.Now.AddYears(-2).ToString();
+                return DateTime.UtcNow.AddYears(-2).ToString(format);
             case AttacherHistoricalDurations.SinceLastUse:
-                return DateTime.Now.AddDays(-2).ToString();
+                return DateTime.UtcNow.AddDays(-2).ToString(format);
             case AttacherHistoricalDurations.Custom:
-                return DateTime.Now.AddDays(-14).ToString();
+                return DateTime.UtcNow.AddDays(-14).ToString(format);
             case AttacherHistoricalDurations.DeltaReading:
-                return DateTime.Now.AddDays(-10).ToString();
+                return DateTime.UtcNow.AddDays(-10).ToString(format);
             default:
                 return "fail";
         }
