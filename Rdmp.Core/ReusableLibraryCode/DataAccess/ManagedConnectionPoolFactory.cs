@@ -18,8 +18,8 @@ namespace Rdmp.Core.ReusableLibraryCode.DataAccess;
 /// Provides thread-local connection pooling for DiscoveredServer instances to eliminate
 /// ephemeral connection churn. Maintains one long-lived connection per thread per server.
 ///
-/// NOTE: This is a temporary implementation for RDMP. Once FAnsi natively supports
-/// GetPooledConnection, this extension will be removed. Check FAnsi first before using.
+/// <para>NOTE: This is a temporary implementation for RDMP. Once FAnsi natively supports
+/// GetPooledConnection, this extension will be removed. Check FAnsi first before using.</para>
 /// </summary>
 public static class ManagedConnectionPoolFactory
 {
