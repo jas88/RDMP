@@ -51,6 +51,10 @@ public class CreateNewCohortDatabaseWizardTests : DatabaseTests
         _t1 = new TableInfo(CatalogueRepository, "T1");
         _t2 = new TableInfo(CatalogueRepository, "T2");
 
+        // Ensure TableInfo objects are committed before creating dependent objects
+        _t1.SaveToDatabase();
+        _t2.SaveToDatabase();
+
         _c1 = new ColumnInfo(CatalogueRepository, "PrivateIdentifierA", "varchar(10)", _t1);
         _c2 = new ColumnInfo(CatalogueRepository, "PrivateIdentifierB", "int", _t2);
 
