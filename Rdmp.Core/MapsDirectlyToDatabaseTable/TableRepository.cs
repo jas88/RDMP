@@ -167,12 +167,12 @@ public abstract class TableRepository : ITableRepository
     {
         foreach (DbParameter p in cmd.Parameters)
         {
-            var prop = oTableWrapperObject.GetType().GetProperty(p.ParameterName.Trim('@'));
+            var accessor = PropertyAccessorCache.GetAccessor(oTableWrapperObject, p.ParameterName.Trim('@'));
 
-            var propValue = prop.GetValue(oTableWrapperObject, null);
+            var propValue = accessor.GetValue(oTableWrapperObject);
 
             //if it is a complex type but IConvertible e.g. CatalogueFolder
-            if (!prop.PropertyType.IsValueType && propValue is IConvertible c && c.GetTypeCode() == TypeCode.String)
+            if (!accessor.PropertyType.IsValueType && propValue is IConvertible c && c.GetTypeCode() == TypeCode.String)
                 propValue = c.ToString(CultureInfo.CurrentCulture);
 
             SetParameterToValue(p, propValue);
@@ -794,11 +794,11 @@ public abstract class TableRepository : ITableRepository
     public void SaveSpecificPropertyOnlyToDatabase(IMapsDirectlyToDatabaseTable entity, string propertyName,
         object propertyValue)
     {
-        var prop = entity.GetType().GetProperty(propertyName);
-        prop.SetValue(entity, propertyValue);
+        var accessor = PropertyAccessorCache.GetAccessor(entity, propertyName);
+        accessor.SetValue(entity, propertyValue);
 
         //don't put in the enum number put in the free text enum value (that's what we do everywhere else)
-        if (prop.PropertyType.IsEnum)
+        if (accessor.PropertyType.IsEnum)
             propertyValue = propertyValue.ToString();
 
         Update($"UPDATE {Wrap(entity.GetType().Name)} SET {propertyName}=@val WHERE ID = {entity.ID}",
