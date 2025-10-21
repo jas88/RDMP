@@ -292,3 +292,4 @@ Visual Studio 2017/
 # Claude configuration
 CLAUDE.md
 .claude/
+.claude-flow/
