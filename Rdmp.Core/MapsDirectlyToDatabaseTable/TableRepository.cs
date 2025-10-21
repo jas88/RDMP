@@ -29,7 +29,7 @@ namespace Rdmp.Core.MapsDirectlyToDatabaseTable;
 /// <summary>
 /// See ITableRepository
 /// </summary>
-public abstract class TableRepository : ITableRepository
+public abstract class TableRepository : ITableRepository, IDisposable
 {
     //fields
     protected DbConnectionStringBuilder _connectionStringBuilder;
@@ -38,6 +38,12 @@ public abstract class TableRepository : ITableRepository
     private static object _oLockUpdateCommands = new();
     private UpdateCommandStore _updateCommandStore = new();
     public bool SupportsCommits => true;
+
+    /// <summary>
+    /// Thread-local reusable connection for non-transactional queries.
+    /// Reduces connection churn by maintaining one connection per thread for the lifetime of the repository.
+    /// </summary>
+    private readonly ThreadLocal<IManagedConnection> _threadLocalConnection;
 
     //'accessors'
     public string ConnectionString => _connectionStringBuilder.ConnectionString;
@@ -58,6 +64,7 @@ public abstract class TableRepository : ITableRepository
     public TableRepository()
     {
         _tables = new Lazy<DiscoveredTable[]>(() => DiscoveredServer.GetCurrentDatabase().DiscoverTables(false));
+        _threadLocalConnection = new ThreadLocal<IManagedConnection>(trackAllValues: true);
     }
 
     public TableRepository(IObscureDependencyFinder obscureDependencyFinder,
@@ -676,27 +683,53 @@ public abstract class TableRepository : ITableRepository
         //any existing ongoing connection found on this Thread
         GetOngoingActivitiesFromThreadsDictionary(out var ongoingConnection, out var ongoingTransaction);
 
-        //if we are in the middle of doing stuff we can just reuse the ongoing one
-        if (ongoingConnection != null &&
-            ongoingConnection.Connection.State ==
-            ConnectionState.Open) //as long as it hasn't timed out or been disposed etc
-            if (ongoingConnection.CloseOnDispose)
-            {
-                var clone = ongoingConnection.Clone();
-                clone.CloseOnDispose = false;
-                return clone;
-            }
-            else
-            {
-                return ongoingConnection;
-            }
+        // If we're in a transaction, use the transaction-specific connection
+        if (ongoingTransaction != null)
+        {
+            //if we are in the middle of doing stuff we can just reuse the ongoing one
+            if (ongoingConnection != null &&
+                ongoingConnection.Connection.State ==
+                ConnectionState.Open) //as long as it hasn't timed out or been disposed etc
+                if (ongoingConnection.CloseOnDispose)
+                {
+                    var clone = ongoingConnection.Clone();
+                    clone.CloseOnDispose = false;
+                    return clone;
+                }
+                else
+                {
+                    return ongoingConnection;
+                }
 
-        ongoingConnection = DiscoveredServer.GetManagedConnection(ongoingTransaction);
+            ongoingConnection = DiscoveredServer.GetManagedConnection(ongoingTransaction);
 
-        //record as the active connection on this thread
-        ongoingConnections[Thread.CurrentThread] = ongoingConnection;
+            //record as the active connection on this thread
+            ongoingConnections[Thread.CurrentThread] = ongoingConnection;
 
-        return ongoingConnection;
+            return ongoingConnection;
+        }
+
+        // For non-transactional queries, use the thread-local long-lived connection
+        var threadConnection = _threadLocalConnection.Value;
+
+        // Check if we have a valid connection for this thread
+        if (threadConnection?.Connection.State == ConnectionState.Open)
+        {
+            // Return a non-disposing wrapper so using() blocks don't close our long-lived connection
+            var wrapper = threadConnection.Clone();
+            wrapper.CloseOnDispose = false;
+            return wrapper;
+        }
+
+        // Create a new long-lived connection for this thread
+        var newConnection = DiscoveredServer.GetManagedConnection(null);
+        newConnection.CloseOnDispose = false; // Don't close on dispose - we manage the lifetime
+        _threadLocalConnection.Value = newConnection;
+
+        // Return a non-disposing wrapper
+        var returnWrapper = newConnection.Clone();
+        returnWrapper.CloseOnDispose = false;
+        return returnWrapper;
     }
 
     private void GetOngoingActivitiesFromThreadsDictionary(out IManagedConnection ongoingConnection,
@@ -863,6 +896,72 @@ public abstract class TableRepository : ITableRepository
                         && IsCompatibleType(t)
                 ).ToArray();
     }
+
+    #region IDisposable Support
+
+    private bool _disposed = false;
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Dispose all thread-local connections
+                if (_threadLocalConnection != null)
+                {
+                    foreach (var connection in _threadLocalConnection.Values)
+                    {
+                        try
+                        {
+                            if (connection?.Connection.State == ConnectionState.Open)
+                            {
+                                connection.Connection.Close();
+                                connection.Connection.Dispose();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Warn(ex, "Error disposing thread-local connection");
+                        }
+                    }
+                    _threadLocalConnection.Dispose();
+                }
+
+                // Clean up any ongoing connections
+                lock (ongoingConnectionsLock)
+                {
+                    foreach (var kvp in ongoingConnections)
+                    {
+                        try
+                        {
+                            if (kvp.Value?.Connection.State == ConnectionState.Open)
+                            {
+                                kvp.Value.Connection.Close();
+                                kvp.Value.Connection.Dispose();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Warn(ex, "Error disposing ongoing connection");
+                        }
+                    }
+                    ongoingConnections.Clear();
+                    ongoingTransactions.Clear();
+                }
+            }
+
+            _disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    #endregion
 
     /// <summary>
     /// Returns True if the type is one for objects that are held in the database.  Types will come from your repository assembly

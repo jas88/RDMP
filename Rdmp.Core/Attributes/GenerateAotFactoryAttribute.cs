@@ -18,34 +18,34 @@ namespace Rdmp.Core.Attributes;
 public sealed class GenerateAotFactoryAttribute : Attribute
 {
     /// <summary>
-    /// Gets the priority of this factory when multiple constructors are available.
+    /// Gets or sets the priority of this factory when multiple constructors are available.
     /// Higher values indicate higher priority. Default is 0.
     /// </summary>
-    public int Priority { get; }
+    public int Priority { get; set; }
 
     /// <summary>
-    /// Gets whether to generate factories for all constructors or only public ones.
+    /// Gets or sets whether to generate factories for all constructors or only public ones.
     /// Default is false (only public constructors).
     /// </summary>
-    public bool IncludeNonPublicConstructors { get; }
+    public bool IncludeNonPublicConstructors { get; set; }
 
     /// <summary>
-    /// Gets specific constructor parameter types to generate factories for.
+    /// Gets or sets specific constructor parameter types to generate factories for.
     /// If null or empty, factories will be generated for all compatible constructors.
     /// </summary>
-    public Type[] TargetConstructorParameters { get; }
+    public Type[] TargetConstructorParameters { get; set; }
 
     /// <summary>
-    /// Gets whether to generate a variable-parameter factory for dynamic constructor selection.
+    /// Gets or sets whether to generate a variable-parameter factory for dynamic constructor selection.
     /// Default is true.
     /// </summary>
-    public bool GenerateVariableFactory { get; }
+    public bool GenerateVariableFactory { get; set; }
 
     /// <summary>
-    /// Gets whether the generated factory should be registered automatically in the AotObjectFactoryRegistry.
+    /// Gets or sets whether the generated factory should be registered automatically in the AotObjectFactoryRegistry.
     /// Default is true.
     /// </summary>
-    public bool AutoRegister { get; }
+    public bool AutoRegister { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the GenerateAotFactoryAttribute with default settings.
@@ -122,10 +122,10 @@ public sealed class GenerateAotFactoryAttribute : Attribute
 public sealed class UseWithAotFactoryAttribute : Attribute
 {
     /// <summary>
-    /// Gets the priority for this constructor when multiple constructors are marked.
+    /// Gets or sets the priority for this constructor when multiple constructors are marked.
     /// Higher values indicate higher priority. Default is 0.
     /// </summary>
-    public int Priority { get; }
+    public int Priority { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the UseWithAotFactoryAttribute with default priority.

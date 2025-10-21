@@ -291,7 +291,7 @@ public static class AotObjectFactoryRegistry
                 // Look for exact type match first
                 var exactMatch = factories.FirstOrDefault(kvp =>
                     kvp.Key.Item1 == param1Type && kvp.Key.Item2 == param2Type);
-                if (exactMatch.Key != null)
+                if (exactMatch.Value != null)
                 {
                     instance = exactMatch.Value(parameter1, parameter2);
                     return true;
@@ -301,7 +301,7 @@ public static class AotObjectFactoryRegistry
                 var assignableMatch = factories.FirstOrDefault(kvp =>
                     param1Type != null && kvp.Key.Item1.IsAssignableFrom(param1Type) &&
                     param2Type != null && kvp.Key.Item2.IsAssignableFrom(param2Type));
-                if (assignableMatch.Key != null)
+                if (assignableMatch.Value != null)
                 {
                     instance = assignableMatch.Value(parameter1, parameter2);
                     return true;

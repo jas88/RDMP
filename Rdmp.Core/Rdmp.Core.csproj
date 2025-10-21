@@ -175,6 +175,9 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
+		<!-- Exclude source generators from compilation - they run during build -->
+		<Compile Remove="Generators\**\*.cs" />
+		<None Include="Generators\**\*.cs" />
 	</ItemGroup>
 	<ItemGroup>
 		<Content Include="Validation\readme.txt" />

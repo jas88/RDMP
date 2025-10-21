@@ -50,7 +50,7 @@ public static class AotObjectConstructor
     /// <summary>
     /// Gets statistics about AOT vs reflection usage
     /// </summary>
-    public static AotUsageStatistics GetUsageStatistics()
+    internal static AotUsageStatistics GetUsageStatistics()
     {
         EnsureInitialized();
         return AotUsageStatistics.Instance;
@@ -328,40 +328,4 @@ internal sealed class AotUsageStatistics
             _reflectionUsageCount = 0;
         }
     }
-}
-
-/// <summary>
-/// Public statistics class for AOT usage tracking
-/// </summary>
-public class AotUsageStatistics
-{
-    internal static readonly AotUsageStatistics Instance = new();
-
-    private AotUsageStatistics() { }
-
-    /// <summary>
-    /// Gets the total number of constructions
-    /// </summary>
-    public long TotalConstructions => Instance.TotalConstructions;
-
-    /// <summary>
-    /// Gets the number of AOT constructions
-    /// </summary>
-    public long AotConstructions => Instance.AotConstructions;
-
-    /// <summary>
-    /// Gets the number of reflection constructions
-    /// </summary>
-    public long ReflectionConstructions => Instance.ReflectionConstructions;
-
-    /// <summary>
-    /// Gets the percentage of constructions that used AOT factories
-    /// </summary>
-    /// <returns>Percentage of AOT usage (0-100)</returns>
-    public double GetAotUsagePercentage() => Instance.GetAotUsagePercentage();
-
-    /// <summary>
-    /// Resets all statistics
-    /// </summary>
-    public void Reset() => Instance.Reset();
 }

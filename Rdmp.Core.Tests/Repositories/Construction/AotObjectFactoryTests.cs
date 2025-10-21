@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
+using Rdmp.Core.Repositories;
 using Rdmp.Core.Repositories.Construction;
 using Tests.Common;
 
@@ -28,8 +29,8 @@ internal class AotObjectFactoryTests : DatabaseTests
     [SetUp]
     public void FactorySetup()
     {
-        _catalogueRepository = GetCatalogueRepository();
-        _repositoryLocator = GetRepositoryLocator();
+        _catalogueRepository = CatalogueRepository;
+        _repositoryLocator = RepositoryLocator;
     }
 
     [Test]

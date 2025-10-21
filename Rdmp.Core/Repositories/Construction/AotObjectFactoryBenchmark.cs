@@ -78,6 +78,7 @@ public static class AotObjectFactoryBenchmark
         public TimeSpan AotWarmupTime { get; set; }
         public TimeSpan ReflectionBenchmarkTime { get; set; }
         public TimeSpan AotBenchmarkTime { get; set; }
+        public int IterationCount { get; set; }
 
         // Memory results
         public long ReflectionMemoryBefore { get; set; }
@@ -97,10 +98,10 @@ public static class AotObjectFactoryBenchmark
         public string ErrorMessage { get; set; }
 
         public double CallsPerSecondReflection => ReflectionBenchmarkTime.TotalSeconds > 0
-            ? BenchmarkIterations / ReflectionBenchmarkTime.TotalSeconds : 0;
+            ? IterationCount / ReflectionBenchmarkTime.TotalSeconds : 0;
 
         public double CallsPerSecondAot => AotBenchmarkTime.TotalSeconds > 0
-            ? BenchmarkIterations / AotBenchmarkTime.TotalSeconds : 0;
+            ? IterationCount / AotBenchmarkTime.TotalSeconds : 0;
     }
 
     /// <summary>

@@ -28,8 +28,8 @@ internal class MEFOptimizedTests : DatabaseTests
     [SetUp]
     public void IntegrationSetup()
     {
-        _catalogueRepository = GetCatalogueRepository();
-        _repositoryLocator = GetRepositoryLocator();
+        _catalogueRepository = CatalogueRepository;
+        _repositoryLocator = RepositoryLocator;
     }
 
     [Test]
@@ -160,7 +160,7 @@ internal class MEFOptimizedTests : DatabaseTests
     public void Integration_ConcurrentMEFUsage_ThreadSafe()
     {
         // Arrange
-        var tasks = new List<Task<object>>();
+        var tasks = new List<Task<ITestIntegrationInterface>>();
         var taskCount = 10;
         var typeName = typeof(TestIntegrationClass).FullName;
 
