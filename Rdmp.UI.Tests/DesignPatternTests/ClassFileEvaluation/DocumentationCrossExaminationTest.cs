@@ -282,7 +282,11 @@ internal class DocumentationCrossExaminationTest
         "ResearchDataManagmentPlatform",
 
         // CSVHandling
-        "TypeTranslation"
+        "TypeTranslation",
+
+        // MEF optimization migration guide - example names
+        "MyNamespace",
+        "AotObjectFactoryExample"
     };
 
     #endregion
