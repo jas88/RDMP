@@ -378,16 +378,15 @@ public partial class AutoCommentsEvaluator
 
 
         //drag your debugger stack pointer to here to mess up all your files to match the suggestedNewFileContents :)
-        if (suggestedNewFileContents.Count == 0)
-            Assert.Pass();
-        else
+        if (suggestedNewFileContents.Count > 0)
         {
-            Console.WriteLine($"Replacing file contents in {string.Join(";", suggestedNewFileContents.Keys)}");
-        }
-        foreach (var suggestedNewFileContent in suggestedNewFileContents)
-            File.WriteAllText(suggestedNewFileContent.Key, suggestedNewFileContent.Value);
+            var errorMessage = $"The following files need auto-comment fixes:{Environment.NewLine}{string.Join(Environment.NewLine, suggestedNewFileContents.Keys.Select(Path.GetFileName))}";
 
-        Assert.That(suggestedNewFileContents, Is.Empty);
+            foreach (var suggestedNewFileContent in suggestedNewFileContents)
+                File.WriteAllText(suggestedNewFileContent.Key, suggestedNewFileContent.Value);
+
+            Assert.Fail(errorMessage);
+        }
     }
 
     private static string GetUniqueTypeName(string typename)
