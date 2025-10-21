@@ -612,3 +612,6 @@ For migration support:
 
 *Last updated: October 2025*
 *Version: 2.0.0*
+
+[Project]: ../Documentation/CodeTutorials/Glossary.md#Project
+[Lookup]: ../Documentation/CodeTutorials/Glossary.md#Lookup
