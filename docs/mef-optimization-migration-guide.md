@@ -69,9 +69,9 @@ Ensure your projects reference:
 
 ## Step-by-Step Migration
 
-### Step 1: Update Project References
+### Step 1: Update [Project] References
 
-Update all RDMP project references to use the latest version:
+Update all RDMP [Project] references to use the latest version:
 
 ```bash
 dotnet add package Rdmp.Core --version 2.0.0
@@ -255,7 +255,7 @@ Key test categories:
 
 | Operation | Legacy | Optimized | Improvement |
 |-----------|--------|-----------|-------------|
-| Type Lookup | 1-5ms | 0.1-0.5ms | 10x faster |
+| Type [Lookup] | 1-5ms | 0.1-0.5ms | 10x faster |
 | Constructor Resolution | 2-8ms | 0.5-2ms | 4x faster |
 | Generic Type Resolution | 5-15ms | 1-3ms | 5x faster |
 
