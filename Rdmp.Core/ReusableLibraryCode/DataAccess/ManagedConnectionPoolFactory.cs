@@ -52,8 +52,8 @@ public static class ManagedConnectionPoolFactory
     /// Gets a managed connection for the specified server. Returns a thread-local long-lived
     /// connection if available, otherwise creates a new one.
     ///
-    /// If FAnsi has native GetPooledConnection support, delegates to that. Otherwise uses
-    /// RDMP's implementation.
+    /// <para>If FAnsi has native GetPooledConnection support, delegates to that. Otherwise uses
+    /// RDMP's implementation.</para>
     /// </summary>
     /// <param name="server">The discovered server to connect to</param>
     /// <param name="transaction">Optional transaction to use (if specified, bypasses pooling)</param>
