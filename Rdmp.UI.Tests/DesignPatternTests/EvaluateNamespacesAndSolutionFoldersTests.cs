@@ -224,7 +224,7 @@ public class CopyrightHeaderEvaluator
                 @"// This code is adapted from https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications")
             {
                 changes = true;
-                sbSuggestedText.AppendLine(@"// Copyright (c) The University of Dundee 2018-2023");
+                sbSuggestedText.AppendLine($"// Copyright (c) The University of Dundee 2018-{DateTime.Now.Year}");
                 sbSuggestedText.AppendLine(@"// This file is part of the Research Data Management Platform (RDMP).");
                 sbSuggestedText.AppendLine(
                     @"// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.");
