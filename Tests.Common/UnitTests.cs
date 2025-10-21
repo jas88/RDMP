@@ -150,6 +150,8 @@ public abstract class UnitTests
             var col = WhenIHaveA<ColumnInfo>(repository);
 
             var cata = new Catalogue(repository, "Mycata");
+            // Ensure Catalogue is visible before creating dependent CatalogueItem
+            cata.SaveAndFlush();
             var ci = new CatalogueItem(repository, cata, "MyCataItem");
             var ei = new ExtractionInformation(repository, ci, col, "MyCataItem");
             return (T)(object)Save(ei);
@@ -164,6 +166,8 @@ public abstract class UnitTests
         if (typeof(T) == typeof(ColumnInfo))
         {
             var ti = WhenIHaveA<TableInfo>(repository);
+            // Ensure TableInfo is visible before creating dependent ColumnInfo
+            ti.SaveAndFlush();
             var col = new ColumnInfo(repository, "My_Col", "varchar(10)", ti);
             return (T)(object)col;
         }
@@ -378,6 +382,10 @@ public abstract class UnitTests
         {
             var lookup = WhenIHaveA<Lookup>(repository);
 
+            // Ensure TableInfo objects are visible before creating dependent ColumnInfo objects
+            lookup.ForeignKey.TableInfo.SaveAndFlush();
+            lookup.PrimaryKey.TableInfo.SaveAndFlush();
+
             var otherJoinFk = new ColumnInfo(repository, "otherJoinKeyForeign", "int", lookup.ForeignKey.TableInfo);
             var otherJoinPk = new ColumnInfo(repository, "otherJoinKeyPrimary", "int", lookup.PrimaryKey.TableInfo);
 
@@ -560,6 +568,8 @@ public abstract class UnitTests
             var cata = new Catalogue(repository, "MyCata");
             var cataItem = new CatalogueItem(repository, cata, "MyCol");
             var table = new TableInfo(repository, "MyTable");
+            // Ensure TableInfo is visible before creating dependent ColumnInfo
+            table.SaveAndFlush();
             var col = new ColumnInfo(repository, "mycol", "datetime", table);
 
             var ei = new ExtractionInformation(repository, cataItem, col, "mycol");
@@ -632,12 +642,14 @@ public abstract class UnitTests
         ti1 = WhenIHaveA<TableInfo>(repository);
         ti1.Name = "ParentTable";
         ti1.Database = "MyDb";
-        ti1.SaveToDatabase();
+        ti1.SaveAndFlush();
         col1 = new ColumnInfo(repository, "ParentCol", "varchar(10)", ti1);
 
         ti2 = WhenIHaveA<TableInfo>(repository);
         ti2.Name = "ChildTable";
         ti2.Database = "MyDb";
+        // Ensure TableInfo is visible before creating dependent ColumnInfo objects
+        ti2.SaveAndFlush();
         col2 = new ColumnInfo(repository, "ChildCol", "varchar(10)", ti2);
         col3 = new ColumnInfo(repository, "Desc", "varchar(10)", ti2);
     }

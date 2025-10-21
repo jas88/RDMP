@@ -16,6 +16,7 @@ using Rdmp.Core.CohortCommitting.Pipeline.Destinations.IdentifierAllocation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.DataFlowPipeline;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Providers;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
@@ -51,9 +52,9 @@ public class CreateNewCohortDatabaseWizardTests : DatabaseTests
         _t1 = new TableInfo(CatalogueRepository, "T1");
         _t2 = new TableInfo(CatalogueRepository, "T2");
 
-        // Ensure TableInfo objects are committed before creating dependent objects
-        _t1.SaveToDatabase();
-        _t2.SaveToDatabase();
+        // Ensure TableInfo objects are visible before creating dependent ColumnInfo objects
+        _t1.SaveAndFlush();
+        _t2.SaveAndFlush();
 
         _c1 = new ColumnInfo(CatalogueRepository, "PrivateIdentifierA", "varchar(10)", _t1);
         _c2 = new ColumnInfo(CatalogueRepository, "PrivateIdentifierB", "int", _t2);

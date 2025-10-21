@@ -708,4 +708,14 @@ public class MemoryRepository : IRepository
     public void EndTransaction(bool commit)
     {
     }
+
+    /// <summary>
+    /// No-op for MemoryRepository - visibility is always immediate in memory.
+    /// This method exists to satisfy the IRepository interface.
+    /// </summary>
+    public void FlushVisibility(IMapsDirectlyToDatabaseTable obj)
+    {
+        // No action needed for in-memory repository
+        // Objects are always immediately visible
+    }
 }

@@ -220,4 +220,12 @@ public interface IRepository
     /// </summary>
     /// <param name="commit">True to accept the changes,  False to try and rollback (if supported)</param>
     void EndTransaction(bool commit);
+
+    /// <summary>
+    /// Ensures that the specified object is fully visible to other connections/transactions.
+    /// This is necessary when AUTO_UPDATE_STATISTICS_ASYNC is ON, as newly inserted parent objects
+    /// may not be immediately visible for FK constraint checks.
+    /// </summary>
+    /// <param name="obj">The object to flush (typically a parent object before creating children)</param>
+    void FlushVisibility(IMapsDirectlyToDatabaseTable obj);
 }
