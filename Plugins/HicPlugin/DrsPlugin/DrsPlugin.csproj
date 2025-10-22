@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <DebugType>embedded</DebugType>
+    <NeutralLanguage>en-GB</NeutralLanguage>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SharpCompress" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Rdmp.Core\Rdmp.Core.csproj" />
+  </ItemGroup>
+</Project>

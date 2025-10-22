@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>$(TargetFramework)-windows</TargetFramework>
+    <IsCodedUITest>False</IsCodedUITest>
+    <TestProjectType>UnitTest</TestProjectType>
+    <AssemblyTitle>LoadModules.Extensions.Tests</AssemblyTitle>
+    <Product>LoadModules.Extensions.Tests</Product>
+    <Copyright>Copyright ©  2019</Copyright>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NUnit.Analyzers" Version="4.6.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AutomationPlugins\LoadModules.Extensions.AutomationPlugins\LoadModules.Extensions.AutomationPlugins.csproj" />
+    <ProjectReference Include="..\Interactive\LoadModules.Extensions.Interactive\LoadModules.Extensions.Interactive.csproj" />
+    <ProjectReference Include="..\Python\LoadModules.Extensions.Python\LoadModules.Extensions.Python.csproj" />
+    <ProjectReference Include="..\..\..\Tests.Common\Tests.Common.csproj" />
+    <ProjectReference Include="..\ReleasePlugins\LoadModules.Extensions.ReleasePlugins\LoadModules.Extensions.ReleasePlugins.csproj" />
+    <ProjectReference Include="..\StatsScriptsExecution\LoadModules.Extensions.StatsScriptsExecution\LoadModules.Extensions.StatsScriptsExecution.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="TestDatabases.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

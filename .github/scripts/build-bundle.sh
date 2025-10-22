@@ -45,26 +45,8 @@ cp -rt ./PublishWinForms \
   $BINDIR/WebView2Loader.dll \
   $BINDIR/wpfgfx_cor3.dll
 
-# Install plugins
-echo "Installing plugins..."
-for plugin in \
-  https://api.github.com/repos/SMI/RdmpDicom/releases/latest \
-  https://api.github.com/repos/HICServices/HicPlugin/releases/latest \
-  https://api.github.com/repos/HICServices/RdmpExtensions/releases/latest
-do
-  PluginName="$(cut -d/ -f6 <<< "$plugin")"
-  NAME="$(curl -s "$plugin" | grep "browser_download_url.*$PluginName.*rdmp" | cut -d : -f 2,3 | cut -d '"' -f 2)"
-  curl -OL "$NAME"
-done
-
-# Use hardlinks instead of copying to save space
-for platform in PublishWindows PublishLinux PublishWinForms
-do
-  for rdmp in *.rdmp; do
-    ln "$rdmp" "$platform/$rdmp"
-  done
-done
-rm *.rdmp
+# All plugins (HicPlugin, RdmpExtensions, RdmpDicom) are now embedded components
+# and compile as part of the main solution - no plugin downloads needed
 
 # Sign executables (disabled for fork)
 # if [ -n "${AZURE_KEY_VAULT_URI:-}" ]; then

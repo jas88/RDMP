@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>$(TargetFramework)-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyTitle>LoadModules.Extensions.Interactive</AssemblyTitle>
+    <Company>Hewlett-Packard Company</Company>
+    <Product>LoadModules.Extensions.Interactive</Product>
+    <Copyright>Copyright © Hewlett-Packard Company 2016</Copyright>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Rdmp.UI\Rdmp.UI.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="DeAnonymise\DeAnonymiseAgainstCohortUI.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="DeAnonymise\DeAnonymiseAgainstCohortUI.Designer.cs">
+      <DependentUpon>DeAnonymiseAgainstCohortUI.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="DeAnonymise\DeAnonymiseAgainstCohortUI.resx">
+      <DependentUpon>DeAnonymiseAgainstCohortUI.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
