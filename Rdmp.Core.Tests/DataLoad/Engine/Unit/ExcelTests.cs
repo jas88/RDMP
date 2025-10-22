@@ -351,13 +351,18 @@ public class ExcelTests
 
         var contents = File.ReadAllText(file.FullName);
 
-        Assert.That(
-contents.Trim(new[] { ',', '\r', '\n', ' ', '\t' }), Is.EqualTo(@"Participant,Score,IsEvil,DateField,DoubleField,MixedField
+        var expectedContent = @"Participant,Score,IsEvil,DateField,DoubleField,MixedField
 Bob,3,yes,2001-01-01,0.1,10:30:00
 Frank,1.1,no,2001-01-01 10:30:00,0.51,11:30:00
 Hank,2.1,no,2002-01-01 11:30:00,0.22,0.1
 Shanker,2,yes,2003-01-01 01:30:00,0.10,0.51
-Bobboy,2,maybe,2015-09-18,15:09:00,00:03:56"));
+Bobboy,2,maybe,2015-09-18,15:09:00,00:03:56";
+
+        // Normalize line endings for cross-platform compatibility
+        var normalizedContents = contents.Replace("\r\n", "\n").Replace("\r", "\n").Trim(',', '\n', ' ', '\t');
+        var normalizedExpected = expectedContent.Replace("\r\n", "\n").Replace("\r", "\n");
+
+        Assert.That(normalizedContents, Is.EqualTo(normalizedExpected));
 
         file.Delete();
     }

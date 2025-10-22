@@ -38,10 +38,10 @@ internal class ExecuteCommandCreateNewDataLoadDirectoryTests : CommandCliTests
         Assert.Multiple(() =>
         {
             Assert.That(Directory.Exists(root));
-            Assert.That(lmd.LocationOfForLoadingDirectory, Is.EqualTo($"{root}\\Data\\ForLoading"));
-            Assert.That(lmd.LocationOfForArchivingDirectory, Is.EqualTo($"{root}\\Data\\ForArchiving"));
-            Assert.That(lmd.LocationOfExecutablesDirectory, Is.EqualTo($"{root}\\Executables"));
-            Assert.That(lmd.LocationOfCacheDirectory, Is.EqualTo($"{root}\\Data\\Cache"));
+            Assert.That(lmd.LocationOfForLoadingDirectory, Is.EqualTo(Path.Combine(root, "Data", "ForLoading")));
+            Assert.That(lmd.LocationOfForArchivingDirectory, Is.EqualTo(Path.Combine(root, "Data", "ForArchiving")));
+            Assert.That(lmd.LocationOfExecutablesDirectory, Is.EqualTo(Path.Combine(root, "Executables")));
+            Assert.That(lmd.LocationOfCacheDirectory, Is.EqualTo(Path.Combine(root, "Data", "Cache")));
         });
     }
 

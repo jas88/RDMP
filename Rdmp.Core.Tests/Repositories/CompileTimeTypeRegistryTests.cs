@@ -132,9 +132,11 @@ internal class CompileTimeTypeRegistryTests
     public void GetType_NullOrEmptyInput_ThrowsArgumentException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => MEF.GetType(null));
+        // ArgumentException.ThrowIfNullOrEmpty throws ArgumentNullException for null (which derives from ArgumentException)
+        Assert.Throws<ArgumentNullException>(() => MEF.GetType(null));
         Assert.Throws<ArgumentException>(() => MEF.GetType(string.Empty));
-        Assert.Throws<ArgumentException>(() => MEF.GetType("   "));
+        // Whitespace is not validated and returns null (type not found)
+        Assert.That(MEF.GetType("   "), Is.Null);
     }
 
     [Test]

@@ -330,7 +330,7 @@
 		<PackageReference Include="ExcelNumberFormat" />
 		<PackageReference Include="FluentFTP" />
 		<PackageReference Include="HIC.SynthEHR" />
-		<PackageReference Include="HIC.FAnsiSql" />
+		<PackageReference Include="FAnsiSql.Legacy" />
 		<PackageReference Include="LibArchive.Net" />
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub">

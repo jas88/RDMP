@@ -195,7 +195,7 @@ public static class MEF
         var typeToCreateAsType = GetType(typeToCreate) ?? throw new Exception($"Could not find Type '{typeToCreate}'");
 
         //can we cast to T?
-        if (typeToCreateAsType.IsAssignableFrom(typeof(T)))
+        if (!typeof(T).IsAssignableFrom(typeToCreateAsType))
             throw new Exception(
                 $"Requested typeToCreate '{typeToCreate}' was not assignable to the required Type '{typeof(T).Name}'");
 
@@ -207,7 +207,8 @@ public static class MEF
 
     public static void AddTypeToCatalogForTesting(Type p0)
     {
-        if (!_types.Value.ContainsKey(p0.FullName ?? throw new ArgumentNullException(nameof(p0))))
+        ArgumentNullException.ThrowIfNull(p0);
+        if (!_types.Value.ContainsKey(p0.FullName))
             throw new Exception($"Type {p0.FullName} was not preloaded");
     }
 }

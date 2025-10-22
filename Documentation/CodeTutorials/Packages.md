@@ -8,7 +8,6 @@
 | Package | Source Code | License | Purpose | Additional Risk Assessment |
 | ------- | ------------| ------- | ------- | -------------------------- |
 | FluentFTP | [Github](https://github.com/robinrodricks/FluentFTP/) | [MIT](https://opensource.org/licenses/MIT) | FTP(S) client | |
-| MongoDB.Driver | [GitHub](https://github.com/mongodb/mongo-csharp-driver) | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | Database driver for MongoDB | |
 | Microsoft.SourceLink.GitHub | [GitHub](https://github.com/dotnet/sourcelink) | [MIT](https://opensource.org/licenses/MIT) | Enable source linkage from nupkg | Official MS project |
 | ObjectListView.Repack.NET6Plus | [GitHub](https://github.com/nasisakk/ObjectListViewRepack) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | |
 | Scintilla.NET | [GitHub](https://github.com/VPKSoft/Scintilla.NET) | [MIT](https://opensource.org/licenses/MIT) | |
@@ -21,7 +20,7 @@
 | ExcelNumberFormat | [GitHub](https://github.com/andersnm/ExcelNumberFormat) |[MIT](https://opensource.org/licenses/MIT)  | Handles translating number formats from Excel formats into usable values | |
 | LibArchive.Net | [GitHub](https://github.com/jas88/libarchive.net) | [BSD](https://opensource.org/license/bsd-2-clause/) | Access archive formats without the LZMA bugs of SharpCompress | |
 | [NLog](https://nlog-project.org/) | [GitHub](https://github.com/NLog/NLog) | [BSD 3-Clause](https://github.com/NLog/NLog/blob/dev/LICENSE.txt) | Flexible user configurable logging | |
-| HIC.FAnsiSql |[GitHub](https://github.com/HicServices/FAnsiSql) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | [DBMS] abstraction layer |
+| FAnsiSql.Legacy |[GitHub](https://github.com/jas88/FAnsiSql) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | [DBMS] abstraction layer |
 | HIC.SynthEHR | [GitHub](https://github.com/HicServices/SynthEHR) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | Generate Test Datasets for tests/exericses |
 | SSH.NET  | [GitHub](https://github.com/sshnet/SSH.NET)  | [MIT](https://github.com/sshnet/SSH.NET/blob/develop/LICENSE) | Enables fetching files from SFTP servers |
 | Moq 4 | [GitHub](https://github.com/moq/moq4) |[BSD 3](https://github.com/moq/moq4/blob/master/License.txt)  | Mock objects during unit testing |
@@ -43,4 +42,6 @@
 | AWSSDK.SSO | [GitHub](https://github.com/aws/aws-sdk-net) | [Apache 2.0](https://opensource.org/licenses/Apache-2.0)  | |
 | AWSSDK.SSOOIDC | [GitHub](https://github.com/aws/aws-sdk-net) | [Apache 2.0](https://opensource.org/licenses/Apache-2.0)  | |
 | Microsoft.Bcl.AsyncInterfaces | [Nuget](https://www.nuget.org/packages/microsoft.bcl.asyncinterfaces/) | [MIT](https://opensource.org/licenses/MIT)  | |
+| Microsoft.CodeAnalysis.Analyzers | [GitHub](https://github.com/dotnet/roslyn-analyzers) | [MIT](https://opensource.org/licenses/MIT) | Code analyzers for source generators | Build-time only |
+| Microsoft.CodeAnalysis.CSharp | [GitHub](https://github.com/dotnet/roslyn) | [MIT](https://opensource.org/licenses/MIT) | C# compiler and code analysis APIs for source generators | Build-time only |
 [DBMS]: ./Glossary.md#DBMS

@@ -27,7 +27,7 @@ internal class DataTableExtensionsTests
 
         dt.SaveAsCsv(path);
 
-        var answer = File.ReadAllText(path);
+        var answer = File.ReadAllText(path).Replace("\r\n", "\n");
 
         Assert.That(answer, Is.EqualTo("""
                                        Phrase,Car
@@ -49,7 +49,7 @@ internal class DataTableExtensionsTests
 
         dt.SaveAsCsv(path);
 
-        var answer = File.ReadAllText(path);
+        var answer = File.ReadAllText(path).Replace("\r\n", "\n");
 
         Assert.That(answer, Is.EqualTo("""
                     Phrase,Car
@@ -72,7 +72,7 @@ internal class DataTableExtensionsTests
 
         dt.SaveAsCsv(path);
 
-        var answer = File.ReadAllText(path);
+        var answer = File.ReadAllText(path).Replace("\r\n", "\n");
 
         Assert.That(answer, Is.EqualTo(""""
                     Phrase,Car

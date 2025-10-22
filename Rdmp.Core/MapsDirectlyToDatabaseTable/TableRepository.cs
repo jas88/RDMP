@@ -702,8 +702,9 @@ public abstract class TableRepository : ITableRepository, IDisposable
             return ongoingConnection;
         }
 
-        // For non-transactional queries, use the global connection pool
-        return DiscoveredServer.GetPooledConnection();
+        // For non-transactional queries, get a managed connection
+        // FAnsiSql 3.3.0+ provides native connection pooling at the ADO.NET provider level
+        return DiscoveredServer.GetManagedConnection();
     }
 
     private void GetOngoingActivitiesFromThreadsDictionary(out IManagedConnection ongoingConnection,
@@ -903,9 +904,7 @@ public abstract class TableRepository : ITableRepository, IDisposable
                     ongoingTransactions.Clear();
                 }
 
-                // Note: Pooled connections are managed by ManagedConnectionPool
-                // and will be cleaned up via ManagedConnectionPool.ClearAllConnections()
-                // during application shutdown
+                // Note: Pooled connections are managed by FAnsiSql's native connection pooling
             }
 
             _disposed = true;
