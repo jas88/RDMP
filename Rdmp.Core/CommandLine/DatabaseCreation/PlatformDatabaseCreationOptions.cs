@@ -135,6 +135,10 @@ public class PlatformDatabaseCreationOptions
         builder.InitialCatalog = (Prefix ?? "") + databaseName;
         builder.TrustServerCertificate = !ValidateCertificate;
 
+        // Increase connection timeout from default 15s to 60s for CI environments
+        // where LocalDB can be slow during post-login phase on busy VMs
+        builder.ConnectTimeout = 60;
+
         if (!string.IsNullOrWhiteSpace(Username))
         {
             builder.UserID = Username;

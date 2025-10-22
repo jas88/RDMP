@@ -1,4 +1,4 @@
-// Copyright (c) The University of Dundee 2018-2019
+// Copyright (c) The University of Dundee 2018-2025
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -134,10 +134,21 @@ public class MigrateRAWTableToStaging : DataLoadComponent
 
             using var con = dbInfo.Server.GetConnection();
             con.Open();
+
+            // Build WHERE clause that's type-aware to avoid "varchar to numeric" conversion errors
+            var whereConditions = cols.Select(c =>
+            {
+                // For string columns, check both NULL and empty string
+                if (c.DataType.GetCSharpDataType() == typeof(string))
+                    return $"({c.GetRuntimeName()} IS NULL OR {c.GetRuntimeName()}='')";
+
+                // For non-string columns (numeric, date, etc.), only check NULL
+                return $"{c.GetRuntimeName()} IS NULL";
+            });
+
             using var cmd = dbInfo.Server.GetCommand(
                 //Magical code that nukes blank/null rows - where all rows are blank/null
-                $@"delete from {sourceTableName} WHERE {string.Join(" AND ",
-                    cols.Select(c => $"({c} IS NULL OR {c}='')"))}", con);
+                $@"delete from {sourceTableName} WHERE {string.Join(" AND ", whereConditions)}", con);
             job.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
                 $"About to delete fully null records using SQL:{cmd.CommandText}"));
 
