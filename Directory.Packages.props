@@ -1,6 +1,6 @@
 <Project>
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.7.12" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.7.13" />
     <PackageVersion Include="AWSSDK.SecurityToken" Version="4.0.2.9" />
     <PackageVersion Include="AWSSDK.SSO" Version="4.0.1.9" />
     <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.2.6" />
