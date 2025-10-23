@@ -227,7 +227,7 @@ jobs:
           use-verbose-mode: 'yes'
           check-modified-files-only: 'yes'
           config-file: 'deadlinksconfig.json'
-          base-branch: 'develop'
+          base-branch: 'main'
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:

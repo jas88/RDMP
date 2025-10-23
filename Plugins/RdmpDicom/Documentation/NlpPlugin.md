@@ -12,7 +12,7 @@ for cohort building.  The free text and tree structure of SRs make them difficul
 into a relational database.  A better approach is to use a dedicated NLP framework and query
 it from the Cohort Builder.  One such NLP tool is [SemEHR]
 
-RDMP supports [cohort building plugins](https://github.com/HicServices/RDMP/blob/develop/Documentation/CodeTutorials/CohortBuildingApiPlugins.md#cohort-building-api-plugins).
+RDMP supports [cohort building plugins](https://github.com/HicServices/RDMP/blob/main/Documentation/CodeTutorials/CohortBuildingApiPlugins.md#cohort-building-api-plugins).
 A plugin has been created to interface with SR data held in a [SemEHR] instance.
 
 ## Loading Data
@@ -37,7 +37,7 @@ Alternatively from the command line you can run:
 ```
 
 ## Using the API endpoint in Cohort Builder
-Create a new [CohortIdentificationConfiguration].  Ensure you have [enabled query caching](https://github.com/HicServices/RDMP/blob/develop/Rdmp.Core/CohortCreation/CohortCreation.md#creating-a-cache).  
+Create a new [CohortIdentificationConfiguration].  Ensure you have [enabled query caching](https://github.com/HicServices/RDMP/blob/main/Rdmp.Core/CohortCreation/CohortCreation.md#creating-a-cache).  
 
 Add your new 'Sem EHR Catalogue' to the root container of the configuration
 
@@ -57,5 +57,5 @@ To get back to the settings/query screen after error right click the cohort set 
 
 
 [SemEHR]: https://github.com/CogStack/CogStack-SemEHR
-[Catalogue]: https://github.com/HicServices/RDMP/blob/develop/Documentation/CodeTutorials/Glossary.md#catalogue
-[CohortIdentificationConfiguration]: https://github.com/HicServices/RDMP/blob/develop/Documentation/CodeTutorials/Glossary.md#cohortidentificationconfiguration
+[Catalogue]: https://github.com/HicServices/RDMP/blob/main/Documentation/CodeTutorials/Glossary.md#catalogue
+[CohortIdentificationConfiguration]: https://github.com/HicServices/RDMP/blob/main/Documentation/CodeTutorials/Glossary.md#cohortidentificationconfiguration

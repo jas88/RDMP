@@ -467,7 +467,7 @@ Updated to be compatible with RDMP 4.2
 
 - Initial commit from private repo
 
-[Unreleased]: https://github.com/SMI/RdmpDicom/compare/v7.1.2...develop
+[Unreleased]: https://github.com/SMI/RdmpDicom/compare/v7.1.2...main
 [7.1.2]: https://github.com/SMI/RdmpDicom/compare/v7.1.1...v7.1.2
 [7.1.1]: https://github.com/SMI/RdmpDicom/compare/v7.1.0...v7.1.1
 [7.1.0]: https://github.com/SMI/RdmpDicom/compare/v7.0.8...v7.1.0

@@ -154,7 +154,7 @@ Image.Load<Rgba32>(CatalogueIcons.YourImage);
 ## Release Process
 RDMP releases are performed by GitHub Actions CI server.  The logic for this is in [build.yml](./.github/workflows/build.yml).
 
-To perform a release merge all branches into `develop` then perform the following:
+To perform a release merge all branches into `main` then perform the following:
 
 - Update [Changelog](./CHANGELOG.md)
   - Add a header with the version number and date e.g. `## [7.0.21] - 2022-09-26`
@@ -180,9 +180,7 @@ Once the release is built and you have tested the binary in [GitHub Releases](ht
 - Update the `url` tag to the new version
 - Update the `changelog` tag to have the new version anchor hyperlink
 
-Test that your RDMP client can update with `Help->Check for updates` (note that if your xml file change is on `develop` you will need to specify this as the update path)
-
-Finally merge `develop` into `main` and push.  This will ensure that the `main` branch always has the source of the last RDMP version release.
+Test that your RDMP client can update with `Help->Check for updates`.
 
 ## Database Schema Changes
 Avoid making changes to the RDMP schema until you are experienced with the codebase as these changes have the greatest possibility of breaking deployments/plugins.
