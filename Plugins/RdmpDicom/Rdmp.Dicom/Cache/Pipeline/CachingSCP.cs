@@ -62,7 +62,7 @@ public class CachingSCP : DicomService, IDicomServiceProvider, IDicomCStoreProvi
     private string CalledAE = string.Empty;
     private string CallingAE = string.Empty;
 
-    private static readonly DicomServiceDependencies Dependencies =new(new LoggerFactory(),new DesktopNetworkManager(),new DefaultTranscoderManager(),new ArrayPoolMemoryProvider());
+    private static readonly DicomServiceDependencies Dependencies =new(new LoggerFactory(),new DesktopNetworkManager(),new DefaultTranscoderManager(),new ArrayPoolMemoryProvider(), serviceProvider: null);
     public CachingSCP(INetworkStream stream, Encoding encoding, ILogger logger): base(stream, encoding, logger, Dependencies)
     {
         Options.LogDimseDatasets = false;
