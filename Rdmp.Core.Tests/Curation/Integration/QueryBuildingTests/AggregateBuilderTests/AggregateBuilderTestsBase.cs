@@ -11,7 +11,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration.QueryBuildingTests.AggregateBuilderTests;
 
-public class AggregateBuilderTestsBase : DatabaseTests
+public abstract class AggregateBuilderTestsBase : DatabaseTests
 {
     protected Catalogue _c;
     protected CatalogueItem _cataItem1;
