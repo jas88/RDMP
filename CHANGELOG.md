@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove functionality to mark individual catalogues as extractable/not extractable. Favor use of marking as internal.
 - Move RSA key checks to fix bug where bad RSA keys were causing issues at launch
 - Add cli command to export catalogue metadata to a Atlassian Confluence space
+- Integrate plugin tests (HICPluginTests, LoadModules.Extensions.Tests, Rdmp.Dicom.Tests) into main solution and test orchestration
 
 
 ## [9.0.1] - 2025-07-31

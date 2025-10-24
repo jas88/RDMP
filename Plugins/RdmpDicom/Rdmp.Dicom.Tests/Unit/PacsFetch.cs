@@ -8,6 +8,7 @@ using FellowOakDicom.Log;
 using FellowOakDicom.Memory;
 using FellowOakDicom.Network;
 using FellowOakDicom.Network.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
@@ -19,7 +20,8 @@ internal class PacsFetch
         IDicomCMoveProvider
     {
         private static readonly DicomServiceDependencies Dependencies = new(LoggerFactory.Create(builder => builder.AddConsole()),
-            new DesktopNetworkManager(), new DefaultTranscoderManager(), new ArrayPoolMemoryProvider());
+            new DesktopNetworkManager(), new DefaultTranscoderManager(), new ArrayPoolMemoryProvider(),
+            serviceProvider: new ServiceCollection().BuildServiceProvider());
         public QRService(INetworkStream stream, Encoding fallbackEncoding, Microsoft.Extensions.Logging.ILogger log) : base(stream, fallbackEncoding, log, Dependencies)
         {
         }

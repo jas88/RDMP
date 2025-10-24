@@ -41,7 +41,7 @@
     <ProjectReference Include="..\..\..\Tests.Common\Tests.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="HIC.BadMedicine.Dicom" Version="0.1.2" />
+    <PackageReference Include="SynthDicom" Version="1.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="NUnit" Version="4.3.2" />

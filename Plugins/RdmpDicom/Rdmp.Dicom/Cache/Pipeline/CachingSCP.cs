@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FellowOakDicom.Imaging.Codec;
 using FellowOakDicom.Memory;
 using Rdmp.Core.ReusableLibraryCode.Progress;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using FellowOakDicom.Log;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -62,7 +63,8 @@ public class CachingSCP : DicomService, IDicomServiceProvider, IDicomCStoreProvi
     private string CalledAE = string.Empty;
     private string CallingAE = string.Empty;
 
-    private static readonly DicomServiceDependencies Dependencies =new(new LoggerFactory(),new DesktopNetworkManager(),new DefaultTranscoderManager(),new ArrayPoolMemoryProvider(), serviceProvider: null);
+    private static readonly DicomServiceDependencies Dependencies =new(new LoggerFactory(),new DesktopNetworkManager(),new DefaultTranscoderManager(),new ArrayPoolMemoryProvider(),
+        serviceProvider: new ServiceCollection().BuildServiceProvider());
     public CachingSCP(INetworkStream stream, Encoding encoding, ILogger logger): base(stream, encoding, logger, Dependencies)
     {
         Options.LogDimseDatasets = false;
