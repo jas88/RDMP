@@ -39,7 +39,9 @@ public class CombinedReportDataWsRepository : WsRepository<CombinedReportData>, 
         Notify?.Invoke(this, message);
     }
 
+#pragma warning disable CS0067 // Event is never invoked (abstract member requirement)
     public override event AfterReadAllHandler AfterReadAll;
+#pragma warning restore CS0067
 
     public override event AfterReadSingleHandler AfterReadSingle;
     protected virtual void OnAfterReadSingle(CombinedReportData report)
