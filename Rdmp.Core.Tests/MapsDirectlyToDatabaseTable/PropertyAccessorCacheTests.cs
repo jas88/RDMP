@@ -247,17 +247,17 @@ public class PropertyAccessorCacheTests
         }
         var reflectionAvg = reflectionTotal / 3;
 
-        TestContext.WriteLine($"Compiled accessor (avg): {accessorAvg}ms");
-        TestContext.WriteLine($"Reflection (avg): {reflectionAvg}ms");
+        TestContext.Out.WriteLine($"Compiled accessor (avg): {accessorAvg}ms");
+        TestContext.Out.WriteLine($"Reflection (avg): {reflectionAvg}ms");
 
         if (reflectionAvg > 0 && accessorAvg > 0)
         {
             var speedup = (double)reflectionAvg / accessorAvg;
-            TestContext.WriteLine($"Speedup: {speedup:F2}x");
+            TestContext.Out.WriteLine($"Speedup: {speedup:F2}x");
         }
         else
         {
-            TestContext.WriteLine("Times too small to measure accurately - both approaches are very fast");
+            TestContext.Out.WriteLine("Times too small to measure accurately - both approaches are very fast");
         }
 
         // More lenient assertion - compiled accessor should be at least as fast

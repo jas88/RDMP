@@ -12,7 +12,7 @@ using Tests.Common;
 
 namespace LoadModules.Extensions.AutomationPlugins.Tests;
 
-public class TestsRequiringAnAutomationPluginRepository:DatabaseTests
+public abstract class TestsRequiringAnAutomationPluginRepository:DatabaseTests
 {
     public AutomateExtractionRepository Repo;
 
@@ -66,5 +66,11 @@ public class TestsRequiringAnAutomationPluginRepository:DatabaseTests
         validPipeline.SaveToDatabase();
 
         return validPipeline;
+    }
+
+    [TearDown]
+    public void DisposeAutomationRepository()
+    {
+        Repo?.Dispose();
     }
 }

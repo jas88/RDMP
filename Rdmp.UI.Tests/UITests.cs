@@ -25,7 +25,9 @@ using Tests.Common;
 
 namespace Rdmp.UI.Tests;
 
+#pragma warning disable NUnit1034 // Class used as base class but also instantiated directly
 public class UITests : UnitTests
+#pragma warning restore NUnit1034
 {
     private TestActivateItems _itemActivator;
     private ToMemoryCheckNotifier _checkResults;

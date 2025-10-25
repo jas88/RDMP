@@ -18,7 +18,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.CohortCreation.QueryTests;
 
-public class CohortQueryBuilderWithCacheTests : CohortIdentificationTests
+public abstract class CohortQueryBuilderWithCacheTests : CohortIdentificationTests
 {
     protected DiscoveredDatabase queryCacheDatabase;
     protected ExternalDatabaseServer externalDatabaseServer;

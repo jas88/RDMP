@@ -56,7 +56,7 @@ namespace Tests.Common;
 [TestFixture]
 [NonParallelizable]
 [Category("Database")]
-public partial class DatabaseTests
+public abstract partial class DatabaseTests
 {
     protected readonly IRDMPPlatformRepositoryServiceLocator RepositoryLocator;
     protected static TestDatabasesSettings TestDatabaseSettings;

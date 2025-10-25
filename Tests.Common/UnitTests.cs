@@ -50,7 +50,7 @@ namespace Tests.Common;
 /// Base class for all tests that want to create objects only in memory (and not in database like <see cref="DatabaseTests"/>)
 /// </summary>
 [Category("Unit")]
-public class UnitTests
+public abstract class UnitTests
 {
     protected MemoryDataExportRepository Repository = new();
     protected IRDMPPlatformRepositoryServiceLocator RepositoryLocator { get; private set; }

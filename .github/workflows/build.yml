@@ -16,7 +16,7 @@ jobs:
     name: Run Database Tests
     runs-on: windows-latest
     env:
-      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml   
+      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -26,8 +26,8 @@ jobs:
         shell: bash
         run: |
           cat > ./Tools/rdmp/Databases.yaml << EOF
-          CatalogueConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_Catalogue;Trusted_Connection=True;TrustServerCertificate=true;
-          DataExportConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_DataExport;Trusted_Connection=True;TrustServerCertificate=true;
+          CatalogueConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_Catalogue;Trusted_Connection=True;TrustServerCertificate=true;Connection Timeout=180;
+          DataExportConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_DataExport;Trusted_Connection=True;TrustServerCertificate=true;Connection Timeout=180;
           EOF
       - name: Set RSA Key
         run: |
@@ -101,8 +101,8 @@ jobs:
         shell: bash
         run: |
           cat > ./Tools/rdmp/Databases.yaml << EOF
-          CatalogueConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_Catalogue;Trusted_Connection=True;TrustServerCertificate=true;
-          DataExportConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_DataExport;Trusted_Connection=True;TrustServerCertificate=true;
+          CatalogueConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_Catalogue;Trusted_Connection=True;TrustServerCertificate=true;Connection Timeout=180;
+          DataExportConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_DataExport;Trusted_Connection=True;TrustServerCertificate=true;Connection Timeout=180;
           EOF
       - name: Set RSA Key
         run: |
