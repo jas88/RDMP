@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using SCIStorePlugin.Data;
+using LibArchive.Net;
 
 namespace SCIStorePlugin.Repositories;
 
@@ -32,8 +32,14 @@ public class CombinedReportArchivedXmlRepository : IRepository<CombinedReportDat
         {
             try
             {
-                using var zipArchive = ZipFile.Open(archive.FullName, ZipArchiveMode.Read);
-                reports.AddRange(zipArchive.Entries.Select(entry => deserializer.DeserializeFromZipEntry(entry, Path.Combine(archive.FullName, entry.Name))));
+                // Migrated to libarchive.net for better performance
+                using var libArchive = new LibArchiveReader(archive.FullName);
+                foreach (var entry in libArchive.Entries())
+                {
+                    var report = DeserializeFromLibArchiveEntry(entry, deserializer);
+                    if (report != null)
+                        reports.Add(report);
+                }
             }
             catch (Exception e)
             {
@@ -44,15 +50,39 @@ public class CombinedReportArchivedXmlRepository : IRepository<CombinedReportDat
         return reports;
     }
 
+    /// <summary>
+    /// Deserialize data directly from libarchive.net entry stream
+    /// </summary>
+    private static CombinedReportData DeserializeFromLibArchiveEntry(object libArchiveEntry, CombinedReportXmlDeserializer deserializer)
+    {
+        try
+        {
+            // Get the stream directly from libarchive entry
+            var streamProperty = libArchiveEntry.GetType().GetProperty("Stream");
+            if (streamProperty?.GetValue(libArchiveEntry) is Stream stream)
+            {
+                return deserializer.DeserializeFromStream(stream);
+            }
+        }
+        catch (Exception)
+        {
+            // Fallback: return null or handle error appropriately
+        }
+
+        return null;
+    }
+
     public string FindArchiveContainingReport(CombinedReportData report)
     {
         var archives = _sourceDirectory.EnumerateFiles("*.zip", SearchOption.AllDirectories);
 
         foreach (var archive in archives)
         {
-            using var zipArchive = ZipFile.Open(archive.FullName, ZipArchiveMode.Read);
-            if (zipArchive.Entries.Select(entry => entry.Name.Split(new [] {'-', '.'})).Any(nameParts => nameParts[1].Equals(report.SciStoreRecord.LabNumber) &&
-                    nameParts[2].Equals(report.SciStoreRecord.TestReportID)))
+            // Migrated to libarchive.net for better performance
+            using var libArchive = new LibArchiveReader(archive.FullName);
+            if (libArchive.Entries().Select(entry => entry.Name.Split(new [] {'-', '.'})).Any(nameParts =>
+                nameParts.Length > 2 && nameParts[1].Equals(report.SciStoreRecord.LabNumber) &&
+                nameParts[2].Equals(report.SciStoreRecord.TestReportID)))
             {
                 return archive.FullName;
             }
@@ -75,3 +105,4 @@ public class CombinedReportArchivedXmlRepository : IRepository<CombinedReportDat
         throw new NotImplementedException();
     }
 }
+

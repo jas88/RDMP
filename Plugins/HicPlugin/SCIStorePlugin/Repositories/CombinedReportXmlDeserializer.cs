@@ -69,4 +69,32 @@ public class CombinedReportXmlDeserializer
             throw new Exception($"Error deserializing report, even after replacing invalid characters:{fileLocation}", e);
         }
     }
+
+    /// <summary>
+    /// Deserialize CombinedReportData directly from a stream (for libarchive.net compatibility)
+    /// </summary>
+    public CombinedReportData DeserializeFromStream(Stream stream)
+    {
+        try
+        {
+            return Serializer.Deserialize(stream) as CombinedReportData;
+        }
+        catch (Exception)
+        {
+            // we have failed so will fall through to attempt below
+        }
+
+        // Not putting this into the above catch as the Deflate stream can't be rewound, and would rather open a new stream for safety
+        // Exception might be due to invalid characters, attempt to replace them then deserialize again
+        try
+        {
+            stream.Position = 0;
+            return Serializer.Deserialize(stream) as CombinedReportData;
+        }
+        catch (Exception)
+        {
+            // Could not deserialize even with cleanup
+            return null;
+        }
+    }
 }

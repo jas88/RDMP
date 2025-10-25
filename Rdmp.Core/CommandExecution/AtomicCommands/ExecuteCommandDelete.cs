@@ -84,13 +84,18 @@ public class ExecuteCommandDelete : BasicCommandExecution
         // if the thing we are deleting is important and sensitive then we should use a transaction
         if (_deletables.Count > 1 || ShouldUseTransactionsWhenDeleting(_deletables.FirstOrDefault()))
         {
-            ExecuteWithCommit(ExecuteImpl, GetDescription(),
-                _deletables.OfType<IMapsDirectlyToDatabaseTable>().ToArray());
-            PublishNearest();
+            if (ExecuteWithCommit(ExecuteImpl, GetDescription(),
+                _deletables.OfType<IMapsDirectlyToDatabaseTable>().ToArray()))
+            {
+                // Only publish after successful commit
+                PublishNearest();
+            }
         }
         else
         {
             ExecuteImpl();
+            // Publish after deletion when not using transactions
+            PublishNearest();
         }
     }
 
@@ -124,15 +129,8 @@ public class ExecuteCommandDelete : BasicCommandExecution
         if (BasicActivator.IsInteractive &&
             !YesNo($"{GetDeleteVerbIfAny() ?? "Delete"} {_deletables.Count} Items?", "Delete Items")) return;
 
-        try
-        {
-            foreach (var d in _deletables.Where(d => d is not DatabaseEntity exists || exists.Exists()))
-                d.DeleteInDatabase();
-        }
-        finally
-        {
-            PublishNearest();
-        }
+        foreach (var d in _deletables.Where(d => d is not DatabaseEntity exists || exists.Exists()))
+            d.DeleteInDatabase();
     }
 
     private void PublishNearest()
