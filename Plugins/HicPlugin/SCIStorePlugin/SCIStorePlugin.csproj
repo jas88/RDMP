@@ -10,7 +10,7 @@
 		<DebugType>embedded</DebugType>
 	</PropertyGroup>
 	<PropertyGroup>
-		<SGenTypes>SCIStorePlugin.Data.SciStoreReport;SCIStorePlugin.Data.CombinedReportData</SGenTypes>
+		<SGenTypes>SCIStorePlugin.Data.SciStoreReport;SCIStorePlugin.Data.CombinedReportDataDto</SGenTypes>
 	</PropertyGroup>
 	<ItemGroup>
 		<Compile Update="Service References\SciStoreServices81\Reference.cs">
