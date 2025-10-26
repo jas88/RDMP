@@ -417,9 +417,15 @@ internal class DocumentationCrossExaminationTest
 
     private static void EnsureCodeBlocksCompile(string mdFile, List<string> problems)
     {
-        // Path from Core.Tests bin directory to UI.Tests source: up 4 levels then into Rdmp.UI.Tests
-        var codeBlocks = Path.Combine(TestContext.CurrentContext.TestDirectory,
-            "../../../../Rdmp.UI.Tests/DesignPatternTests/MarkdownCodeBlockTests.cs");
+        // Find solution root and build absolute path to MarkdownCodeBlockTests
+        var testDir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        while (testDir != null && !testDir.GetFiles("*.sln").Any())
+            testDir = testDir.Parent;
+
+        if (testDir == null)
+            throw new DirectoryNotFoundException("Could not find solution root from test directory");
+
+        var codeBlocks = Path.Combine(testDir.FullName, "Rdmp.UI.Tests", "DesignPatternTests", "MarkdownCodeBlockTests.cs");
 
         Console.WriteLine($"Starting {mdFile}");
 
