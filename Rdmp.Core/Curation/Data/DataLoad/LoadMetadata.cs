@@ -356,8 +356,11 @@ public class LoadMetadata : DatabaseEntity, ILoadMetadata, IHasDependencies, IHa
     /// <inheritdoc/>
     public IEnumerable<ICatalogue> GetAllCatalogues()
     {
-        var catalogueLinkIDs = Repository.GetAllObjectsWhere<LoadMetadataCatalogueLinkage>("LoadMetadataID", ID).Select(l => l.CatalogueID);
-        return Repository.GetAllObjects<Catalogue>().Where(cat => catalogueLinkIDs.Contains(cat.ID));
+        // Optimized: Use GetAllObjectsInIDList to filter in SQL instead of loading entire Catalogue table
+        var catalogueLinkIDs = Repository.GetAllObjectsWhere<LoadMetadataCatalogueLinkage>("LoadMetadataID", ID)
+            .Select(l => l.CatalogueID)
+            .ToList();
+        return Repository.GetAllObjectsInIDList<Catalogue>(catalogueLinkIDs);
     }
 
     /// <inheritdoc cref="GetDistinctLoggingDatabase()"/>

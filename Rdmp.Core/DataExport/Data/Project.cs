@@ -192,7 +192,10 @@ public class Project : DatabaseEntity, IProject, ICustomSearchString, ICheckable
     /// <inheritdoc/>
     public ICatalogue[] GetAllProjectCatalogues()
     {
-        return Repository.GetAllObjects<ExtractableDataSetProject>().Where(edsp => edsp.Project_ID == this.ID).Select(edsp => edsp.DataSet.Catalogue).ToArray(); 
+        // Optimized: Use GetAllObjectsWhere to filter in SQL instead of loading entire table
+        return Repository.GetAllObjectsWhere<ExtractableDataSetProject>("Project_ID", this.ID)
+            .Select(edsp => edsp.DataSet.Catalogue)
+            .ToArray();
     }
 
     /// <inheritdoc/>

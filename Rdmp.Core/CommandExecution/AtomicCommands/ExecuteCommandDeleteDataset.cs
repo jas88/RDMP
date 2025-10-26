@@ -15,7 +15,9 @@ public ExecuteCommandDeleteDataset(IBasicActivateItems activator, [DemandsInitia
     public override void Execute()
     {
         base.Execute();
-        var columnItemsLinkedToDataset = _activator.RepositoryLocator.CatalogueRepository.GetAllObjects<ColumnInfo>().Where(cif => cif.Dataset_ID == _dataset.ID);
+        // Optimized: Use GetAllObjectsWhere to filter in SQL instead of loading entire ColumnInfo table
+        var columnItemsLinkedToDataset = _activator.RepositoryLocator.CatalogueRepository
+            .GetAllObjectsWhere<ColumnInfo>("Dataset_ID", _dataset.ID);
         foreach (var col in columnItemsLinkedToDataset)
         {
             col.Dataset_ID = null;
