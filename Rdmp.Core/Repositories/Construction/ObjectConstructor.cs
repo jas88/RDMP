@@ -376,17 +376,8 @@ public class ObjectConstructor
                 compatible.Add(constructor);
         }
 
-        if (!compatible.Any())
-        {
-            // If no compatible constructors found and we have parameters, throw exception
-            // (null return is only for when constructor selection is truly optional)
-            if (constructorValues?.Length > 0)
-                throw new ObjectLacksCompatibleConstructorException(
-                    $"No compatible constructor found for type '{typeToConstruct.Name}' with {constructorValues.Length} parameter(s)");
-            return null;
-        }
-
-        return InvokeBestConstructor(compatible, constructorValues);
+        // Return null if no compatible constructors (allows optional constructor selection)
+        return compatible.Any() ? InvokeBestConstructor(compatible, constructorValues) : null;
     }
 
     /// <summary>

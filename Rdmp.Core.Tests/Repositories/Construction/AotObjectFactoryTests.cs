@@ -314,9 +314,11 @@ internal class AotObjectFactoryTests : DatabaseTests
         // Arrange
         var type = typeof(NullParameterTestClass);
 
-        // Act & Assert
-        Assert.Throws<ObjectLacksCompatibleConstructorException>(
-            () => ObjectConstructor.ConstructIfPossible(type, new object[] { null }));
+        // Act
+        var result = ObjectConstructor.ConstructIfPossible(type, new object[] { null });
+
+        // Assert - Should return null when no compatible constructor (value type doesn't accept null)
+        Assert.That(result, Is.Null);
     }
 
     [Test]
