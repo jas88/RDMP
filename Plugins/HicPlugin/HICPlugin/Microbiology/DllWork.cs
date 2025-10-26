@@ -7,11 +7,6 @@ using System.Text.RegularExpressions;
 
 namespace HICPlugin.Microbiology;
 
-public interface IMicrobiologyResultRecord
-{
-
-}
-
 internal class MicrobiologyHelper
 {
     public static string[] SplitByWhitespace(string currentLine)

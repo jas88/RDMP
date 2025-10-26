@@ -11,8 +11,6 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 namespace HICPlugin.DataFlowComponents;
 
 
-public class ChrisHallSpecialExplicitSource :DataExtractionSpecialExplicitSource { }
-
 public class DataExtractionSpecialExplicitSource : ExecuteDatasetExtractionSource
 {
     [DemandsInitialization("The database you want a using statement put in front of")]

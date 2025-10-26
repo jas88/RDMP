@@ -15,7 +15,7 @@ using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using YamlDotNet.Serialization;
 
-namespace HICPluginInteractive.DataFlowComponents;
+namespace HICPlugin.DataFlowComponents;
 
 /// <summary>
 /// Pipeline component designed to prevent DataTable columns containing CHIs passing through the pipeline.

@@ -7,12 +7,9 @@ using System.IO;
 
 namespace DrsPlugin.Attachers;
 
-public interface IImagePatcher
-{
-    Stream PatchAwayExif(Stream inStream, Stream outStream);
-    byte[] ReadPixelData(Stream stream);
-}
-
+/// <summary>
+/// Factory for creating cached patcher instances
+/// </summary>
 internal static class CachedPatcherFactory
 {
     private static readonly JpegPatcher JpegPatcher = new();
