@@ -13,7 +13,7 @@ using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using Tests.Common.Scenarios;
 
-namespace LoadModules.Extensions.Interactive.Tests;
+namespace LoadModules.Extensions.Tests.Interactive;
 
 public class DeAnonymiseAgainstCohortTests:TestsRequiringACohort,IDeAnonymiseAgainstCohortConfigurationFulfiller
 {

@@ -14,7 +14,7 @@ using Rdmp.Core.Curation.Data.Pipelines;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Logging;
 
-namespace LoadModules.Extensions.AutomationPlugins.Tests;
+namespace LoadModules.Extensions.Tests.AutomationTests;
 
 public class ObjectCreationTests : TestsRequiringAnAutomationPluginRepository
 {

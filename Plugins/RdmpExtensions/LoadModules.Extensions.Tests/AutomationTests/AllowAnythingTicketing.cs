@@ -10,7 +10,7 @@ using Rdmp.Core.Curation;
 using Rdmp.Core.Ticketing;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 
-namespace LoadModules.Extensions.AutomationPlugins.Tests;
+namespace LoadModules.Extensions.Tests.AutomationTests;
 
 public class AllowAnythingTicketing:ITicketingSystem
 {

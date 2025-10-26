@@ -9,7 +9,7 @@ using LoadModules.Extensions.Python.DataProvider;
 using NUnit.Framework;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 
-namespace LoadModules.Extensions.Python.Tests.Unit;
+namespace LoadModules.Extensions.Tests.Python.Unit;
 
 [Category("Integration")]
 public class PythonNotInstalledTests

@@ -14,7 +14,7 @@ using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.DataLoad.Engine.Job;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 
-namespace LoadModules.Extensions.Python.Tests.Unit;
+namespace LoadModules.Extensions.Tests.Python.Unit;
 
 public class Python2InstalledTests
 {

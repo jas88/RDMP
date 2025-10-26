@@ -15,7 +15,7 @@ using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.DataLoad;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 
-namespace LoadModules.Extensions.Python.Tests;
+namespace LoadModules.Extensions.Tests.Python;
 
 public class ScriptExecutionTests
 {

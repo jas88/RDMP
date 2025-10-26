@@ -16,7 +16,7 @@ using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Tests.Common;
 
-namespace LoadModules.Extensions.AutomationPlugins.Tests;
+namespace LoadModules.Extensions.Tests.AutomationTests;
 
 public class TestsRequiringAnAutomationPluginRepository:DatabaseTests
 {
