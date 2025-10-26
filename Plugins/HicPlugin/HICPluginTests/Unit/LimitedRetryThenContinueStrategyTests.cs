@@ -24,12 +24,12 @@ public class LimitedRetryThenContinueStrategyTests
 
         var strategy = new LimitedRetryThenContinueStrategy(5,new List<int>(new int[]{3,1}), mockServer);
 
-            
-       Assert.That(4,Is.EqualTo(strategy.RetryAfterCooldown(new TimeSpan(1,0,0,0), ThrowImmediatelyDataLoadEventListener.Quiet, 5, new Exception())));
-       Assert.That(3, Is.EqualTo(strategy.RetryAfterCooldown(new TimeSpan(1, 0, 0, 0), ThrowImmediatelyDataLoadEventListener.Quiet, 4, new Exception())));
-       Assert.That(2, Is.EqualTo(strategy.RetryAfterCooldown(new TimeSpan(1, 0, 0, 0), ThrowImmediatelyDataLoadEventListener.Quiet, 3, new Exception())));
-       Assert.That(1, Is.EqualTo(strategy.RetryAfterCooldown(new TimeSpan(1, 0, 0, 0), ThrowImmediatelyDataLoadEventListener.Quiet, 2, new Exception())));
-       Assert.That(0, Is.EqualTo(strategy.RetryAfterCooldown(new TimeSpan(1, 0, 0, 0), ThrowImmediatelyDataLoadEventListener.Quiet, 1, new Exception())));
+
+       Assert.That(strategy.RetryAfterCooldown(new TimeSpan(1,0,0,0), ThrowImmediatelyDataLoadEventListener.Quiet, 5, new Exception()), Is.EqualTo(4));
+       Assert.That(strategy.RetryAfterCooldown(new TimeSpan(1, 0, 0, 0), ThrowImmediatelyDataLoadEventListener.Quiet, 4, new Exception()), Is.EqualTo(3));
+       Assert.That(strategy.RetryAfterCooldown(new TimeSpan(1, 0, 0, 0), ThrowImmediatelyDataLoadEventListener.Quiet, 3, new Exception()), Is.EqualTo(2));
+       Assert.That(strategy.RetryAfterCooldown(new TimeSpan(1, 0, 0, 0), ThrowImmediatelyDataLoadEventListener.Quiet, 2, new Exception()), Is.EqualTo(1));
+       Assert.That(strategy.RetryAfterCooldown(new TimeSpan(1, 0, 0, 0), ThrowImmediatelyDataLoadEventListener.Quiet, 1, new Exception()), Is.EqualTo(0));
 
     }
 }

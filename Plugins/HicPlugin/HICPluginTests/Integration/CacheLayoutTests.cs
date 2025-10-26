@@ -49,7 +49,7 @@ class CacheLayoutTests : DatabaseTests
         var downloadDirectory = cacheLayout.GetLoadCacheDirectory(ThrowImmediatelyDataLoadEventListener.Quiet);
 
         var expectedDownloadPath = Path.Combine(rootDirectory.FullName, "T", "Biochemistry");
-       Assert.That(expectedDownloadPath, Is.EqualTo(downloadDirectory.FullName));
+       Assert.That(downloadDirectory.FullName, Is.EqualTo(expectedDownloadPath));
     }
 
     [Test]
@@ -74,6 +74,6 @@ class CacheLayoutTests : DatabaseTests
         Assert.That(archiveFile.Exists,Is.True);
 
         const string expectedArchiveFilename = "2005-01-01.zip";
-       Assert.That(expectedArchiveFilename, Is.EqualTo(archiveFile.Name));
+       Assert.That(archiveFile.Name, Is.EqualTo(expectedArchiveFilename));
     }
 }

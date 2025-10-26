@@ -44,7 +44,8 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         while (solutionDir?.GetFiles("*.sln").Any() != true) solutionDir = solutionDir?.Parent;
         Assert.That(solutionDir, Is.Not.Null, $"Failed to find {SolutionName} in any parent directories");
 
-        var sln = new VisualStudioSolutionFile(solutionDir, solutionDir.GetFiles(SolutionName).Single());
+        var slnFile = solutionDir.GetFiles(SolutionName).FirstOrDefault() ?? throw new FileNotFoundException($"Could not find {SolutionName} in {solutionDir.FullName}");
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
 
         ProcessFolderRecursive(sln.RootFolders, solutionDir);
 

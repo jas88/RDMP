@@ -32,7 +32,7 @@ class RepositoryTests
         var bloodSample = report.Samples.First();
         var result = bloodSample.Results.First(static r => r.ReadCodeValue.Equals("TTTT."));
 
-       Assert.That(8.9, Is.EqualTo(result.QuantityValue ?? 0.0m));
+       Assert.That(result.QuantityValue ?? 0.0m, Is.EqualTo(8.9));
     }
 
     [Test]
@@ -88,12 +88,12 @@ class RepositoryTests
             
         repo.Create(reports, listener);
 
-       Assert.That(1, Is.EqualTo(repo.HeadersTable.Rows.Count));
-       Assert.That(1, Is.EqualTo(repo.SampleDetailsTable.Rows.Count));
-       Assert.That(2, Is.EqualTo(repo.ResultsTable.Rows.Count));
+       Assert.That(repo.HeadersTable.Rows.Count, Is.EqualTo(1));
+       Assert.That(repo.SampleDetailsTable.Rows.Count, Is.EqualTo(1));
+       Assert.That(repo.ResultsTable.Rows.Count, Is.EqualTo(2));
 
-       Assert.That("TESTID", Is.EqualTo(repo.ResultsTable.Rows[0]["TestIdentifier"]));
-       Assert.That("ANOTHERTEST_LOCAL", Is.EqualTo(repo.ResultsTable.Rows[1]["LocalClinicalCodeValue"]));
+       Assert.That(repo.ResultsTable.Rows[0]["TestIdentifier"], Is.EqualTo("TESTID"));
+       Assert.That(repo.ResultsTable.Rows[1]["LocalClinicalCodeValue"], Is.EqualTo("ANOTHERTEST_LOCAL"));
 
         Assert.That(repo.ResultsTable.Rows[0]["QuantityValue"].ToString().Length == 4, Is.True);
     }
@@ -111,7 +111,7 @@ class RepositoryTests
 
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(badXmlString));
         var actualString = CombinedReportXmlDeserializer.RemoveInvalidCharactersFromStream(stream);
-       Assert.That(expectedXmlString, Is.EqualTo(actualString));
+       Assert.That(actualString, Is.EqualTo(expectedXmlString));
     }
 }
 

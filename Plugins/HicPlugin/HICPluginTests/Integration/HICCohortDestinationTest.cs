@@ -77,7 +77,7 @@ create procedure fishfishfishproc1
             //actually does the send
             d.Dispose(tomem,null);
 
-           Assert.That(cohortIDInTestData, Is.EqualTo(request.CohortCreatedIfAny.OriginID));
+           Assert.That(request.CohortCreatedIfAny.OriginID, Is.EqualTo(cohortIDInTestData));
         }
         else
             Assert.Throws<Exception>(() => d.Dispose(tomem, null));
