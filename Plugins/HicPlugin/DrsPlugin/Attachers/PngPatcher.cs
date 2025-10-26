@@ -5,23 +5,27 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
+using System.IO;
 
-namespace SCIStorePlugin.Data;
+namespace DrsPlugin.Attachers;
 
-public class SciStoreReport
+public class PngPatcher : IImagePatcher
 {
-    public SciStoreHeader Header { get; set; }
-    public HashSet<SciStoreSample> Samples { get; set; }
-
-    public SciStoreReport()
+    public Stream PatchAwayExif(Stream inStream, Stream outStream)
     {
-        // For XML serialiser
+        inStream.CopyTo(outStream);
+        return outStream;
     }
 
-    public SciStoreReport(SciStoreReport report)
+    public byte[] ReadPixelData(Stream stream)
     {
-        Header = report.Header;
-        Samples = report.Samples;
+        using var ms = new MemoryStream();
+        stream.CopyTo(ms);
+        return ms.ToArray();
+    }
+
+    public string GetFileExtension()
+    {
+        return ".png";
     }
 }

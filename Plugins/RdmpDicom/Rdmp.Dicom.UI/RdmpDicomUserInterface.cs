@@ -47,12 +47,12 @@ public class RdmpDicomUserInterface : PluginUserInterface, IRefreshBusSubscriber
 
         //allow clicking in Catalogue collection whitespace
         if (o is RDMPCollection.Catalogue)
-            return new[] { new ExecuteCommandCreateNewImagingDataset(_activator) };
+            return new[] { new ExecuteCommandCreateNewImagingDatasetUI(_activator) };
         return databaseEntity switch
         {
             Catalogue c => new IAtomicCommand[]
             {
-                new ExecuteCommandCreateNewImagingDataset(_activator),
+                new ExecuteCommandCreateNewImagingDatasetUI(_activator),
                 new ExecuteCommandPromoteNewTag(_activator).SetTarget(databaseEntity),
                 new Rdmp.Dicom.CommandExecution.ExecuteCommandCreateNewSemEHRCatalogue(_activator),
                 new ExecuteCommandCompareImagingSchemas(_activator, c)

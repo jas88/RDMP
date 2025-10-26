@@ -17,12 +17,12 @@ using SCIStorePlugin.Data;
 namespace SCIStorePlugin.Repositories;
 
 public delegate void InsertionErrorHandler(object sender, SqlException exception, string queryString = "");
-public class SciStoreDbRepository : IRepository<SciStoreReport>
+public class SciStoreDbRepository : ISciStoreRepository<SciStoreReport>
 {
     public string DatabaseName { get; set; }
     private readonly DatabaseHelper _databaseHelper;
     private readonly SciStoreTableRecord _targetTables;
-    private readonly IRepository<SciStoreReport> _errorRepo;
+    private readonly ISciStoreRepository<SciStoreReport> _errorRepo;
 
     // SIZE OF Database field holding comment text
     private const int ResultCommentFieldSize = 650;
@@ -33,7 +33,7 @@ public class SciStoreDbRepository : IRepository<SciStoreReport>
     private readonly SqlConnection _connectionToDestination;
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    public SciStoreDbRepository(DatabaseHelper databaseHelper, SciStoreTableRecord targetTables, IRepository<SciStoreReport> errorRepo)
+    public SciStoreDbRepository(DatabaseHelper databaseHelper, SciStoreTableRecord targetTables, ISciStoreRepository<SciStoreReport> errorRepo)
     {
         _databaseHelper = databaseHelper;
         _targetTables = targetTables;

@@ -13,7 +13,7 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace SCIStorePlugin.Repositories;
 
-public abstract class DbRepository<T> : IRepository<T> where T : class, new()
+public abstract class DbRepository<T> : ISciStoreRepository<T> where T : class, new()
 {
     protected readonly DatabaseHelper DatabaseHelper;
     protected readonly SciStoreTableRecord TableInfo;

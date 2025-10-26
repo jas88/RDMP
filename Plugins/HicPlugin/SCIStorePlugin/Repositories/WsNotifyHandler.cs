@@ -5,23 +5,8 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
 
-namespace SCIStorePlugin.Data;
+namespace SCIStorePlugin.Repositories;
 
-public class SciStoreReport
-{
-    public SciStoreHeader Header { get; set; }
-    public HashSet<SciStoreSample> Samples { get; set; }
-
-    public SciStoreReport()
-    {
-        // For XML serialiser
-    }
-
-    public SciStoreReport(SciStoreReport report)
-    {
-        Header = report.Header;
-        Samples = report.Samples;
-    }
-}
+// todo: specific notify handler is a quick fix for UI-related issue in HistoryDownloader, refactor/remove
+public delegate void WsNotifyHandler(object sender, string message);

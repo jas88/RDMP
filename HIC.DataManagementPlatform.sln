@@ -110,6 +110,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rdmp.Dicom.UI", "Plugins\Rd
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rdmp.Dicom.Tests", "Plugins\RdmpDicom\Rdmp.Dicom.Tests\Rdmp.Dicom.Tests.csproj", "{938D8819-0B1B-4FE9-85DC-FA4FEA77EE36}"
 EndProject
+
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HICPluginTests", "Plugins\HicPlugin\HICPluginTests\HICPluginTests.csproj", "{65C85EBC-81D4-4B41-892C-110E86CB4990}"
+EndProject
+
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HICPluginTests", "Plugins\HicPlugin\HICPluginTests\HICPluginTests.csproj", "{65C85EBC-81D4-4B41-892C-110E86CB4990}"
+EndProject
+
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoadModules.Extensions.Tests", "Plugins\RdmpExtensions\LoadModules.Extensions.Tests\LoadModules.Extensions.Tests.csproj", "{010DD797-BA17-BA17-4DD4-8781-736C8C4FB62C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

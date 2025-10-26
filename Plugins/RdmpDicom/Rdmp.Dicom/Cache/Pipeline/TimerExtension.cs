@@ -4,24 +4,15 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
-using System;
-using System.Collections.Generic;
+using System.Timers;
 
-namespace SCIStorePlugin.Data;
+namespace Rdmp.Dicom.Cache.Pipeline;
 
-public class SciStoreReport
+public static class TimerExtension
 {
-    public SciStoreHeader Header { get; set; }
-    public HashSet<SciStoreSample> Samples { get; set; }
-
-    public SciStoreReport()
+    public static void Reset(this Timer timer)
     {
-        // For XML serialiser
-    }
-
-    public SciStoreReport(SciStoreReport report)
-    {
-        Header = report.Header;
-        Samples = report.Samples;
+        timer.Stop();
+        timer.Start();
     }
 }

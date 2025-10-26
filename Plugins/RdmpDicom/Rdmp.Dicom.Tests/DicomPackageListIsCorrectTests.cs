@@ -18,7 +18,7 @@ namespace Rdmp.Dicom.Tests;
 /// Tests to confirm that the dependencies in csproj files (NuGet packages) match those in the .nuspec files and that packages.md
 /// lists the correct versions (in documentation)
 /// </summary>
-internal sealed partial class PackageListIsCorrectTests
+internal sealed partial class DicomPackageListIsCorrectTests
 {
     private static readonly EnumerationOptions EnumerationOptions = new() { RecurseSubdirectories = true, MatchCasing = MatchCasing.CaseInsensitive, IgnoreInaccessible = true };
 

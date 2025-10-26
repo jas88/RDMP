@@ -5,23 +5,21 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
+using System.Data;
 
 namespace SCIStorePlugin.Data;
 
-public class SciStoreReport
+public class FixedDatasetIdProvider : IDatasetIdProvider
 {
-    public SciStoreHeader Header { get; set; }
-    public HashSet<SciStoreSample> Samples { get; set; }
+    private readonly int _datasetId;
 
-    public SciStoreReport()
+    public FixedDatasetIdProvider(int datasetId)
     {
-        // For XML serialiser
+        _datasetId = datasetId;
     }
 
-    public SciStoreReport(SciStoreReport report)
+    public int CreateDatasetId()
     {
-        Header = report.Header;
-        Samples = report.Samples;
+        return _datasetId;
     }
 }

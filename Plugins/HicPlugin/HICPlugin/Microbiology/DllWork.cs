@@ -13,19 +13,6 @@ using System.Text.RegularExpressions;
 
 namespace HICPlugin.Microbiology;
 
-internal class MicrobiologyHelper
-{
-    public static string[] SplitByWhitespace(string currentLine)
-    {
-        return currentLine.Trim().Split(new[] {' ', '\t'}, StringSplitOptions.RemoveEmptyEntries);
-    }
-
-    public static string GetValueFromWhitespaceSeperatedLine(string currentLine, int index)
-    {
-        return currentLine.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[index];
-    }
-}
-
 public class MB_Tests : IMicrobiologyResultRecord
 {
     public string SpecimenNo { get; set; }

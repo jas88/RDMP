@@ -12,8 +12,6 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
-// todo: specific notify handler is a quick fix for UI-related issue in HistoryDownloader, refactor/remove
-public delegate void WsNotifyHandler(object sender, string message);
 
 /// <summary>
 /// SCI Store web service repository for a specific health board and discipline (passed in on construction)
@@ -314,45 +312,5 @@ public class CombinedReportDataWsRepository : WsRepository<CombinedReportData>, 
                 UserName = wsConfig.Username
             }
         };
-    }
-}
-
-public class WebServiceLoginFailureException : Exception
-{
-    public WebServiceLoginFailureException(string message, Exception innerException = null) : base(message, innerException)
-    {
-    }
-}
-
-public class WebServiceRetrievalFailure : Exception
-{
-    public DateTime Day { get; private set; }
-    public TimeSpan TimeSpan { get; private set; }
-
-    public WebServiceRetrievalFailure(DateTime day, TimeSpan timeSpan, Exception innerException = null) : base ("Failed to retrieve data from the web service", innerException)
-    {
-        Day = day;
-        TimeSpan = timeSpan;
-    }
-
-    public override string ToString()
-    {
-        return $"Failed retrieval of {TimeSpan:g} for {Day:yyyy-MM-dd}: {base.ToString()}";
-    }
-}
-
-public class LabReportRetrievalFailureException : Exception
-{
-    public SciStoreRecord LabRecord { get; private set; }
-
-    public LabReportRetrievalFailureException(SciStoreRecord labRecord, Exception innerException) : base ("Failed to retrieve lab investigation reports", innerException)
-    {
-        LabRecord = labRecord;
-    }
-
-    public override string ToString()
-    {
-        return
-            $"{base.ToString()}{Environment.NewLine}Lab Number: {LabRecord.LabNumber}{Environment.NewLine}Test Report ID{LabRecord.TestReportID}";
     }
 }

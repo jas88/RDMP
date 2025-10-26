@@ -4,7 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -200,23 +200,4 @@ public class IsolationReview
 
         return !a.ToString().Equals(b.ToString());
     }
-}
-
-public class IsolationDifference
-{
-    public string Pk { get; set; }
-
-    public int RowIndex { get; set; }
-
-    public bool IsMaster { get; set; }
-
-    public List<string> ConflictingColumns { get; set; } = new();
-
-    public IsolationDifference(int rowIndex, string pk , bool isMaster)
-    {
-        RowIndex = rowIndex;
-        Pk = pk;
-        IsMaster = isMaster;
-    }
-
 }

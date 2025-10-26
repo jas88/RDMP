@@ -5,23 +5,20 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
-namespace SCIStorePlugin.Data;
+namespace HICPlugin.Microbiology;
 
-public class SciStoreReport
+internal class MicrobiologyHelper
 {
-    public SciStoreHeader Header { get; set; }
-    public HashSet<SciStoreSample> Samples { get; set; }
-
-    public SciStoreReport()
+    public static string[] SplitByWhitespace(string currentLine)
     {
-        // For XML serialiser
+        return currentLine.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
     }
 
-    public SciStoreReport(SciStoreReport report)
+    public static string GetValueFromWhitespaceSeperatedLine(string currentLine, int index)
     {
-        Header = report.Header;
-        Samples = report.Samples;
+        return currentLine.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[index];
     }
 }

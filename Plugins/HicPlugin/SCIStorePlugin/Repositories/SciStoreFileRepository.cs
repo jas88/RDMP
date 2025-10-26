@@ -11,7 +11,7 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
-public class SciStoreFileRepository : IRepository<SciStoreReport>
+public class SciStoreFileRepository : ISciStoreRepository<SciStoreReport>
 {
     private readonly string _rootPath;
     private readonly SciStoreTableRecord _tableInfo;

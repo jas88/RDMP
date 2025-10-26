@@ -13,9 +13,9 @@ using SixLabors.ImageSharp;
 
 namespace Rdmp.Dicom.UI.CommandExecution.AtomicCommands;
 
-public class ExecuteCommandCreateNewImagingDataset : BasicUICommandExecution
+public class ExecuteCommandCreateNewImagingDatasetUI : BasicUICommandExecution
 {
-    public ExecuteCommandCreateNewImagingDataset(IActivateItems activator) : base(activator)
+    public ExecuteCommandCreateNewImagingDatasetUI(IActivateItems activator) : base(activator)
     {
 
     }

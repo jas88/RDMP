@@ -4,24 +4,17 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Rdmp.Core.ReusableLibraryCode.Progress;
+using SCIStorePlugin.Data;
 
-namespace SCIStorePlugin.Data;
+namespace SCIStorePlugin.Repositories;
 
-public class SciStoreReport
+public interface ISciStoreRepository<T>
 {
-    public SciStoreHeader Header { get; set; }
-    public HashSet<SciStoreSample> Samples { get; set; }
-
-    public SciStoreReport()
-    {
-        // For XML serialiser
-    }
-
-    public SciStoreReport(SciStoreReport report)
-    {
-        Header = report.Header;
-        Samples = report.Samples;
-    }
+    IEnumerable<T> ReadAll();
+    void Create(IEnumerable<T> reports, IDataLoadEventListener listener);
 }
+
+public delegate void AfterReadAllHandler();
+public delegate void AfterReadSingleHandler(object sender, CombinedReportData report);

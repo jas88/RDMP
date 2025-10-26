@@ -12,7 +12,7 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
-public interface IRepositorySupportsDateRangeQueries<T> : IRepository<T>
+public interface IRepositorySupportsDateRangeQueries<T> : ISciStoreRepository<T>
 {
     IEnumerable<CombinedReportData> ReadForInterval(DateTime day, TimeSpan timeSpan, IDataLoadEventListener listener, GracefulCancellationToken token);
 }

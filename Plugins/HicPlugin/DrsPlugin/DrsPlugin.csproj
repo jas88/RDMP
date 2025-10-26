@@ -10,6 +10,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="SharpCompress" />
+    <PackageReference Include="SixLabors.ImageSharp" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" VersionOverride="4.0.7.14" />

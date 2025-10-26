@@ -4,24 +4,25 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
-using System;
 using System.Collections.Generic;
 
-namespace SCIStorePlugin.Data;
+namespace Rdmp.Dicom.PipelineComponents;
 
-public class SciStoreReport
+public class IsolationDifference
 {
-    public SciStoreHeader Header { get; set; }
-    public HashSet<SciStoreSample> Samples { get; set; }
+    public string Pk { get; set; }
 
-    public SciStoreReport()
+    public int RowIndex { get; set; }
+
+    public bool IsMaster { get; set; }
+
+    public List<string> ConflictingColumns { get; set; } = new();
+
+    public IsolationDifference(int rowIndex, string pk , bool isMaster)
     {
-        // For XML serialiser
+        RowIndex = rowIndex;
+        Pk = pk;
+        IsMaster = isMaster;
     }
 
-    public SciStoreReport(SciStoreReport report)
-    {
-        Header = report.Header;
-        Samples = report.Samples;
-    }
 }

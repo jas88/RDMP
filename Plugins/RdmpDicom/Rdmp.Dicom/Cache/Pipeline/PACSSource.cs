@@ -5,22 +5,22 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using FellowOakDicom;
+using FellowOakDicom.Log;
 using FellowOakDicom.Network;
+using FellowOakDicom.Network.Client;
+using Microsoft.Extensions.Logging;
+using Rdmp.Core.Caching.Requests;
+using Rdmp.Core.Curation;
+using Rdmp.Core.Curation.Data;
+using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using Rdmp.Dicom.Cache.Pipeline.Dicom;
 using Timer = System.Timers.Timer;
-using Rdmp.Core.Curation.Data;
-using Rdmp.Core.Caching.Requests;
-using Rdmp.Core.DataFlowPipeline;
-using Rdmp.Core.Curation;
-using System.Collections.Concurrent;
-using FellowOakDicom.Log;
-using FellowOakDicom.Network.Client;
-using Microsoft.Extensions.Logging;
 
 namespace Rdmp.Dicom.Cache.Pipeline;
 
@@ -38,7 +38,7 @@ public class PACSSource : SMICacheSource
     [DemandsInitialization("The timeout (in ms) to wait for an association response after sending an association release request.  Defaults to 50ms if not specified")]
     public int? AssociationLingerTimeoutInMs { get; set; }
 
-    /// 
+    ///
     [DemandsInitialization("The timeout (in ms) to wait for an association response after sending an association request.  Defaults to 10000ms if not specified")]
     public int? AssociationReleaseTimeoutInMs { get; set; }
 
@@ -303,14 +303,3 @@ public class PACSSource : SMICacheSource
     #endregion
 
 }
-
-#region TimerExtension
-public static class TimerExtension
-{
-    public static void Reset(this Timer timer)
-    {
-        timer.Stop();
-        timer.Start();
-    }
-}
-#endregion

@@ -14,7 +14,7 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
-public class SciStoreDataTableRepository : IRepository<SciStoreReport>
+public class SciStoreDataTableRepository : ISciStoreRepository<SciStoreReport>
 {
     private readonly IDataTableSchemaSource _dataTableSchemaSource;
     private const string HeaderTableName = "Header";

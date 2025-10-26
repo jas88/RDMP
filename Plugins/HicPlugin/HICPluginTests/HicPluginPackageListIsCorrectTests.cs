@@ -12,13 +12,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 
-namespace LoadModules.Extensions.Tests;
+namespace HICPluginTests;
 
 /// <summary>
 /// Tests to confirm that the dependencies in csproj files (NuGet packages) match those in the .nuspec files and that packages.md
 /// lists the correct versions (in documentation)
 /// </summary>
-public class PackageListIsCorrectTests
+public class HicPluginPackageListIsCorrectTests
 {
     private static readonly EnumerationOptions EnumerationOptions = new() { RecurseSubdirectories = true,MatchCasing = MatchCasing.CaseInsensitive,IgnoreInaccessible = true};
 
@@ -27,8 +27,10 @@ public class PackageListIsCorrectTests
 
     // | Org.SomePackage |
     //
-    private static readonly Regex RMarkdownEntry = new(@"^\|\s*\[?([^ |\]]+)(\]\([^)]+\))?\s*\|", RegexOptions.IgnoreCase|RegexOptions.Compiled|RegexOptions.CultureInvariant);
+    private static readonly Regex RMarkdownEntry = new(@"^\|\s*\[?([^ |\]]+)(\]\([^)]+\))?\s*\|", RegexOptions.Compiled|RegexOptions.CultureInvariant);
 
+    // Dummy lines: 'Package' heading, horizontal line
+    private static readonly Regex DummyPackage = new("^Package|-+$",RegexOptions.Compiled|RegexOptions.CultureInvariant);
 
     /// <summary>
     /// Enumerate non-test packages, check that they are listed in PACKAGES.md
@@ -45,7 +47,7 @@ public class PackageListIsCorrectTests
             .Select(line => RMarkdownEntry.Match(line))
             .Where(m=>m.Success)
             .Select(m => m.Groups[1].Value)
-            .Except(new[]{"Package", "-------" })
+            .Where(p=>!DummyPackage.IsMatch(p))
             .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 
         // Extract the named packages from csproj files
@@ -57,12 +59,8 @@ public class PackageListIsCorrectTests
         undocumented.AppendJoin(Environment.NewLine, undocumentedPackages);
 
         var unusedPackages = packagesMarkdown.Except(usedPackages).ToArray();
-        Assert.Multiple(() =>
-        {
-            Assert.That(unusedPackages, Is.Empty,
-                    $"The following packages are listed in PACKAGES.md but are not used in any csproj file: {string.Join(", ", unusedPackages)}");
-            Assert.That(undocumented.ToString(), Is.Empty);
-        });
+        Assert.That(unusedPackages, Is.Empty);
+        Assert.That(undocumented.ToString(), Is.Empty);
     }
 
     /// <summary>
@@ -85,11 +83,10 @@ public class PackageListIsCorrectTests
             if (!Path.IsPathRooted(path)) path = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
             return new DirectoryInfo(path);
         }
-
         var root = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
         while (!root.EnumerateFiles("*.sln", SearchOption.TopDirectoryOnly).Any() && root.Parent != null)
             root = root.Parent;
-        Assert.That(root.Parent, Is.Not.Null, "Could not find root of repository");
+        Assert.That(root.Parent, Is.Not.Null);
         return root;
     }
 
@@ -100,9 +97,8 @@ public class PackageListIsCorrectTests
     /// <returns></returns>
     private static IEnumerable<string> GetCsprojFiles(DirectoryInfo root)
     {
-        return root.EnumerateFiles("*.csproj", EnumerationOptions).Select(static f => f.FullName).Where(static f => !f.Contains("tests", StringComparison.InvariantCultureIgnoreCase));
+        return root.EnumerateFiles("*.csproj", EnumerationOptions).Select(f => f.FullName).Where(f => !f.Contains("tests", StringComparison.InvariantCultureIgnoreCase));
     }
-
     /// <summary>
     /// Find the sole packages.md file wherever in the repo it lives. Error if multiple or none.
     /// </summary>
@@ -110,8 +106,10 @@ public class PackageListIsCorrectTests
     /// <returns></returns>
     private static string[] GetPackagesMarkdown(DirectoryInfo root)
     {
-        var path = root.EnumerateFiles("packages.md", EnumerationOptions).Select(static f => f.FullName).Where(f => !f.Contains("RDMP\\Documentation\\CodeTutorials\\Packages.md")).ToArray();
-        Assert.That(path, Is.Not.Empty, "Packages.md not found");
+        var path = root.EnumerateFiles("packages.md", EnumerationOptions).Select(f => f.FullName)
+            .Where(f => !f.Contains("RDMP\\Documentation\\CodeTutorials\\Packages.md", StringComparison.InvariantCultureIgnoreCase))
+            .ToArray();
+        Assert.That(path.Length==0, Is.False);
         return path;
     }
 

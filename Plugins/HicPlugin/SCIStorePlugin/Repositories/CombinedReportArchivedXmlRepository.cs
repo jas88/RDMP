@@ -8,7 +8,7 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
-public class CombinedReportArchivedXmlRepository : IRepository<CombinedReportData>
+public class CombinedReportArchivedXmlRepository : ISciStoreRepository<CombinedReportData>
 {
     private readonly DirectoryInfo _sourceDirectory;
 

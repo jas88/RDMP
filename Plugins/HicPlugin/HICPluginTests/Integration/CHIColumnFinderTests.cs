@@ -5,7 +5,6 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 ﻿using HICPlugin.DataFlowComponents;
-using HICPluginInteractive.DataFlowComponents;
 using NUnit.Framework;
 using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.ReusableLibraryCode.Progress;

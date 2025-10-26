@@ -4,24 +4,32 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+/*
+ * From http://www.techmikael.com/2009/07/removing-exif-data-continued.html
+ * */
+
 using System;
-using System.Collections.Generic;
+using System.IO;
 
-namespace SCIStorePlugin.Data;
+namespace DrsPlugin.Attachers;
 
-public class SciStoreReport
+/// <summary>
+/// Factory for creating cached patcher instances
+/// </summary>
+internal static class CachedPatcherFactory
 {
-    public SciStoreHeader Header { get; set; }
-    public HashSet<SciStoreSample> Samples { get; set; }
+    private static readonly JpegPatcher JpegPatcher = new();
+    private static readonly PngPatcher PngPatcher = new();
 
-    public SciStoreReport()
+    internal static IImagePatcher Create(string extension)
     {
-        // For XML serialiser
-    }
-
-    public SciStoreReport(SciStoreReport report)
-    {
-        Header = report.Header;
-        Samples = report.Samples;
+        return extension switch
+        {
+            ".jpg" => JpegPatcher,
+            ".jpeg" => JpegPatcher,
+            ".png" => PngPatcher,
+            _ => throw new InvalidOperationException(
+                $"Can't create a patcher for images with extension type: {extension}")
+        };
     }
 }

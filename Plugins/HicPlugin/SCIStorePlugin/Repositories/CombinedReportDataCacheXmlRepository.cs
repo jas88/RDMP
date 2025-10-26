@@ -13,7 +13,7 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
-public class CombinedReportDataCacheXmlRepository : IRepository<CombinedReportData>
+public class CombinedReportDataCacheXmlRepository : ISciStoreRepository<CombinedReportData>
 {
     private readonly ICacheLayout _cacheLayout;
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();

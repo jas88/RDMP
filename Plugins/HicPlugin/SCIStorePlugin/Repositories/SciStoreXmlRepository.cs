@@ -13,7 +13,7 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
-public class SciStoreXmlRepository : IRepository<SciStoreReport>
+public class SciStoreXmlRepository : ISciStoreRepository<SciStoreReport>
 {
     private readonly string _rootPath;
 
