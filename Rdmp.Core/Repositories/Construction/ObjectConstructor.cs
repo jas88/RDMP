@@ -261,13 +261,32 @@ public class ObjectConstructor
     private static object InvokeBestConstructor(List<ConstructorInfo> constructors, params object[] parameters)
     {
         if (constructors.Count == 1)
-            return constructors[0].Invoke(parameters);
+        {
+            try
+            {
+                return constructors[0].Invoke(parameters);
+            }
+            catch (TargetInvocationException ex)
+            {
+                // Unwrap to expose actual exception from constructor
+                throw ex.InnerException ?? ex;
+            }
+        }
 
         // First priority: Use decorated constructor if exactly one is decorated
         var importDecorated = constructors.Where(c => Attribute.IsDefined(c, typeof(UseWithObjectConstructorAttribute)))
             .ToArray();
         if (importDecorated.Length == 1)
-            return importDecorated[0].Invoke(parameters);
+        {
+            try
+            {
+                return importDecorated[0].Invoke(parameters);
+            }
+            catch (TargetInvocationException ex)
+            {
+                throw ex.InnerException ?? ex;
+            }
+        }
 
         // Second priority: Pick constructor with most specific parameter types (avoid object parameters)
         var bestMatch = constructors
@@ -291,7 +310,16 @@ public class ObjectConstructor
 
         // If there's a clear winner (highest specificity), use it
         if (bestMatch.Count >= 2 && bestMatch[0].Specificity > bestMatch[1].Specificity)
-            return bestMatch[0].Constructor.Invoke(parameters);
+        {
+            try
+            {
+                return bestMatch[0].Constructor.Invoke(parameters);
+            }
+            catch (TargetInvocationException ex)
+            {
+                throw ex.InnerException ?? ex;
+            }
+        }
 
         // Otherwise, ambiguous
         throw new ObjectLacksCompatibleConstructorException(
