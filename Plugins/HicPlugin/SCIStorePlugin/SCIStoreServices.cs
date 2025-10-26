@@ -474,7 +474,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -1691,7 +1715,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -2790,7 +2838,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -3007,7 +3079,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -3046,6 +3142,8 @@
             private string idTypeField;
 
             private string idSourceField;
+
+            private string statusField;
 
             /// <remarks/>
             [System.Xml.Serialization.XmlElementAttribute(Order = 0)]
@@ -3092,6 +3190,18 @@
                 {
                     idSourceField = value;
                     RaisePropertyChanged("IdSource");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 4)]
+            public string Status
+            {
+                get => statusField;
+                set
+                {
+                    statusField = value;
+                    RaisePropertyChanged("Status");
                 }
             }
 
@@ -3190,7 +3300,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -9610,7 +9744,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -11343,7 +11501,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -12149,7 +12331,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -13465,7 +13671,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -15155,7 +15385,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -15856,7 +16110,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;
@@ -19034,7 +19312,31 @@
             }
 
             /// <remarks/>
-            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 5)]
+            [System.Xml.Serialization.XmlElementAttribute(Order = 5)]
+            public bool IncludePatientInformation
+            {
+                get => includePatientInformationField;
+                set
+                {
+                    includePatientInformationField = value;
+                    RaisePropertyChanged("IncludePatientInformation");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlElementAttribute(Order = 6)]
+            public bool IncludePatientInformationSpecified
+            {
+                get => includePatientInformationFieldSpecified;
+                set
+                {
+                    includePatientInformationFieldSpecified = value;
+                    RaisePropertyChanged("IncludePatientInformationSpecified");
+                }
+            }
+
+            /// <remarks/>
+            [System.Xml.Serialization.XmlAnyElementAttribute(Order = 7)]
             public System.Xml.XmlElement[] Any
             {
                 get => anyField;

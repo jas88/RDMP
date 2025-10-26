@@ -120,8 +120,7 @@
 		<None Include="Service References\SciStoreServices81\SCIStoreServices.wsdl" />
 	</ItemGroup>
 	<ItemGroup>
-		<Compile Remove="Service References\SciStoreServices81\Reference1.cs" />
-	</ItemGroup>
+			</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
 	</ItemGroup>
