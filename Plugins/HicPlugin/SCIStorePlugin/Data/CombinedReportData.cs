@@ -5,6 +5,9 @@ using SCIStore.SciStoreServices81;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Container for SCIStore report data combining the healthboard extract indicator, SCIStore record metadata, and the full investigation report with service results and clinical information.
+/// </summary>
 public class CombinedReportData
 {
     public string HbExtract { get; set; } // This field is not in the SciStore data, it is only available at time of extraction

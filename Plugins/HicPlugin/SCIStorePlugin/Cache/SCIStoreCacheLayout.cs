@@ -14,6 +14,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace SCIStorePlugin.Cache;
 
+/// <summary>
+/// Cache layout implementation for SCIStore data organized by healthboard and discipline, managing daily ZIP archives and cleanup of temporary XML files.
+/// </summary>
 public class SCIStoreCacheLayout : CacheLayout
 {
 

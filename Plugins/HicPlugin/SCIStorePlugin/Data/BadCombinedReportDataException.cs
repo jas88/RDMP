@@ -8,6 +8,9 @@ using System;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Exception thrown when a combined report contains invalid data such as malformed lab numbers or missing required fields.
+/// </summary>
 public class BadCombinedReportDataException : Exception
 {
     public object Sender { get; private set; }

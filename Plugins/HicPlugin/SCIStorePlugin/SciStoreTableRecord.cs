@@ -8,6 +8,9 @@
 
 namespace SCIStorePlugin;
 
+/// <summary>
+/// Represents the table structure configuration for a SCIStore discipline, defining the database and table names for headers, samples, results, test codes, and sample types.
+/// </summary>
 public class SciStoreTableRecord : IEquatable<SciStoreTableRecord>
 {
     public string DatabaseName; // if different from Discipline

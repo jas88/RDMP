@@ -16,6 +16,9 @@ public enum ClinicalCodeScheme
     Undefined
 };
 
+/// <summary>
+/// Represents clinical code information extracted from SCIStore reports, including the code value, scheme (Read, Local), and description.
+/// </summary>
 public class ClinicalCodeInfo
 {
     public string Value { get; set; }

@@ -9,6 +9,10 @@ using Rdmp.Core.Validation.Constraints.Primary;
 
 namespace JiraPlugin;
 
+/// <summary>
+/// Validates that a value matches the Jira ticket format using the JIRATicketingSystem regex pattern.
+/// Returns a validation failure if the value does not conform to the expected Jira ticket format.
+/// </summary>
 public class JiraTicketConstraint:PrimaryConstraint
 {
     public override void RenameColumn(string originalName, string newName)

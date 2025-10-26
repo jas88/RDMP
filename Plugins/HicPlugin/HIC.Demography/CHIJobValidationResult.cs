@@ -12,6 +12,10 @@
 
 namespace HIC.Demography;
 
+/// <summary>
+/// Represents the result of a CHI (Community Health Index) validation job, containing the validation
+/// category outcome and an optional reason string explaining the validation result.
+/// </summary>
 public class CHIJobValidationResult
 {
     public CHIJobValidationResult(ValidationCategory result) => Result = result;

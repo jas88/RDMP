@@ -15,6 +15,9 @@ using SCIStore.SciStoreServices81;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Factory for creating SciStoreSample objects from SCIStore test result sets, processing sample details and associated test results with read code validation.
+/// </summary>
 public class SciStoreSampleFactory
 {
     private readonly ReferentialIntegrityConstraint _readCodeConstraint;

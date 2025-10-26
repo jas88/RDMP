@@ -14,6 +14,9 @@ using Rdmp.Core.Logging;
 
 namespace LoadModules.Extensions.AutomationPlugins.Execution.ExtractionPipeline;
 
+/// <summary>
+/// Thread-safe singleton that collects release identifiers seen during an extraction and commits them to the ReleaseIdentifiersSeen table to track which cohort members have been extracted in baseline runs.
+/// </summary>
 public class IdentifierAccumulator
 {
     private static readonly Dictionary<int, IdentifierAccumulator> Accumulators =

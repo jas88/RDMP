@@ -13,6 +13,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Cache;
 
+/// <summary>
+/// Top-level dictionary-based wrapper for the SCIStore cache directory structure, organizing healthboard directories and providing methods to query the most recent data loaded and manage error directories.
+/// </summary>
 public class RootHistoryDirectory : IDictionary<HealthBoard, HealthboardHistoryDirectory>
 {
     public DirectoryInfo Root { get; }

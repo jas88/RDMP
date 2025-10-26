@@ -11,6 +11,9 @@ using System.Linq;
 
 namespace LoadModules.Extensions.AutomationPlugins.Execution.ExtractionPipeline;
 
+/// <summary>
+/// Validates that an extraction pipeline is configured correctly for automated extraction, checking for required components like <see cref="SuccessfullyExtractedResultsDocumenter"/> and compatible source components.
+/// </summary>
 public class AutomatedExtractionPipelineChecker:ICheckable
 {
     private readonly Pipeline _automateExtractionPipeline;

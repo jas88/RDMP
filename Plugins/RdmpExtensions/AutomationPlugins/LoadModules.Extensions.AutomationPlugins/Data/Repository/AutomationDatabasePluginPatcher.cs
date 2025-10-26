@@ -12,6 +12,9 @@ using CatalogueLibrary.Repositories;
 
 namespace LoadModules.Extensions.AutomationPlugins.Data.Repository
 {
+    /// <summary>
+    /// Legacy plugin patcher implementation for finding automation databases created by the plugin assembly.
+    /// </summary>
     public class AutomationDatabasePluginPatcher:IPluginPatcher
     {
         private CatalogueRepository _repository;

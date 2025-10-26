@@ -13,6 +13,9 @@ using MapsDirectlyToDatabaseTable;
 
 namespace LoadModules.Extensions.ReleasePlugins.Automation
 {
+    /// <summary>
+    /// Audit record tracking the processing status of files downloaded from WebDAV, including file location, result status, error messages, and creation/update timestamps.
+    /// </summary>
     public class WebdavAutomationAudit : DatabaseEntity
     {
         #region Database Properties

@@ -9,6 +9,9 @@ using System.Collections.Generic;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Top-level representation of a SCIStore laboratory report containing header information and a collection of samples with their test results.
+/// </summary>
 public class SciStoreReport
 {
     public SciStoreHeader Header { get; set; }

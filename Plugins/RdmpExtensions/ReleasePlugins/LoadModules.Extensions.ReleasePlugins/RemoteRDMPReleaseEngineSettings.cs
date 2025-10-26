@@ -13,6 +13,9 @@ using Rdmp.Core.ReusableLibraryCode.Checks;
 
 namespace LoadModules.Extensions.ReleasePlugins;
 
+/// <summary>
+/// Configuration settings for remote RDMP data releases, including ZIP password, remote RDMP instance credentials, and options for file cleanup after successful release.
+/// </summary>
 public class RemoteRDMPReleaseEngineSettings : ICheckable
 {
     [DemandsInitialization("Password for ZIP package")]

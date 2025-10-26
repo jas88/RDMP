@@ -30,6 +30,9 @@ using WebDAVClient.Model;
 
 namespace LoadModules.Extensions.ReleasePlugins.Automation
 {
+    /// <summary>
+    /// Automated task that downloads ZIP files from a WebDAV server, extracts them to a local release folder, and archives the processed files, with retry logic and comprehensive audit logging.
+    /// </summary>
     public class WebdavAutoDownloader : IAutomateable
     {
         private readonly WebdavAutomationSettings options;

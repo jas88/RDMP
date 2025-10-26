@@ -19,6 +19,9 @@ using Rdmp.Core.ReusableLibraryCode.Checks;
 
 namespace LoadModules.Extensions.AutomationPlugins.Data;
 
+/// <summary>
+/// Defines a schedule for automated data extractions from a project, including execution frequency, pipelines, ticketing integration, and governance checks.
+/// </summary>
 public class AutomateExtractionSchedule : DatabaseEntity, INamed
 {
     #region Database Properties

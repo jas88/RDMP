@@ -18,6 +18,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace LoadModules.Extensions.StatsScriptsExecution.Attachers;
 
+/// <summary>
+/// Data load attacher that executes SAS scripts via sas.exe during the attach phase, providing database connection strings and output paths as macro variables with timeout and logging support.
+/// </summary>
 public class SasAttacher : Attacher, IPluginAttacher
 {
     public SasAttacher() : base(true)

@@ -18,6 +18,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace LoadModules.Extensions.StatsScriptsExecution.Attachers;
 
+/// <summary>
+/// Data load attacher that executes R scripts via Rscript.exe during the attach phase, passing database connection details and output directories as command-line arguments with timeout support.
+/// </summary>
 public class RStudioAttacher : Attacher, IPluginAttacher
 {
     public RStudioAttacher() : base(true)

@@ -11,6 +11,9 @@ using SCIStore.SciStoreServices81;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Lookup table entry mapping SCIStore test codes to Read codes and common codes, including scheme versions, healthboard identifiers, and clinical code descriptions.
+/// </summary>
 public class TestCodeLookup
 {
     public string TestCode { get; set; }

@@ -8,6 +8,9 @@
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Exception thrown when SCIStore XML data is malformed, invalid, or contains unexpected structure, tracking the problematic lab number for diagnostics.
+/// </summary>
 public class SciStoreDodgyXmlException : Exception
 {
     public string LabNumber { get; set; }

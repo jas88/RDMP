@@ -9,6 +9,9 @@ using Microsoft.Data.SqlClient;
 
 namespace SCIStorePlugin;
 
+/// <summary>
+/// Helper class for SQL Server database operations, providing simplified methods for creating commands, executing queries, and bulk inserting data with configurable authentication and timeout settings.
+/// </summary>
 public class DatabaseHelper
 {
     public string Database { get; set; }

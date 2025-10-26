@@ -9,6 +9,9 @@ using System.Data;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Dataset ID provider that returns a fixed, predetermined dataset ID for all requests.
+/// </summary>
 public class FixedDatasetIdProvider : IDatasetIdProvider
 {
     private readonly int _datasetId;

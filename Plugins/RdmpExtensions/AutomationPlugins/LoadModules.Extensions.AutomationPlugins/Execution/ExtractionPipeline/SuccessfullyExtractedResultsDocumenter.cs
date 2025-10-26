@@ -21,6 +21,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace LoadModules.Extensions.AutomationPlugins.Execution.ExtractionPipeline;
 
+/// <summary>
+/// Pipeline component that documents successful extractions by recording the SQL used and tracking release identifiers, enabling future delta extractions to detect query changes and identify new cohort members.
+/// </summary>
 public class SuccessfullyExtractedResultsDocumenter : IPluginDataFlowComponent<DataTable>, IPipelineRequirement<IExtractCommand>, IPipelineRequirement<DataLoadInfo>
 {
 

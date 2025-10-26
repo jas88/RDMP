@@ -25,6 +25,9 @@ using WebDAVClient.Model;
 
 namespace LoadModules.Extensions.ReleasePlugins.Automation
 {
+    /// <summary>
+    /// Automation source that monitors a WebDAV folder for new release files and creates download tasks, with throttling to prevent repeated failures and single-task-at-a-time execution.
+    /// </summary>
     public class WebdavDataReleaseAutomationSource : IPluginAutomationSource, IPipelineRequirement<IRDMPPlatformRepositoryServiceLocator>, ICheckable
     {
         private AutomationServiceSlot _serviceSlot;

@@ -12,6 +12,9 @@ using System.Linq;
 
 namespace LoadModules.Extensions.AutomationPlugins.Data.Repository;
 
+/// <summary>
+/// Locates and instantiates the AutomateExtractionRepository by finding the configured external database server created by the AutomateExtractionPluginPatcher.
+/// </summary>
 public class AutomateExtractionRepositoryFinder : PluginRepositoryFinder
 {
     public static int Timeout = 5;

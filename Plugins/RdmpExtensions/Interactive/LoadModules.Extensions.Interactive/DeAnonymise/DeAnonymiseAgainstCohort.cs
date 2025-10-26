@@ -16,6 +16,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace LoadModules.Extensions.Interactive.DeAnonymise;
 
+/// <summary>
+/// Interactive pipeline component that de-anonymises data by allowing the user to select a cohort and reversing the anonymisation process to restore real identifiers from release identifiers.
+/// </summary>
 public class DeAnonymiseAgainstCohort: IPluginDataFlowComponent<DataTable>, IPipelineRequirement<IBasicActivateItems>
 {
     /// <summary>

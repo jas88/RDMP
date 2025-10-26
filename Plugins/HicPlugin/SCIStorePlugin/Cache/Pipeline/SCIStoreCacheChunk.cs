@@ -11,6 +11,9 @@ using SCIStorePlugin.DataProvider.RetryStrategies;
 
 namespace SCIStorePlugin.Cache.Pipeline;
 
+/// <summary>
+/// Cache chunk containing an array of combined reports fetched from the SCIStore web service for a specific healthboard and discipline on a particular date.
+/// </summary>
 public class SCIStoreCacheChunk : ICacheChunk
 {
     public ICacheFetchRequest Request { get; private set; }

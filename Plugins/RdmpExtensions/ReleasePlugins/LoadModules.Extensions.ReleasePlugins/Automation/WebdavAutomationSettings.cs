@@ -12,6 +12,9 @@ using WebDAVClient;
 
 namespace LoadModules.Extensions.ReleasePlugins.Automation
 {
+    /// <summary>
+    /// Configuration settings for WebDAV automation including endpoint credentials, remote and local folder paths, and ZIP password for extracting downloaded files.
+    /// </summary>
     public class WebdavAutomationSettings : ICheckable
     {
         [DemandsInitialization("Webdav remote folder")]

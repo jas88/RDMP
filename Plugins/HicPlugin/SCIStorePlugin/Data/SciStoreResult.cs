@@ -14,6 +14,9 @@ using SCIStore.SciStoreServices81;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Represents an individual laboratory test result from SCIStore, including test codes, result values, units, read codes, and validation against referential integrity constraints.
+/// </summary>
 public class SciStoreResult : IComparable
 {
     // Key values

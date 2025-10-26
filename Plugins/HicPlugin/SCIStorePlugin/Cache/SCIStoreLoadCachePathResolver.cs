@@ -11,6 +11,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Cache;
 
+/// <summary>
+/// Resolves cache file paths and filenames for SCIStore reports based on healthboard and discipline, generating consistent directory structures and unique filenames from lab numbers and test report IDs.
+/// </summary>
 // Implements specific logic for creating paths/archives
 // Dependent on the specific type of chunk that is being saved. (I think this makes sense as the cache chunk should contain all the information required to determine the correct filepaths in the archive)
 public class SCIStoreLoadCachePathResolver : ILoadCachePathResolver

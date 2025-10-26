@@ -14,6 +14,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Cache;
 
+/// <summary>
+/// Dictionary-based wrapper for a healthboard's cache directory structure, organizing subdirectories by clinical discipline with validation and XML file cleanup capabilities.
+/// </summary>
 public class HealthboardHistoryDirectory : IDictionary<Discipline, DirectoryInfo>
 {
     public HealthBoard Healthboard { get; set; }

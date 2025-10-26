@@ -16,6 +16,9 @@ using Rdmp.Core.Startup;
 
 namespace LoadModules.Extensions.AutomationPlugins.Data;
 
+/// <summary>
+/// Represents an extraction request that has been queued for future execution, tracking the requester, due date, and associated extraction configuration and pipeline.
+/// </summary>
 public class QueuedExtraction : DatabaseEntity
 {
     #region Database Properties

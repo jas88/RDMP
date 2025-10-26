@@ -8,6 +8,9 @@ using System.Data;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Interface for providing dataset identifiers when loading SCIStore data.
+/// </summary>
 public interface IDatasetIdProvider
 {
     int CreateDatasetId();

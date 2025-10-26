@@ -12,6 +12,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace LoadModules.Extensions.AutomationPlugins.Execution.ExtractionPipeline;
 
+/// <summary>
+/// Pipeline source component that extends standard dataset extraction to support delta/incremental extractions by injecting SQL conditions to extract only records added or modified since the last baseline.
+/// </summary>
 public class BaselineHackerExecuteDatasetExtractionSource : ExecuteDatasetExtractionSource
 {
     public override string HackExtractionSQL(string sql, IDataLoadEventListener listener)

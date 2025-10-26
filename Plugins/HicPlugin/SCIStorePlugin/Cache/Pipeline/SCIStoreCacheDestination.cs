@@ -21,6 +21,9 @@ using Rdmp.Core.Caching.Layouts;
 
 namespace SCIStorePlugin.Cache.Pipeline;
 
+/// <summary>
+/// Pipeline destination that writes SCIStore combined reports to XML files in a hierarchical cache structure organized by healthboard, discipline, and date, creating ZIP archives for each day.
+/// </summary>
 public class SCIStoreCacheDestination : CacheFilesystemDestination
 {
 

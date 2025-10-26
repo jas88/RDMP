@@ -10,6 +10,9 @@ using SCIStore.SciStoreServices81;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Represents a clinical sample type extracted from SCIStore clinical circumstance data, including sample codes, descriptions, and healthboard identifiers.
+/// </summary>
 public class SampleType
 {
     public string Code { get; set; }

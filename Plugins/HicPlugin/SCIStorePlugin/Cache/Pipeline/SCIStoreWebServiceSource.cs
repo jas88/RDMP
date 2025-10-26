@@ -23,6 +23,9 @@ using SCIStorePlugin.Repositories;
 
 namespace SCIStorePlugin.Cache.Pipeline;
 
+/// <summary>
+/// Pipeline source that fetches laboratory investigation reports from the SCIStore SOAP web service for a specified healthboard and discipline over a date range, with retry logic and download request tracking.
+/// </summary>
 public class SCIStoreWebServiceSource : CacheSource<SCIStoreCacheChunk>
 {
     private const bool VERBOSE = false;

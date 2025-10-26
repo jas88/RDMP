@@ -14,6 +14,9 @@ using System.Linq;
 
 namespace LoadModules.Extensions.AutomationPlugins;
 
+/// <summary>
+/// Command that creates a new <see cref="AutomateExtractionSchedule"/> for a project, allowing automated data extractions to be scheduled on a recurring basis.
+/// </summary>
 public class ExecuteCommandCreateNewAutomateExtractionSchedule : BasicAutomationCommandExecution
 {
     public IProject Project { get; }

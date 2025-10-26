@@ -11,6 +11,9 @@ using System;
 
 namespace LoadModules.Extensions.AutomationPlugins.Data.Repository;
 
+/// <summary>
+/// Repository for accessing automation database entities, providing connections to both the Catalogue and DataExport repositories for coordinating automated extractions.
+/// </summary>
 public class AutomateExtractionRepository : PluginRepository
 {
     public ICatalogueRepository CatalogueRepository { get; private set; }

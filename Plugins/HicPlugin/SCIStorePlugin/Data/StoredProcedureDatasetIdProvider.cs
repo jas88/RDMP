@@ -9,6 +9,9 @@ using System.Data;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Dataset ID provider that executes a stored procedure to generate new dataset identifiers based on data source, retrieval date, department, and transfer mechanism.
+/// </summary>
 public class StoredProcedureDatasetIdProvider : IDatasetIdProvider
 {
     private readonly string _spName;

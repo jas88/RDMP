@@ -23,6 +23,9 @@ using System.Linq;
 
 namespace LoadModules.Extensions.AutomationPlugins;
 
+/// <summary>
+/// Provides user interface integration for the Automation plugin, including custom icons, tree node children for automated extractions and schedules, and context menu items for projects and extraction configurations.
+/// </summary>
 public class AutomationUserInterface : PluginUserInterface
 {
     public AutomateExtractionRepository AutomationRepository { get; private set; }

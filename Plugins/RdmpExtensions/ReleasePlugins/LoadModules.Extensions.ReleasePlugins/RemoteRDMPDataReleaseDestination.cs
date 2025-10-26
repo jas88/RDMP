@@ -21,6 +21,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace LoadModules.Extensions.ReleasePlugins;
 
+/// <summary>
+/// Pipeline destination component that releases extracted data to a remote RDMP instance by zipping the release folder and uploading it via HTTP, with support for patching existing releases and cleanup of cumulative extraction results.
+/// </summary>
 public class RemoteRDMPDataReleaseDestination : IPluginDataFlowComponent<ReleaseAudit>, IDataFlowDestination<ReleaseAudit>, IPipelineRequirement<Project>, IPipelineRequirement<ReleaseData>
 {
     [DemandsNestedInitialization]

@@ -19,6 +19,9 @@ namespace SCIStorePlugin;
 public delegate void CacheRefillProgressHandler(NotifyEventArgs notifyEventArgs);
 public delegate void CacheRefillCompleteHandler();
 
+/// <summary>
+/// Refills the SCIStore cache from archived ZIP files by extracting reports, organizing them into dated directories by healthboard and discipline, and creating new cache archives.
+/// </summary>
 public class CacheRefiller
 {
     private readonly LoadDirectory _hicProjectDirectory;

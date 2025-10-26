@@ -18,6 +18,9 @@ using Microsoft.Data.SqlClient;
 
 namespace LoadModules.Extensions.AutomationPlugins.Data;
 
+/// <summary>
+/// Represents an automated extraction configuration that links an extraction configuration to a schedule, tracking baseline dates and release identifiers for incremental/delta extractions.
+/// </summary>
 public class AutomateExtraction : DatabaseEntity
 {
     private readonly AutomateExtractionRepository _repository;

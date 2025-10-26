@@ -11,6 +11,9 @@ using MapsDirectlyToDatabaseTable;
 
 namespace LoadModules.Extensions.ReleasePlugins.Data
 {
+    /// <summary>
+    /// Repository for accessing WebDAV automation audit tables, providing database connectivity for tracking WebDAV file processing history.
+    /// </summary>
     public class WebDavDataRepository : TableRepository
     {
         readonly ObjectConstructor _constructor = new ObjectConstructor();

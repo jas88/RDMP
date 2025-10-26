@@ -21,6 +21,9 @@ using Ionic.Zip;
 
 namespace LoadModules.Extensions.ReleasePlugins;
 
+/// <summary>
+/// Extends the standard ReleaseEngine to zip release folders and upload them to a remote RDMP instance via HTTP, integrating with ticketing systems to determine the target safe haven folder.
+/// </summary>
 public class RemoteRDMPReleaseEngine : ReleaseEngine
 {
     public RemoteRDMPReleaseEngineSettings RemoteRDMPSettings { get; }

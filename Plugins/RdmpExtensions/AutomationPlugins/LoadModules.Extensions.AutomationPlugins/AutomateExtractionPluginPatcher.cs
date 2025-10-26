@@ -8,6 +8,9 @@
 
 namespace LoadModules.Extensions.AutomationPlugins;
 
+/// <summary>
+/// Plugin patcher for the AutomateExtraction plugin database schema, responsible for versioning and patching the automation database.
+/// </summary>
 public class AutomateExtractionPluginPatcher:PluginPatcher
 {
     public AutomateExtractionPluginPatcher():base("db")

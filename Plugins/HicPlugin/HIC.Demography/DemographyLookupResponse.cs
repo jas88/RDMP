@@ -12,6 +12,10 @@
 
 namespace HIC.Demography;
 
+/// <summary>
+/// Response object from a demography lookup operation containing the PersonID, CHI number,
+/// and any exception that occurred during the lookup process.
+/// </summary>
 public class DemographyLookupResponse
 {
     public int? PersonID;

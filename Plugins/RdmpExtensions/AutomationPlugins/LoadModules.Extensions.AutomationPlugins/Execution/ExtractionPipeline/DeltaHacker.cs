@@ -16,6 +16,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace LoadModules.Extensions.AutomationPlugins.Execution.ExtractionPipeline;
 
+/// <summary>
+/// Generates SQL modifications to transform a full extraction query into a delta query that retrieves only new or updated records since the last successful extraction baseline.
+/// </summary>
 public class DeltaHacker
 {
     private readonly AutomateExtractionRepository _repository;

@@ -13,6 +13,9 @@ using Rdmp.Core.Startup;
 
 namespace LoadModules.Extensions.AutomationPlugins.Data;
 
+/// <summary>
+/// Records the SQL query used in a successful extraction to enable validation that subsequent delta extractions use the same query, ensuring data consistency across baseline and incremental extractions.
+/// </summary>
 public class SuccessfullyExtractedResults : DatabaseEntity
 {
     #region Database Properties

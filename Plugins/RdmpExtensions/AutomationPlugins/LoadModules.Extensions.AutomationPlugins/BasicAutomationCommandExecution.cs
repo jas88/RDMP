@@ -10,6 +10,9 @@ using Rdmp.Core.Startup;
 
 namespace LoadModules.Extensions.AutomationPlugins;
 
+/// <summary>
+/// Base class for automation command execution that ensures the AutomationRepository is available and configured before allowing commands to execute.
+/// </summary>
 public class BasicAutomationCommandExecution : BasicCommandExecution
 {
     protected PluginRepository AutomationRepository { get; }

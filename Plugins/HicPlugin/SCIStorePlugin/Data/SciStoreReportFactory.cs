@@ -12,6 +12,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Factory for creating SciStoreReport objects from CombinedReportData, validating read codes and handling bad data according to configuration.
+/// </summary>
 public class SciStoreReportFactory
 {
     private readonly ReferentialIntegrityConstraint _readCodeConstraint;

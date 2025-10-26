@@ -23,6 +23,9 @@ using Rdmp.Core.Validation.Constraints.Secondary;
 
 namespace SCIStorePlugin.Attachers;
 
+/// <summary>
+/// Data load attacher that populates the RAW database from SCIStore XML files by parsing combined reports, validating read codes, resolving duplicate test results, and bulk inserting headers, samples, and results into database tables.
+/// </summary>
 [Description(@"Populates the RAW database from XML files retrieved from the SCI Store web service in the ForLoading directory")]
 public class SciStoreAttacher : Attacher
 {
