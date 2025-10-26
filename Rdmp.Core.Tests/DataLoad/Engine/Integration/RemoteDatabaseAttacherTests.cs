@@ -106,7 +106,8 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
 
     private static string Within(AttacherHistoricalDurations duration)
     {
-        const string format = "yyyy-MM-dd HH:mm:ss.fff";
+        // Use format without milliseconds to avoid database truncation/rounding issues
+        const string format = "yyyy-MM-dd HH:mm:ss";
 
         switch (duration)
         {
@@ -131,7 +132,8 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
 
     private static string Outwith(AttacherHistoricalDurations duration)
     {
-        const string format = "yyyy-MM-dd HH:mm:ss.fff";
+        // Use format without milliseconds to avoid database truncation/rounding issues
+        const string format = "yyyy-MM-dd HH:mm:ss";
 
         switch (duration)
         {
