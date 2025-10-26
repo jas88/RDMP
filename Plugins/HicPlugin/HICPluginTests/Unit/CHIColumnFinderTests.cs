@@ -79,7 +79,7 @@ public class CHIColumnFinderTests : TestsRequiringAnExtractionConfiguration
     }
 
     [Test]
-    [TestCaseSource("CHIS")]
+    [TestCaseSource(nameof(CHIS))]
     public void TestForBadString(string toCheck)
     {
         using var toProcess = new DataTable();

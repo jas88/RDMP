@@ -9,9 +9,12 @@
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<DebugType>embedded</DebugType>
 	</PropertyGroup>
+	<!-- XML Serializer Generator disabled - was failing to generate serializer -->
+	<!--
 	<PropertyGroup>
 		<SGenTypes>SCIStorePlugin.Data.SciStoreReport;SCIStorePlugin.Data.CombinedReportData</SGenTypes>
 	</PropertyGroup>
+	-->
 	<ItemGroup>
 		<Compile Update="Service References\SciStoreServices81\Reference.cs">
 			<AutoGen>True</AutoGen>
@@ -125,7 +128,8 @@
 		<Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.XmlSerializer.Generator" />
+		<!-- Microsoft.XmlSerializer.Generator disabled - was failing to generate serializer -->
+		<!-- <PackageReference Include="Microsoft.XmlSerializer.Generator" /> -->
 		<PackageReference Include="System.ServiceModel.Http" />
 	</ItemGroup>
 	<ItemGroup>

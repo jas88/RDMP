@@ -42,6 +42,7 @@ public sealed class DRSFilenameReplacer
     public string GetCorrectFilename(DataRow originalRow, IEnumerable<string> columns, int? index)
     {
         var columnName = _extractionIdentifier.GetRuntimeName();
+        ArgumentException.ThrowIfNullOrEmpty(columnName, nameof(columnName));
         var correctFileName = originalRow[columnName]?.ToString() ?? string.Empty;
 
         foreach (var cellValue in columns.Select(column => originalRow[column]?.ToString() ?? string.Empty))
@@ -49,7 +50,8 @@ public sealed class DRSFilenameReplacer
             try
             {
                 //try and parse each value into a date, will fail if there is no valid date found
-                var date = cellValue != null ? (DateTime)Dt.Parse(cellValue) : DateTime.MinValue;
+                var parsedDate = cellValue != null ? Dt.Parse(cellValue) : null;
+                var date = parsedDate ?? DateTime.MinValue;
                 correctFileName = $"{correctFileName}_{date:yyyy-MM-dd}";
             }
             catch (FormatException)

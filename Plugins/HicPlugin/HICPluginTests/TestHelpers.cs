@@ -68,7 +68,9 @@ internal sealed class MockLoadProgress : ILoadProgress
     }
 
     /// <inheritdoc />
+#pragma warning disable CS0067 // Event is never used - intentionally unused in mock object
     public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore CS0067
 
     /// <inheritdoc />
     public int ID { get; set; }
@@ -144,7 +146,9 @@ internal sealed class MockPipeline : IPipeline
     }
 
     /// <inheritdoc />
+#pragma warning disable CS0067 // Event is never used - intentionally unused in mock object
     public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore CS0067
 
     /// <inheritdoc />
     public int ID { get; set; }
@@ -212,7 +216,9 @@ internal sealed class MockCacheProgress : ICacheProgress
     }
 
     /// <inheritdoc />
+#pragma warning disable CS0067 // Event is never used - intentionally unused in mock object
     public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore CS0067
 
     /// <inheritdoc />
     public int ID { get; set; }
@@ -486,7 +492,9 @@ internal sealed class MockExtractableCohort : IExtractableCohort
     }
 
     /// <inheritdoc />
+#pragma warning disable CS0067 // Event is never used - intentionally unused in mock object
     public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore CS0067
 
     /// <inheritdoc />
     public int ID { get; set; }
@@ -604,7 +612,9 @@ internal sealed class MockExtractableDataSet : IExtractableDataSet
     }
 
     /// <inheritdoc />
+#pragma warning disable CS0067 // Event is never used - intentionally unused in mock object
     public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore CS0067
 
     /// <inheritdoc />
     public int ID { get; set; }
@@ -801,7 +811,9 @@ internal sealed class MockCatalogue : ICatalogue
     }
 
     /// <inheritdoc />
+#pragma warning disable CS0067 // Event is never used - intentionally unused in mock object
     public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore CS0067
 
     /// <inheritdoc />
     public int ID { get; set; }
@@ -1053,7 +1065,9 @@ internal sealed class MockColumn : IColumn
     }
 
     /// <inheritdoc />
+#pragma warning disable CS0067 // Event is never used - intentionally unused in mock object
     public event PropertyChangedEventHandler PropertyChanged;
+#pragma warning restore CS0067
 
     /// <inheritdoc />
     public int ID { get; set; }
