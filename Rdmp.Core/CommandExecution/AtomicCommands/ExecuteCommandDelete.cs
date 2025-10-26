@@ -81,21 +81,12 @@ public class ExecuteCommandDelete : BasicCommandExecution
     {
         base.Execute();
 
-        // if the thing we are deleting is important and sensitive then we should use a transaction
-        if (_deletables.Count > 1 || ShouldUseTransactionsWhenDeleting(_deletables.FirstOrDefault()))
-        {
-            ExecuteWithCommit(ExecuteImpl, GetDescription(),
-                _deletables.OfType<IMapsDirectlyToDatabaseTable>().ToArray());
-            PublishNearest();
-        }
-        else
-        {
-            ExecuteImpl();
-        }
+        // Always use transactions for delete operations to ensure consistency
+        // This prevents issues with connections that have pending transactions
+        ExecuteWithCommit(ExecuteImpl, GetDescription(),
+            _deletables.OfType<IMapsDirectlyToDatabaseTable>().ToArray());
+        PublishNearest();
     }
-
-    private static bool ShouldUseTransactionsWhenDeleting(IDeleteable deletable) =>
-        deletable is CatalogueItem or ExtractionInformation;
 
     private string GetDescription() =>
         _deletables.Count == 1
