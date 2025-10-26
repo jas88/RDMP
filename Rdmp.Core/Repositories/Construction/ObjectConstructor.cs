@@ -263,12 +263,39 @@ public class ObjectConstructor
         if (constructors.Count == 1)
             return constructors[0].Invoke(parameters);
 
+        // First priority: Use decorated constructor if exactly one is decorated
         var importDecorated = constructors.Where(c => Attribute.IsDefined(c, typeof(UseWithObjectConstructorAttribute)))
             .ToArray();
-        return importDecorated.Length == 1
-            ? importDecorated[0].Invoke(parameters)
-            : throw new ObjectLacksCompatibleConstructorException(
-                $"Could not pick the correct constructor between:{Environment.NewLine}{string.Join($"{Environment.NewLine}", constructors.Select(c => $"{c.Name}({string.Join(",", c.GetParameters().Select(p => p.ParameterType))}"))}");
+        if (importDecorated.Length == 1)
+            return importDecorated[0].Invoke(parameters);
+
+        // Second priority: Pick constructor with most specific parameter types (avoid object parameters)
+        var bestMatch = constructors
+            .Select(c => new
+            {
+                Constructor = c,
+                Specificity = c.GetParameters().Select((p, i) =>
+                {
+                    if (parameters[i] == null) return 0;
+                    // Exact type match = highest score
+                    if (p.ParameterType == parameters[i].GetType()) return 3;
+                    // Non-object assignable type = medium score
+                    if (p.ParameterType != typeof(object) && p.ParameterType.IsInstanceOfType(parameters[i])) return 2;
+                    // Object type = lowest score (too generic)
+                    if (p.ParameterType == typeof(object)) return 1;
+                    return 0;
+                }).Sum()
+            })
+            .OrderByDescending(x => x.Specificity)
+            .ToList();
+
+        // If there's a clear winner (highest specificity), use it
+        if (bestMatch.Count >= 2 && bestMatch[0].Specificity > bestMatch[1].Specificity)
+            return bestMatch[0].Constructor.Invoke(parameters);
+
+        // Otherwise, ambiguous
+        throw new ObjectLacksCompatibleConstructorException(
+            $"Could not pick the correct constructor between:{Environment.NewLine}{string.Join($"{Environment.NewLine}", constructors.Select(c => $"{c.Name}({string.Join(",", c.GetParameters().Select(p => p.ParameterType))}"))}");
     }
 
     private static object GetUsingBlankConstructor(Type t)
