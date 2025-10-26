@@ -710,16 +710,11 @@ public abstract class TableRepository : ITableRepository, IDisposable
             if (ongoingConnection != null &&
                 ongoingConnection.Connection.State ==
                 ConnectionState.Open) //as long as it hasn't timed out or been disposed etc
-                if (ongoingConnection.CloseOnDispose)
-                {
-                    var clone = ongoingConnection.Clone();
-                    clone.CloseOnDispose = false;
-                    return clone;
-                }
-                else
-                {
-                    return ongoingConnection;
-                }
+            {
+                // Bypass FAnsiSql's problematic connection reuse and cloning entirely
+            // Rely on FAnsiSql's built-in pooling and health check logic instead
+            return DiscoveredServer.GetManagedConnection(ongoingTransaction);
+            }
 
             ongoingConnection = DiscoveredServer.GetManagedConnection(ongoingTransaction);
 
