@@ -191,11 +191,13 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
         var db = GetCleanedServer(dbType);
 
         using var dt = new DataTable();
-        dt.Columns.Add("animal");
-        dt.Columns.Add("date_seen");
-        var withinDate = Within(duration);
+        dt.Columns.Add("animal", typeof(string));
+        dt.Columns.Add("date_seen", typeof(DateTime)); // Explicitly use DateTime type
+
+        // Parse the string dates into DateTime objects for proper database storage
+        var withinDate = DateTime.Parse(Within(duration));
         dt.Rows.Add("Cow", withinDate);
-        dt.Rows.Add("Crow", Outwith(duration));
+        dt.Rows.Add("Crow", DateTime.Parse(Outwith(duration)));
 
         var tbl = db.CreateTable("MyTable", dt);
 
@@ -257,6 +259,7 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
         Assert.That(tbl.GetRowCount(), Is.EqualTo(3));
 
         using var dt2 = tbl.GetDataTable();
+        // Compare with DateTime object, not string
         VerifyRowExist(dt2, "Cow", withinDate);
 
         attacher.LoadCompletedSoDispose(ExitCodeType.Success, ThrowImmediatelyDataLoadEventListener.Quiet);
