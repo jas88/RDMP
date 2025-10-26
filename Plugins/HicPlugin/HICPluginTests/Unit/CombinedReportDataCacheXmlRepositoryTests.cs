@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using SCIStorePlugin;
 using SCIStorePlugin.Cache;

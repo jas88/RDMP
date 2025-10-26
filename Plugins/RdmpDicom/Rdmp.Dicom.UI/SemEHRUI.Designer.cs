@@ -1,4 +1,4 @@
-﻿
+
 namespace Rdmp.Dicom.UI
 {
     partial class SemEHRUI
