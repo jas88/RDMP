@@ -14,6 +14,9 @@ using Rdmp.Core.DataLoad.Engine.Job.Scheduling;
 
 namespace SCIStorePlugin.DataProvider;
 
+/// <summary>
+/// Cached file retriever for SCI Store data that extends CachedFileRetriever to provide scheduled data load job integration.
+/// </summary>
 public class SCIStoreCachedFileRetriever : CachedFileRetriever
 {
     private ScheduledDataLoadJob _scheduledJob;

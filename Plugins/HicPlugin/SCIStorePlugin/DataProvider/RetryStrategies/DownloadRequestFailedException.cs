@@ -8,6 +8,9 @@ using System;
 
 namespace SCIStorePlugin.DataProvider.RetryStrategies;
 
+/// <summary>
+/// Exception thrown when a download request fails for a specific date and time interval, capturing the fetch date and interval for retry logic.
+/// </summary>
 public class DownloadRequestFailedException : Exception
 {
     public DateTime FetchDate { get; private set; }

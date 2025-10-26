@@ -6,6 +6,9 @@
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Represents laboratory test result name mappings including the test code, descriptive test name, and associated Read code.
+/// </summary>
 public class TestResultNames
 {
     public string Code = "";

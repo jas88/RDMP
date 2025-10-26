@@ -15,6 +15,10 @@ using SCIStorePlugin.Repositories;
 
 namespace SCIStorePlugin.DataProvider.RetryStrategies;
 
+/// <summary>
+/// Retry strategy that attempts a configurable number of retries with exponential backoff before giving up on a failed download,
+/// handling CommunicationException and DownloadRequestFailedException with configurable sleep intervals between attempts.
+/// </summary>
 public class LimitedRetryThenContinueStrategy : IRetryStrategy
 {
     public int NumberOfTimesToRetry { get; set; }

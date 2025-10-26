@@ -13,6 +13,9 @@ using SCIStorePlugin.Repositories;
 
 namespace SCIStorePlugin.DataProvider.RetryStrategies;
 
+/// <summary>
+/// Strategy interface for fetching data with retry logic, providing a Fetch method that retrieves CombinedReportData for a specified date range with cancellation support.
+/// </summary>
 public interface IRetryStrategy
 {
     IEnumerable<CombinedReportData> Fetch(DateTime dateToFetch, TimeSpan interval, IDataLoadEventListener listener, GracefulCancellationToken cancellationToken);

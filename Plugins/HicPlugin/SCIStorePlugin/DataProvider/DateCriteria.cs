@@ -8,6 +8,9 @@ using System;
 
 namespace SCIStorePlugin.DataProvider;
 
+/// <summary>
+/// Defines a date range criteria with FromDate and ToDate, providing an EachDay iterator method for processing each day in the range sequentially.
+/// </summary>
 public class DateCriteria
 {
     public DateTime FromDate { get; set; }

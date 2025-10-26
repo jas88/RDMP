@@ -6,6 +6,9 @@
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Represents a laboratory test set containing the clinical circumstance description and associated local and Read code clinical coding information.
+/// </summary>
 public class TestSet
 {
     public string ClinicalCircumstanceDescription { get; set; }

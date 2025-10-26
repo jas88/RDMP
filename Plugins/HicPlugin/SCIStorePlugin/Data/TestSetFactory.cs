@@ -13,6 +13,9 @@ using SCIStore.SciStoreServices81;
 
 namespace SCIStorePlugin.Data;
 
+/// <summary>
+/// Factory for creating TestSet objects from SCI Store TEST_TYPE data with Read code validation.
+/// </summary>
 public class TestSetFactory
 {
     private readonly ReferentialIntegrityConstraint _readCodeConstraint;
