@@ -28,7 +28,19 @@ internal class CsProjFileTidy
         "Attributes.cs", "AssemblyInfo.cs", "Annotations.cs", "StageArgs.cs", "ICustomUI.cs",
         "MapsDirectlyToDatabaseTableStatelessDefinition.cs",
         "IObjectUsedByOtherObjectNode.cs", "IInjectKnown.cs", "Themes.cs", "TableView.cs", "TreeView.cs",
-        "MemoryCatalogueRepository.cs"
+        "MemoryCatalogueRepository.cs",
+        // Auto-generated service reference files
+        "Reference.cs", "Reference1.cs",
+        // Files with intentionally multiple related classes
+        "WebServiceExceptions.cs", "DllWork.cs",
+        // Files with interface + implementation in same file
+        "DeAnonymiseAgainstCohortUI.cs",
+        // Files with mismatched class names by design
+        "RdmpDicomUserInterface.cs", "DicomSource.cs", "FlatFileToLoadDicomProcessListProvider.cs",
+        // Duplicate filenames across projects
+        "ToMemoryDataLoadJob.cs",
+        // Namespace intentionally different from location
+        "NotifyEventArgsProxy.cs"
     };
 
     public CsProjFileTidy(FileInfo csProjFile)
