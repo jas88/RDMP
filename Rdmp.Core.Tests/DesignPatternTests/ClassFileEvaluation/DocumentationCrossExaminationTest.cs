@@ -417,8 +417,9 @@ internal class DocumentationCrossExaminationTest
 
     private static void EnsureCodeBlocksCompile(string mdFile, List<string> problems)
     {
+        // Path from Core.Tests bin directory to UI.Tests source: up 4 levels then into Rdmp.UI.Tests
         var codeBlocks = Path.Combine(TestContext.CurrentContext.TestDirectory,
-            "../../../Rdmp.UI.Tests/DesignPatternTests/MarkdownCodeBlockTests.cs");
+            "../../../../Rdmp.UI.Tests/DesignPatternTests/MarkdownCodeBlockTests.cs");
 
         Console.WriteLine($"Starting {mdFile}");
 
