@@ -30,8 +30,12 @@ public class AllObjectsHaveImages : DatabaseTests
             "ExtractionFilterParameter",
             //handled by CatalogueIconProvider just like AnyTableSqlParameter by looking for the ISqlParameter classes
 
-            "StackFrame"
+            "StackFrame",
             //not required , it's only ever dependent on itself and it doesn't have any visualisation on Catalogue / Export
+
+            // ObjectProxy types - dynamically generated proxy classes for AOT/reflection-free object construction
+            "ObjectProxy", "ObjectProxy_16", "ObjectProxy_18", "ObjectProxy_22", "ObjectProxy_23", "ObjectProxy_24",
+            "LoadMetadataProxy"
         };
 
         var missingConcepts = Core.Repositories.MEF.GetAllTypes()
