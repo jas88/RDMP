@@ -47,10 +47,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="HIC.System.Windows.Forms.DataVisualization" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 		<PackageReference Include="ObjectListView.Repack.NET6Plus" />
 		<PackageReference Include="Scintilla.NET" />
 		<PackageReference Include="System.Resources.Extensions" />

@@ -8,7 +8,6 @@
 | Package | Source Code | License | Purpose | Additional Risk Assessment |
 | ------- | ------------| ------- | ------- | -------------------------- |
 | FluentFTP | [Github](https://github.com/robinrodricks/FluentFTP/) | [MIT](https://opensource.org/licenses/MIT) | FTP(S) client | |
-| Microsoft.SourceLink.GitHub | [GitHub](https://github.com/dotnet/sourcelink) | [MIT](https://opensource.org/licenses/MIT) | Enable source linkage from nupkg | Official MS project |
 | ObjectListView.Repack.NET6Plus | [GitHub](https://github.com/nasisakk/ObjectListViewRepack) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | |
 | Scintilla.NET | [GitHub](https://github.com/VPKSoft/Scintilla.NET) | [MIT](https://opensource.org/licenses/MIT) | |
 | VPKSoft.ScintillaLexers.NET | [GitHub](https://github.com/VPKSoft/ScintillaLexers) | [MIT](https://opensource.org/licenses/MIT) | |

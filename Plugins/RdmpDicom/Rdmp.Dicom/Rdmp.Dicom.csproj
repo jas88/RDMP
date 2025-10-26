@@ -28,10 +28,6 @@
 	<ItemGroup>
 		<!-- Updated to use DicomTypeTranslation (without HIC. prefix) with FAnsiSql.Legacy 3.3.1 -->
 		<PackageReference Include="DicomTypeTranslation" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 		<PackageReference Include="fo-dicom" />
 	</ItemGroup>
 	<ItemGroup>
