@@ -278,9 +278,11 @@ public class Startup
     /// </summary>
     public static void PreStartup()
     {
-        ImplementationManager.Load<MicrosoftSQLImplementation>();
-        ImplementationManager.Load<MySqlImplementation>();
-        ImplementationManager.Load<OracleImplementation>();
-        ImplementationManager.Load<PostgreSqlImplementation>();
+        // FAnsiSql 3.3.4+ auto-registers implementations when assemblies load
+        // Manual Load() calls no longer needed
+        // ImplementationManager.Load<MicrosoftSQLImplementation>();
+        // ImplementationManager.Load<MySqlImplementation>();
+        // ImplementationManager.Load<OracleImplementation>();
+        // ImplementationManager.Load<PostgreSqlImplementation>();
     }
 }
