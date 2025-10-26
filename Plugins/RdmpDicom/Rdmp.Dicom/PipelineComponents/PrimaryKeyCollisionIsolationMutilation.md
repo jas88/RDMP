@@ -129,3 +129,4 @@ Study.StudyInstanceUID = '9.9.9'
 ## Tests
 
 Unit tests for the component can be found in [PrimaryKeyCollisionIsolationMutilationTests.cs](../../Rdmp.Dicom.Tests/Unit/PrimaryKeyCollisionIsolationMutilationTests.cs)
+[JoinInfo]: ../../../../Documentation/CodeTutorials/Glossary.md#JoinInfo

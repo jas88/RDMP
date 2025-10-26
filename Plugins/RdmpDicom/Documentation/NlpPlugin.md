@@ -58,4 +58,4 @@ To get back to the settings/query screen after error right click the cohort set 
 
 [SemEHR]: https://github.com/CogStack/CogStack-SemEHR
 [Catalogue]: https://github.com/HicServices/RDMP/blob/main/Documentation/CodeTutorials/Glossary.md#catalogue
-[CohortIdentificationConfiguration]: https://github.com/HicServices/RDMP/blob/main/Documentation/CodeTutorials/Glossary.md#cohortidentificationconfiguration
+[CohortIdentificationConfiguration]: https://github.com/HicServices/RDMP/blob/main/Documentation/CodeTutorials/Glossary.md#cohortidentificationconfiguration[Catalogue]: ../../../Documentation/CodeTutorials/Glossary.md#Catalogue

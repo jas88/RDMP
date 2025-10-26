@@ -286,7 +286,31 @@ internal class DocumentationCrossExaminationTest
 
         // MEF optimization migration guide - example names
         "MyNamespace",
-        "AotObjectFactoryExample"
+        "AotObjectFactoryExample",
+
+        // External protocols, APIs, and system classes
+        "WebDAV",
+        "CommunicationException",
+        "EventWaitHandle",
+        "TrySend",
+        "DecimalString",
+
+        // Domain-specific terms and product names
+        "MetIDQ",
+        "CUIs",
+
+        // Database/table examples in documentation
+        "CT_SeriesTable",
+        "CT_ImageTable",
+        "ImageTableSchema",
+        "MassiveImageArchive",
+        "Test_P_00202_RIGHT_CC",
+        "Test_P_00077_LEFT_CC",
+        "Training_P_01983_LEFT_MLO_1",
+
+        // Documentation file names
+        "NoteForNewDevelopers",
+        "NlpPlugin"
     };
 
     #endregion
