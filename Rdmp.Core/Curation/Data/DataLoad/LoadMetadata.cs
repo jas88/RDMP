@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using FAnsi.Discovery;
 using FAnsi.Discovery.QuerySyntax;
 using Rdmp.Core.Curation.Data.Cache;
@@ -316,7 +317,7 @@ public class LoadMetadata : DatabaseEntity, ILoadMetadata, IHasDependencies, IHa
 
     public void UnlinkFromCatalogue(ICatalogue catalogue)
     {
-        foreach (var l in CatalogueRepository.GetAllObjects<LoadMetadataCatalogueLinkage>().Where(link => link.CatalogueID == catalogue.ID && link.LoadMetadataID == ID))
+        foreach (var l in CatalogueRepository.GetAllObjectsWhere<LoadMetadataCatalogueLinkage>("CatalogueID", catalogue.ID, ExpressionType.AndAlso, "LoadMetadataID", ID))
         {
             l.DeleteInDatabase();
         }

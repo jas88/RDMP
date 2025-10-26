@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -71,8 +72,7 @@ public class DitaCatalogueExtractor : ICheckable
         GenerateDataSetFile("dataset.dita");
 
         //get all the catalogues then sort them alphabetically
-        var catas = new List<Catalogue>(_repository.GetAllObjects<Catalogue>()
-            .Where(c => !(c.IsDeprecated || c.IsInternalDataset)));
+        var catas = _repository.GetAllObjectsWhere<Catalogue>("IsDeprecated", false, ExpressionType.AndAlso, "IsInternalDataset", false).ToList();
         catas.Sort();
 
         var sw = Stopwatch.StartNew();
@@ -270,8 +270,7 @@ public class DitaCatalogueExtractor : ICheckable
     /// <param name="notifier"></param>
     public void Check(ICheckNotifier notifier)
     {
-        var catas = _repository.GetAllObjectsWhere<Catalogue>("IsInternalDataset", false)
-            .ToArray();
+        var catas = _repository.GetAllObjectsWhere<Catalogue>("IsInternalDataset", false);
 
         //Catalogues with no acronyms
         foreach (var c in catas.Where(c => string.IsNullOrWhiteSpace(c.Acronym)))
