@@ -337,6 +337,10 @@
 		</EmbeddedResource>
 	</ItemGroup>
 	<ItemGroup>
+  	<PackageReference Include="AWSSDK.S3" VersionOverride="4.0.7.14" />
+  	<PackageReference Include="AWSSDK.SecurityToken" VersionOverride="4.0.2.10" />
+	<PackageReference Include="AWSSDK.SSO" VersionOverride="4.0.1.10" />
+	<PackageReference Include="AWSSDK.SSOOIDC" VersionOverride="4.0.3" />
 		<Folder Include="PluginChildProvision\" />
 	</ItemGroup>
 </Project>
