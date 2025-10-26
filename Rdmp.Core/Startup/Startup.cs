@@ -278,11 +278,13 @@ public class Startup
     /// </summary>
     public static void PreStartup()
     {
-        // FAnsiSql 3.3.4+ auto-registers implementations when assemblies load
-        // Manual Load() calls no longer needed
-        // ImplementationManager.Load<MicrosoftSQLImplementation>();
-        // ImplementationManager.Load<MySqlImplementation>();
-        // ImplementationManager.Load<OracleImplementation>();
-        // ImplementationManager.Load<PostgreSqlImplementation>();
+        // Despite FAnsiSql 3.3.4+ documentation claiming auto-registration,
+        // explicit Load() calls are still required for implementation discovery
+#pragma warning disable CS0618 // Type or member is obsolete
+        ImplementationManager.Load<MicrosoftSQLImplementation>();
+        ImplementationManager.Load<MySqlImplementation>();
+        ImplementationManager.Load<OracleImplementation>();
+        ImplementationManager.Load<PostgreSqlImplementation>();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 }

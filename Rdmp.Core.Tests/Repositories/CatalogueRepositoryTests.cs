@@ -22,7 +22,9 @@ internal class CatalogueRepositoryTests
     [Test]
     public void TestConnection_NoServer_DoNotShowPassword()
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         ImplementationManager.Load<FAnsi.Implementations.MicrosoftSQL.MicrosoftSQLImplementation>();
+#pragma warning restore CS0618 // Type or member is obsolete
 
         var repo = new CatalogueRepository(new SqlConnectionStringBuilder
         {
@@ -44,7 +46,9 @@ internal class CatalogueRepositoryTests
     [Test]
     public void TestConnection_NoServer_IntegratedSecurity()
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         ImplementationManager.Load<FAnsi.Implementations.MicrosoftSQL.MicrosoftSQLImplementation>();
+#pragma warning restore CS0618 // Type or member is obsolete
 
         if (EnvironmentInfo.IsLinux)
             Assert.Inconclusive(
