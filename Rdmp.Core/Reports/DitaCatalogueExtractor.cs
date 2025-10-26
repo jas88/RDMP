@@ -270,7 +270,7 @@ public class DitaCatalogueExtractor : ICheckable
     /// <param name="notifier"></param>
     public void Check(ICheckNotifier notifier)
     {
-        var catas = _repository.GetAllObjects<Catalogue>().Where(c => !c.IsInternalDataset)
+        var catas = _repository.GetAllObjectsWhere<Catalogue>("IsInternalDataset", false)
             .ToArray();
 
         //Catalogues with no acronyms
