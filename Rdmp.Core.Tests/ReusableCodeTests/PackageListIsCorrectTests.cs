@@ -120,8 +120,9 @@ public class PackageListIsCorrectTests
     /// <returns></returns>
     private static string GetPackagesMarkdown(DirectoryInfo root)
     {
-        var path = root.EnumerateFiles("packages.md", EnumerationOptions).Select(f => f.FullName).SingleOrDefault();
-        Assert.That(path, Is.Not.Null, "Could not find packages.md");
+        // Find Packages.md in root directory (not in plugin subdirectories)
+        var path = Path.Combine(root.FullName, "Packages.md");
+        Assert.That(File.Exists(path), Is.True, $"Could not find Packages.md at {path}");
         return path;
     }
 }

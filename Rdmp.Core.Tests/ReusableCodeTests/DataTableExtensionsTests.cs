@@ -29,11 +29,13 @@ internal class DataTableExtensionsTests
 
         var answer = File.ReadAllText(path).Replace("\r\n", "\n");
 
-        Assert.That(answer, Is.EqualTo("""
-                                       Phrase,Car
-                                       "omg,why me!",Ferrari
+        var expected = """
+                       Phrase,Car
+                       "omg,why me!",Ferrari
 
-                                       """));
+                       """.Replace("\r\n", "\n");
+
+        Assert.That(answer, Is.EqualTo(expected));
     }
 
     [Test]
