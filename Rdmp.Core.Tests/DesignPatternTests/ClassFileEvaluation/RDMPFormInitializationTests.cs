@@ -12,7 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 
-namespace Rdmp.UI.Tests.DesignPatternTests.ClassFileEvaluation;
+namespace Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 
 public class RDMPFormInitializationTests
 {

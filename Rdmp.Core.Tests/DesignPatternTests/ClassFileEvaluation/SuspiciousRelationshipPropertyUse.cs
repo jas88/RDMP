@@ -18,7 +18,7 @@ using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Repositories;
 
-namespace Rdmp.UI.Tests.DesignPatternTests.ClassFileEvaluation;
+namespace Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 
 public class SuspiciousRelationshipPropertyUse
 {

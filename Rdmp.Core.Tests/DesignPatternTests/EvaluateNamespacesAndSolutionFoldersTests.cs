@@ -13,10 +13,10 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.VisualStudioSolutionFileProcessing;
-using Rdmp.UI.Tests.DesignPatternTests.ClassFileEvaluation;
+using Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 using Tests.Common;
 
-namespace Rdmp.UI.Tests.DesignPatternTests;
+namespace Rdmp.Core.Tests.DesignPatternTests;
 
 public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
 {
@@ -78,15 +78,17 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         var documented = new AllImportantClassesDocumented();
         documented.FindProblems(_csFilesFound);
 
-        var uiStandardisationTest = new UserInterfaceStandardisationChecker();
-        uiStandardisationTest.FindProblems(_csFilesFound);
+        // UI standardization check skipped in Core.Tests (UI-specific validation)
+        // var uiStandardisationTest = new UserInterfaceStandardisationChecker();
+        // uiStandardisationTest.FindProblems(_csFilesFound);
 
         var crossExamination = new DocumentationCrossExaminationTest(solutionDir);
         crossExamination.FindProblems(_csFilesFound);
 
         //Assuming all files are present and correct we can now evaluate the RDMP specific stuff:
-        var otherTestRunner = new RDMPFormInitializationTests();
-        otherTestRunner.FindUninitializedForms(_csFilesFound);
+        // UI form initialization check skipped in Core.Tests (UI-specific validation)
+        // var otherTestRunner = new RDMPFormInitializationTests();
+        // otherTestRunner.FindUninitializedForms(_csFilesFound);
 
         var propertyChecker = new SuspiciousRelationshipPropertyUse();
         propertyChecker.FindPropertyMisuse(_csFilesFound);

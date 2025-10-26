@@ -11,7 +11,7 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Repositories;
 
-namespace Rdmp.UI.Tests.DesignPatternTests;
+namespace Rdmp.Core.Tests.DesignPatternTests;
 
 public class InterfaceDeclarationsCorrect
 {

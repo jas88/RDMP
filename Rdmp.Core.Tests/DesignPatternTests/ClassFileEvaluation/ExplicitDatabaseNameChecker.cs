@@ -10,7 +10,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 
-namespace Rdmp.UI.Tests.DesignPatternTests.ClassFileEvaluation;
+namespace Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 
 public class ExplicitDatabaseNameChecker
 {
