@@ -38,7 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Rdmp.Dicom\Rdmp.Dicom.csproj" />
-    <ProjectReference Include="..\..\..\..\SynthDicom\SynthDicom\SynthDicom.csproj" />
+    <PackageReference Include="SynthDicom" />
     <ProjectReference Include="..\..\..\Tests.Common\Tests.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
