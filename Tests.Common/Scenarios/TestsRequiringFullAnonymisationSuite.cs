@@ -17,7 +17,7 @@ namespace Tests.Common.Scenarios;
 /// <summary>
 /// For any test that requires both the ANOStore and the IdentifierDump and anything else we come up with in terms of anonymisation
 /// </summary>
-public class TestsRequiringFullAnonymisationSuite : TestsRequiringANOStore
+public abstract class TestsRequiringFullAnonymisationSuite : TestsRequiringANOStore
 {
     protected string IdentifierDump_DatabaseName = TestDatabaseNames.GetConsistentName("IdentifierDump");
     protected ExternalDatabaseServer IdentifierDump_ExternalDatabaseServer { get; set; }
