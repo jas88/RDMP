@@ -10,7 +10,7 @@ using DrsPlugin.Attachers;
 using NUnit.Framework;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 
-namespace DrsPluginTests;
+namespace HICPluginTests;
 
 public class SourceArchiveTests
 {

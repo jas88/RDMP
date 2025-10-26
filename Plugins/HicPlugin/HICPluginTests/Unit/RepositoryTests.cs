@@ -16,7 +16,7 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 using SCIStorePlugin.Data;
 using SCIStorePlugin.Repositories;
 
-namespace SCIStorePluginTests.Unit;
+namespace HICPluginTests.Unit;
 
 class RepositoryTests
 {

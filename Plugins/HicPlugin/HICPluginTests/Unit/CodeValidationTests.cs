@@ -13,7 +13,7 @@ using HICPluginTests;
 using Rdmp.Core.Validation;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Unit;
+namespace HICPluginTests.Unit;
 
 public class CodeValidationTests : DatabaseTests
 {

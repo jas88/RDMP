@@ -23,7 +23,7 @@ using Rdmp.Core.QueryBuilding;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using Tests.Common;
 
-namespace DrsPluginTests;
+namespace HICPluginTests;
 
 public class ExtractionTests : DatabaseTests
 {

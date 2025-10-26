@@ -20,7 +20,7 @@ using SCIStorePlugin.Cache.Pipeline;
 using SCIStorePlugin.Data;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Integration;
+namespace HICPluginTests.Integration;
 
 internal class PipelineDatabaseTestHelper
 {

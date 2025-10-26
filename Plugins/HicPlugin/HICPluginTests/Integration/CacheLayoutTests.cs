@@ -12,7 +12,7 @@ using SCIStorePlugin.Cache;
 using SCIStorePlugin.Data;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Integration;
+namespace HICPluginTests.Integration;
 
 [Category("Integration")]
 class CacheLayoutTests : DatabaseTests

@@ -18,7 +18,7 @@ using SCIStorePlugin.Data;
 using Tests.Common;
 using NSubstitute;
 
-namespace SCIStorePluginTests.Integration;
+namespace HICPluginTests.Integration;
 
 public class SCIStoreCacheDestinationTests : DatabaseTests
 {

@@ -13,7 +13,7 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 using SCIStorePlugin.Data;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Integration;
+namespace HICPluginTests.Integration;
 
 [Category("Database")]
 public class SCIStoreWebServiceProviderTests : DatabaseTests

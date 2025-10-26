@@ -13,7 +13,7 @@ using SCIStorePlugin.DataProvider.RetryStrategies;
 using SCIStorePlugin.Repositories;
 using NSubstitute;
 
-namespace SCIStorePluginTests.Unit;
+namespace HICPluginTests.Unit;
 
 public class LimitedRetryThenContinueStrategyTests
 {

@@ -11,7 +11,7 @@ using NUnit.Framework;
 using SCIStorePlugin.Repositories;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Integration;
+namespace HICPluginTests.Integration;
 
 public class ReflectionToDatabaseTester : DatabaseTests
 {

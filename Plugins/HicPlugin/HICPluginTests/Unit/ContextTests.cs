@@ -15,7 +15,7 @@ using SCIStorePlugin.Cache.Pipeline;
 using System.IO;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Unit;
+namespace HICPluginTests.Unit;
 
 public class ContextTests : DatabaseTests
 {

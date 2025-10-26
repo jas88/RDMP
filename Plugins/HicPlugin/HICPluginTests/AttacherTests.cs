@@ -26,7 +26,7 @@ using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using Tests.Common;
 
-namespace DrsPluginTests;
+namespace HICPluginTests;
 
 public class AttacherTests : DatabaseTests
 {

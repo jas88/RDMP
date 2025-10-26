@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace DrsPluginTests.TestData {
+namespace HICPluginTests.TestData {
     using System;
     
     

@@ -12,7 +12,7 @@ using NUnit.Framework;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using SCIStorePlugin.Data;
 
-namespace SCIStorePluginTests.Integration;
+namespace HICPluginTests.Integration;
 
 
 public class SCIStoreDataTests

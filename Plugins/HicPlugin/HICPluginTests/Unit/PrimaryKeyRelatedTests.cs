@@ -7,7 +7,7 @@
 ﻿using NUnit.Framework;
 using SCIStorePlugin.Data;
 
-namespace SCIStorePluginTests.Unit;
+namespace HICPluginTests.Unit;
 
 public class PrimaryKeyRelatedTests
 {
