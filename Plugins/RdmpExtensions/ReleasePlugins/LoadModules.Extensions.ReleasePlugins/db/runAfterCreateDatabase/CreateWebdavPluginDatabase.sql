@@ -1,4 +1,4 @@
-﻿/****** Object:  Table [dbo].[WebdavAutomationAudit]    Script Date: 17/10/2017 12:12:08 ******/
+/****** Object:  Table [dbo].[WebdavAutomationAudit]    Script Date: 17/10/2017 12:12:08 ******/
 SET ANSI_NULLS ON
 GO
 

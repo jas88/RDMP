@@ -1,4 +1,4 @@
-﻿#Expects the following to exist on the server:
+#Expects the following to exist on the server:
 #Catalogue
 #DQE
 #DataExport

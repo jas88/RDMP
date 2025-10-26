@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyTitle>LoadModules.Extensions</AssemblyTitle>
     <Product>LoadModules.Extensions</Product>
