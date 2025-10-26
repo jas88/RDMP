@@ -118,13 +118,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDartsPlugin", "Plugins\Hi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HICPluginInteractive", "Plugins\HicPlugin\HICPluginInteractive\HICPluginInteractive.csproj", "{A1B2C3D4-E5F6-A7B8-C9D0-E1F2A3B4C5D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "main", "Plugins\HicPlugin\Plugin\main\main.csproj", "{11223344-5566-7788-99AA-BBCCDDEEFF00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HicPlugin.Main", "Plugins\HicPlugin\Plugin\main\HicPlugin.Main.csproj", "{11223344-5566-7788-99AA-BBCCDDEEFF00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "windows", "Plugins\HicPlugin\Plugin\windows\windows.csproj", "{22334455-6677-8899-AABB-CCDDEEFF0011}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HicPlugin.Windows", "Plugins\HicPlugin\Plugin\windows\HicPlugin.Windows.csproj", "{22334455-6677-8899-AABB-CCDDEEFF0011}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "main", "Plugins\RdmpExtensions\Plugin\main\main.csproj", "{33445566-7788-99AA-BBCC-DDEEFF001122}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RdmpExtensions.Main", "Plugins\RdmpExtensions\Plugin\main\RdmpExtensions.Main.csproj", "{33445566-7788-99AA-BBCC-DDEEFF001122}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "windows", "Plugins\RdmpExtensions\Plugin\windows\windows.csproj", "{44556677-8899-AABB-CCDD-EEFF00112233}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RdmpExtensions.Windows", "Plugins\RdmpExtensions\Plugin\windows\RdmpExtensions.Windows.csproj", "{44556677-8899-AABB-CCDD-EEFF00112233}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugin", "Plugin", "{AABBCCDD-1122-3344-5566-778899AABBCC}"
 EndProject
