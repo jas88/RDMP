@@ -39,10 +39,11 @@ public class CombinedReportDataWsRepository : WsRepository<CombinedReportData>, 
         Notify?.Invoke(this, message);
     }
 
-    #pragma warning disable CS0067 // Event is never used - this is legacy plugin code
+    #pragma warning disable CS0067 // Events are never used - this is legacy plugin code
     public override event AfterReadAllHandler AfterReadAll;
 
     public override event AfterReadSingleHandler AfterReadSingle;
+    #pragma warning restore CS0067
     protected virtual void OnAfterReadSingle(CombinedReportData report)
     {
         AfterReadSingle?.Invoke(this, report);
