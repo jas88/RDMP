@@ -83,9 +83,9 @@ public class ExecuteCommandDelete : BasicCommandExecution
 
         // Always use transactions for delete operations to ensure consistency
         // This prevents issues with connections that have pending transactions
+        // PublishNearest() is called within ExecuteImpl's finally block
         ExecuteWithCommit(ExecuteImpl, GetDescription(),
             _deletables.OfType<IMapsDirectlyToDatabaseTable>().ToArray());
-        PublishNearest();
     }
 
     private string GetDescription() =>
