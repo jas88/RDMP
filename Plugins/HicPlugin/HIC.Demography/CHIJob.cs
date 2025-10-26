@@ -67,14 +67,14 @@ public partial class CHIJob
         {
             var fieldInfo = typeof(CHIJob).GetProperty($"MaxSize_{propertyInfo.Name}");
             if (fieldInfo != null)
-                MaxLengthsDictionary.Add(propertyInfo, (int)fieldInfo.GetValue(null));
+                MaxLengthsDictionary.Add(propertyInfo, (int)(fieldInfo.GetValue(null) ?? 0));
         }
     }
 
     public void Clean()
     {
         foreach (var key in MaxLengthsDictionary.Keys)
-            key.SetValue(this, CleanString((string)key.GetValue(this, null)), null);
+            key.SetValue(this, CleanString((string)(key.GetValue(this, null) ?? string.Empty)), null);
         if (Sex is { Length: > 1 })
         {
             Sex = char.ToUpperInvariant(Sex[0]) switch
