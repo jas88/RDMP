@@ -14,6 +14,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Repository that converts SCI Store reports into in-memory DataTables (Header, SampleDetails, Results) for bulk database insertion
+/// </summary>
 public class SciStoreDataTableRepository : ISciStoreRepository<SciStoreReport>
 {
     private readonly IDataTableSchemaSource _dataTableSchemaSource;

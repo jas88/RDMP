@@ -9,6 +9,9 @@ using System.IO;
 
 namespace DrsPlugin.Attachers;
 
+/// <summary>
+/// Image patcher for PNG files that performs a simple stream copy (PNG files typically don't contain sensitive EXIF data)
+/// </summary>
 public class PngPatcher : IImagePatcher
 {
     public Stream PatchAwayExif(Stream inStream, Stream outStream)

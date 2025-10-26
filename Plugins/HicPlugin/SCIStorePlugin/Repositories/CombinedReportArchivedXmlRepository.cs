@@ -8,6 +8,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Repository for reading combined laboratory reports from ZIP archives containing XML files
+/// </summary>
 public class CombinedReportArchivedXmlRepository : ISciStoreRepository<CombinedReportData>
 {
     private readonly DirectoryInfo _sourceDirectory;

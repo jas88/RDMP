@@ -10,6 +10,9 @@ using FellowOakDicom.Network.Client;
 
 namespace Rdmp.Dicom.Cache.Pipeline.Dicom;
 
+/// <summary>
+/// Interface for sending DICOM network requests with throttling and client connection management
+/// </summary>
 public interface IDicomRequestSender
 {
     void ThrottleRequest(DicomRequest dicomRequest, IDicomClient client, CancellationToken cancellationToken);

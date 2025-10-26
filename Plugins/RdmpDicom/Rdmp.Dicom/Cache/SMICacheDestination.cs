@@ -14,6 +14,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace Rdmp.Dicom.Cache;
 
+/// <summary>
+/// Cache destination for DICOM images that archives files by modality and date, creating ZIP archives organized in year/month/day structure
+/// </summary>
 public class SMICacheDestination : CacheFilesystemDestination
 {
     public bool DEBUG_DoNotUpdateCacheProgress;

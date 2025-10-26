@@ -8,6 +8,9 @@ using System;
 
 namespace Rdmp.Dicom.Extraction.FoDicomBased;
 
+/// <summary>
+/// Exception thrown when a DICOM file path cannot be uniquely resolved (e.g., multiple matches found in archive or ambiguous path specification)
+/// </summary>
 public class AmbiguousFilePathResolutionException : Exception
 {
     public AmbiguousFilePathResolutionException(string msg):base(msg)

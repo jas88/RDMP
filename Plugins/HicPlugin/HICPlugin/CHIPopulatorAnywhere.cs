@@ -9,6 +9,9 @@ using Rdmp.Core.Curation.Data;
 
 namespace HICPlugin;
 
+/// <summary>
+/// CHI (Community Health Index) populator that works with ColumnInfo references, allowing demographic data to be sourced from any table structure in the catalogue
+/// </summary>
 public class CHIPopulatorAnywhere : CHIPopulator
 {
     [DemandsInitialization("")]

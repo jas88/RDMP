@@ -24,6 +24,9 @@ using Timer = System.Timers.Timer;
 
 namespace Rdmp.Dicom.Cache.Pipeline;
 
+/// <summary>
+/// Cache source that fetches DICOM studies from a PACS using C-FIND and C-MOVE operations, with retry logic and throttling
+/// </summary>
 public class PACSSource : SMICacheSource
 {
 

@@ -16,6 +16,9 @@ using Rdmp.Core.Caching.Pipeline.Destinations;
 
 namespace Rdmp.Dicom.Cache;
 
+/// <summary>
+/// Defines the filesystem layout for cached DICOM images, organizing files by modality in year/month/day/hour ZIP archives
+/// </summary>
 public class SMICacheLayout : CacheLayout
 {
     public SMICacheLayout(DirectoryInfo cacheDirectory, SMICachePathResolver resolver): base(cacheDirectory, "yyyyMMddHH", CacheArchiveType.Zip, CacheFileGranularity.Hour, resolver)

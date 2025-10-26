@@ -20,6 +20,9 @@ using Rdmp.Core.DataFlowPipeline.Requirements;
 
 namespace HICPlugin.BespokeAttachers;
 
+/// <summary>
+/// Bespoke attacher for loading MetIDQ (Metabolomics) data files during the data load process
+/// </summary>
 public class MetIDQAttacher : IPluginAttacher
 {
     [DemandsInitialization("File pattern to load")]

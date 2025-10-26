@@ -10,6 +10,9 @@ using FellowOakDicom;
 
 namespace Rdmp.Dicom.Extraction;
 
+/// <summary>
+/// Maps a private DICOM UID to an anonymized release UID for a specific project and UID type (Study, Series, SOP Instance, etc.)
+/// </summary>
 public class UIDMapping
 {
     public string PrivateUID { get; set; }

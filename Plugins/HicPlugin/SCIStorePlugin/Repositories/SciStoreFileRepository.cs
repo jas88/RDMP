@@ -11,6 +11,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// File-based repository for SCI Store reports (currently not fully implemented)
+/// </summary>
 public class SciStoreFileRepository : ISciStoreRepository<SciStoreReport>
 {
     private readonly string _rootPath;

@@ -16,7 +16,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace HICPlugin.DataFlowComponents;
 
-
+/// <summary>
+/// Specialized data extraction source that allows SQL customization including database context switching, collation injection, and anonymization function wrapping for columns with ANO transforms
+/// </summary>
 public class DataExtractionSpecialExplicitSource : ExecuteDatasetExtractionSource
 {
     [DemandsInitialization("The database you want a using statement put in front of")]

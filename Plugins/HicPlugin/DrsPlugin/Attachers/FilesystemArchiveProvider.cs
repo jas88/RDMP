@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 
 namespace DrsPlugin.Attachers;
 
+/// <summary>
+/// Archive provider that reads image files directly from the filesystem directory structure, with retry logic for network reliability
+/// </summary>
 public class FilesystemArchiveProvider : IArchiveProvider
 {
     private readonly string _rootPath;

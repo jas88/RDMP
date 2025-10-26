@@ -10,6 +10,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Base repository interface for reading and creating SCI Store laboratory data records
+/// </summary>
 public interface ISciStoreRepository<T>
 {
     IEnumerable<T> ReadAll();

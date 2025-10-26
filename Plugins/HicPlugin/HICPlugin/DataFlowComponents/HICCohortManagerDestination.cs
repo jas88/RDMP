@@ -19,6 +19,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace HICPlugin.DataFlowComponents;
 
+/// <summary>
+/// Cohort destination that commits cohorts to the HIC (Health Informatics Centre) cohort management system via stored procedures, supporting both new cohorts and versioned updates to existing cohorts
+/// </summary>
 public class HICCohortManagerDestination : IPluginCohortDestination
 {
     [Obsolete("This was misspelled in old versions of this plugin")]

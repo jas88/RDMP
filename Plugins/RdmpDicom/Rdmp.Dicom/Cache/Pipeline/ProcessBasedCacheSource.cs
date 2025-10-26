@@ -16,6 +16,9 @@ using System.Diagnostics;
 
 namespace Rdmp.Dicom.Cache.Pipeline;
 
+/// <summary>
+/// Cache source that fetches DICOM images by executing an external process/command with templated start/end dates and output directory
+/// </summary>
 public class ProcessBasedCacheSource : CacheSource<SMIDataChunk>
 {
     [DemandsInitialization(@"Process to start (path only)",Mandatory = true)]

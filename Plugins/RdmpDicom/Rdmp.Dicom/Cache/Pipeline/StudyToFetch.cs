@@ -6,6 +6,9 @@
 
 namespace Rdmp.Dicom.Cache.Pipeline;
 
+/// <summary>
+/// Represents a DICOM study to be fetched from PACS, tracking the study UID and retry count for failed fetch attempts
+/// </summary>
 public class StudyToFetch
 {
     /// <summary>

@@ -8,6 +8,9 @@ using System.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Interface for setting the schema of a DataTable from an external source (typically a database)
+/// </summary>
 public interface IDataTableSchemaSource
 {
     void SetSchema(DataTable dataTable);

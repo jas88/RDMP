@@ -17,6 +17,9 @@ using System.Data.Common;
 
 namespace HICPlugin.Mutilators;
 
+/// <summary>
+/// Data mutilator that validates CHI (Community Health Index) numbers using the official checksum algorithm, with configurable actions for invalid CHIs (nullify, delete rows, or crash)
+/// </summary>
 public class CHIMutilator:IPluginMutilateDataTables
 {
     private DiscoveredDatabase _dbInfo;

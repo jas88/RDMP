@@ -16,6 +16,9 @@ using System.Web;
 
 namespace Rdmp.Dicom.ExternalApis;
 
+/// <summary>
+/// Configuration for querying the SemEHR API, including search terms, filters (temporality, negation, modality), date ranges, and return field specifications
+/// </summary>
 public class SemEHRConfiguration
 {
     [YamlIgnore]

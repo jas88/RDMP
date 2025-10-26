@@ -9,6 +9,9 @@ using System.IO;
 
 namespace Rdmp.Dicom.Cache;
 
+/// <summary>
+/// Resolves cache directory paths for DICOM images based on modality (e.g., CT, MR), creating modality-specific subdirectories
+/// </summary>
 public class SMICachePathResolver : ILoadCachePathResolver
 {
     public string Modality { get; }

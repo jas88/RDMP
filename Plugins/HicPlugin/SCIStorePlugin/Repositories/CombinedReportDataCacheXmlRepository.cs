@@ -13,6 +13,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Repository for reading and writing combined laboratory report data as XML files in a cache directory structure organized by health board (T/F)
+/// </summary>
 public class CombinedReportDataCacheXmlRepository : ISciStoreRepository<CombinedReportData>
 {
     private readonly ICacheLayout _cacheLayout;

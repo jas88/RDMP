@@ -6,6 +6,9 @@
 
 namespace Rdmp.Dicom.Extraction;
 
+/// <summary>
+/// Interface for repositories that map private DICOM UIDs to anonymized release UIDs for data extraction
+/// </summary>
 public interface IMappingRepository
 {
     string GetOrAllocateMapping(string value, int projectNumber, UIDType uidType);

@@ -9,6 +9,9 @@ using Rdmp.Dicom.Extraction.FoDicomBased;
 
 namespace Rdmp.Dicom.PipelineComponents.DicomSources.Worklists;
 
+/// <summary>
+/// Interface for worklists that provide DICOM files or directories from the filesystem for pipeline processing
+/// </summary>
 public interface IDicomFileWorklist:IDicomWorklist
 {
     /// <summary>

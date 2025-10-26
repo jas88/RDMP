@@ -9,6 +9,9 @@ using FellowOakDicom;
 
 namespace Rdmp.Dicom.Extraction.FoDicomBased.DirectoryDecisions;
 
+/// <summary>
+/// Directory strategy that places all extracted DICOM files flat in the root extraction directory with no subdirectories
+/// </summary>
 public class PutInRoot : PutDicomFilesInExtractionDirectories
 {
     protected override string WriteOutDatasetImpl(DirectoryInfo outputDirectory, string releaseIdentifier, DicomDataset dicomDataset)

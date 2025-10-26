@@ -9,6 +9,9 @@ using FellowOakDicom;
 
 namespace Rdmp.Dicom.Extraction.FoDicomBased.DirectoryDecisions;
 
+/// <summary>
+/// Directory strategy that organizes extracted DICOM files into release identifier/series UID subdirectories
+/// </summary>
 public class PutInUidSeriesFolders : PutDicomFilesInExtractionDirectories
 {
     public override string PredictOutputPath(DirectoryInfo outputDirectory, string releaseIdentifier, string studyUid, string seriesUid, string sopUid)

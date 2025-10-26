@@ -22,6 +22,9 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace HICPlugin.Microbiology;
 
+/// <summary>
+/// Attacher for loading microbiology laboratory data from flat files into a normalized relational structure with header, test, isolation, and result tables
+/// </summary>
 public class MicrobiologyAttacher : Attacher, IPluginAttacher
 {
 

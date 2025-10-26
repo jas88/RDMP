@@ -12,6 +12,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Repository interface for SCI Store data that supports querying by date ranges for incremental data loading
+/// </summary>
 public interface IRepositorySupportsDateRangeQueries<T> : ISciStoreRepository<T>
 {
     IEnumerable<CombinedReportData> ReadForInterval(DateTime day, TimeSpan timeSpan, IDataLoadEventListener listener, GracefulCancellationToken token);

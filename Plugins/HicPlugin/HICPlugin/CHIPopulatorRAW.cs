@@ -10,6 +10,9 @@ using Rdmp.Core.Curation.Data.DataLoad;
 
 namespace HICPlugin;
 
+/// <summary>
+/// CHI (Community Health Index) populator that works with PreLoadDiscardedColumn references, designed for use during RAW data loading stage where columns may be discarded after CHI lookup
+/// </summary>
 public class CHIPopulatorRAW : CHIPopulator
 {
     [DemandsInitialization("")]

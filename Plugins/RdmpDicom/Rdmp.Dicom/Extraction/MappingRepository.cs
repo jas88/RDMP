@@ -16,6 +16,9 @@ using Rdmp.Core.Curation.Data;
 
 namespace Rdmp.Dicom.Extraction;
 
+/// <summary>
+/// SQL Server database repository for storing and retrieving DICOM UID mappings, generating new anonymized UIDs as needed
+/// </summary>
 public class MappingRepository : IMappingRepository
 {
     private readonly DiscoveredServer _server;

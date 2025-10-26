@@ -9,6 +9,9 @@ using System.IO;
 
 namespace DrsPlugin.Attachers;
 
+/// <summary>
+/// Interface for providing access to archived image files, abstracting different storage mechanisms (filesystem, RAR, etc.)
+/// </summary>
 public interface IArchiveProvider
 {
     MemoryStream GetEntry(string entryName);

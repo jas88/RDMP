@@ -31,6 +31,10 @@ using TypeGuesser;
 
 namespace Rdmp.Dicom.PipelineComponents;
 
+/// <summary>
+/// Mutilator that handles DICOM data rows with primary key collisions by isolating conflicting records for review
+/// </summary>
+
 public class PrimaryKeyCollisionIsolationMutilation:IPluginMutilateDataTables
 {
     [DemandsInitialization("All tables which participate in record isolation e.g. Study,Series, Image.  These tables must have valid JoinInfos configured and one must be marked TableInfo.IsPrimaryExtractionTable",Mandatory=true)]

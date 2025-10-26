@@ -9,6 +9,9 @@ using FellowOakDicom;
 
 namespace Rdmp.Dicom.PipelineComponents.DicomSources.Worklists;
 
+/// <summary>
+/// Interface for worklists that provide DicomDataset objects (in-memory DICOM data) for pipeline processing
+/// </summary>
 public interface IDicomDatasetWorklist : IDicomWorklist
 {
     /// <summary>

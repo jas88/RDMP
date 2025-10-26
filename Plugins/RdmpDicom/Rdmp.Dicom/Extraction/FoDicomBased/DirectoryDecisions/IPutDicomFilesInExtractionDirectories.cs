@@ -9,6 +9,9 @@ using FellowOakDicom;
 
 namespace Rdmp.Dicom.Extraction.FoDicomBased.DirectoryDecisions;
 
+/// <summary>
+/// Interface for strategies that determine the directory structure for extracted DICOM files (e.g., flat, by patient, by study/series)
+/// </summary>
 public interface IPutDicomFilesInExtractionDirectories
 {
     /// <summary>

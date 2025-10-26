@@ -12,6 +12,9 @@ using System.Linq;
 
 namespace DrsPlugin.Attachers;
 
+/// <summary>
+/// Verifies that EXIF-stripped images have identical pixel data to the originals, ensuring the stripping process doesn't corrupt image content
+/// </summary>
 public class ImageIntegrityChecker
 {
     public void VerifyIntegrityOfStrippedImages(IArchiveProvider archive, string pathToStrippedFiles, IDataLoadEventListener listener)

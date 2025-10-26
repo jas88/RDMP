@@ -15,6 +15,9 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace DrsPlugin.Attachers;
 
+/// <summary>
+/// Image patcher for JPEG files that strips EXIF metadata using ImageSharp library while preserving pixel data
+/// </summary>
 public class JpegPatcher : IImagePatcher
 {
     public Stream PatchAwayExif(Stream inStream, Stream outStream)

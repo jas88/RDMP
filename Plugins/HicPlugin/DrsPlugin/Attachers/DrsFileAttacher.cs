@@ -19,6 +19,9 @@ using System.Linq;
 
 namespace DrsPlugin.Attachers;
 
+/// <summary>
+/// Attacher for loading Diabetic Retinopathy Service (DRS) image files, stripping EXIF metadata from images and archiving them with integrity checks
+/// </summary>
 public class DrsFileAttacher : Attacher, IPluginAttacher
 {
     [DemandsInitialization("The name of the column in the manifest file which contains the names of the image files")]

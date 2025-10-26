@@ -9,6 +9,9 @@ using System;
 
 namespace Rdmp.Dicom.Cache;
 
+/// <summary>
+/// Represents a chunk of DICOM data fetched from a PACS, including the modality, fetch date, and cache layout information
+/// </summary>
 public class SMIDataChunk : ICacheChunk
 {
     public ICacheFetchRequest Request { get; }

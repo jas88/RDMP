@@ -6,6 +6,9 @@
 
 namespace Rdmp.Dicom.PipelineComponents.CFind;
 
+/// <summary>
+/// Placeholder class for C-FIND list functionality
+/// </summary>
 public class List
 {
 }

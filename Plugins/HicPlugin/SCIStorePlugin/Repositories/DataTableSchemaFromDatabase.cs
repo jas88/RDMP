@@ -11,6 +11,9 @@ using FAnsi.Discovery;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Sets a DataTable's schema by querying the structure of the corresponding table in a SQL Server database
+/// </summary>
 public class DataTableSchemaFromDatabase : IDataTableSchemaSource
 {
     private readonly DiscoveredDatabase _destinationDatabase;

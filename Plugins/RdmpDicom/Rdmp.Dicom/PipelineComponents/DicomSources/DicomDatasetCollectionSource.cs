@@ -14,6 +14,9 @@ using Rdmp.Core.DataFlowPipeline.Requirements;
 
 namespace Rdmp.Dicom.PipelineComponents.DicomSources;
 
+/// <summary>
+/// DICOM pipeline source that processes in-memory DicomDataset collections from a worklist for data loading
+/// </summary>
 public class DicomDatasetCollectionSource : DicomSource, IPipelineRequirement<IDicomWorklist>
 {
     private IDicomDatasetWorklist _datasetListWorklist;

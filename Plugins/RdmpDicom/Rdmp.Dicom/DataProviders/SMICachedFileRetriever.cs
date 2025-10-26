@@ -16,6 +16,9 @@ using Rdmp.Core.DataLoad.Engine.Job.Scheduling;
 
 namespace Rdmp.Dicom.DataProviders;
 
+/// <summary>
+/// Retrieves cached DICOM files from the SMI cache for data loading, with scheduled job support and cache cleanup
+/// </summary>
 [Obsolete("Not clear what this does")]
 public class SMICachedFileRetriever : CachedFileRetriever
 {

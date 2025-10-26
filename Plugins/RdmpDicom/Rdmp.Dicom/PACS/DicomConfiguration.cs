@@ -9,6 +9,9 @@ using FellowOakDicom.Network;
 
 namespace Rdmp.Dicom.PACS;
 
+/// <summary>
+/// Configuration for DICOM network operations including remote/local AE titles, ports, and timeout/cooldown settings for PACS communication
+/// </summary>
 public class DicomConfiguration
 {
     public string RemoteAetHost { get; set; }

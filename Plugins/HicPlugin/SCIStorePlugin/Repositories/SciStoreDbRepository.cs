@@ -17,6 +17,10 @@ using SCIStorePlugin.Data;
 namespace SCIStorePlugin.Repositories;
 
 public delegate void InsertionErrorHandler(object sender, SqlException exception, string queryString = "");
+
+/// <summary>
+/// Database repository that inserts SCI Store reports (headers, samples, results) into SQL Server using reflection-based SQL generation, with error handling and field truncation
+/// </summary>
 public class SciStoreDbRepository : ISciStoreRepository<SciStoreReport>
 {
     public string DatabaseName { get; set; }

@@ -8,6 +8,9 @@ using System.Collections.Generic;
 
 namespace Rdmp.Dicom.PipelineComponents;
 
+/// <summary>
+/// Represents a difference between a master record and an isolated record, tracking which columns conflict for primary key collision resolution
+/// </summary>
 public class IsolationDifference
 {
     public string Pk { get; set; }

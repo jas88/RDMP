@@ -18,6 +18,9 @@ using Rdmp.Core.Curation;
 
 namespace Rdmp.Dicom.TagPromotionSchema;
 
+/// <summary>
+/// Adds a new column to a table for storing a promoted DICOM tag value, handling schema creation and data type mapping
+/// </summary>
 public class TagColumnAdder: ICheckable
 {
     /// <summary>

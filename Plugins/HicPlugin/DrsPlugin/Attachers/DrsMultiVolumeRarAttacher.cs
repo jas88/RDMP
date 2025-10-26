@@ -20,6 +20,9 @@ using System.Linq;
 
 namespace DrsPlugin.Attachers;
 
+/// <summary>
+/// Attacher for loading DRS images from multi-volume RAR archives, extracting and stripping EXIF metadata before archiving with manifest validation
+/// </summary>
 public class DrsMultiVolumeRarAttacher : Attacher, IPluginAttacher
 {
     [DemandsInitialization("The name of the column in the manifest file which contains the names of the image files")]

@@ -22,6 +22,9 @@ using System.Linq;
 
 namespace Rdmp.Dicom.Extraction
 {
+    /// <summary>
+    /// Pipeline component that extracts all DICOM tags from image files and exports them to a CSV file for analysis
+    /// </summary>
     public class DicomTagToCSV : IPluginDataFlowComponent<DataTable>, IPipelineRequirement<IExtractCommand>
     {
         [DemandsInitialization("If the path filename contains relative file uris to images then this is the root directory")]

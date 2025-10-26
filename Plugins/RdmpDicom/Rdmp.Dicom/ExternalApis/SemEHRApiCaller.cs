@@ -19,6 +19,9 @@ using Rdmp.Core.MapsDirectlyToDatabaseTable;
 
 namespace Rdmp.Dicom.ExternalApis;
 
+/// <summary>
+/// Cohort compiler that queries the SemEHR (Semantic EHR) API to find DICOM images matching semantic medical concepts extracted from radiology reports
+/// </summary>
 public class SemEHRApiCaller : PluginCohortCompiler
 {
     public const string SemEHRApiPrefix = $"{ApiPrefix}SemEHR";

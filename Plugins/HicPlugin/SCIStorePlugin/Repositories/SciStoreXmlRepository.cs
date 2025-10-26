@@ -13,6 +13,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Repository for persisting SCI Store reports as individual XML files, one per lab number
+/// </summary>
 public class SciStoreXmlRepository : ISciStoreRepository<SciStoreReport>
 {
     private readonly string _rootPath;

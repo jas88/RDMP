@@ -7,6 +7,9 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
+/// <summary>
+/// Deserializes combined laboratory report XML with automatic handling of invalid PCL escape code characters found in legacy Fife Haematology data
+/// </summary>
 public class CombinedReportXmlDeserializer
 {
     private static readonly XmlSerializer Serializer = new(typeof(CombinedReportData));

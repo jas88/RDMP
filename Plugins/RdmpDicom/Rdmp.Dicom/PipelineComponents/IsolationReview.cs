@@ -16,6 +16,9 @@ using Rdmp.Core.ReusableLibraryCode.DataAccess;
 
 namespace Rdmp.Dicom.PipelineComponents;
 
+/// <summary>
+/// Reviews isolation table records to identify and report primary key collisions and data conflicts that were isolated during data loading
+/// </summary>
 public class IsolationReview
 {
     public string Error { get; }

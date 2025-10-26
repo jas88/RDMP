@@ -18,6 +18,9 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Rdmp.Dicom.Cache.Pipeline;
 
+/// <summary>
+/// DICOM Service Class Provider (SCP) that receives and caches DICOM images from PACS via C-STORE operations
+/// </summary>
 public class CachingSCP : DicomService, IDicomServiceProvider, IDicomCStoreProvider, IDicomCEchoProvider
 {
     #region Transfer Syntaxes

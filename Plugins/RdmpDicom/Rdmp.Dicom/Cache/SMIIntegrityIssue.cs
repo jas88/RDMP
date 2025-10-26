@@ -8,6 +8,9 @@ using System;
 
 namespace Rdmp.Dicom.Cache;
 
+/// <summary>
+/// Records a DICOM series integrity issue where the number of retrieved instances doesn't match the expected count
+/// </summary>
 public class SMIIntegrityIssue
 {
     public string SeriesUID { get; set; }

@@ -9,6 +9,9 @@ using TypeGuesser;
 
 namespace Rdmp.Dicom.TagPromotionSchema;
 
+/// <summary>
+/// Represents a pair of columns (loaded and requested) for DICOM tag promotion operations (part of legacy tag promotion system)
+/// </summary>
 [Obsolete("Part of the old tag promotion stuff")]
 public class TagLoadedColumnPair
 {

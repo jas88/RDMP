@@ -15,6 +15,9 @@ using Rdmp.Dicom.PACS;
 
 namespace Rdmp.Dicom.Cache.Pipeline.Dicom;
 
+/// <summary>
+/// Sends DICOM network requests (C-FIND, C-MOVE, C-ECHO) to PACS with throttling, timeout handling, and retry logic
+/// </summary>
 public class DicomRequestSender : IDicomRequestSender
 {
     public int SendTimeout { get; private set; }

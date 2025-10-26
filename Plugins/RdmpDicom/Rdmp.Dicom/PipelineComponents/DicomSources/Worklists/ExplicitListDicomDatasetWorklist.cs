@@ -9,6 +9,9 @@ using FellowOakDicom;
 
 namespace Rdmp.Dicom.PipelineComponents.DicomSources.Worklists;
 
+/// <summary>
+/// Worklist implementation that provides an explicit in-memory list of DicomDatasets for testing DicomDatasetCollectionSource
+/// </summary>
 public class ExplicitListDicomDatasetWorklist : IDicomDatasetWorklist
 {
     private readonly DicomDataset[] _datasets;
