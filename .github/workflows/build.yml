@@ -80,9 +80,12 @@ jobs:
         timeout-minutes: 10
         shell: bash
         run: |
-            cat scripts/create_list_destroy_catalogue.yaml scripts/create_cohort.yaml scripts/create_dataload.yaml scripts/orphan_extractable_column.yaml | \
-            sed '2,${/^Commands:/d}' | \
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f -
+            # Combine scripts into single file
+            cat scripts/create_list_destroy_catalogue.yaml > /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/create_cohort.yaml >> /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/create_dataload.yaml >> /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml >> /tmp/combined-tests.yaml
+            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
       - name: Test (DB)
         shell: bash
         run: |
@@ -169,9 +172,12 @@ jobs:
         timeout-minutes: 10
         shell: bash
         run: |
-            cat scripts/create_list_destroy_catalogue.yaml scripts/create_cohort.yaml scripts/create_dataload.yaml scripts/orphan_extractable_column.yaml | \
-            sed '2,${/^Commands:/d}' | \
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f -
+            # Combine scripts into single file
+            cat scripts/create_list_destroy_catalogue.yaml > /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/create_cohort.yaml >> /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/create_dataload.yaml >> /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml >> /tmp/combined-tests.yaml
+            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
       - name: Test with local file system
         shell: bash
         run:  |
