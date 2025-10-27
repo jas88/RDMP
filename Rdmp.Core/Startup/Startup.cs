@@ -278,9 +278,12 @@ public class Startup
     /// </summary>
     public static void PreStartup()
     {
+        // ImplementationManager.Load() is marked obsolete but is still required at runtime for explicit registration of DBMS implementations.
+#pragma warning disable CS0618 // ImplementationManager.Load() is obsolete but required
         ImplementationManager.Load<MicrosoftSQLImplementation>();
         ImplementationManager.Load<MySqlImplementation>();
         ImplementationManager.Load<OracleImplementation>();
         ImplementationManager.Load<PostgreSqlImplementation>();
+#pragma warning restore CS0618
     }
 }
