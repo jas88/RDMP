@@ -93,6 +93,22 @@ public class ObjectConstructor
     /// <returns></returns>
     public static object Construct<T>(Type typeToConstruct, T constructorParameter1, bool allowBlank = true)
     {
+        // Check for decorated constructor first (highest priority)
+        var allConstructors = typeToConstruct.GetConstructors(TargetBindingFlags);
+        var decorated = allConstructors.Where(c => Attribute.IsDefined(c, typeof(UseWithObjectConstructorAttribute))).ToArray();
+        if (decorated.Length == 1)
+        {
+            try
+            {
+                var paramCount = decorated[0].GetParameters().Length;
+                return decorated[0].Invoke(paramCount == 0 ? Array.Empty<object>() : new object[] { constructorParameter1 });
+            }
+            catch (TargetInvocationException ex)
+            {
+                throw ex.InnerException ?? ex;
+            }
+        }
+
         var repositoryLocatorConstructorInfos = GetConstructors<T>(typeToConstruct);
 
         if (repositoryLocatorConstructorInfos.Any())
@@ -260,19 +276,6 @@ public class ObjectConstructor
 
     private static object InvokeBestConstructor(List<ConstructorInfo> constructors, params object[] parameters)
     {
-        if (constructors.Count == 1)
-        {
-            try
-            {
-                return constructors[0].Invoke(parameters);
-            }
-            catch (TargetInvocationException ex)
-            {
-                // Unwrap to expose actual exception from constructor
-                throw ex.InnerException ?? ex;
-            }
-        }
-
         // First priority: Use decorated constructor if exactly one is decorated
         var importDecorated = constructors.Where(c => Attribute.IsDefined(c, typeof(UseWithObjectConstructorAttribute)))
             .ToArray();
@@ -284,6 +287,19 @@ public class ObjectConstructor
             }
             catch (TargetInvocationException ex)
             {
+                throw ex.InnerException ?? ex;
+            }
+        }
+
+        if (constructors.Count == 1)
+        {
+            try
+            {
+                return constructors[0].Invoke(parameters);
+            }
+            catch (TargetInvocationException ex)
+            {
+                // Unwrap to expose actual exception from constructor
                 throw ex.InnerException ?? ex;
             }
         }

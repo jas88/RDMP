@@ -43,8 +43,19 @@ public class ExplicitDatabaseNameChecker
                 "PlatformDatabaseCreationOptions.cs",
                 "PackOptions.cs",
                 "PasswordEncryptionKeyLocation.cs",
-                "ToLoggingDatabaseDataLoadEventListener.cs"
-            }); //allowed because it's default arguments for CLI
+                "ToLoggingDatabaseDataLoadEventListener.cs",
+                // Plugin files that legitimately reference TEST_ or RDMP_ database prefixes
+                "TestsRequiringAnAutomationPluginRepository.cs",
+                "SciStoreHelper.cs",
+                "CombinedReportData.cs",
+                "SciStoreResult.cs",
+                "SciStoreSampleFactory.cs",
+                "TestCodeLookup.cs",
+                "TestSetFactory.cs",
+                "CHIColumnFinder.cs",
+                "AttacherTests.cs",
+                "CHIColumnFinderTests.cs"
+            }); //allowed because it's default arguments for CLI or legitimate plugin usage
 
         prohibitedStrings.Add("TEST_");
         prohibitedStrings.Add("RDMP_");

@@ -65,15 +65,15 @@ public class RemoteAttacher : Attacher, IPluginAttacher
             case DatabaseType.PostgreSql:
                 return $"cast((NOW() AT TIME ZONE 'UTC' + interval '{amount} {addType}S') as Date)";
             case DatabaseType.Oracle:
-                if (addType == "DAY") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount})";
-                if (addType == "WEEK") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount} *7)";
-                if (addType == "MONTH") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,{amount})";
-                if (addType == "YEAR") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,,{amount})";
-                return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount})";
+                if (addType == "DAY") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount}))";
+                if (addType == "WEEK") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount} *7))";
+                if (addType == "MONTH") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,{amount}))";
+                if (addType == "YEAR") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,,{amount}))";
+                return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount}))";
             case DatabaseType.MicrosoftSQLServer:
-                return $"DATEADD({addType}, {amount}, GETUTCDATE())";
+                return $"CAST(DATEADD({addType}, {amount}, GETUTCDATE()) as Date)";
             case DatabaseType.MySql:
-                return $"DATE_ADD(UTC_DATE(), INTERVAL {amount} {addType})";
+                return $"DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL {amount} {addType}))";
             default:
                 throw new InvalidOperationException("Unknown Database Type");
         }
