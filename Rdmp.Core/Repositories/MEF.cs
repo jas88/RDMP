@@ -70,9 +70,34 @@ public static class MEF
     private static ReadOnlyDictionary<string, Type> PopulateUnique()
     {
         var sw = Stopwatch.StartNew();
-        var typeByName = new Dictionary<string, Type>();
+        var typeByName = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
         var assembliesProcessed = 0;
         var assembliesSkipped = 0;
+
+        // Try to use compile-time generated registry if available
+        try
+        {
+            var compiledRegistryType = Type.GetType("Rdmp.Core.Repositories.CompiledTypeRegistry");
+            if (compiledRegistryType != null)
+            {
+                var getTypeMethod = compiledRegistryType.GetMethod("GetAllTypes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (getTypeMethod != null)
+                {
+                    var compiledTypes = getTypeMethod.Invoke(null, null) as IEnumerable<KeyValuePair<string, Type>>;
+                    if (compiledTypes != null)
+                    {
+                        foreach (var kvp in compiledTypes)
+                            typeByName.TryAdd(kvp.Key, kvp.Value);
+
+                        Console.WriteLine($"MEF: Preloaded {typeByName.Count} types from compiled registry");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"MEF: Could not load compiled registry: {ex.Message}");
+        }
 
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
@@ -150,41 +175,23 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
-        // Try compile-time registry first if available (O(1) lookup, zero reflection)
-#if HAS_COMPILED_TYPE_REGISTRY
-        var type = CompiledTypeRegistry.GetType(typeName);
-        if (type != null)
-        {
-            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found in compiled registry ({CompiledTypeRegistry.TypeCount} types)");
-            return type;
-        }
-
-        // Try tail lookup in compiled registry
-        type = CompiledTypeRegistry.GetType(Tail(typeName));
-        if (type != null)
-        {
-            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found '{Tail(typeName)}' in compiled registry");
-            return type;
-        }
-#endif
-
-        // Use runtime reflection
+        // Use runtime reflection (will be populated from CompiledTypeRegistry if available)
         var dict = _types.Value;
         var dictHashCode = dict.GetHashCode();
 
-        Type type2;
-        if (dict.TryGetValue(typeName, out type2))
+        Type type;
+        if (dict.TryGetValue(typeName, out type))
         {
-            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found in runtime cache (dict hash: {dictHashCode})");
-            return type2;
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found in cache (dict hash: {dictHashCode})");
+            return type;
         }
-        if (dict.TryGetValue(Tail(typeName), out type2))
+        if (dict.TryGetValue(Tail(typeName), out type))
         {
-            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found '{Tail(typeName)}' in runtime cache");
-            return type2;
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found '{Tail(typeName)}' in cache");
+            return type;
         }
 
-        Console.WriteLine($"MEF.GetType(\"{typeName}\"): NOT FOUND (runtime: {dict.Count})");
+        Console.WriteLine($"MEF.GetType(\"{typeName}\"): NOT FOUND (cache: {dict.Count} types)");
         return null;
     }
 

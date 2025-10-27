@@ -201,6 +201,11 @@ public class TypeRegistryGenerator : IIncrementalGenerator
         sb.AppendLine("    }");
         sb.AppendLine();
         sb.AppendLine("    public static int TypeCount => _typesByName.Count;");
+        sb.AppendLine();
+        sb.AppendLine("    public static IEnumerable<KeyValuePair<string, Type>> GetAllTypes()");
+        sb.AppendLine("    {");
+        sb.AppendLine("        return _typesByName;");
+        sb.AppendLine("    }");
         sb.AppendLine("}");
 
         return sb.ToString();
