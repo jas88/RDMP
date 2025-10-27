@@ -51,12 +51,32 @@ public static class MEF
     {
         var sw = Stopwatch.StartNew();
         var typeByName = new Dictionary<string, Type>();
+        var assembliesProcessed = 0;
+        var assembliesSkipped = 0;
+
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            if (assembly.FullName?.StartsWith("CommandLine", StringComparison.Ordinal) != false) continue;
+            // Skip CommandLine assembly
+            if (assembly.FullName?.StartsWith("CommandLine", StringComparison.Ordinal) == true)
+            {
+                assembliesSkipped++;
+                continue;
+            }
+
+            assembliesProcessed++;
+            var isAutomationPlugins = assembly.FullName?.Contains("AutomationPlugins", StringComparison.OrdinalIgnoreCase) == true;
+            if (isAutomationPlugins)
+                Console.WriteLine($"MEF: Processing AutomationPlugins assembly: {assembly.FullName}");
+
             try
             {
+                var typesInAssembly = 0;
                 foreach (var type in assembly.GetTypes())
+                {
+                    typesInAssembly++;
+                    if (isAutomationPlugins && type.Name.Contains("AutomateExtraction", StringComparison.OrdinalIgnoreCase))
+                        Console.WriteLine($"MEF: Found type {type.FullName} in AutomationPlugins");
+
                     foreach (var alias in new[]
                              {
                              Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
@@ -69,6 +89,10 @@ public static class MEF
                             typeByName.Remove(alias);
                             typeByName.Add(alias, type);
                         }
+                }
+
+                if (isAutomationPlugins)
+                    Console.WriteLine($"MEF: AutomationPlugins assembly contained {typesInAssembly} types");
             }
             catch (Exception e)
             {
@@ -77,9 +101,11 @@ public static class MEF
                     badAssemblies.TryAdd(assembly.FullName, e);
                 }
 
-                Console.WriteLine(e);
+                Console.WriteLine($"MEF: Failed to process assembly {assembly.FullName}: {e.Message}");
             }
         }
+
+        Console.WriteLine($"MEF: Processed {assembliesProcessed} assemblies, skipped {assembliesSkipped}, found {typeByName.Count} types in {sw.ElapsedMilliseconds}ms");
 
         return new ReadOnlyDictionary<string, Type>(typeByName);
     }
