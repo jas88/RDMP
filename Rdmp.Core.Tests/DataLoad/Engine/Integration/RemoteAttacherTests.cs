@@ -28,7 +28,7 @@ public class RemoteAttacherTests
             RemoteTableDateColumn = "date"
         };
         var lmd = new LoadMetadata();
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) > DATEADD({convertTime}, -1, GETUTCDATE())"));
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) > CAST(DATEADD({convertTime}, -1, GETUTCDATE()) as Date)"));
     }
     [Test]
     public void TestRemoteAttacherParameterSinceLastUse()
