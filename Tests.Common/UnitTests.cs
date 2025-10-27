@@ -63,7 +63,12 @@ public class UnitTests
         "DQEGraphAnnotation",
         "Evaluation",
         "WindowLayout",
-        "Dataset"
+        "Dataset",
+        // AutomationPlugins types - plugin-specific entities being integrated into core
+        "SuccessfullyExtractedResults",
+        "AutomateExtractionSchedule",
+        "QueuedExtraction",
+        "AutomateExtraction"
     });
 
 
