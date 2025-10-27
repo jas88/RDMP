@@ -78,11 +78,11 @@ jobs:
           dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache" --dir ~/rdmp/rdmp-yaml/
       - name: Run integration test scripts
         timeout-minutes: 10
+        shell: bash
         run: |
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_list_destroy_catalogue.yaml
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_cohort.yaml
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_dataload.yaml
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/orphan_extractable_column.yaml
+            cat scripts/create_list_destroy_catalogue.yaml scripts/create_cohort.yaml scripts/create_dataload.yaml scripts/orphan_extractable_column.yaml | \
+            sed '2,${/^Commands:/d}' | \
+            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f -
       - name: Test (DB)
         shell: bash
         run: |
@@ -167,11 +167,11 @@ jobs:
           dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache" --dir ~/rdmp/rdmp-yaml/
       - name: Run integration test scripts
         timeout-minutes: 10
+        shell: bash
         run: |
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_list_destroy_catalogue.yaml
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_cohort.yaml
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/create_dataload.yaml
-            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f ./scripts/orphan_extractable_column.yaml
+            cat scripts/create_list_destroy_catalogue.yaml scripts/create_cohort.yaml scripts/create_dataload.yaml scripts/orphan_extractable_column.yaml | \
+            sed '2,${/^Commands:/d}' | \
+            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f -
       - name: Test with local file system
         shell: bash
         run:  |

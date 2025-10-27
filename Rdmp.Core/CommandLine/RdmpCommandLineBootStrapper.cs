@@ -69,13 +69,23 @@ public class RdmpCommandLineBootStrapper
     {
         if (!string.IsNullOrWhiteSpace(opts.File))
         {
-            if (!File.Exists(opts.File))
-            {
-                Console.WriteLine($"Could not find file '{opts.File}'");
-                return -55;
-            }
+            string content;
 
-            var content = File.ReadAllText(opts.File);
+            // Support reading from stdin if file is "-"
+            if (opts.File == "-")
+            {
+                content = Console.In.ReadToEnd();
+            }
+            else
+            {
+                if (!File.Exists(opts.File))
+                {
+                    Console.WriteLine($"Could not find file '{opts.File}'");
+                    return -55;
+                }
+
+                content = File.ReadAllText(opts.File);
+            }
 
             if (string.IsNullOrWhiteSpace(content))
             {
