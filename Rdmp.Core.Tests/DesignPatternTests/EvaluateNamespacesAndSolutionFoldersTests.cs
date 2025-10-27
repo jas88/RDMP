@@ -40,10 +40,11 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
     [Test]
     public void EvaluateNamespacesAndSolutionFolders()
     {
-        // Force plugin assemblies to load by referencing their types
-        // Must be done in test method, not static constructor, to ensure it runs
-        _ = typeof(SCIStorePlugin.Data.SciStoreResult);
-        _ = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction);
+        // Force plugin assemblies to load by actually loading them
+        // typeof() alone may be optimized away by compiler
+        var assembly1 = typeof(SCIStorePlugin.Data.SciStoreResult).Assembly;
+        var assembly2 = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction).Assembly;
+        Console.WriteLine($"Loaded assemblies: {assembly1.FullName}, {assembly2.FullName}");
 
         // Force MEF to refresh its type cache after loading assemblies
         // This ensures newly loaded types are discovered even if MEF was initialized earlier
