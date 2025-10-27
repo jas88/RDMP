@@ -38,7 +38,7 @@ internal class ExternalCohortTableTests : UnitTests
         table.SaveToDatabase();
 
         var ex = Assert.Throws<Exception>(() => table.Check(ThrowImmediatelyCheckNotifier.Quiet));
-        Assert.That(ex.Message, Does.StartWith("Could not check table intactness for ExternalCohortTable 'My Cohort Database'"));
+        Assert.That(ex.Message, Does.StartWith("Could not connect to Cohort database called 'My Cohort Database'"));
     }
 
     /// <summary>

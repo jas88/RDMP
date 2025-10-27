@@ -42,6 +42,6 @@ internal class TestExecuteCommandImportTableInfo : CommandCliTests
         var ex = Assert.Catch<Exception>(() => GetInvoker().ExecuteCommand(typeof(ExecuteCommandImportTableInfo),
             new CommandLineObjectPicker(new string[] { tbl, "true" }, GetActivator())));
 
-        Assert.That(ex.Message, Does.StartWith("A network-related or instance-specific error occurred while establishing a connection to SQL Server"));
+        Assert.That(ex.Message, Does.StartWith("Could not reach server myServerAddress"));
     }
 }
