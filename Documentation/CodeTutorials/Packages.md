@@ -43,4 +43,8 @@
 | Microsoft.Bcl.AsyncInterfaces | [Nuget](https://www.nuget.org/packages/microsoft.bcl.asyncinterfaces/) | [MIT](https://opensource.org/licenses/MIT)  | |
 | Microsoft.CodeAnalysis.Analyzers | [GitHub](https://github.com/dotnet/roslyn-analyzers) | [MIT](https://opensource.org/licenses/MIT) | Code analyzers for source generators | Build-time only |
 | Microsoft.CodeAnalysis.CSharp | [GitHub](https://github.com/dotnet/roslyn) | [MIT](https://opensource.org/licenses/MIT) | C# compiler and code analysis APIs for source generators | Build-time only |
+| Microsoft.XmlSerializer.Generator | [GitHub](https://github.com/dotnet/runtime) | [MIT](https://opensource.org/licenses/MIT) | XML serializer code generation | Build-time only |
+| RestSharp | [GitHub](https://github.com/restsharp/RestSharp) | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | REST API client library | |
+| SharpCompress | [GitHub](https://github.com/adamhathcock/sharpcompress) | [MIT](https://opensource.org/licenses/MIT) | Archive and compression library | |
+| System.ServiceModel.Http | [GitHub](https://github.com/dotnet/wcf) | [MIT](https://opensource.org/licenses/MIT) | WCF HTTP bindings support | |
 [DBMS]: ./Glossary.md#DBMS

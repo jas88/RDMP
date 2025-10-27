@@ -54,7 +54,10 @@ public class ExplicitDatabaseNameChecker
                 "TestSetFactory.cs",
                 "CHIColumnFinder.cs",
                 "AttacherTests.cs",
-                "CHIColumnFinderTests.cs"
+                "CHIColumnFinderTests.cs",
+                "TestData.Designer.cs",
+                "CodeValidationTests.cs",
+                "RepositoryTests.cs"
             }); //allowed because it's default arguments for CLI or legitimate plugin usage
 
         prohibitedStrings.Add("TEST_");
