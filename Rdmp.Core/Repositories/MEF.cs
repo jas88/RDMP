@@ -38,11 +38,21 @@ public static class MEF
 
     private static void Flush(object _1, AssemblyLoadEventArgs ale)
     {
+        var assemblyName = ale?.LoadedAssembly?.FullName ?? "(initialization)";
+        Console.WriteLine($"MEF.Flush called for assembly: {assemblyName}");
+
         // Always reset when an assembly loads (ale != null) to ensure new types are discovered
         // On initialization (ale == null), only create if _types is null
         if (ale is not null || _types is null)
+        {
+            Console.WriteLine($"MEF: Creating new type cache (event={ale != null}, wasNull={_types is null})");
             _types = new Lazy<ReadOnlyDictionary<string, Type>>(PopulateUnique,
                 LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+        else
+        {
+            Console.WriteLine("MEF: Skipped cache reset (no assembly load, _types exists)");
+        }
         TypeCache.Clear();
     }
 
