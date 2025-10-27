@@ -298,7 +298,7 @@ public partial class AutoCommentsEvaluator
                             Assert.Multiple(() =>
                             {
                                 Assert.That(string.IsNullOrWhiteSpace(whitespace));
-                                Assert.That(t, Is.Not.Null);
+                                Assert.That(t, Is.Not.Null, $"MEF.GetType() returned null for class '{currentClassName}' in file '{f}'. The assembly containing this type may not be loaded.");
                             });
 
                             if (t.GetProperty($"{member}_ID") != null)

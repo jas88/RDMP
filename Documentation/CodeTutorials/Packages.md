@@ -47,4 +47,7 @@
 | RestSharp | [GitHub](https://github.com/restsharp/RestSharp) | [Apache 2.0](https://opensource.org/licenses/Apache-2.0) | REST API client library | |
 | SharpCompress | [GitHub](https://github.com/adamhathcock/sharpcompress) | [MIT](https://opensource.org/licenses/MIT) | Archive and compression library | |
 | System.ServiceModel.Http | [GitHub](https://github.com/dotnet/wcf) | [MIT](https://opensource.org/licenses/MIT) | WCF HTTP bindings support | |
+| DicomTypeTranslation | [GitHub](https://github.com/jas88/DicomTypeTranslation) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | Converts DICOM types to database/C# types | |
+| fo-dicom | [GitHub](https://github.com/fo-dicom/fo-dicom) | [MS-PL](https://opensource.org/licenses/MS-PL) | DICOM library for .NET | |
+| DotNetZip | [GitHub](https://github.com/DinoChiesa/DotNetZip) | [MS-PL](https://opensource.org/licenses/MS-PL) | ZIP file handling library | |
 [DBMS]: ./Glossary.md#DBMS

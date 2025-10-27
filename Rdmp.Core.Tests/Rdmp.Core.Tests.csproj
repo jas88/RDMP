@@ -84,6 +84,9 @@
     <ItemGroup>
         <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
         <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
+        <!-- Plugin references to ensure assemblies are loaded for MEF type resolution -->
+        <ProjectReference Include="..\Plugins\HicPlugin\SCIStorePlugin\SCIStorePlugin.csproj" />
+        <ProjectReference Include="..\Plugins\RdmpExtensions\AutomationPlugins\LoadModules.Extensions.AutomationPlugins\LoadModules.Extensions.AutomationPlugins.csproj" />
     </ItemGroup>
     <ItemGroup>
         <Compile Update="Curation\TestResources.Designer.cs">

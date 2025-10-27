@@ -25,7 +25,7 @@ public class PackageListIsCorrectTests
 
     //<PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     private static readonly Regex RPackageRefNoVersion =
-        new(@"<PackageReference\s+Include=""(.*)""",
+        new(@"<PackageReference\s+Include=""([^""]+)""",
             RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
 
