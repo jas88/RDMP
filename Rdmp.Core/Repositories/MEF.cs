@@ -38,7 +38,9 @@ public static class MEF
 
     private static void Flush(object _1, AssemblyLoadEventArgs ale)
     {
-        if (_types?.IsValueCreated != false)
+        // Always reset when an assembly loads (ale != null) to ensure new types are discovered
+        // On initialization (ale == null), only create if _types is null
+        if (ale is not null || _types is null)
             _types = new Lazy<ReadOnlyDictionary<string, Type>>(PopulateUnique,
                 LazyThreadSafetyMode.ExecutionAndPublication);
         TypeCache.Clear();
