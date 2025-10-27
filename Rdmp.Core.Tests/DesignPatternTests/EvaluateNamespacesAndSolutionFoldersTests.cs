@@ -45,6 +45,10 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         _ = typeof(SCIStorePlugin.Data.SciStoreResult);
         _ = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction);
 
+        // Force MEF to refresh its type cache after loading assemblies
+        // This ensures newly loaded types are discovered even if MEF was initialized earlier
+        MEF.RefreshTypes();
+
         var solutionDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
         while (solutionDir?.GetFiles("*.sln").Any() != true) solutionDir = solutionDir?.Parent;
         Assert.That(solutionDir, Is.Not.Null, $"Failed to find {SolutionName} in any parent directories");

@@ -46,6 +46,16 @@ public static class MEF
         TypeCache.Clear();
     }
 
+    /// <summary>
+    /// Forces a refresh of the MEF type cache. Use this after dynamically loading assemblies
+    /// that need to be discovered. This is primarily for testing scenarios where assemblies
+    /// are loaded via typeof() after MEF has already been initialized.
+    /// </summary>
+    public static void RefreshTypes()
+    {
+        Flush(null, new AssemblyLoadEventArgs(typeof(MEF).Assembly));
+    }
+
     //private static readonly Regex ExcludeAssembly = new(@"^(<|Interop\+|Microsoft|System|MongoDB|NPOI|SixLabors|NUnit|OracleInternal|Npgsql|Amazon|Castle|Newtonsoft|SharpCompress|Terminal|YamlDotNet|Moq|BrightIdeasSoftware|MySqlConnector|Azure|ZstdSharp|CommandLine|FAnsi|Internal|Mono|DnsClient|Oracle|MS|NuGet|Unix)", RegexOptions.Compiled|RegexOptions.CultureInvariant);
     private static ReadOnlyDictionary<string, Type> PopulateUnique()
     {
