@@ -37,18 +37,14 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         "TreeView.cs"
     };
 
-    // Force plugin assemblies to load by referencing their types
-    // This ensures MEF can resolve types during AutoCommentsEvaluator checks
-    static EvaluateNamespacesAndSolutionFoldersTests()
-    {
-        // Touch plugin types to force assembly loading
-        _ = typeof(SCIStorePlugin.Data.SciStoreResult);
-        _ = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction);
-    }
-
     [Test]
     public void EvaluateNamespacesAndSolutionFolders()
     {
+        // Force plugin assemblies to load by referencing their types
+        // Must be done in test method, not static constructor, to ensure it runs
+        _ = typeof(SCIStorePlugin.Data.SciStoreResult);
+        _ = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction);
+
         var solutionDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
         while (solutionDir?.GetFiles("*.sln").Any() != true) solutionDir = solutionDir?.Parent;
         Assert.That(solutionDir, Is.Not.Null, $"Failed to find {SolutionName} in any parent directories");
