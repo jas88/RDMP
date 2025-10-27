@@ -361,9 +361,17 @@ public partial class AutoCommentsEvaluator
                         sbSuggestedText.AppendLine(text[i]);
 
                         //add the para tag
-                        var nextLine = text[i + 1].Insert(text[i + 1].IndexOf("///", StringComparison.Ordinal) + 4,
-                            "<para>");
-                        sbSuggestedText.AppendLine(nextLine);
+                        var commentStart = text[i + 1].IndexOf("///", StringComparison.Ordinal);
+                        if (commentStart >= 0 && text[i + 1].Length > commentStart + 4)
+                        {
+                            var nextLine = text[i + 1].Insert(commentStart + 4, "<para>");
+                            sbSuggestedText.AppendLine(nextLine);
+                        }
+                        else
+                        {
+                            // Line too short to insert para tag, just add as-is
+                            sbSuggestedText.AppendLine(text[i + 1]);
+                        }
                         i++;
                         paraOpened = true;
                         continue;
