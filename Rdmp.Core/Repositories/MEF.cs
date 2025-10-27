@@ -75,28 +75,47 @@ public static class MEF
         var assembliesSkipped = 0;
 
         // Try to use compile-time generated registry if available
-        try
+        // Search all loaded assemblies since Type.GetType() doesn't work across assembly boundaries
+        Console.WriteLine("MEF: Searching for CompiledTypeRegistry in loaded assemblies...");
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            var compiledRegistryType = Type.GetType("Rdmp.Core.Repositories.CompiledTypeRegistry");
-            if (compiledRegistryType != null)
+            try
             {
-                var getTypeMethod = compiledRegistryType.GetMethod("GetAllTypes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                if (getTypeMethod != null)
+                var compiledRegistryType = assembly.GetType("Rdmp.Core.Repositories.CompiledTypeRegistry");
+                if (compiledRegistryType != null)
                 {
-                    var compiledTypes = getTypeMethod.Invoke(null, null) as IEnumerable<KeyValuePair<string, Type>>;
-                    if (compiledTypes != null)
+                    Console.WriteLine($"MEF: Found CompiledTypeRegistry in {assembly.FullName}");
+                    var getTypeMethod = compiledRegistryType.GetMethod("GetAllTypes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    if (getTypeMethod != null)
                     {
-                        foreach (var kvp in compiledTypes)
-                            typeByName.TryAdd(kvp.Key, kvp.Value);
+                        Console.WriteLine("MEF: GetAllTypes method found, invoking...");
+                        var compiledTypes = getTypeMethod.Invoke(null, null) as IEnumerable<KeyValuePair<string, Type>>;
+                        if (compiledTypes != null)
+                        {
+                            var countBefore = typeByName.Count;
+                            foreach (var kvp in compiledTypes)
+                                typeByName.TryAdd(kvp.Key, kvp.Value);
 
-                        Console.WriteLine($"MEF: Preloaded {typeByName.Count} types from compiled registry");
+                            Console.WriteLine($"MEF: Preloaded {typeByName.Count - countBefore} types from compiled registry (total now: {typeByName.Count})");
+                            break; // Found it, stop searching
+                        }
+                        else
+                        {
+                            Console.WriteLine("MEF: GetAllTypes returned null or wrong type");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("MEF: GetAllTypes method not found on CompiledTypeRegistry");
                     }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"MEF: Could not load compiled registry: {ex.Message}");
+            catch (Exception ex)
+            {
+                // Don't log for every assembly, only if we found the type
+                if (ex.Message.Contains("CompiledTypeRegistry"))
+                    Console.WriteLine($"MEF: Error loading compiled registry from {assembly.GetName().Name}: {ex.Message}");
+            }
         }
 
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())

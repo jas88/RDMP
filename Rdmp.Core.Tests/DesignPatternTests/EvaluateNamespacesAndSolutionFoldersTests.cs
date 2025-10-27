@@ -40,8 +40,14 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
     [Test]
     public void EvaluateNamespacesAndSolutionFolders()
     {
-        // Note: As of source generator implementation, all types from referenced assemblies
-        // are available in the compile-time CompiledTypeRegistry. No runtime assembly loading needed.
+        // Load plugin assemblies to ensure types are available
+        // The .Assembly property forces runtime to actually load the assembly
+        var _ = typeof(SCIStorePlugin.Data.SciStoreResult).Assembly;
+        var _2 = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction).Assembly;
+
+        // Refresh MEF cache to discover newly loaded assemblies
+        // (CompiledTypeRegistry will be used if available, providing additional optimization)
+        MEF.RefreshTypes();
 
         var solutionDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
         while (solutionDir?.GetFiles("*.sln").Any() != true) solutionDir = solutionDir?.Parent;
