@@ -150,33 +150,41 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
+        // Try compile-time registry first if available (O(1) lookup, zero reflection)
+#if HAS_COMPILED_TYPE_REGISTRY
+        var type = CompiledTypeRegistry.GetType(typeName);
+        if (type != null)
+        {
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found in compiled registry ({CompiledTypeRegistry.TypeCount} types)");
+            return type;
+        }
+
+        // Try tail lookup in compiled registry
+        type = CompiledTypeRegistry.GetType(Tail(typeName));
+        if (type != null)
+        {
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found '{Tail(typeName)}' in compiled registry");
+            return type;
+        }
+#endif
+
+        // Use runtime reflection
         var dict = _types.Value;
         var dictHashCode = dict.GetHashCode();
 
-        // Try for exact match, then caseless match, then tail match, then tail caseless match
-        if (dict.TryGetValue(typeName, out var type))
+        Type type2;
+        if (dict.TryGetValue(typeName, out type2))
         {
-            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found via exact match (dict hash: {dictHashCode})");
-            return type;
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found in runtime cache (dict hash: {dictHashCode})");
+            return type2;
         }
-        if (dict.TryGetValue(typeName.ToUpperInvariant(), out type))
+        if (dict.TryGetValue(Tail(typeName), out type2))
         {
-            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found via case-insensitive match (dict hash: {dictHashCode})");
-            return type;
-        }
-        if (dict.TryGetValue(Tail(typeName), out type))
-        {
-            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found via tail match for '{Tail(typeName)}' (dict hash: {dictHashCode})");
-            return type;
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found '{Tail(typeName)}' in runtime cache");
+            return type2;
         }
 
-        if (dict.TryGetValue(Tail(typeName).ToUpperInvariant(), out type))
-        {
-            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found via tail case-insensitive match (dict hash: {dictHashCode})");
-            return type;
-        }
-
-        Console.WriteLine($"MEF.GetType(\"{typeName}\"): NOT FOUND in dictionary with {dict.Count} types (dict hash: {dictHashCode})");
+        Console.WriteLine($"MEF.GetType(\"{typeName}\"): NOT FOUND (runtime: {dict.Count})");
         return null;
     }
 

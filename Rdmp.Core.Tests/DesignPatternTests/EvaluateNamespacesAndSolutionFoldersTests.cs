@@ -40,15 +40,8 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
     [Test]
     public void EvaluateNamespacesAndSolutionFolders()
     {
-        // Force plugin assemblies to load by actually loading them
-        // typeof() alone may be optimized away by compiler
-        var assembly1 = typeof(SCIStorePlugin.Data.SciStoreResult).Assembly;
-        var assembly2 = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction).Assembly;
-        Console.WriteLine($"Loaded assemblies: {assembly1.FullName}, {assembly2.FullName}");
-
-        // Force MEF to refresh its type cache after loading assemblies
-        // This ensures newly loaded types are discovered even if MEF was initialized earlier
-        MEF.RefreshTypes();
+        // Note: As of source generator implementation, all types from referenced assemblies
+        // are available in the compile-time CompiledTypeRegistry. No runtime assembly loading needed.
 
         var solutionDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
         while (solutionDir?.GetFiles("*.sln").Any() != true) solutionDir = solutionDir?.Parent;

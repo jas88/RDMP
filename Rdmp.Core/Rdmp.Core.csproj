@@ -175,7 +175,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
-		<!-- Exclude source generators from compilation - they run during build -->
+		<!-- Exclude source generators from compilation - they're in separate project -->
 		<Compile Remove="Generators\**\*.cs" />
 		<None Include="Generators\**\*.cs" />
 	</ItemGroup>
