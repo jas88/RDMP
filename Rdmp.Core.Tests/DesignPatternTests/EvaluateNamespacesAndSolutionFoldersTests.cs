@@ -37,6 +37,15 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         "TreeView.cs"
     };
 
+    // Force plugin assemblies to load by referencing their types
+    // This ensures MEF can resolve types during AutoCommentsEvaluator checks
+    static EvaluateNamespacesAndSolutionFoldersTests()
+    {
+        // Touch plugin types to force assembly loading
+        _ = typeof(SCIStorePlugin.Data.SciStoreResult);
+        _ = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction);
+    }
+
     [Test]
     public void EvaluateNamespacesAndSolutionFolders()
     {

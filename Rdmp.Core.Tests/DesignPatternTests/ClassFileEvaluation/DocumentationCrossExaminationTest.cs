@@ -427,7 +427,7 @@ internal class DocumentationCrossExaminationTest
 
         var codeBlocks = Path.Combine(testDir.FullName, "Rdmp.UI.Tests", "DesignPatternTests", "MarkdownCodeBlockTests.cs");
 
-        Console.WriteLine($"Starting {mdFile}");
+        // Removed: Console.WriteLine($"Starting {mdFile}"); - floods CI logs
 
         var codeBlocksContent = File.ReadAllText(codeBlocks);
 
