@@ -150,12 +150,34 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
-        // Try for exact match, then caseless match, then tail match, then tail caseless match
-        if (_types.Value.TryGetValue(typeName, out var type)) return type;
-        if (_types.Value.TryGetValue(typeName.ToUpperInvariant(), out type)) return type;
-        if (_types.Value.TryGetValue(Tail(typeName), out type)) return type;
+        var dict = _types.Value;
+        var dictHashCode = dict.GetHashCode();
 
-        return _types.Value.TryGetValue(Tail(typeName).ToUpperInvariant(), out type) ? type : null;
+        // Try for exact match, then caseless match, then tail match, then tail caseless match
+        if (dict.TryGetValue(typeName, out var type))
+        {
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found via exact match (dict hash: {dictHashCode})");
+            return type;
+        }
+        if (dict.TryGetValue(typeName.ToUpperInvariant(), out type))
+        {
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found via case-insensitive match (dict hash: {dictHashCode})");
+            return type;
+        }
+        if (dict.TryGetValue(Tail(typeName), out type))
+        {
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found via tail match for '{Tail(typeName)}' (dict hash: {dictHashCode})");
+            return type;
+        }
+
+        if (dict.TryGetValue(Tail(typeName).ToUpperInvariant(), out type))
+        {
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found via tail case-insensitive match (dict hash: {dictHashCode})");
+            return type;
+        }
+
+        Console.WriteLine($"MEF.GetType(\"{typeName}\"): NOT FOUND in dictionary with {dict.Count} types (dict hash: {dictHashCode})");
+        return null;
     }
 
     public static Type GetType(string type, Type expectedBaseClass)
