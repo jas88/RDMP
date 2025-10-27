@@ -158,7 +158,7 @@ public class TypeRegistryGenerator : IIncrementalGenerator
         sb.AppendLine("/// Compile-time generated type registry containing all types from referenced assemblies.");
         sb.AppendLine($"/// Generated at compile-time with {types.Count} types.");
         sb.AppendLine("/// </summary>");
-        sb.AppendLine("internal static partial class CompiledTypeRegistry");
+        sb.AppendLine("public static partial class CompiledTypeRegistry");
         sb.AppendLine("{");
         sb.AppendLine("    private static readonly FrozenDictionary<string, Type> _typesByName;");
         sb.AppendLine();
