@@ -20,24 +20,33 @@ using Microsoft.IdentityModel.Tokens;
 namespace Rdmp.Dicom.Extraction.FoDicomBased;
 
 /// <summary>
+/// <para>
 /// A file path that might be relative or absolute or might be a path to a file in a zip file.  Zip boundary is ! e.g. C:\MassiveImageArchive\DOI\Bah.zip!000000.dcm
-/// 
-/// The following are examples of paths we might get given
-/// 
+/// </para>
+/// <para>
+/// The following are examples of paths we might get given:
+/// </para>
+/// <para>
 /// C:\MassiveImageArchive\DOI\Bah.zip!000000.dcm
+/// </para>
+/// <para>
 /// C:\MassiveImageArchive\DOI\Calc-Test_P_00202_RIGHT_CC\1.3.6.1.4.1.9590.100.1.2.32737473111512049914158289192624777641\1.3.6.1.4.1.9590.100.1.2.178738814511944891404623704932278059093\000000.dcm
+/// </para>
+/// <para>
 /// C:\MassiveImageArchive\DOI\Calc-Test_P_00077_LEFT_CC\1.3.6.1.4.1.9590.100.1.2.171237778213286314004831596800955774428\1.3.6.1.4.1.9590.100.1.2.120762895113344405411143779050723940544\000000.dcm
+/// </para>
+/// <para>
 /// \Mass-Training_P_01983_LEFT_MLO_1\1.3.6.1.4.1.9590.100.1.2.315974405612087965807898763551341558217\1.3.6.1.4.1.9590.100.1.2.35571788212802531401890896782882200908\000000.dcm
-///
-///
+/// </para>
+/// <para>
 /// Linux paths must follow the following rules:
-///
-/// Absolute path:
-///     Anything starting with '/'
-///
-/// Relative path:
-///     Anything not starting with '/' e.g. "./series1/1.dcm"
-/// 
+/// </para>
+/// <para>
+/// Absolute path: Anything starting with '/'
+/// </para>
+/// <para>
+/// Relative path: Anything not starting with '/' e.g. "./series1/1.dcm"
+/// </para>
 /// </summary>
 public partial class AmbiguousFilePath
 {
