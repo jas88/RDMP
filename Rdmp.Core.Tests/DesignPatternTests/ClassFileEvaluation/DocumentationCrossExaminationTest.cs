@@ -231,6 +231,16 @@ internal class DocumentationCrossExaminationTest
         "EnvironmentPotential",
         "MySqlConnection",
         "DbCommandBuilder",
+
+        // Proposed refactoring terms (docs/refactoring/memory-repository-per-type-dictionaries.md)
+        "ObjectsByType",
+        "GetTypeDictionary",
+        "GetObjectsOfType",
+        "PerTypeDictionaryTests",
+        "MemoryRepositoryPerformanceTests",
+
+        // Directory/plugin names used in documentation
+        "RdmpExtensions",
         "DbCommandBuilder",
         "IDecideTypesForStrings",
         "TypeCompatibilityGroup",
