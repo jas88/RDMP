@@ -64,6 +64,19 @@ jobs:
       - name: Initialise RDMP
         run: |
           dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" "(localdb)\MSSQLLocalDB" TEST_ -e
+      - name: Wait for LocalDB to be fully ready
+        shell: bash
+        run: |
+          echo "Waiting for LocalDB to be fully ready..."
+          for i in {1..10}; do
+            if sqlcmd -l 60 -S '(localdb)\MSSQLLocalDB' -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "LocalDB is ready!"
+              break
+            fi
+            echo "Attempt $i: LocalDB not fully ready..."
+            sleep 3
+          done
+          sqlcmd -l 60 -S '(localdb)\MSSQLLocalDB' -Q "SELECT DB_NAME(), @@VERSION;"
       - name: Wait for MySQL to be ready
         shell: bash
         run: |
@@ -93,6 +106,7 @@ jobs:
             sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml >> /tmp/combined-tests.yaml
             dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
       - name: Test (DB)
+        timeout-minutes: 45
         shell: bash
         run: |
           rm -rf coverage
