@@ -111,12 +111,16 @@ YamlRepository (File-backed persistence)
 ### 2.3 Real-World Impact
 
 **Scenario:** RDMP application with typical workload
-- **Catalogue Objects:** ~500
-- **CatalogueItem Objects:** ~2,000
-- **ColumnInfo Objects:** ~3,000
+- **[Catalogue] Objects:** ~500
+- **[CatalogueItem] Objects:** ~2,000
+- **[ColumnInfo] Objects:** ~3,000
 - **ExtractionInformation Objects:** ~1,500
 - **Other Types:** ~3,000
 - **Total:** ~10,000 objects
+
+[Catalogue]: ../../Documentation/CodeTutorials/Glossary.md#Catalogue
+[CatalogueItem]: ../../Documentation/CodeTutorials/Glossary.md#CatalogueItem
+[ColumnInfo]: ../../Documentation/CodeTutorials/Glossary.md#ColumnInfo
 
 **Current State:**
 - `GetObjectByID<Catalogue>(123)` → Scans 10,000 objects
@@ -197,11 +201,16 @@ Total identified: **20 access points**
 
 ## 4. Proposed Architecture
 
-### 4.1 New Data Structure
+### 4.1 New Data Structure (Proposed)
+
+**Note:** The following code elements are part of this refactoring proposal and do not yet exist in the codebase:
+- `ObjectsByType` - Proposed per-type dictionary structure
+- `GetTypeDictionary<T>()` - Proposed helper method
+- `GetObjectsOfType<T>()` - Proposed helper method
 
 ```csharp
 /// <summary>
-/// Per-type object storage for O(1) lookups. Maps Type → (ID → Object).
+/// PROPOSED: Per-type object storage for O(1) lookups. Maps Type → (ID → Object).
 /// </summary>
 protected readonly ConcurrentDictionary<Type, ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>>
     ObjectsByType = new();
@@ -213,11 +222,11 @@ protected readonly ConcurrentDictionary<Type, ConcurrentDictionary<int, IMapsDir
 3. **Thread Safety:** Two-level `ConcurrentDictionary` for concurrent reads/writes
 4. **No Breaking Changes:** `Objects` remains available for backward compatibility (Phase 1-3)
 
-### 4.2 Helper Methods
+### 4.2 Helper Methods (Proposed)
 
 ```csharp
 /// <summary>
-/// Gets or creates the inner dictionary for a specific type.
+/// PROPOSED: Gets or creates the inner dictionary for a specific type.
 /// Thread-safe via GetOrAdd pattern.
 /// </summary>
 protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetTypeDictionary<T>()
@@ -227,7 +236,7 @@ protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetTypeDiction
 }
 
 /// <summary>
-/// Gets or creates the inner dictionary for a specific type (non-generic).
+/// PROPOSED: Gets or creates the inner dictionary for a specific type (non-generic).
 /// Thread-safe via GetOrAdd pattern.
 /// </summary>
 protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetTypeDictionary(Type type)
@@ -239,7 +248,7 @@ protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetTypeDiction
 }
 
 /// <summary>
-/// Gets all objects of a specific type efficiently.
+/// PROPOSED: Gets all objects of a specific type efficiently.
 /// </summary>
 protected IEnumerable<T> GetObjectsOfType<T>() where T : IMapsDirectlyToDatabaseTable
 {
@@ -249,7 +258,7 @@ protected IEnumerable<T> GetObjectsOfType<T>() where T : IMapsDirectlyToDatabase
 }
 
 /// <summary>
-/// Gets all objects of a specific type efficiently (non-generic).
+/// PROPOSED: Gets all objects of a specific type efficiently (non-generic).
 /// </summary>
 protected IEnumerable<IMapsDirectlyToDatabaseTable> GetObjectsOfType(Type type)
 {

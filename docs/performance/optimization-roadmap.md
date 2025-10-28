@@ -112,8 +112,10 @@ var setting = repo.GetAllObjectsWhere<Setting>("Key = @key",
 
 ### High-Impact Targets
 1. **OverviewModel.cs:264** - CumulativeExtractionResults (5000 rows)
-2. **ExecuteCommandLinkColumnInfoToDataset.cs:34** - ColumnInfo (10,000 rows)
+2. **ExecuteCommandLinkColumnInfoToDataset.cs:34** - [ColumnInfo] (10,000 rows)
 3. **JoinManager.cs:56-63** - Three separate GetAllObjects (2000 rows each)
+
+[ColumnInfo]: ../../Documentation/CodeTutorials/Glossary.md#ColumnInfo
 
 ### Implementation Plan
 ```bash
