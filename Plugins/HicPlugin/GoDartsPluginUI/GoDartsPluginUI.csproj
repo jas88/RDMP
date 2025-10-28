@@ -5,6 +5,7 @@
     <AssemblyTitle>GoDartsPluginUI</AssemblyTitle>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
   <PropertyGroup>
