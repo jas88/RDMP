@@ -153,8 +153,56 @@ jobs:
           auto-start: true
       - name: Build
         run: dotnet build --configuration Release --verbosity minimal
-      # File System tests don't need databases - they use YamlRepository
-      # File System tests use YamlRepository - skip all database initialization
+      - name: Drop existing test databases if present
+        shell: bash
+        run: |
+          echo "Cleaning up any existing test databases..."
+          sqlcmd -l 30 -S '(localdb)\MSSQLLocalDB' -Q "IF DB_ID('TEST_Catalogue') IS NOT NULL DROP DATABASE TEST_Catalogue;" || true
+          sqlcmd -l 30 -S '(localdb)\MSSQLLocalDB' -Q "IF DB_ID('TEST_DataExport') IS NOT NULL DROP DATABASE TEST_DataExport;" || true
+      - name: Initialise RDMP
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 "(localdb)\MSSQLLocalDB" TEST_ -e
+      - name: Wait for LocalDB to be fully ready
+        shell: bash
+        run: |
+          echo "Waiting for LocalDB to be fully ready..."
+          for i in {1..10}; do
+            if sqlcmd -l 60 -S '(localdb)\MSSQLLocalDB' -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "LocalDB is ready!"
+              break
+            fi
+            echo "Attempt $i: LocalDB not fully ready..."
+            sleep 3
+          done
+          sqlcmd -l 60 -S '(localdb)\MSSQLLocalDB' -Q "SELECT DB_NAME(), @@VERSION;"
+      - name: Wait for MySQL to be ready
+        shell: bash
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -uroot -p'YourStrong!Passw0rd' --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Attempt $i: MySQL not ready yet..."
+            sleep 2
+          done
+          mysql -h127.0.0.1 -uroot -p'YourStrong!Passw0rd' -e "SELECT VERSION();"
+      - name: Create MySql Logging, DQE and Cohort Building Cache Db
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver LiveLoggingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_logging2" --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver DQE "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe" --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache" --dir ~/rdmp/rdmp-yaml/
+      - name: Run integration test scripts
+        timeout-minutes: 10
+        shell: bash
+        run: |
+            # Combine scripts into single file
+            cat scripts/create_list_destroy_catalogue.yaml > /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/create_cohort.yaml >> /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/create_dataload.yaml >> /tmp/combined-tests.yaml
+            sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml >> /tmp/combined-tests.yaml
+            dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
       - name: Test with local file system
         shell: bash
         run:  |
