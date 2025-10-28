@@ -52,7 +52,7 @@ var cmd = new ExecuteCommandConfirmLogs(..., "00:00:01");
 ---
 
 ### 3. **Python ScriptExecutionTests (8+ seconds total)**
-**File:** `/Plugins/RdmpExtensions/LoadModules.Extensions.Tests/Python/ScriptExecutionTests.cs`
+**File:** `Plugins/RdmpExtensions/LoadModules.Extensions.Tests/Python/ScriptExecutionTests.cs`
 **Issue:**
 - `SlowRollerTest`: Runs Python script with 5× 1-second sleeps = **5 seconds**
 - `SlowRollerAsync`: `Task.Delay(2000)` + `Task.Delay(6000)` = **8 seconds**
@@ -390,7 +390,7 @@ Keep sequential but optimize:
 1. `/Rdmp.Core.Tests/Curation/Integration/TriggerTests.cs:199-211` - Replace 5× Thread.Sleep
 2. `/Rdmp.Core.Tests/CommandExecution/ExecuteCommandConfirmLogsTests.cs:126` - Replace Thread.Sleep(5000)
 3. `/Rdmp.Core.Tests/DataLoad/Engine/Integration/DataTableUploadDestinationTests.cs:420` - Fix string concatenation
-4. `/Plugins/RdmpExtensions/LoadModules.Extensions.Tests/Python/ScriptExecutionTests.cs:106,116` - Reduce delay times
+4. `Plugins/RdmpExtensions/LoadModules.Extensions.Tests/Python/ScriptExecutionTests.cs:106,116` - Reduce delay times
 
 ### Short-term Refactoring (1-2 weeks):
 1. `/Rdmp.Core.Tests/Reports/CustomMetadataReportTests.cs` - Convert to in-memory streams

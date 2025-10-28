@@ -114,13 +114,14 @@ YamlRepository (File-backed persistence)
 - **[Catalogue] Objects:** ~500
 - **[CatalogueItem] Objects:** ~2,000
 - **[ColumnInfo] Objects:** ~3,000
-- **ExtractionInformation Objects:** ~1,500
+- **[ExtractionInformation] Objects:** ~1,500
 - **Other Types:** ~3,000
 - **Total:** ~10,000 objects
 
 [Catalogue]: ../../Documentation/CodeTutorials/Glossary.md#Catalogue
 [CatalogueItem]: ../../Documentation/CodeTutorials/Glossary.md#CatalogueItem
 [ColumnInfo]: ../../Documentation/CodeTutorials/Glossary.md#ColumnInfo
+[ExtractionInformation]: ../../Documentation/CodeTutorials/Glossary.md#ExtractionInformation
 
 **Current State:**
 - `GetObjectByID<Catalogue>(123)` → Scans 10,000 objects
@@ -855,8 +856,10 @@ if (Objects.Any())
 // Line 92: Add default servers
 if (defaultServer != null)
 {
-    GetTypeDictionary<ExternalDatabaseServer>().TryAdd(defaultServer.ID, defaultServer);
+    GetTypeDictionary<[ExternalDatabaseServer]>().TryAdd(defaultServer.ID, defaultServer);
 }
+
+[ExternalDatabaseServer]: ../../Documentation/CodeTutorials/Glossary.md#ExternalDatabaseServer
 
 // Line 98: Find max ID to avoid collisions
 if (ObjectsByType.Any())
@@ -894,9 +897,12 @@ var allObjects = _repository.GetAllObjectsInDatabase();
 
 ### 8.1 Unit Tests (New)
 
-**File:** `Rdmp.Core.Tests/Curation/MemoryRepositoryTests/PerTypeDictionaryTests.cs`
+**PROPOSED FILE:** `Rdmp.Core.Tests/Curation/MemoryRepositoryTests/PerTypeDictionaryTests.cs`
+
+**Note:** This test class does not yet exist. It is part of the proposed refactoring.
 
 ```csharp
+// PROPOSED: Test class for per-type dictionary functionality
 [TestFixture]
 [Category("Unit")]
 public class PerTypeDictionaryTests
@@ -1008,9 +1014,12 @@ public class PerTypeDictionaryTests
 
 ### 8.2 Performance Benchmarks
 
-**File:** `Rdmp.Core.Tests/Performance/MemoryRepositoryPerformanceTests.cs`
+**PROPOSED FILE:** `Rdmp.Core.Tests/Performance/MemoryRepositoryPerformanceTests.cs`
+
+**Note:** This test class does not yet exist. It is part of the proposed refactoring.
 
 ```csharp
+// PROPOSED: Performance benchmark tests for repository optimizations
 [TestFixture]
 [Category("Performance")]
 [Explicit("Performance benchmarks - run manually")]
