@@ -195,9 +195,10 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
         dt.Columns.Add("date_seen", typeof(DateTime)); // Explicitly use DateTime type
 
         // Parse the string dates into DateTime objects for proper database storage
-        var withinDate = DateTime.Parse(Within(duration));
+        // Use AssumeUniversal to treat UTC strings as UTC (not local time)
+        var withinDate = DateTime.Parse(Within(duration), null, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
         dt.Rows.Add("Cow", withinDate);
-        dt.Rows.Add("Crow", DateTime.Parse(Outwith(duration)));
+        dt.Rows.Add("Crow", DateTime.Parse(Outwith(duration), null, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal));
 
         var tbl = db.CreateTable("MyTable", dt);
 
