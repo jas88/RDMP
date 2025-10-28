@@ -33,6 +33,7 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Application\ResearchDataManagementPlatform\ResearchDataManagementPlatform.csproj" />
+        <ProjectReference Include="..\Rdmp.Core.Tests\Rdmp.Core.Tests.csproj" />
         <ProjectReference Include="..\Rdmp.UI\Rdmp.UI.csproj" />
         <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
     </ItemGroup>

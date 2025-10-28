@@ -25,7 +25,7 @@ public class PackageListIsCorrectTests
 
     //<PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     private static readonly Regex RPackageRefNoVersion =
-        new(@"<PackageReference\s+Include=""(.*)""",
+        new(@"<PackageReference\s+Include=""([^""]+)""",
             RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
 
@@ -120,8 +120,9 @@ public class PackageListIsCorrectTests
     /// <returns></returns>
     private static string GetPackagesMarkdown(DirectoryInfo root)
     {
-        var path = root.EnumerateFiles("packages.md", EnumerationOptions).Select(f => f.FullName).SingleOrDefault();
-        Assert.That(path, Is.Not.Null, "Could not find packages.md");
+        // Find Packages.md in Documentation/CodeTutorials directory
+        var path = Path.Combine(root.FullName, "Documentation", "CodeTutorials", "Packages.md");
+        Assert.That(File.Exists(path), Is.True, $"Could not find Packages.md at {path}");
         return path;
     }
 }

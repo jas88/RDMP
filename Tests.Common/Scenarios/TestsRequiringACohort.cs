@@ -20,7 +20,7 @@ using Rdmp.Core.ReusableLibraryCode;
 namespace Tests.Common.Scenarios;
 
 [TestFixture]
-public class TestsRequiringACohort : TestsRequiringA
+public abstract class TestsRequiringACohort : TestsRequiringA
 {
     protected const int cohortIDInTestData = -599;
     protected const int projectNumberInTestData = 99;

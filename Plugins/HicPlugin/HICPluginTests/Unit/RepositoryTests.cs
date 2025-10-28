@@ -1,3 +1,9 @@
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -10,7 +16,7 @@ using Rdmp.Core.ReusableLibraryCode.Progress;
 using SCIStorePlugin.Data;
 using SCIStorePlugin.Repositories;
 
-namespace SCIStorePluginTests.Unit;
+namespace HICPluginTests.Unit;
 
 class RepositoryTests
 {
@@ -26,7 +32,7 @@ class RepositoryTests
         var bloodSample = report.Samples.First();
         var result = bloodSample.Results.First(static r => r.ReadCodeValue.Equals("TTTT."));
 
-       Assert.That(8.9, Is.EqualTo(result.QuantityValue ?? 0.0m));
+       Assert.That(result.QuantityValue ?? 0.0m, Is.EqualTo(8.9));
     }
 
     [Test]
@@ -82,12 +88,12 @@ class RepositoryTests
             
         repo.Create(reports, listener);
 
-       Assert.That(1, Is.EqualTo(repo.HeadersTable.Rows.Count));
-       Assert.That(1, Is.EqualTo(repo.SampleDetailsTable.Rows.Count));
-       Assert.That(2, Is.EqualTo(repo.ResultsTable.Rows.Count));
+       Assert.That(repo.HeadersTable.Rows.Count, Is.EqualTo(1));
+       Assert.That(repo.SampleDetailsTable.Rows.Count, Is.EqualTo(1));
+       Assert.That(repo.ResultsTable.Rows.Count, Is.EqualTo(2));
 
-       Assert.That("TESTID", Is.EqualTo(repo.ResultsTable.Rows[0]["TestIdentifier"]));
-       Assert.That("ANOTHERTEST_LOCAL", Is.EqualTo(repo.ResultsTable.Rows[1]["LocalClinicalCodeValue"]));
+       Assert.That(repo.ResultsTable.Rows[0]["TestIdentifier"], Is.EqualTo("TESTID"));
+       Assert.That(repo.ResultsTable.Rows[1]["LocalClinicalCodeValue"], Is.EqualTo("ANOTHERTEST_LOCAL"));
 
         Assert.That(repo.ResultsTable.Rows[0]["QuantityValue"].ToString().Length == 4, Is.True);
     }
@@ -105,7 +111,7 @@ class RepositoryTests
 
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(badXmlString));
         var actualString = CombinedReportXmlDeserializer.RemoveInvalidCharactersFromStream(stream);
-       Assert.That(expectedXmlString, Is.EqualTo(actualString));
+       Assert.That(actualString, Is.EqualTo(expectedXmlString));
     }
 }
 

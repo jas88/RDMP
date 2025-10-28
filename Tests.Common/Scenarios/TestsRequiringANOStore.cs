@@ -17,7 +17,7 @@ using Rdmp.Core.ReusableLibraryCode.Checks;
 
 namespace Tests.Common.Scenarios;
 
-public class TestsRequiringANOStore : TestsRequiringA
+public abstract class TestsRequiringANOStore : TestsRequiringA
 {
     protected ExternalDatabaseServer ANOStore_ExternalDatabaseServer { get; set; }
     protected DiscoveredDatabase ANOStore_Database { get; set; }

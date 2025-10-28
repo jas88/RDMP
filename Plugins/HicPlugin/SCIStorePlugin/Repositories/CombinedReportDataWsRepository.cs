@@ -1,4 +1,10 @@
-﻿using System;
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -12,8 +18,6 @@ using SCIStorePlugin.Data;
 
 namespace SCIStorePlugin.Repositories;
 
-// todo: specific notify handler is a quick fix for UI-related issue in HistoryDownloader, refactor/remove
-public delegate void WsNotifyHandler(object sender, string message);
 
 /// <summary>
 /// SCI Store web service repository for a specific health board and discipline (passed in on construction)
@@ -39,9 +43,11 @@ public class CombinedReportDataWsRepository : WsRepository<CombinedReportData>, 
         Notify?.Invoke(this, message);
     }
 
+    #pragma warning disable CS0067 // Events are never used - this is legacy plugin code
     public override event AfterReadAllHandler AfterReadAll;
 
     public override event AfterReadSingleHandler AfterReadSingle;
+    #pragma warning restore CS0067
     protected virtual void OnAfterReadSingle(CombinedReportData report)
     {
         AfterReadSingle?.Invoke(this, report);
@@ -312,45 +318,5 @@ public class CombinedReportDataWsRepository : WsRepository<CombinedReportData>, 
                 UserName = wsConfig.Username
             }
         };
-    }
-}
-
-public class WebServiceLoginFailureException : Exception
-{
-    public WebServiceLoginFailureException(string message, Exception innerException = null) : base(message, innerException)
-    {
-    }
-}
-
-public class WebServiceRetrievalFailure : Exception
-{
-    public DateTime Day { get; private set; }
-    public TimeSpan TimeSpan { get; private set; }
-
-    public WebServiceRetrievalFailure(DateTime day, TimeSpan timeSpan, Exception innerException = null) : base ("Failed to retrieve data from the web service", innerException)
-    {
-        Day = day;
-        TimeSpan = timeSpan;
-    }
-
-    public override string ToString()
-    {
-        return $"Failed retrieval of {TimeSpan:g} for {Day:yyyy-MM-dd}: {base.ToString()}";
-    }
-}
-
-public class LabReportRetrievalFailureException : Exception
-{
-    public SciStoreRecord LabRecord { get; private set; }
-
-    public LabReportRetrievalFailureException(SciStoreRecord labRecord, Exception innerException) : base ("Failed to retrieve lab investigation reports", innerException)
-    {
-        LabRecord = labRecord;
-    }
-
-    public override string ToString()
-    {
-        return
-            $"{base.ToString()}{Environment.NewLine}Lab Number: {LabRecord.LabNumber}{Environment.NewLine}Test Report ID{LabRecord.TestReportID}";
     }
 }

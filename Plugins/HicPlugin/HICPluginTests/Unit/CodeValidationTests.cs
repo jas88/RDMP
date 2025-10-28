@@ -1,3 +1,9 @@
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
 using System;
 using NUnit.Framework;
 using Rdmp.Core.ReusableLibraryCode.Progress;
@@ -7,7 +13,7 @@ using HICPluginTests;
 using Rdmp.Core.Validation;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Unit;
+namespace HICPluginTests.Unit;
 
 public class CodeValidationTests : DatabaseTests
 {
@@ -48,7 +54,7 @@ public class CodeValidationTests : DatabaseTests
         var testSetFactory = new TestSetFactory(readCodeConstraint);
         var testDetails = testSetFactory.CreateFromTestType(testType, ThrowImmediatelyDataLoadEventListener.Quiet);
 
-       Assert.That("NOT_A_READ_CODE", Is.EqualTo(testDetails.LocalCode.Value));
+       Assert.That(testDetails.LocalCode.Value, Is.EqualTo("NOT_A_READ_CODE"));
         Assert.That(testDetails.ReadCode, Is.Null);
     }
 
@@ -84,7 +90,7 @@ public class CodeValidationTests : DatabaseTests
         var testDetails = testSetFactory.CreateFromTestType(testType, ThrowImmediatelyDataLoadEventListener.Quiet);
 
         Assert.That(testDetails.ReadCode, Is.Not.Null);
-       Assert.That(".0766", Is.EqualTo(testDetails.ReadCode.Value));
+       Assert.That(testDetails.ReadCode.Value, Is.EqualTo(".0766"));
         Assert.That(testDetails.LocalCode, Is.Null);
     }
 
@@ -137,7 +143,7 @@ public class CodeValidationTests : DatabaseTests
         Assert.That(testDetails.ReadCode,Is.Not.Null);
         Assert.That(testDetails.LocalCode,Is.Not.Null);
 
-       Assert.That("4Q24.", Is.EqualTo(testDetails.ReadCode.Value));
-       Assert.That("GGOC",Is.EqualTo( testDetails.LocalCode.Value));
+       Assert.That(testDetails.ReadCode.Value, Is.EqualTo("4Q24."));
+       Assert.That(testDetails.LocalCode.Value, Is.EqualTo("GGOC"));
     }
 }

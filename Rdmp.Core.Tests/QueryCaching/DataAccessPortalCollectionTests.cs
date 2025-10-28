@@ -23,10 +23,12 @@ internal class DataAccessPortalCollectionTests
     [OneTimeSetUp]
     public void LoadImplementation()
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         ImplementationManager.Load<MicrosoftSQLImplementation>();
         ImplementationManager.Load<MySqlImplementation>();
         ImplementationManager.Load<OracleImplementation>();
         ImplementationManager.Load<PostgreSqlImplementation>();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [TestCase(true)]

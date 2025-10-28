@@ -38,23 +38,109 @@ public static class MEF
 
     private static void Flush(object _1, AssemblyLoadEventArgs ale)
     {
-        if (_types?.IsValueCreated != false)
+        var assemblyName = ale?.LoadedAssembly?.FullName ?? "(initialization)";
+        Console.WriteLine($"MEF.Flush called for assembly: {assemblyName}");
+
+        // Always reset when an assembly loads (ale != null) to ensure new types are discovered
+        // On initialization (ale == null), only create if _types is null
+        if (ale is not null || _types is null)
+        {
+            Console.WriteLine($"MEF: Creating new type cache (event={ale != null}, wasNull={_types is null})");
             _types = new Lazy<ReadOnlyDictionary<string, Type>>(PopulateUnique,
                 LazyThreadSafetyMode.ExecutionAndPublication);
+        }
+        else
+        {
+            Console.WriteLine("MEF: Skipped cache reset (no assembly load, _types exists)");
+        }
         TypeCache.Clear();
+    }
+
+    /// <summary>
+    /// Forces a refresh of the MEF type cache. Use this after dynamically loading assemblies
+    /// that need to be discovered. This is primarily for testing scenarios where assemblies
+    /// are loaded via typeof() after MEF has already been initialized.
+    /// </summary>
+    public static void RefreshTypes()
+    {
+        Flush(null, new AssemblyLoadEventArgs(typeof(MEF).Assembly));
     }
 
     //private static readonly Regex ExcludeAssembly = new(@"^(<|Interop\+|Microsoft|System|MongoDB|NPOI|SixLabors|NUnit|OracleInternal|Npgsql|Amazon|Castle|Newtonsoft|SharpCompress|Terminal|YamlDotNet|Moq|BrightIdeasSoftware|MySqlConnector|Azure|ZstdSharp|CommandLine|FAnsi|Internal|Mono|DnsClient|Oracle|MS|NuGet|Unix)", RegexOptions.Compiled|RegexOptions.CultureInvariant);
     private static ReadOnlyDictionary<string, Type> PopulateUnique()
     {
         var sw = Stopwatch.StartNew();
-        var typeByName = new Dictionary<string, Type>();
+        var typeByName = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+        var assembliesProcessed = 0;
+        var assembliesSkipped = 0;
+
+        // Try to use compile-time generated registry if available
+        // Search all loaded assemblies since Type.GetType() doesn't work across assembly boundaries
+        Console.WriteLine("MEF: Searching for CompiledTypeRegistry in loaded assemblies...");
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            if (assembly.FullName?.StartsWith("CommandLine", StringComparison.Ordinal) != false) continue;
             try
             {
+                var compiledRegistryType = assembly.GetType("Rdmp.Core.Repositories.CompiledTypeRegistry");
+                if (compiledRegistryType != null)
+                {
+                    Console.WriteLine($"MEF: Found CompiledTypeRegistry in {assembly.FullName}");
+                    var getTypeMethod = compiledRegistryType.GetMethod("GetAllTypes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    if (getTypeMethod != null)
+                    {
+                        Console.WriteLine("MEF: GetAllTypes method found, invoking...");
+                        var compiledTypes = getTypeMethod.Invoke(null, null) as IEnumerable<KeyValuePair<string, Type>>;
+                        if (compiledTypes != null)
+                        {
+                            var countBefore = typeByName.Count;
+                            foreach (var kvp in compiledTypes)
+                                typeByName.TryAdd(kvp.Key, kvp.Value);
+
+                            Console.WriteLine($"MEF: Preloaded {typeByName.Count - countBefore} types from compiled registry (total now: {typeByName.Count})");
+                            break; // Found it, stop searching
+                        }
+                        else
+                        {
+                            Console.WriteLine("MEF: GetAllTypes returned null or wrong type");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("MEF: GetAllTypes method not found on CompiledTypeRegistry");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Don't log for every assembly, only if we found the type
+                if (ex.Message.Contains("CompiledTypeRegistry"))
+                    Console.WriteLine($"MEF: Error loading compiled registry from {assembly.GetName().Name}: {ex.Message}");
+            }
+        }
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            // Skip CommandLine assembly
+            if (assembly.FullName?.StartsWith("CommandLine", StringComparison.Ordinal) == true)
+            {
+                assembliesSkipped++;
+                continue;
+            }
+
+            assembliesProcessed++;
+            var isAutomationPlugins = assembly.FullName?.Contains("AutomationPlugins", StringComparison.OrdinalIgnoreCase) == true;
+            if (isAutomationPlugins)
+                Console.WriteLine($"MEF: Processing AutomationPlugins assembly: {assembly.FullName}");
+
+            try
+            {
+                var typesInAssembly = 0;
                 foreach (var type in assembly.GetTypes())
+                {
+                    typesInAssembly++;
+                    if (isAutomationPlugins && type.Name.Contains("AutomateExtraction", StringComparison.OrdinalIgnoreCase))
+                        Console.WriteLine($"MEF: Found type {type.FullName} in AutomationPlugins");
+
                     foreach (var alias in new[]
                              {
                              Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
@@ -67,6 +153,10 @@ public static class MEF
                             typeByName.Remove(alias);
                             typeByName.Add(alias, type);
                         }
+                }
+
+                if (isAutomationPlugins)
+                    Console.WriteLine($"MEF: AutomationPlugins assembly contained {typesInAssembly} types");
             }
             catch (Exception e)
             {
@@ -75,9 +165,11 @@ public static class MEF
                     badAssemblies.TryAdd(assembly.FullName, e);
                 }
 
-                Console.WriteLine(e);
+                Console.WriteLine($"MEF: Failed to process assembly {assembly.FullName}: {e.Message}");
             }
         }
+
+        Console.WriteLine($"MEF: Processed {assembliesProcessed} assemblies, skipped {assembliesSkipped}, found {typeByName.Count} types in {sw.ElapsedMilliseconds}ms");
 
         return new ReadOnlyDictionary<string, Type>(typeByName);
     }
@@ -102,12 +194,24 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
-        // Try for exact match, then caseless match, then tail match, then tail caseless match
-        if (_types.Value.TryGetValue(typeName, out var type)) return type;
-        if (_types.Value.TryGetValue(typeName.ToUpperInvariant(), out type)) return type;
-        if (_types.Value.TryGetValue(Tail(typeName), out type)) return type;
+        // Use runtime reflection (will be populated from CompiledTypeRegistry if available)
+        var dict = _types.Value;
+        var dictHashCode = dict.GetHashCode();
 
-        return _types.Value.TryGetValue(Tail(typeName).ToUpperInvariant(), out type) ? type : null;
+        Type type;
+        if (dict.TryGetValue(typeName, out type))
+        {
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found in cache (dict hash: {dictHashCode})");
+            return type;
+        }
+        if (dict.TryGetValue(Tail(typeName), out type))
+        {
+            Console.WriteLine($"MEF.GetType(\"{typeName}\"): Found '{Tail(typeName)}' in cache");
+            return type;
+        }
+
+        Console.WriteLine($"MEF.GetType(\"{typeName}\"): NOT FOUND (cache: {dict.Count} types)");
+        return null;
     }
 
     public static Type GetType(string type, Type expectedBaseClass)

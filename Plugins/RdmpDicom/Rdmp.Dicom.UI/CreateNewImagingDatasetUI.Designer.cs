@@ -1,4 +1,4 @@
-﻿using Rdmp.UI.SimpleControls;
+using Rdmp.UI.SimpleControls;
 
 namespace Rdmp.Dicom.UI
 {

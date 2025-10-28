@@ -135,7 +135,7 @@ public class MemoryRepository : IRepository
     {
         var prop = typeof(T).GetProperty(property);
 
-        return GetAllObjects<T>().Where(o => Equals(prop.GetValue(o), value1)).ToArray();
+        return Objects.Keys.OfType<T>().Where(o => Equals(prop.GetValue(o), value1)).OrderBy(o => o.ID).ToArray();
     }
 
     public T[] GetAllObjectsWhere<T>(string property1, object value1, ExpressionType operand, string property2,
@@ -146,12 +146,12 @@ public class MemoryRepository : IRepository
 
         return operand switch
         {
-            ExpressionType.AndAlso => GetAllObjects<T>()
+            ExpressionType.AndAlso => Objects.Keys.OfType<T>()
                 .Where(o => Equals(prop1.GetValue(o), value1) && Equals(prop2.GetValue(o), value2))
-                .ToArray(),
-            ExpressionType.OrElse => GetAllObjects<T>()
+                .OrderBy(o => o.ID).ToArray(),
+            ExpressionType.OrElse => Objects.Keys.OfType<T>()
                 .Where(o => Equals(prop1.GetValue(o), value1) || Equals(prop2.GetValue(o), value2))
-                .ToArray(),
+                .OrderBy(o => o.ID).ToArray(),
             _ => throw new NotSupportedException("operand")
         };
     }

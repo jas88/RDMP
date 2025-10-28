@@ -33,7 +33,7 @@ using TypeGuesser;
 namespace Tests.Common.Scenarios;
 
 [TestFixture]
-public class TestsRequiringAnExtractionConfiguration : TestsRequiringACohort
+public abstract class TestsRequiringAnExtractionConfiguration : TestsRequiringACohort
 {
     protected ICatalogue _catalogue;
     protected ITableInfo _tableInfo;

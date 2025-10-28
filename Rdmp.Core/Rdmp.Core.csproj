@@ -175,7 +175,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
-		<!-- Exclude source generators from compilation - they run during build -->
+		<!-- Exclude source generators from compilation - they're in separate project -->
 		<Compile Remove="Generators\**\*.cs" />
 		<None Include="Generators\**\*.cs" />
 	</ItemGroup>
@@ -333,10 +333,6 @@
 		<PackageReference Include="FAnsiSql.Legacy" />
 		<PackageReference Include="LibArchive.Net" />
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
 		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

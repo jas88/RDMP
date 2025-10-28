@@ -17,3 +17,6 @@ The configuration options should look like
 * Path to image archive should be populated with the path to the image archive file
 * Image URI Column name should be populated with the name of the column that contains the path the the image for this entry. This field is required and does require your data to host the filename and location path in seperate columns.
 * Dataset Name should be populated with a regex string to match on all datasets bundles that reference images, '.*' will match on everything
+
+[Pipeline]: ../../../../Documentation/CodeTutorials/Glossary.md#Pipeline
+

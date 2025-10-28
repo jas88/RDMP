@@ -69,17 +69,37 @@ public class RdmpCommandLineBootStrapper
     {
         if (!string.IsNullOrWhiteSpace(opts.File))
         {
-            if (!File.Exists(opts.File))
-            {
-                Console.WriteLine($"Could not find file '{opts.File}'");
-                return -55;
-            }
+            string content;
 
-            var content = File.ReadAllText(opts.File);
+            // Support reading from stdin if file is "-"
+            if (opts.File == "-")
+            {
+                // Check if stdin is redirected (not interactive)
+                if (Console.IsInputRedirected)
+                {
+                    content = Console.In.ReadToEnd();
+                }
+                else
+                {
+                    Console.WriteLine("Error: -f - requires input to be piped or redirected");
+                    Console.WriteLine("Example: cat script.yaml | rdmp -f -");
+                    return -55;
+                }
+            }
+            else
+            {
+                if (!File.Exists(opts.File))
+                {
+                    Console.WriteLine($"Could not find file '{opts.File}'");
+                    return -55;
+                }
+
+                content = File.ReadAllText(opts.File);
+            }
 
             if (string.IsNullOrWhiteSpace(content))
             {
-                Console.WriteLine($"File is empty ('{opts.File}')");
+                Console.WriteLine($"Error: Input is empty");
                 return -56;
             }
 

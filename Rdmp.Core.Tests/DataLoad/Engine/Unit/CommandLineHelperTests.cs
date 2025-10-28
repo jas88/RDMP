@@ -31,7 +31,9 @@ internal class CommandLineHelperTests
         const string db = "db-name";
         Assert.That(CommandLineHelper.GetValueString(db), Is.EqualTo(db));
 
+#pragma warning disable CS0618 // Type or member is obsolete
         ImplementationManager.Load<MicrosoftSQLImplementation>();
+#pragma warning restore CS0618 // Type or member is obsolete
 
         //notice how server and db don't actually exist, that's cool they implement IMightNotExist
         var dbInfo =

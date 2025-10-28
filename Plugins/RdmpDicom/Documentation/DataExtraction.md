@@ -17,3 +17,6 @@ Mappings are persisted so that repeated extractions of the same images for the s
 
 ![Overview](Images/FoDicomBasedExtraction.png)
 _Extraction Component FoDicomBasedExtraction_
+
+[Project]: ../../../Documentation/CodeTutorials/Glossary.md#Project
+

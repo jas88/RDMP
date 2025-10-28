@@ -1,4 +1,9 @@
-﻿// Copyright (c) The University of Dundee 2024-2024
+﻿// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) The University of Dundee 2018-2025
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -65,15 +70,15 @@ public class RemoteAttacher : Attacher, IPluginAttacher
             case DatabaseType.PostgreSql:
                 return $"cast((NOW() AT TIME ZONE 'UTC' + interval '{amount} {addType}S') as Date)";
             case DatabaseType.Oracle:
-                if (addType == "DAY") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount})";
-                if (addType == "WEEK") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount} *7)";
-                if (addType == "MONTH") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,{amount})";
-                if (addType == "YEAR") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,,{amount})";
-                return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount})";
+                if (addType == "DAY") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount}))";
+                if (addType == "WEEK") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount} *7))";
+                if (addType == "MONTH") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,{amount}))";
+                if (addType == "YEAR") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,,{amount}))";
+                return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount}))";
             case DatabaseType.MicrosoftSQLServer:
-                return $"DATEADD({addType}, {amount}, GETUTCDATE())";
+                return $"CAST(DATEADD({addType}, {amount}, GETUTCDATE()) as Date)";
             case DatabaseType.MySql:
-                return $"DATE_ADD(UTC_DATE(), INTERVAL {amount} {addType})";
+                return $"DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL {amount} {addType}))";
             default:
                 throw new InvalidOperationException("Unknown Database Type");
         }

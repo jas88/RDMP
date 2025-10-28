@@ -28,7 +28,7 @@ namespace Tests.Common.Scenarios;
 /// <summary>
 /// Scenario where you want to run a full DLE load of records into a table
 /// </summary>
-public class TestsRequiringADle : TestsRequiringA
+public abstract class TestsRequiringADle : TestsRequiringA
 {
     protected int RowsBefore;
     protected int RowsNow => LiveTable.GetRowCount();

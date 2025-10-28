@@ -93,6 +93,22 @@ public class ObjectConstructor
     /// <returns></returns>
     public static object Construct<T>(Type typeToConstruct, T constructorParameter1, bool allowBlank = true)
     {
+        // Check for decorated constructor first (highest priority)
+        var allConstructors = typeToConstruct.GetConstructors(TargetBindingFlags);
+        var decorated = allConstructors.Where(c => Attribute.IsDefined(c, typeof(UseWithObjectConstructorAttribute))).ToArray();
+        if (decorated.Length == 1)
+        {
+            try
+            {
+                var paramCount = decorated[0].GetParameters().Length;
+                return decorated[0].Invoke(paramCount == 0 ? Array.Empty<object>() : new object[] { constructorParameter1 });
+            }
+            catch (TargetInvocationException ex)
+            {
+                throw ex.InnerException ?? ex;
+            }
+        }
+
         var repositoryLocatorConstructorInfos = GetConstructors<T>(typeToConstruct);
 
         if (repositoryLocatorConstructorInfos.Any())
@@ -260,15 +276,70 @@ public class ObjectConstructor
 
     private static object InvokeBestConstructor(List<ConstructorInfo> constructors, params object[] parameters)
     {
-        if (constructors.Count == 1)
-            return constructors[0].Invoke(parameters);
-
+        // First priority: Use decorated constructor if exactly one is decorated
         var importDecorated = constructors.Where(c => Attribute.IsDefined(c, typeof(UseWithObjectConstructorAttribute)))
             .ToArray();
-        return importDecorated.Length == 1
-            ? importDecorated[0].Invoke(parameters)
-            : throw new ObjectLacksCompatibleConstructorException(
-                $"Could not pick the correct constructor between:{Environment.NewLine}{string.Join($"{Environment.NewLine}", constructors.Select(c => $"{c.Name}({string.Join(",", c.GetParameters().Select(p => p.ParameterType))}"))}");
+        if (importDecorated.Length == 1)
+        {
+            try
+            {
+                return importDecorated[0].Invoke(parameters);
+            }
+            catch (TargetInvocationException ex)
+            {
+                throw ex.InnerException ?? ex;
+            }
+        }
+
+        if (constructors.Count == 1)
+        {
+            try
+            {
+                return constructors[0].Invoke(parameters);
+            }
+            catch (TargetInvocationException ex)
+            {
+                // Unwrap to expose actual exception from constructor
+                throw ex.InnerException ?? ex;
+            }
+        }
+
+        // Second priority: Pick constructor with most specific parameter types (avoid object parameters)
+        var bestMatch = constructors
+            .Select(c => new
+            {
+                Constructor = c,
+                Specificity = c.GetParameters().Select((p, i) =>
+                {
+                    if (parameters[i] == null) return 0;
+                    // Exact type match = highest score
+                    if (p.ParameterType == parameters[i].GetType()) return 3;
+                    // Non-object assignable type = medium score
+                    if (p.ParameterType != typeof(object) && p.ParameterType.IsInstanceOfType(parameters[i])) return 2;
+                    // Object type = lowest score (too generic)
+                    if (p.ParameterType == typeof(object)) return 1;
+                    return 0;
+                }).Sum()
+            })
+            .OrderByDescending(x => x.Specificity)
+            .ToList();
+
+        // If there's a clear winner (highest specificity), use it
+        if (bestMatch.Count >= 2 && bestMatch[0].Specificity > bestMatch[1].Specificity)
+        {
+            try
+            {
+                return bestMatch[0].Constructor.Invoke(parameters);
+            }
+            catch (TargetInvocationException ex)
+            {
+                throw ex.InnerException ?? ex;
+            }
+        }
+
+        // Otherwise, ambiguous
+        throw new ObjectLacksCompatibleConstructorException(
+            $"Could not pick the correct constructor between:{Environment.NewLine}{string.Join($"{Environment.NewLine}", constructors.Select(c => $"{c.Name}({string.Join(",", c.GetParameters().Select(p => p.ParameterType))}"))}");
     }
 
     private static object GetUsingBlankConstructor(Type t)
@@ -321,6 +392,7 @@ public class ObjectConstructor
                 compatible.Add(constructor);
         }
 
+        // Return null if no compatible constructors (allows optional constructor selection)
         return compatible.Any() ? InvokeBestConstructor(compatible, constructorValues) : null;
     }
 

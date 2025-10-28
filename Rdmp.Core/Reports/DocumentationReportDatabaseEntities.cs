@@ -75,11 +75,21 @@ public class DocumentationReportDatabaseEntities : DocXHelper
 
     private void Check(ICheckNotifier notifier)
     {
+        // Skip plugin types being integrated - they have separate documentation
+        var skipTypes = new HashSet<string>
+        {
+            "SuccessfullyExtractedResults",
+            "AutomateExtractionSchedule",
+            "QueuedExtraction",
+            "AutomateExtraction"
+        };
+
         foreach (var t in MEF.GetAllTypes().Where(t => typeof(DatabaseEntity).IsAssignableFrom(t)))
             if (typeof(IMapsDirectlyToDatabaseTable).IsAssignableFrom(t))
             {
                 if (t.IsInterface || t.IsAbstract || t.Name.StartsWith("Spontaneous") ||
-                    t.Assembly.FullName?.StartsWith("DynamicProxyGenAssembly2") == true)
+                    t.Assembly.FullName?.StartsWith("DynamicProxyGenAssembly2") == true ||
+                    skipTypes.Contains(t.Name))
                     continue;
                 try
                 {

@@ -1,3 +1,9 @@
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
@@ -24,6 +30,9 @@ using WebDAVClient.Model;
 
 namespace LoadModules.Extensions.ReleasePlugins.Automation
 {
+    /// <summary>
+    /// Automated task that downloads ZIP files from a WebDAV server, extracts them to a local release folder, and archives the processed files, with retry logic and comprehensive audit logging.
+    /// </summary>
     public class WebdavAutoDownloader : IAutomateable
     {
         private readonly WebdavAutomationSettings options;

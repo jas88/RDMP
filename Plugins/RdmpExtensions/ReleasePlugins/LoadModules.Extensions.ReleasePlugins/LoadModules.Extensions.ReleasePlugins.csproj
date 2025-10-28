@@ -26,9 +26,8 @@
     <EmbeddedResource Include="db\runAfterCreateDatabase\CreateWebdavPluginDatabase.sql" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DotNetZip" Version="1.16.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    
+    <PackageReference Include="DotNetZip" />
+    <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Rdmp.Core\Rdmp.Core.csproj" />

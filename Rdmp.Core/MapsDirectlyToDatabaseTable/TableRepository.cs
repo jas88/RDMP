@@ -224,21 +224,34 @@ public abstract class TableRepository : ITableRepository, IDisposable
                 "GetObjectByID<T> requires a proper class not an interface so that it can access the correct table")
             : (T)GetObjectByID(typeof(T), id);
 
-    public IMapsDirectlyToDatabaseTable GetObjectByID(Type type, int id)
+    public IMapsDirectlyToDatabaseTable GetObjectByID(Type type, int id) => GetObjectByID(type, id, null);
+
+    public IMapsDirectlyToDatabaseTable GetObjectByID(Type type, int id, IManagedConnection externalConnection)
     {
         if (id == 0)
             return null;
 
         var typename = Wrap(type.Name);
 
-        using var connection = GetConnection();
-        using var selectCommand = DatabaseCommandHelper.GetCommand($"SELECT * FROM {typename} WHERE ID={id}",
-            connection.Connection, connection.Transaction);
-        using var r = selectCommand.ExecuteReader();
-        if (!r.HasRows)
-            throw new KeyNotFoundException($"Could not find {type.Name} with ID {id}");
-        r.Read();
-        return ConstructEntity(type, r);
+        var useExternalConnection = externalConnection != null;
+        var connection = useExternalConnection ? externalConnection : GetConnection();
+
+        try
+        {
+            using var selectCommand = DatabaseCommandHelper.GetCommand($"SELECT * FROM {typename} WHERE ID={id}",
+                connection.Connection, connection.Transaction);
+            using var r = selectCommand.ExecuteReader();
+            if (!r.HasRows)
+                throw new KeyNotFoundException($"Could not find {type.Name} with ID {id}");
+            r.Read();
+            return ConstructEntity(type, r);
+        }
+        finally
+        {
+            // Only dispose the connection if we created it
+            if (!useExternalConnection)
+                connection?.Dispose();
+        }
     }
 
     public string Wrap(string name) => DiscoveredServer.GetQuerySyntaxHelper().EnsureWrapped(name);
@@ -259,9 +272,11 @@ public abstract class TableRepository : ITableRepository, IDisposable
         }
     }
 
-    public virtual T[] GetAllObjects<T>() where T : IMapsDirectlyToDatabaseTable => GetAllObjects<T>(null);
+    public virtual T[] GetAllObjects<T>() where T : IMapsDirectlyToDatabaseTable => GetAllObjects<T>(null, null);
 
-    public T[] GetAllObjects<T>(string whereSQL) where T : IMapsDirectlyToDatabaseTable
+    public T[] GetAllObjects<T>(string whereSQL) where T : IMapsDirectlyToDatabaseTable => GetAllObjects<T>(whereSQL, null);
+
+    public T[] GetAllObjects<T>(string whereSQL, IManagedConnection externalConnection) where T : IMapsDirectlyToDatabaseTable
     {
         var typename = Wrap(typeof(T).Name);
 
@@ -272,13 +287,25 @@ public abstract class TableRepository : ITableRepository, IDisposable
 
         var toReturn = new List<T>();
 
-        using var opener = GetConnection();
-        var selectCommand = DatabaseCommandHelper.GetCommand($"SELECT * FROM {typename} {whereSQL ?? ""}",
-            opener.Connection, opener.Transaction);
+        var useExternalConnection = externalConnection != null;
+        var connection = useExternalConnection ? externalConnection : GetConnection();
 
-        using var r = selectCommand.ExecuteReader();
-        while (r.Read())
-            toReturn.Add(ConstructEntity<T>(r));
+        try
+        {
+            var selectCommand = DatabaseCommandHelper.GetCommand($"SELECT * FROM {typename} {whereSQL ?? ""}",
+                connection.Connection, connection.Transaction);
+
+                  using var r = selectCommand.ExecuteReader();
+            while (r.Read())
+                toReturn.Add(ConstructEntity<T>(r));
+        }
+        finally
+        {
+            // Only dispose the connection if we created it
+            if (!useExternalConnection)
+                connection?.Dispose();
+        }
+
         return toReturn.ToArray();
     }
 
@@ -683,16 +710,11 @@ public abstract class TableRepository : ITableRepository, IDisposable
             if (ongoingConnection != null &&
                 ongoingConnection.Connection.State ==
                 ConnectionState.Open) //as long as it hasn't timed out or been disposed etc
-                if (ongoingConnection.CloseOnDispose)
-                {
-                    var clone = ongoingConnection.Clone();
-                    clone.CloseOnDispose = false;
-                    return clone;
-                }
-                else
-                {
-                    return ongoingConnection;
-                }
+            {
+                // Bypass FAnsiSql's problematic connection reuse and cloning entirely
+            // Rely on FAnsiSql's built-in pooling and health check logic instead
+            return DiscoveredServer.GetManagedConnection(ongoingTransaction);
+            }
 
             ongoingConnection = DiscoveredServer.GetManagedConnection(ongoingTransaction);
 

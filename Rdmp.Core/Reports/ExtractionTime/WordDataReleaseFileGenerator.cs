@@ -188,7 +188,7 @@ public class WordDataReleaseFileGenerator : DocXHelper
             SetTableCell(table, tableLine, 0,
               extractableDataset.ToString());
             var linkedDatasets = extractableDataset.Catalogue.CatalogueItems.Select(static c => c.ColumnInfo).Where(ci => ci.Dataset_ID != null).Distinct().Select(ci => ci.Dataset_ID);
-            var datasets = _repository.CatalogueRepository.GetAllObjects<Curation.Data.Dataset>().Where(d => linkedDatasets.Contains(d.ID)).ToList();
+            var datasets = _repository.CatalogueRepository.GetAllObjectsInIDList<Curation.Data.Dataset>(linkedDatasets.Where(id => id.HasValue).Select(id => id.Value)).ToList();
             var datasetString = string.Join("",datasets.Select(ds=> $"{ds.Name} {getDOI(ds)}, {Environment.NewLine}"));
             SetTableCell(table, tableLine, 1, result.FiltersUsed);
             SetTableCell(table, tableLine, 2, filename);
