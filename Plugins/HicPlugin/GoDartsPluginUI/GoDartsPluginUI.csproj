@@ -18,6 +18,7 @@
     <PackageReference Include="AWSSDK.SecurityToken" />
   <PackageReference Include="AWSSDK.SSO" />
   <PackageReference Include="AWSSDK.SSOOIDC" />
+  <PackageReference Include="Newtonsoft.Json" />
     <ProjectReference Include="..\..\..\Rdmp.UI\Rdmp.UI.csproj" />
   </ItemGroup>
 </Project>
