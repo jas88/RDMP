@@ -239,7 +239,7 @@ jobs:
           cache: true
           cache-dependency-path: Directory.Packages.props
       - name: Cache apt packages
-        uses: awalsh128/cache-apt-packages@v1.6.0
+        uses: awalsh128/cache-apt-packages-action@v1.6.0
         with:
           packages: pixz p7zip-full
           version: 1.0
