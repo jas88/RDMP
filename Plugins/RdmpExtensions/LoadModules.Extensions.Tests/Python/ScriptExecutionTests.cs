@@ -8,7 +8,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using LoadModules.Extensions.Python.DataProvider;
-using LoadModules.Extensions.Python.Tests.Unit;
+using LoadModules.Extensions.Tests.Python.Unit;
 using LoadModules.Extensions.Tests;
 using NUnit.Framework;
 using Rdmp.Core.DataFlowPipeline;

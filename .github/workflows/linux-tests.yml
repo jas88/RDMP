@@ -1,0 +1,274 @@
+name: Linux Non-UI Tests
+
+on:
+  push:
+  pull_request:
+
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+  ACCEPT_EULA: "Y"
+  MSSQL_PID: "developer"
+
+jobs:
+  tests_db:
+    name: Run Database Tests (Linux)
+    runs-on: ubuntu-22.04
+    env:
+      RDMP_KEY_LOCATION: /tmp/key/private-key.xml
+    services:
+      oracle:
+        image: ghcr.io/gvenzl/oracle-xe:21-slim
+        env:
+          ORACLE_PASSWORD: oracle
+        ports:
+          - 1521:1521
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          cache: true
+          cache-dependency-path: Directory.Packages.props
+      - name: MS repo
+        run: |
+          curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/ubuntu/22.04/mssql-server-2022 jammy main"
+      - name: Cache and install database packages
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+        with:
+          packages: libeatmydata1 apt-transport-https curl postgresql postgresql-contrib mssql-tools mssql-server
+          version: 1.0
+          execute_install_scripts: true
+      - name: Configure and start databases
+        run: |
+          # Configure SQL Server
+          sudo -E /opt/mssql/bin/mssql-conf -n setup accept-eula
+          # Start databases
+          sudo systemctl start postgresql
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'pgpass4291';"
+          sudo systemctl start mysql.service
+          # Wait for SQL Server to be ready
+          for i in {1..30}; do
+            if /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "SQL Server is ready!"
+              break
+            fi
+            echo "Attempt $i: SQL Server not ready yet..."
+            sleep 3
+          done
+          /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "SELECT @@VERSION;"
+      - name: Populate Databases.yaml
+        run: |
+          cat > ./Tools/rdmp/Databases.yaml << EOF
+          CatalogueConnectionString: Server=localhost,1433;Database=TEST_Catalogue;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
+          DataExportConnectionString: Server=localhost,1433;Database=TEST_DataExport;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
+          EOF
+      - name: Set RSA Key
+        run: |
+          mkdir -p /tmp/key
+          echo '<?xml version="1.0" encoding="utf-16"?><RSAParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Modulus>5CBYA/4GKu57eepMM5dHguZR6QxPakujvUPq81YQlAs9XdAS5OugT9xYATXV0ZUVeQrtCOj1jjS6cSnekJKzXMD48H2IbT+ImRVqyjE19dgeeZtK1cGa8wDKTdNtjo+ur2iaMzItE3VChcMidWncQpiieieSUwQ81uoab7foVdaQm078TzlHLaWiSyAPCOOIeeO2q7HEjVPkbiqCGl2Lkrzvzct84SDMFkyQXzXVJCfdlFn5bX3/8OwC9gWVICPBVbVFZZQ3skUKFqK/aYcgJL/svDyhFsj89TK3xzz8YE1r8VwxVtvqLfRXrWqUCV1n2vEm4XUjuTwQi2nwclREuQ==</Modulus><Exponent>AQAB</Exponent><P>+zfBbR8e3gLc5TDOSoyjclKdPyl62BZvp0kdlmihI5rJ/Bk+CnymYr22vBbWe/wJugWL4bLEAMWiWsa0ri0mJig24aJZ+DMEJDh+wz4J70OBbsE7jydw9whkt6r/8dYCwE2L4aKlL5pUOL/DzgQJ6vxkQ3UAjYMvEzBPapd7Z7c=</P><Q>6HgO3YVz2umROVrHkQ0xa+4a+EMZVAEBhS+ZuJ5KhXBomxYptfAud0WmGN1zOM7TpBYnk8IBx2kuBKoAavFtjbjsoINVxlLlUvUDEJmeElVz5TqRRCNEChY0sfDlR9gVIopB/p7BU5SFRz5i7+qpsWzWdBU/BR93K2vJNsj2Vw8=</Q><DP>ecv4bY1vC7hbnIrjGWXCQMUpE9xqgKWwEGz0eV3U8kwzrZQXbkIs8SaFl/+Cka4KkTPrM8vWF4G6S0SXiPK+0jUhFpf+AsXJNj5lxwcnDeeusyHgXHGE5WAeZKX1XSyjPNTcAtM2PzQVrUXcCuAOZu1jNwlc8T8u7aC4gDddT1U=</DP><DQ>KNlP42Ub4o/AUQ++maJz2L9SReWkgbpbhgfDP0mxVplWCEpwseOuho7ajOv83zKYxfCOq8wfe+bjizZENIaP9aNVES+C1wKiAV3EWBpmSFpzrwgHlq2LuyoDwHDQGTvDGvqodhF3bzRd5xLzV60ofGDfni5NkJzi1+JszQ+rGck=</DQ><InverseQ>BC4M2rtw/lHKW8gDVcQSB1a1yWlgtLqtoX+krelqO59/6Np2ApsPc43SUoy4PY1f+Oxf+Erik1NM1+TRucVBGB8AP1q0SFuTsmWiLE9zv/1zjeJJLOoPbpGia+bQ/r7fP+ZhBK8ldae7FAOctcoSfQ0jAn2IBpDyvlAlcnwRvwQ=</InverseQ><D>q1e/w//gEg7dn0xjv7w4chEcJLaiT2xQp6+DoRFbklZ+2R+XkWmJF3KghwgweSJI5olWUALprM3d23FfQaduIJSwZbFj7upxZsm3U/ZyWRzihuQk6ThpcWt+h8Xt283/nrAqYZmmUZ8ZP+64ywef8EVEhAuE0+Wy7JkZEiBH2W/MEXUvbMV8w282/X6H8zpIkHgjMvy/rouDMFA+ZLR9OOCofw7aVV9VivOVCVIhWe+inrQzG3UCLEEmKNOy0FmqQYvZ4vtwJ+kAByo6xW2YO9cHtEJFiKrZ1O2A0P0xtziOqStDq6JqoeE/bty8y3oM3HPyXMZXG2ecLuwbP4usoQ==</D></RSAParameters>' > /tmp/key/private-key.xml
+      - name: Update TestDatabases.txt for Linux
+        run: |
+          sed -i'' 's/localhost/localhost,1433/' Tests.Common/TestDatabases.txt
+          sed -i'' 's/(localdb)\\\\MSSQLLocalDB/localhost,1433/' Tests.Common/TestDatabases.txt
+      - name: Build
+        run: dotnet build --configuration Release --verbosity minimal
+      - name: Drop existing test databases if present
+        run: |
+          echo "Cleaning up any existing test databases..."
+          /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "IF DB_ID('TEST_Catalogue') IS NOT NULL DROP DATABASE TEST_Catalogue;" || true
+          /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "IF DB_ID('TEST_DataExport') IS NOT NULL DROP DATABASE TEST_DataExport;" || true
+      - name: Initialise RDMP
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" "localhost,1433" TEST_ -e
+      - name: Wait for SQL Server to be fully ready
+        run: |
+          echo "Waiting for SQL Server to be fully ready..."
+          for i in {1..10}; do
+            if /opt/mssql-tools/bin/sqlcmd -l 60 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "SQL Server is ready!"
+              break
+            fi
+            echo "Attempt $i: SQL Server not fully ready..."
+            sleep 3
+          done
+          /opt/mssql-tools/bin/sqlcmd -l 60 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "SELECT DB_NAME(), @@VERSION;"
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -uroot -p'YourStrong!Passw0rd' --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Attempt $i: MySQL not ready yet..."
+            sleep 2
+          done
+          mysql -h127.0.0.1 -uroot -p'YourStrong!Passw0rd' -e "SELECT VERSION();"
+      - name: Create MySql Logging, DQE and Cohort Building Cache Db
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver LiveLoggingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_logging2" --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver DQE "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe" --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache" --dir ~/rdmp/rdmp-yaml/
+      - name: Run integration test scripts
+        timeout-minutes: 10
+        run: |
+          # Combine scripts into single file
+          cat scripts/create_list_destroy_catalogue.yaml > /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/create_cohort.yaml >> /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/create_dataload.yaml >> /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml >> /tmp/combined-tests.yaml
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
+      - name: Test (DB) - Non-UI Only
+        timeout-minutes: 45
+        run: |
+          # Install MinIO for S3 compatibility
+          curl -L "https://dl.min.io/server/minio/release/linux-amd64/minio" > minio
+          chmod +x minio
+          ./minio server ./minio --console-address :9001 &
+          mkdir ~/.aws
+          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
+          # Run non-UI test projects only
+          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` db-core.lcov
+          dotnet test LoadModules.Extensions.Tests/LoadModules.Extensions.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` db-extensions.lcov
+          dotnet test Plugins/HicPlugin/HICPluginTests/HICPluginTests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` db-hic.lcov
+          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` db-dicom.lcov
+      - uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./db-core.lcov ./db-extensions.lcov ./db-hic.lcov ./db-dicom.lcov
+          flag-name: linux-db-tests
+
+  tests_file_system:
+    name: Run File System Tests (Linux)
+    runs-on: ubuntu-22.04
+    env:
+      RDMP_KEY_LOCATION: /tmp/key/private-key.xml
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          cache: true
+          cache-dependency-path: Directory.Packages.props
+      - name: MS repo
+        run: |
+          curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/ubuntu/22.04/mssql-server-2022 jammy main"
+      - name: Cache and install database packages
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+        with:
+          packages: libeatmydata1 apt-transport-https curl postgresql postgresql-contrib mssql-tools mssql-server
+          version: 1.0
+          execute_install_scripts: true
+      - name: Configure and start databases
+        run: |
+          # Configure SQL Server
+          sudo -E /opt/mssql/bin/mssql-conf -n setup accept-eula
+          # Start databases
+          sudo systemctl start postgresql
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'pgpass4291';"
+          sudo systemctl start mysql.service
+          # Wait for SQL Server to be ready
+          for i in {1..30}; do
+            if /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "SQL Server is ready!"
+              break
+            fi
+            echo "Attempt $i: SQL Server not ready yet..."
+            sleep 3
+          done
+          /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "SELECT @@VERSION;"
+      - name: Populate Databases.yaml
+        run: |
+          cat > ./Tools/rdmp/Databases.yaml << EOF
+          CatalogueConnectionString: Server=localhost,1433;Database=TEST_Catalogue;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
+          DataExportConnectionString: Server=localhost,1433;Database=TEST_DataExport;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
+          EOF
+      - name: Set RSA Key
+        run: |
+          mkdir -p /tmp/key
+          echo '<?xml version="1.0" encoding="utf-16"?><RSAParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Modulus>5CBYA/4GKu57eepMM5dHguZR6QxPakujvUPq81YQlAs9XdAS5OugT9xYATXV0ZUVeQrtCOj1jjS6cSnekJKzXMD48H2IbT+ImRVqyjE19dgeeZtK1cGa8wDKTdNtjo+ur2iaMzItE3VChcMidWncQpiieieSUwQ81uoab7foVdaQm078TzlHLaWiSyAPCOOIeeO2q7HEjVPkbiqCGl2Lkrzvzct84SDMFkyQXzXVJCfdlFn5bX3/8OwC9gWVICPBVbVFZZQ3skUKFqK/aYcgJL/svDyhFsj89TK3xzz8YE1r8VwxVtvqLfRXrWqUCV1n2vEm4XUjuTwQi2nwclREuQ==</Modulus><Exponent>AQAB</Exponent><P>+zfBbR8e3gLc5TDOSoyjclKdPyl62BZvp0kdlmihI5rJ/Bk+CnymYr22vBbWe/wJugWL4bLEAMWiWsa0ri0mJig24aJZ+DMEJDh+wz4J70OBbsE7jydw9whkt6r/8dYCwE2L4aKlL5pUOL/DzgQJ6vxkQ3UAjYMvEzBPapd7Z7c=</P><Q>6HgO3YVz2umROVrHkQ0xa+4a+EMZVAEBhS+ZuJ5KhXBomxYptfAud0WmGN1zOM7TpBYnk8IBx2kuBKoAavFtjbjsoINVxlLlUvUDEJmeElVz5TqRRCNEChY0sfDlR9gVIopB/p7BU5SFRz5i7+qpsWzWdBU/BR93K2vJNsj2Vw8=</Q><DP>ecv4bY1vC7hbnIrjGWXCQMUpE9xqgKWwEGz0eV3U8kwzrZQXbkIs8SaFl/+Cka4KkTPrM8vWF4G6S0SXiPK+0jUhFpf+AsXJNj5lxwcnDeeusyHgXHGE5WAeZKX1XSyjPNTcAtM2PzQVrUXcCuAOZu1jNwlc8T8u7aC4gDddT1U=</DP><DQ>KNlP42Ub4o/AUQ++maJz2L9SReWkgbpbhgfDP0mxVplWCEpwseOuho7ajOv83zKYxfCOq8wfe+bjizZENIaP9aNVES+C1wKiAV3EWBpmSFpzrwgHlq2LuyoDwHDQGTvDGvqodhF3bzRd5xLzV60ofGDfni5NkJzi1+JszQ+rGck=</DQ><InverseQ>BC4M2rtw/lHKW8gDVcQSB1a1yWlgtLqtoX+krelqO59/6Np2ApsPc43SUoy4PY1f+Oxf+Erik1NM1+TRucVBGB8AP1q0SFuTsmWiLE9zv/1zjeJJLOoPbpGia+bQ/r7fP+ZhBK8ldae7FAOctcoSfQ0jAn2IBpDyvlAlcnwRvwQ=</InverseQ><D>q1e/w//gEg7dn0xjv7w4chEcJLaiT2xQp6+DoRFbklZ+2R+XkWmJF3KghwgweSJI5olWUALprM3d23FfQaduIJSwZbFj7upxZsm3U/ZyWRzihuQk6ThpcWt+h8Xt283/nrAqYZmmUZ8ZP+64ywef8EVEhAuE0+Wy7JkZEiBH2W/MEXUvbMV8w282/X6H8zpIkHgjMvy/rouDMFA+ZLR9OOCofw7aVV9VivOVCVIhWe+inrQzG3UCLEEmKNOy0FmqQYvZ4vtwJ+kAByo6xW2YO9cHtEJFiKrZ1O2A0P0xtziOqStDq6JqoeE/bty8y3oM3HPyXMZXG2ecLuwbP4usoQ==</D></RSAParameters>' > /tmp/key/private-key.xml
+      - name: Update TestDatabases.txt for Linux
+        run: |
+          sed -i'' 's/localhost/localhost,1433/' Tests.Common/TestDatabases.txt
+          sed -i'' 's/(localdb)\\\\MSSQLLocalDB/localhost,1433/' Tests.Common/TestDatabases.txt
+      - name: Build
+        run: dotnet build --configuration Release --verbosity minimal
+      - name: Drop existing test databases if present
+        run: |
+          echo "Cleaning up any existing test databases..."
+          /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "IF DB_ID('TEST_Catalogue') IS NOT NULL DROP DATABASE TEST_Catalogue;" || true
+          /opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "IF DB_ID('TEST_DataExport') IS NOT NULL DROP DATABASE TEST_DataExport;" || true
+      - name: Initialise RDMP
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" "localhost,1433" TEST_ -e
+      - name: Wait for SQL Server to be fully ready
+        run: |
+          echo "Waiting for SQL Server to be fully ready..."
+          for i in {1..10}; do
+            if /opt/mssql-tools/bin/sqlcmd -l 60 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "SQL Server is ready!"
+              break
+            fi
+            echo "Attempt $i: SQL Server not fully ready..."
+            sleep 3
+          done
+          /opt/mssql-tools/bin/sqlcmd -l 60 -S localhost -U sa -P 'YourStrong!Passw0rd' -Q "SELECT DB_NAME(), @@VERSION;"
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -uroot -p'YourStrong!Passw0rd' --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Attempt $i: MySQL not ready yet..."
+            sleep 2
+          done
+          mysql -h127.0.0.1 -uroot -p'YourStrong!Passw0rd' -e "SELECT VERSION();"
+      - name: Create MySql Logging, DQE and Cohort Building Cache Db
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver LiveLoggingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_logging2" --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver DQE "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe" --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache" --dir ~/rdmp/rdmp-yaml/
+      - name: Run integration test scripts
+        timeout-minutes: 10
+        run: |
+          # Combine scripts into single file
+          cat scripts/create_list_destroy_catalogue.yaml > /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/create_cohort.yaml >> /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/create_dataload.yaml >> /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml >> /tmp/combined-tests.yaml
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
+      - name: Test with local file system - Non-UI Only
+        run: |
+          echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
+          # Install MinIO for S3 compatibility
+          curl -L "https://dl.min.io/server/minio/release/linux-amd64/minio" > minio
+          chmod +x minio
+          ./minio server ./minio --console-address :9001 &
+          mkdir ~/.aws
+          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
+          # Run non-UI test projects only
+          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` fs-core.lcov
+          dotnet test LoadModules.Extensions.Tests/LoadModules.Extensions.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` fs-extensions.lcov
+          dotnet test Plugins/HicPlugin/HICPluginTests/HICPluginTests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` fs-hic.lcov
+          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage -type f` fs-dicom.lcov
+      - uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./fs-core.lcov ./fs-extensions.lcov ./fs-hic.lcov ./fs-dicom.lcov
+          flag-name: linux-fs-tests
