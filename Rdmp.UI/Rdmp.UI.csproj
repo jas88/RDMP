@@ -339,6 +339,7 @@
 	<PackageReference Include="AWSSDK.SSOOIDC" VersionOverride="4.0.3" />
 	<PackageReference Include="FluentFTP" VersionOverride="53.0.2" />
 	<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" VersionOverride="9.0.10" />
+	<PackageReference Include="NLog" VersionOverride="6.0.5" />
 	<PackageReference Include="NPOI" VersionOverride="2.7.5" />
 		<Folder Include="PluginChildProvision\" />
 	</ItemGroup>
