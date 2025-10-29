@@ -301,7 +301,8 @@ public class ProcessTask : DatabaseEntity, IProcessTask, IOrderable, INamed, ICh
             : new CheckEventArgs($"Found File '{Path}'", CheckResult.Success));
 
 
-        var matchingPaths = Repository.GetAllObjects<ProcessTask>().Where(pt => pt.Path.Equals(Path));
+        // Optimized: Use GetAllObjectsWhere instead of scanning all ProcessTask objects
+        var matchingPaths = Repository.GetAllObjectsWhere<ProcessTask>("Path", Path);
         foreach (var duplicate in matchingPaths.Except(new[] { this }))
             notifier.OnCheckPerformed(
                 new CheckEventArgs(
