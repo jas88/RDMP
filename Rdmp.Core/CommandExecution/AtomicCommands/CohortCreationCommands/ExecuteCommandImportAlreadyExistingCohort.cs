@@ -63,8 +63,10 @@ public class ExecuteCommandImportAlreadyExistingCohort : BasicCommandExecution, 
 
 
         // the ones we already know about
+        // Optimized: Use GetAllObjectsWhere for single ID filter
         var existing = new HashSet<int>(BasicActivator.RepositoryLocator.DataExportRepository
-            .GetAllObjects<ExtractableCohort>().Where(c => c.ExternalCohortTable_ID == ect.ID).Select(c => c.OriginID));
+            .GetAllObjectsWhere<ExtractableCohort>("ExternalCohortTable_ID", ect.ID)
+            .Select(c => c.OriginID));
 
         // new ones we don't know about yet
         available = available.Where(c => !existing.Contains(c.ID.Value)).ToArray();
