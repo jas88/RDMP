@@ -1,4 +1,9 @@
-﻿// Copyright (c) The University of Dundee 2024-2024
+﻿// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) The University of Dundee 2018-2025
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -109,7 +114,10 @@ public class RegexRedactionMutilator : MatchingTablesMutilatorWithDataLoadJob
 
                 dt.EndLoadData();
                 var redactionUpates = dt.Clone();
-                var columnInfo = relatedCatalogues.SelectMany(static c => c.CatalogueItems).ToArray().Select(static ci => ci.ColumnInfo).FirstOrDefault(ci => ci.GetRuntimeName() == column.GetRuntimeName());
+                // Optimized: Use Select().ToArray() instead of ToArray().Select()
+                var columnInfo = relatedCatalogues.SelectMany(static c => c.CatalogueItems)
+                    .Select(static ci => ci.ColumnInfo)
+                    .FirstOrDefault(ci => ci.GetRuntimeName() == column.GetRuntimeName());
                 if (columnInfo is null)
                 {
                     job.OnNotify(this, new NotifyEventArgs(ProgressEventType.Error, "Unable to find the related column info"));

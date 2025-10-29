@@ -1,3 +1,9 @@
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
 ﻿using Rdmp.Core.Caching.Pipeline.Sources;
 using Rdmp.Core.Caching.Requests;
 using Rdmp.Core.Curation;
@@ -10,6 +16,9 @@ using System.Diagnostics;
 
 namespace Rdmp.Dicom.Cache.Pipeline;
 
+/// <summary>
+/// Cache source that fetches DICOM images by executing an external process/command with templated start/end dates and output directory
+/// </summary>
 public class ProcessBasedCacheSource : CacheSource<SMIDataChunk>
 {
     [DemandsInitialization(@"Process to start (path only)",Mandatory = true)]

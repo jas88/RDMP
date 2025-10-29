@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using FAnsi.Discovery;
 using FAnsi.Discovery.QuerySyntax;
 using Rdmp.Core.Curation.Data.Cache;
@@ -316,7 +317,7 @@ public class LoadMetadata : DatabaseEntity, ILoadMetadata, IHasDependencies, IHa
 
     public void UnlinkFromCatalogue(ICatalogue catalogue)
     {
-        foreach (var l in CatalogueRepository.GetAllObjects<LoadMetadataCatalogueLinkage>().Where(link => link.CatalogueID == catalogue.ID && link.LoadMetadataID == ID))
+        foreach (var l in CatalogueRepository.GetAllObjectsWhere<LoadMetadataCatalogueLinkage>("CatalogueID", catalogue.ID, ExpressionType.AndAlso, "LoadMetadataID", ID))
         {
             l.DeleteInDatabase();
         }
@@ -355,8 +356,11 @@ public class LoadMetadata : DatabaseEntity, ILoadMetadata, IHasDependencies, IHa
     /// <inheritdoc/>
     public IEnumerable<ICatalogue> GetAllCatalogues()
     {
-        var catalogueLinkIDs = Repository.GetAllObjectsWhere<LoadMetadataCatalogueLinkage>("LoadMetadataID", ID).Select(l => l.CatalogueID);
-        return Repository.GetAllObjects<Catalogue>().Where(cat => catalogueLinkIDs.Contains(cat.ID));
+        // Optimized: Use GetAllObjectsInIDList to filter in SQL instead of loading entire Catalogue table
+        var catalogueLinkIDs = Repository.GetAllObjectsWhere<LoadMetadataCatalogueLinkage>("LoadMetadataID", ID)
+            .Select(l => l.CatalogueID)
+            .ToList();
+        return Repository.GetAllObjectsInIDList<Catalogue>(catalogueLinkIDs);
     }
 
     /// <inheritdoc cref="GetDistinctLoggingDatabase()"/>

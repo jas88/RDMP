@@ -27,12 +27,8 @@
 	</ItemGroup>
 	<ItemGroup>
 		<!-- Updated to use DicomTypeTranslation (without HIC. prefix) with FAnsiSql.Legacy 3.3.1 -->
-		<PackageReference Include="DicomTypeTranslation" Version="4.2.0" />
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="fo-dicom" Version="5.2.4" />
+		<PackageReference Include="DicomTypeTranslation" />
+		<PackageReference Include="fo-dicom" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\Rdmp.Core\Rdmp.Core.csproj" />

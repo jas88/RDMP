@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>$(TargetFramework)-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyTitle>LoadModules.Extensions.Interactive</AssemblyTitle>
     <Company>Hewlett-Packard Company</Company>
     <Product>LoadModules.Extensions.Interactive</Product>

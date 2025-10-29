@@ -1,4 +1,4 @@
-﻿// Copyright (c) The University of Dundee 2024-2024
+﻿// Copyright (c) The University of Dundee 2018-2025
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -28,7 +28,8 @@ public class RemoteAttacherTests
             RemoteTableDateColumn = "date"
         };
         var lmd = new LoadMetadata();
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) > DATEADD({convertTime}, -1, GETUTCDATE())"));
+        // Updated: No longer casting column to Date - preserves time component for accurate filtering
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE date > CAST(DATEADD({convertTime}, -1, GETUTCDATE()) as Date)"));
     }
     [Test]
     public void TestRemoteAttacherParameterSinceLastUse()
@@ -42,7 +43,8 @@ public class RemoteAttacherTests
         {
             LastLoadTime = DateTime.Now
         };
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) > convert(Date,'{lmd.LastLoadTime.GetValueOrDefault():yyyy-MM-dd HH:mm:ss.fff}')"));
+        // Updated: No longer casting column to Date - preserves time component
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE date > convert(Date,'{lmd.LastLoadTime.GetValueOrDefault():yyyy-MM-dd HH:mm:ss.fff}')"));
     }
     [Test]
     public void TestRemoteAttacherParameterSinceLastUse_NULL()
@@ -69,7 +71,8 @@ public class RemoteAttacherTests
         {
             LastLoadTime = DateTime.Now
         };
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer, attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) >= convert(Date,'{attacher.CustomFetchDurationStartDate:yyyy-MM-dd HH:mm:ss.fff}') AND CAST(date as Date) <= convert(Date,'{attacher.CustomFetchDurationEndDate:yyyy-MM-dd HH:mm:ss.fff}')"));
+        // Updated: No longer casting column to Date - preserves time component
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer, attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE date >= convert(Date,'{attacher.CustomFetchDurationStartDate:yyyy-MM-dd HH:mm:ss.fff}') AND date <= convert(Date,'{attacher.CustomFetchDurationEndDate:yyyy-MM-dd HH:mm:ss.fff}')"));
     }
     [Test]
     public void TestRemoteAttacherParameterCustomRangeNoStart()
@@ -84,7 +87,8 @@ public class RemoteAttacherTests
         {
             LastLoadTime = DateTime.Now
         };
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer, attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) <= convert(Date,'{attacher.CustomFetchDurationEndDate:yyyy-MM-dd HH:mm:ss.fff}')"));
+        // Updated: No longer casting column to Date
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer, attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE date <= convert(Date,'{attacher.CustomFetchDurationEndDate:yyyy-MM-dd HH:mm:ss.fff}')"));
     }
     [Test]
     public void TestRemoteAttacherParameterCustomRangeNoEnd()
@@ -99,7 +103,8 @@ public class RemoteAttacherTests
         {
             LastLoadTime = DateTime.Now
         };
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer, attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) >= convert(Date,'{attacher.CustomFetchDurationStartDate:yyyy-MM-dd HH:mm:ss.fff}')"));
+        // Updated: No longer casting column to Date
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer, attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE date >= convert(Date,'{attacher.CustomFetchDurationStartDate:yyyy-MM-dd HH:mm:ss.fff}')"));
     }
     [Test]
     public void TestRemoteAttacherParameterCustomRangeNoDates()
@@ -130,7 +135,8 @@ public class RemoteAttacherTests
         {
             LastLoadTime = DateTime.Now
         };
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) >= convert(Date,'{attacher.DeltaReadingStartDate.AddDays(-attacher.DeltaReadingLookBackDays):yyyy-MM-dd HH:mm:ss.fff}') AND CAST(date as Date) < convert(Date,'{attacher.DeltaReadingStartDate.AddDays(attacher.DeltaReadingLookForwardDays):yyyy-MM-dd HH:mm:ss.fff}')"));
+        // Updated: No longer casting column to Date - preserves time component
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE date >= convert(Date,'{attacher.DeltaReadingStartDate.AddDays(-attacher.DeltaReadingLookBackDays):yyyy-MM-dd HH:mm:ss.fff}') AND date < convert(Date,'{attacher.DeltaReadingStartDate.AddDays(attacher.DeltaReadingLookForwardDays):yyyy-MM-dd HH:mm:ss.fff}')"));
     }
     [Test]
     public void TestRemoteAttacherParameterDeltaReading_NoLookBack()
@@ -146,7 +152,8 @@ public class RemoteAttacherTests
         {
             LastLoadTime = DateTime.Now
         };
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) >= convert(Date,'{attacher.DeltaReadingStartDate:yyyy-MM-dd HH:mm:ss.fff}') AND CAST(date as Date) < convert(Date,'{attacher.DeltaReadingStartDate.AddDays(attacher.DeltaReadingLookForwardDays):yyyy-MM-dd HH:mm:ss.fff}')"));
+        // Updated: No longer casting column to Date
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE date >= convert(Date,'{attacher.DeltaReadingStartDate:yyyy-MM-dd HH:mm:ss.fff}') AND date < convert(Date,'{attacher.DeltaReadingStartDate.AddDays(attacher.DeltaReadingLookForwardDays):yyyy-MM-dd HH:mm:ss.fff}')"));
     }
     [Test]
     public void TestRemoteAttacherParameterDeltaReading_NoLookForward()
@@ -162,7 +169,8 @@ public class RemoteAttacherTests
         {
             LastLoadTime = DateTime.Now
         };
-        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE CAST(date as Date) >= convert(Date,'{attacher.DeltaReadingStartDate.AddDays(-attacher.DeltaReadingLookBackDays):yyyy-MM-dd HH:mm:ss.fff}') AND CAST(date as Date) < convert(Date,'{attacher.DeltaReadingStartDate:yyyy-MM-dd HH:mm:ss.fff}')"));
+        // Updated: No longer casting column to Date
+        Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer,attacher.RemoteTableDateColumn), Is.EqualTo($" WHERE date >= convert(Date,'{attacher.DeltaReadingStartDate.AddDays(-attacher.DeltaReadingLookBackDays):yyyy-MM-dd HH:mm:ss.fff}') AND date < convert(Date,'{attacher.DeltaReadingStartDate:yyyy-MM-dd HH:mm:ss.fff}')"));
     }
     [Test]
     public void TestRemoteAttacherParameterDeltaReadingNoDates()

@@ -145,8 +145,13 @@ public class CommitInProgress : IDisposable
         }
 
         if (!changes.Any())
-            // no changes so no need for a Commit
+        {
+            // no changes so no need for a Commit - cleanup transactions
+            if (Settings.UseTransactions)
+                foreach (var repo in _repositories)
+                    repo.EndTransaction(false);
             return null;
+        }
         var cataRepo = _locator.CatalogueRepository;
 
         var description = GetDescription(changes);
@@ -165,13 +170,24 @@ public class CommitInProgress : IDisposable
             }, int.MaxValue, description, out var newDescription, false))
                 description = newDescription;
             else
-                // user cancelled creating Commit
+            {
+                // user cancelled creating Commit - cleanup transactions
+                if (Settings.UseTransactions)
+                    foreach (var repo in _repositories)
+                        repo.EndTransaction(false);
                 return null;
+            }
         }
 
         // We couldn't describe the changes, that's bad...
         if (description == null)
+        {
+            // cleanup transactions
+            if (Settings.UseTransactions)
+                foreach (var repo in _repositories)
+                    repo.EndTransaction(false);
             return null;
+        }
 
         // Ok user has typed in a description (or system generated one) and we are
         // definitely going to do this
@@ -222,16 +238,16 @@ public class CommitInProgress : IDisposable
             repo.Inserting += Inserting;
 
 
-            if (Settings.UseTransactions && _finishing == false)
-                try
-                {
-                    // Abandon transactions
-                    repo.EndTransaction(false);
-                }
-                catch (NotSupportedException)
-                {
-                    // ok maybe someone else shut this down somehow... whatever
-                }
+            // Always cleanup transactions to prevent leaks
+            try
+            {
+                repo.EndTransaction(false);
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue cleaning up other repositories
+                System.Diagnostics.Debug.WriteLine($"Error cleaning up transaction in repository {repo.GetType().Name}: {ex.Message}");
+            }
         }
 
         _isDisposed = true;

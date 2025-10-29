@@ -1,4 +1,4 @@
-﻿--Version: 1.1.0.0
+--Version: 1.1.0.0
 --Description: Adds support for 
 
 if not exists (select 1 from sys.columns where name = 'RefreshCohort')

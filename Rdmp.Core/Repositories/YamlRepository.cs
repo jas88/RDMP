@@ -36,6 +36,12 @@ public class YamlRepository : MemoryDataExportRepository
 
     public DirectoryInfo Directory { get; }
 
+    /// <summary>
+    /// When true, skips all file write operations (useful for CI/testing to avoid I/O overhead).
+    /// Objects are still maintained in memory.
+    /// </summary>
+    public bool ReadOnlyMode { get; set; }
+
     private object lockFs = new();
 
     public YamlRepository(DirectoryInfo dir)
@@ -59,10 +65,10 @@ public class YamlRepository : MemoryDataExportRepository
             }
         }
         
-        LoadObjects();      
+        LoadObjects();
 
         // Don't create new objects with the ID of existing objects
-        NextObjectId = Objects.IsEmpty ? 0 : Objects.Max(o => o.Key.ID);
+        NextObjectId = GetMaxId();
     }
 
     /// <summary>
@@ -112,7 +118,13 @@ public class YamlRepository : MemoryDataExportRepository
                         var obj = (IMapsDirectlyToDatabaseTable)deserializer.Deserialize(
                             File.ReadAllText(yaml.FullName), t);
                         SetRepositoryOnObject(obj);
-                        Objects.TryAdd(obj, 0);
+
+                        // Hook up property change tracking (same as InsertAndHydrate)
+                        obj.PropertyChanged += toCreate_PropertyChanged;
+
+                        // Use type-indexed storage instead of Objects
+                        var typeDict = GetOrCreateTypeDictionary(t);
+                        typeDict.TryAdd(obj.ID, obj);
                     }
                     catch (Exception ex)
                     {
@@ -194,13 +206,16 @@ public class YamlRepository : MemoryDataExportRepository
         lock (lockFs)
         {
             base.DeleteFromDatabase(oTableWrapperObject);
-            File.Delete(GetPath(oTableWrapperObject));
+            if (!ReadOnlyMode)
+                File.Delete(GetPath(oTableWrapperObject));
         }
     }
 
     public override void SaveToDatabase(IMapsDirectlyToDatabaseTable o)
     {
         base.SaveToDatabase(o);
+
+        if (ReadOnlyMode) return;  // Skip file I/O in read-only mode
 
         SetRepositoryOnObject(o);
 
@@ -224,13 +239,15 @@ public class YamlRepository : MemoryDataExportRepository
     {
         base.DeleteEncryptionKeyPath();
 
-        if (File.Exists(GetEncryptionKeyPathFile()))
+        if (!ReadOnlyMode && File.Exists(GetEncryptionKeyPathFile()))
             File.Delete(GetEncryptionKeyPathFile());
     }
 
     public override void SetEncryptionKeyPath(string fullName)
     {
         base.SetEncryptionKeyPath(fullName);
+
+        if (ReadOnlyMode) return;
 
         // if setting it to null
         if (string.IsNullOrWhiteSpace(fullName))
@@ -260,6 +277,8 @@ public class YamlRepository : MemoryDataExportRepository
 
     private void SaveDefaults()
     {
+        if (ReadOnlyMode) return;
+
         var serializer = new Serializer();
 
         // save the default and the ID
@@ -332,6 +351,8 @@ public class YamlRepository : MemoryDataExportRepository
 
     private void SaveDataExportProperties()
     {
+        if (ReadOnlyMode) return;
+
         var serializer = new Serializer();
 
         // save the default and the ID
@@ -429,6 +450,8 @@ public class YamlRepository : MemoryDataExportRepository
 
     private void SaveCredentialsDictionary()
     {
+        if (ReadOnlyMode) return;
+
         var serializer = new Serializer();
 
         var ids =
@@ -468,6 +491,8 @@ public class YamlRepository : MemoryDataExportRepository
 
     private void SaveCohortContainerContents(CohortAggregateContainer toSave)
     {
+        if (ReadOnlyMode) return;
+
         var dir = Path.Combine(Directory.FullName, nameof(PersistCohortContainerContent));
         var file = Path.Combine(dir, $"{toSave.ID}.yaml");
 
@@ -675,6 +700,8 @@ public class YamlRepository : MemoryDataExportRepository
         where T : IMapsDirectlyToDatabaseTable
         where T2 : IMapsDirectlyToDatabaseTable
     {
+        if (ReadOnlyMode) return;
+
         var file = Path.Combine(Directory.FullName, $"{filenameWithoutSuffix}.yaml");
         var serializer = new Serializer();
 

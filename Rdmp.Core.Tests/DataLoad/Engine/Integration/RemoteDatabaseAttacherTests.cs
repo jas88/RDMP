@@ -106,7 +106,8 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
 
     private static string Within(AttacherHistoricalDurations duration)
     {
-        const string format = "yyyy-MM-dd HH:mm:ss.fff";
+        // Use format without milliseconds to avoid database truncation/rounding issues
+        const string format = "yyyy-MM-dd HH:mm:ss";
 
         switch (duration)
         {
@@ -131,7 +132,8 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
 
     private static string Outwith(AttacherHistoricalDurations duration)
     {
-        const string format = "yyyy-MM-dd HH:mm:ss.fff";
+        // Use format without milliseconds to avoid database truncation/rounding issues
+        const string format = "yyyy-MM-dd HH:mm:ss";
 
         switch (duration)
         {
@@ -189,11 +191,14 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
         var db = GetCleanedServer(dbType);
 
         using var dt = new DataTable();
-        dt.Columns.Add("animal");
-        dt.Columns.Add("date_seen");
-        var withinDate = Within(duration);
+        dt.Columns.Add("animal", typeof(string));
+        dt.Columns.Add("date_seen", typeof(DateTime)); // Explicitly use DateTime type
+
+        // Parse the string dates into DateTime objects for proper database storage
+        // Use AssumeUniversal to treat UTC strings as UTC (not local time)
+        var withinDate = DateTime.Parse(Within(duration), null, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
         dt.Rows.Add("Cow", withinDate);
-        dt.Rows.Add("Crow", Outwith(duration));
+        dt.Rows.Add("Crow", DateTime.Parse(Outwith(duration), null, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal));
 
         var tbl = db.CreateTable("MyTable", dt);
 
@@ -255,6 +260,7 @@ public class RemoteDatabaseAttacherTests : DatabaseTests
         Assert.That(tbl.GetRowCount(), Is.EqualTo(3));
 
         using var dt2 = tbl.GetDataTable();
+        // Compare with DateTime object, not string
         VerifyRowExist(dt2, "Cow", withinDate);
 
         attacher.LoadCompletedSoDispose(ExitCodeType.Success, ThrowImmediatelyDataLoadEventListener.Quiet);

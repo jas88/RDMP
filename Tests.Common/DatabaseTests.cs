@@ -115,10 +115,12 @@ public abstract partial class DatabaseTests
     {
         Rdmp.Core.Repositories.CatalogueRepository.SuppressHelpLoading = true;
 
+#pragma warning disable CS0618 // Type or member is obsolete
         ImplementationManager.Load<MicrosoftSQLImplementation>();
         ImplementationManager.Load<MySqlImplementation>();
         ImplementationManager.Load<OracleImplementation>();
         ImplementationManager.Load<PostgreSqlImplementation>();
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Always ignore SSL when running tests
         DiscoveredServerHelper.AddConnectionStringKeyword(DatabaseType.MicrosoftSQLServer, "TrustServerCertificate",

@@ -41,7 +41,7 @@
     <ProjectReference Include="..\..\..\Tests.Common\Tests.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="SynthDicom" Version="1.0.0" />
+    <PackageReference Include="SynthDicom" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="NUnit" Version="4.3.2" />
@@ -49,8 +49,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
-    <PackageReference Include="NunitXml.TestLogger" Version="6.1.0" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="NunitXml.TestLogger" />
   </ItemGroup>
   <ItemGroup>
     <None Update="TestDatabases.txt">

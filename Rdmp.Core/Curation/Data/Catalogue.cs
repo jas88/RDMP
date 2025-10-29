@@ -549,10 +549,12 @@ public sealed class Catalogue : DatabaseEntity, IComparable, ICatalogue, IInject
     /// <inheritdoc/>
     public LoadMetadata[] LoadMetadatas()
     {
-        
-        var loadMetadataLinkIDs = Repository.GetAllObjectsWhere<LoadMetadataCatalogueLinkage>("CatalogueID", ID).Select(l => l.LoadMetadataID);
+        // Optimized: Use GetAllObjectsInIDList to filter in SQL instead of loading entire LoadMetadata table
+        var loadMetadataLinkIDs = Repository.GetAllObjectsWhere<LoadMetadataCatalogueLinkage>("CatalogueID", ID)
+            .Select(l => l.LoadMetadataID)
+            .ToList();
 
-        return Repository.GetAllObjects<LoadMetadata>().Where(cat => loadMetadataLinkIDs.Contains(cat.ID)).ToArray();
+        return Repository.GetAllObjectsInIDList<LoadMetadata>(loadMetadataLinkIDs).ToArray();
     }
 
     /// <inheritdoc/>

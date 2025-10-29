@@ -1,4 +1,4 @@
-﻿--Version:7.0.0
+--Version:7.0.0
 --Description: Updates database to support new object Memento
  
  if not exists (select 1 from sys.tables where name = 'Commit')

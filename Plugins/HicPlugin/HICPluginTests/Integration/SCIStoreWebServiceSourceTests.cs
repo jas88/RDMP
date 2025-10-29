@@ -1,3 +1,9 @@
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
 ﻿using System;
 using System.Collections.Generic;
 using System.ServiceModel;
@@ -21,7 +27,7 @@ using SCIStorePlugin.DataProvider.RetryStrategies;
 using SCIStorePlugin.Repositories;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Integration;
+namespace HICPluginTests.Integration;
 
 public class SCIStoreWebServiceSourceTests : DatabaseTests
 {
@@ -112,14 +118,14 @@ public class SCIStoreWebServiceSourceTests : DatabaseTests
             }
 
             Assert.That(chunk,Is.Not.Null);
-           Assert.That(downloadException, Is.EqualTo(chunk.DownloadRequestFailedException));
+           Assert.That(chunk.DownloadRequestFailedException, Is.EqualTo(downloadException));
 
             var failures = CatalogueRepository.GetAllObjects<CacheFetchFailure>();
             var numFailures = failures.Length;
-           Assert.That(1, Is.EqualTo(numFailures));//, "The cache fetch failure was not recorded correctly.");
+           Assert.That(numFailures, Is.EqualTo(1));//, "The cache fetch failure was not recorded correctly.");
 
             var failure = failures[0];
-           Assert.That(cacheFetchRequest.Start, Is.EqualTo(failure.FetchRequestStart));
+           Assert.That(failure.FetchRequestStart, Is.EqualTo(cacheFetchRequest.Start));
         }
         catch (Exception e)
         {

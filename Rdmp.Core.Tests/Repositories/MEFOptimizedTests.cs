@@ -256,7 +256,8 @@ internal class MEFOptimizedTests : DatabaseTests
         var testType = typeof(ExceptionThrowingConstructorClass);
 
         // Act & Assert
-        Assert.Throws<Exception>(() => ObjectConstructor.Construct(testType, _catalogueRepository));
+        var ex = Assert.Throws<InvalidOperationException>(() => ObjectConstructor.Construct(testType, _catalogueRepository));
+        Assert.That(ex.Message, Is.EqualTo("Simulated constructor failure"));
     }
 
     [Test]

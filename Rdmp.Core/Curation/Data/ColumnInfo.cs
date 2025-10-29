@@ -468,13 +468,13 @@ public class ColumnInfo : DatabaseEntity, IComparable, IResolveDuplication, IHas
         //also lookups are dependent on us
         dependantObjects.AddRange(GetAllLookupForColumnInfoWhereItIsA(LookupType.AnyKey));
 
-        //also join infoslookups are dependent on us
+        //also join infos where this column is either foreign or primary key
+        // Optimized: Use GetAllObjectsWhere with OR expression to filter in SQL
         dependantObjects.AddRange(
-            Repository.GetAllObjects<JoinInfo>().Where(j =>
-                j.ForeignKey_ID == ID ||
-                j.PrimaryKey_ID == ID));
+            Repository.GetAllObjectsWhere<JoinInfo>("ForeignKey_ID", ID,
+                System.Linq.Expressions.ExpressionType.OrElse, "PrimaryKey_ID", ID));
 
-        return dependantObjects.ToArray(); //dependantObjects.ToArray();
+        return dependantObjects.ToArray();
     }
 
     /// <summary>

@@ -1,3 +1,9 @@
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
 ﻿using System;
 using System.IO;
 using NUnit.Framework;
@@ -6,7 +12,7 @@ using SCIStorePlugin.Cache;
 using SCIStorePlugin.Data;
 using Tests.Common;
 
-namespace SCIStorePluginTests.Integration;
+namespace HICPluginTests.Integration;
 
 [Category("Integration")]
 class CacheLayoutTests : DatabaseTests
@@ -43,7 +49,7 @@ class CacheLayoutTests : DatabaseTests
         var downloadDirectory = cacheLayout.GetLoadCacheDirectory(ThrowImmediatelyDataLoadEventListener.Quiet);
 
         var expectedDownloadPath = Path.Combine(rootDirectory.FullName, "T", "Biochemistry");
-       Assert.That(expectedDownloadPath, Is.EqualTo(downloadDirectory.FullName));
+       Assert.That(downloadDirectory.FullName, Is.EqualTo(expectedDownloadPath));
     }
 
     [Test]
@@ -68,6 +74,6 @@ class CacheLayoutTests : DatabaseTests
         Assert.That(archiveFile.Exists,Is.True);
 
         const string expectedArchiveFilename = "2005-01-01.zip";
-       Assert.That(expectedArchiveFilename, Is.EqualTo(archiveFile.Name));
+       Assert.That(archiveFile.Name, Is.EqualTo(expectedArchiveFilename));
     }
 }

@@ -1,4 +1,9 @@
-﻿// Copyright (c) The University of Dundee 2024-2024
+﻿// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) The University of Dundee 2018-2025
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -260,8 +265,19 @@ public class OverviewModel
 
     public List<CumulativeExtractionResults> GetExtractions()
     {
-        var datasets = _activator.RepositoryLocator.DataExportRepository.GetAllObjectsWhere<ExtractableDataSet>("Catalogue_ID", _catalogue.ID).Select(d => d.ID);
-        var results = _activator.RepositoryLocator.DataExportRepository.GetAllObjects<CumulativeExtractionResults>().Where(result => datasets.Contains(result.ExtractableDataSet_ID)).ToList();
+        var datasetIds = _activator.RepositoryLocator.DataExportRepository
+            .GetAllObjectsWhere<ExtractableDataSet>("Catalogue_ID", _catalogue.ID)
+            .Select(d => d.ID)
+            .ToList();
+
+        // Optimized: Instead of scanning all results, query each dataset individually
+        var results = new List<CumulativeExtractionResults>();
+        foreach (var datasetId in datasetIds)
+        {
+            results.AddRange(_activator.RepositoryLocator.DataExportRepository
+                .GetAllObjectsWhere<CumulativeExtractionResults>("ExtractableDataSet_ID", datasetId));
+        }
+
         return results;
     }
 }

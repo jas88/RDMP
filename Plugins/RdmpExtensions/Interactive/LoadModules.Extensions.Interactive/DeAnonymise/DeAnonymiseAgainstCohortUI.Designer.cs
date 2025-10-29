@@ -1,4 +1,4 @@
-﻿using Rdmp.UI.ChecksUI;
+using Rdmp.UI.ChecksUI;
 
 namespace LoadModules.Extensions.Interactive.DeAnonymise
 {

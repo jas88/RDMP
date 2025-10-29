@@ -1,3 +1,9 @@
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
 using System;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
@@ -11,12 +17,16 @@ using SCIStorePlugin.Data;
 namespace SCIStorePlugin.Repositories;
 
 public delegate void InsertionErrorHandler(object sender, SqlException exception, string queryString = "");
-public class SciStoreDbRepository : IRepository<SciStoreReport>
+
+/// <summary>
+/// Database repository that inserts SCI Store reports (headers, samples, results) into SQL Server using reflection-based SQL generation, with error handling and field truncation
+/// </summary>
+public class SciStoreDbRepository : ISciStoreRepository<SciStoreReport>
 {
     public string DatabaseName { get; set; }
     private readonly DatabaseHelper _databaseHelper;
     private readonly SciStoreTableRecord _targetTables;
-    private readonly IRepository<SciStoreReport> _errorRepo;
+    private readonly ISciStoreRepository<SciStoreReport> _errorRepo;
 
     // SIZE OF Database field holding comment text
     private const int ResultCommentFieldSize = 650;
@@ -27,7 +37,7 @@ public class SciStoreDbRepository : IRepository<SciStoreReport>
     private readonly SqlConnection _connectionToDestination;
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    public SciStoreDbRepository(DatabaseHelper databaseHelper, SciStoreTableRecord targetTables, IRepository<SciStoreReport> errorRepo)
+    public SciStoreDbRepository(DatabaseHelper databaseHelper, SciStoreTableRecord targetTables, ISciStoreRepository<SciStoreReport> errorRepo)
     {
         _databaseHelper = databaseHelper;
         _targetTables = targetTables;

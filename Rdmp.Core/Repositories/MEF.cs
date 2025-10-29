@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -25,10 +26,19 @@ namespace Rdmp.Core.Repositories;
 /// </summary>
 public static class MEF
 {
-    // TODO: Cache/preload this for AOT later; figure out generic support
-    private static Lazy<ReadOnlyDictionary<string, Type>> _types = null;
+    // Primary type source: CompiledTypeRegistry (FrozenDictionary) if available, otherwise reflection-based
+    private static Lazy<IReadOnlyDictionary<string, Type>> _primaryTypes = null;
+
+    // Lookaside cache for runtime-loaded assemblies not in CompiledTypeRegistry
+    private static readonly ConcurrentDictionary<string, Type> _lookasideTypes = new(StringComparer.OrdinalIgnoreCase);
+
+    // Cache for type hierarchy queries (GetTypes<T>)
     private static readonly ConcurrentDictionary<Type, Type[]> TypeCache = new();
+
     private static readonly Dictionary<string, Exception> badAssemblies = new();
+
+    // Track assemblies already processed to avoid duplicate work
+    private static readonly HashSet<string> _processedAssemblies = new();
 
     static MEF()
     {
@@ -38,23 +48,122 @@ public static class MEF
 
     private static void Flush(object _1, AssemblyLoadEventArgs ale)
     {
-        if (_types?.IsValueCreated != false)
-            _types = new Lazy<ReadOnlyDictionary<string, Type>>(PopulateUnique,
-                LazyThreadSafetyMode.ExecutionAndPublication);
+        // On initialization, create primary type source
+        if (ale is null)
+        {
+            if (_primaryTypes is null)
+            {
+#if DEBUG
+                Console.WriteLine("MEF: Initializing primary type source");
+#endif
+                _primaryTypes = new Lazy<IReadOnlyDictionary<string, Type>>(PopulatePrimary,
+                    LazyThreadSafetyMode.ExecutionAndPublication);
+            }
+            return;
+        }
+
+        // On assembly load, add to lookaside only
+        var loadedAssembly = ale.LoadedAssembly;
+        if (loadedAssembly != null)
+        {
+            AddAssemblyToLookaside(loadedAssembly);
+        }
+
+        // Clear type hierarchy cache as new types may affect inheritance queries
         TypeCache.Clear();
     }
 
-    //private static readonly Regex ExcludeAssembly = new(@"^(<|Interop\+|Microsoft|System|MongoDB|NPOI|SixLabors|NUnit|OracleInternal|Npgsql|Amazon|Castle|Newtonsoft|SharpCompress|Terminal|YamlDotNet|Moq|BrightIdeasSoftware|MySqlConnector|Azure|ZstdSharp|CommandLine|FAnsi|Internal|Mono|DnsClient|Oracle|MS|NuGet|Unix)", RegexOptions.Compiled|RegexOptions.CultureInvariant);
-    private static ReadOnlyDictionary<string, Type> PopulateUnique()
+    /// <summary>
+    /// Forces a refresh of the MEF type cache. Use this after dynamically loading assemblies
+    /// that need to be discovered. This is primarily for testing scenarios where assemblies
+    /// are loaded via typeof() after MEF has already been initialized.
+    /// </summary>
+    public static void RefreshTypes()
     {
-        var sw = Stopwatch.StartNew();
-        var typeByName = new Dictionary<string, Type>();
+        // Clear lookaside and re-scan all assemblies
+        _lookasideTypes.Clear();
+        lock (_processedAssemblies)
+        {
+            _processedAssemblies.Clear();
+        }
+
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            if (assembly.FullName?.StartsWith("CommandLine", StringComparison.Ordinal) != false) continue;
+            AddAssemblyToLookaside(assembly);
+        }
+        TypeCache.Clear();
+    }
+
+    private static IReadOnlyDictionary<string, Type> PopulatePrimary()
+    {
+        var sw = Stopwatch.StartNew();
+
+        // Try to use compile-time generated registry (FrozenDictionary) if available
+        // Search all loaded assemblies since Type.GetType() doesn't work across assembly boundaries
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            try
+            {
+                var compiledRegistryType = assembly.GetType("Rdmp.Core.Repositories.CompiledTypeRegistry");
+                if (compiledRegistryType != null)
+                {
+                    var getTypeMethod = compiledRegistryType.GetMethod("GetAllTypes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    if (getTypeMethod != null)
+                    {
+                        var compiledTypes = getTypeMethod.Invoke(null, null) as IEnumerable<KeyValuePair<string, Type>>;
+                        if (compiledTypes != null)
+                        {
+                            // Use FrozenDictionary from CompiledTypeRegistry for optimal lookup performance
+                            var frozen = compiledTypes.ToFrozenDictionary(
+                                kvp => kvp.Key,
+                                kvp => kvp.Value,
+                                StringComparer.OrdinalIgnoreCase);
+
+#if DEBUG
+                            Console.WriteLine($"MEF: Using CompiledTypeRegistry with {frozen.Count} types (loaded in {sw.ElapsedMilliseconds}ms)");
+#endif
+                            return frozen; // Early return - use compile-time registry
+                        }
+                    }
+                }
+            }
+#if DEBUG
+            catch (Exception ex)
+            {
+                // Silent failure - fall back to reflection
+                if (ex.Message.Contains("CompiledTypeRegistry"))
+                    Console.WriteLine($"MEF: Error loading CompiledTypeRegistry: {ex.Message}");
+            }
+#else
+            catch (Exception)
+            {
+                // Silent failure - fall back to reflection
+            }
+#endif
+        }
+
+        // Fallback: Use reflection to scan all assemblies (slower)
+#if DEBUG
+        Console.WriteLine("MEF: CompiledTypeRegistry not found, falling back to reflection");
+#endif
+        var typeByName = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+        var assembliesProcessed = 0;
+        var assembliesSkipped = 0;
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            // Skip CommandLine assembly
+            if (assembly.FullName?.StartsWith("CommandLine", StringComparison.Ordinal) == true)
+            {
+                assembliesSkipped++;
+                continue;
+            }
+
+            assembliesProcessed++;
             try
             {
                 foreach (var type in assembly.GetTypes())
+                {
                     foreach (var alias in new[]
                              {
                              Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
@@ -67,6 +176,7 @@ public static class MEF
                             typeByName.Remove(alias);
                             typeByName.Add(alias, type);
                         }
+                }
             }
             catch (Exception e)
             {
@@ -74,12 +184,68 @@ public static class MEF
                 {
                     badAssemblies.TryAdd(assembly.FullName, e);
                 }
-
-                Console.WriteLine(e);
             }
         }
 
-        return new ReadOnlyDictionary<string, Type>(typeByName);
+#if DEBUG
+        Console.WriteLine($"MEF: Reflection fallback processed {assembliesProcessed} assemblies, found {typeByName.Count} types in {sw.ElapsedMilliseconds}ms");
+#endif
+
+        // Return as FrozenDictionary for optimal lookup performance
+        return typeByName.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Add types from a runtime-loaded assembly to the lookaside cache if not already in primary
+    /// </summary>
+    private static void AddAssemblyToLookaside(System.Reflection.Assembly assembly)
+    {
+        // Skip if already processed
+        var assemblyName = assembly.FullName;
+        lock (_processedAssemblies)
+        {
+            if (!_processedAssemblies.Add(assemblyName))
+                return; // Already processed
+        }
+
+        // Skip CommandLine and other noise assemblies
+        if (assemblyName?.StartsWith("CommandLine", StringComparison.Ordinal) == true)
+            return;
+
+        try
+        {
+            foreach (var type in assembly.GetTypes())
+            {
+                // Only add if not in primary dictionary
+                var primaryDict = _primaryTypes?.Value;
+                if (primaryDict != null && primaryDict.ContainsKey(type.FullName))
+                    continue; // Already in primary, skip
+
+                foreach (var alias in new[]
+                         {
+                         Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
+                         type.FullName?.ToUpperInvariant()
+                     }.Where(static x => x is not null).Distinct())
+                {
+                    // Use AddOrUpdate to handle Rdmp.Core precedence
+                    if (type.FullName?.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        _lookasideTypes[alias] = type; // Rdmp.Core takes precedence
+                    }
+                    else
+                    {
+                        _lookasideTypes.TryAdd(alias, type);
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            lock (badAssemblies)
+            {
+                badAssemblies.TryAdd(assemblyName, e);
+            }
+        }
     }
 
     private static string Tail(string full)
@@ -92,7 +258,7 @@ public static class MEF
     /// <summary>
     /// Looks up the given Type in all loaded assemblies (during <see cref="Startup.Startup"/>).  Returns null
     /// if the Type is not found.
-    /// 
+    ///
     /// <para>This method supports both fully qualified Type names and Name only (although this is slower).  Answers
     /// are cached.</para>
     /// </summary>
@@ -102,12 +268,49 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
-        // Try for exact match, then caseless match, then tail match, then tail caseless match
-        if (_types.Value.TryGetValue(typeName, out var type)) return type;
-        if (_types.Value.TryGetValue(typeName.ToUpperInvariant(), out type)) return type;
-        if (_types.Value.TryGetValue(Tail(typeName), out type)) return type;
+        // Fast path: Check primary dictionary (FrozenDictionary from CompiledTypeRegistry)
+        var primaryDict = _primaryTypes.Value;
+        if (primaryDict.TryGetValue(typeName, out var type))
+            return type;
 
-        return _types.Value.TryGetValue(Tail(typeName).ToUpperInvariant(), out type) ? type : null;
+        // Try short name in primary
+        if (primaryDict.TryGetValue(Tail(typeName), out type))
+            return type;
+
+        // Slower path: Check lookaside for runtime-loaded assemblies
+        if (_lookasideTypes.TryGetValue(typeName, out type))
+            return type;
+
+        // Try short name in lookaside
+        if (_lookasideTypes.TryGetValue(Tail(typeName), out type))
+            return type;
+
+        // Fallback: Use Type.GetType() for types in currently loaded assemblies not in our cache
+        // This handles edge cases like test classes that weren't in CompiledTypeRegistry
+        type = Type.GetType(typeName);
+        if (type != null)
+        {
+            // Add to lookaside for future lookups
+            _lookasideTypes.TryAdd(typeName, type);
+            _lookasideTypes.TryAdd(Tail(typeName), type);
+            return type;
+        }
+
+        // Still not found - scan all loaded assemblies as last resort
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            type = assembly.GetType(typeName);
+            if (type != null)
+            {
+                // Add to lookaside for future lookups
+                _lookasideTypes.TryAdd(typeName, type);
+                _lookasideTypes.TryAdd(Tail(typeName), type);
+                return type;
+            }
+        }
+
+        // Not found
+        return null;
     }
 
     public static Type GetType(string type, Type expectedBaseClass)
@@ -165,9 +368,19 @@ public static class MEF
     /// <returns></returns>
     private static IEnumerable<Type> GetTypes(Type type)
     {
-        return TypeCache.GetOrAdd(type,
-            static target => _types.Value.Values.Where(t => !t.IsInterface && !t.IsAbstract)
-                .Where(target.IsAssignableFrom).Distinct().ToArray());
+        return TypeCache.GetOrAdd(type, target =>
+        {
+            // Combine primary and lookaside types
+            var allTypes = _primaryTypes.Value.Values
+                .Concat(_lookasideTypes.Values)
+                .Distinct();
+
+            return allTypes
+                .Where(t => !t.IsInterface && !t.IsAbstract)
+                .Where(target.IsAssignableFrom)
+                .Distinct()
+                .ToArray();
+        });
     }
 
     /// <summary>
@@ -179,11 +392,22 @@ public static class MEF
     public static IEnumerable<Type> GetGenericTypes(Type genericType, Type typeOfT)
     {
         var target = genericType.MakeGenericType(typeOfT);
-        return _types.Value.Values.Where(t => !t.IsAbstract && !t.IsGenericType && target.IsAssignableFrom(t))
+
+        // Combine primary and lookaside types
+        var allTypes = _primaryTypes.Value.Values.Concat(_lookasideTypes.Values).Distinct();
+
+        return allTypes
+            .Where(t => !t.IsAbstract && !t.IsGenericType && target.IsAssignableFrom(t))
             .Distinct();
     }
 
-    public static IEnumerable<Type> GetAllTypes() => _types.Value.Values.Distinct().AsEnumerable();
+    public static IEnumerable<Type> GetAllTypes()
+    {
+        // Combine primary and lookaside types
+        return _primaryTypes.Value.Values
+            .Concat(_lookasideTypes.Values)
+            .Distinct();
+    }
 
     /// <summary>
     /// Creates an instance of the named class with the provided constructor arguments
@@ -208,7 +432,14 @@ public static class MEF
     public static void AddTypeToCatalogForTesting(Type p0)
     {
         ArgumentNullException.ThrowIfNull(p0);
-        if (!_types.Value.ContainsKey(p0.FullName))
+
+        // Check if type exists in either dictionary (by value, not just key)
+        var inPrimary = _primaryTypes.Value.ContainsKey(p0.FullName) ||
+                       _primaryTypes.Value.Values.Contains(p0);
+        var inLookaside = _lookasideTypes.ContainsKey(p0.FullName) ||
+                         _lookasideTypes.Values.Contains(p0);
+
+        if (!inPrimary && !inLookaside)
             throw new Exception($"Type {p0.FullName} was not preloaded");
     }
 }

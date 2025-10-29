@@ -1,4 +1,9 @@
-﻿// Copyright (c) The University of Dundee 2024-2024
+﻿// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) The University of Dundee 2018-2025
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -65,15 +70,15 @@ public class RemoteAttacher : Attacher, IPluginAttacher
             case DatabaseType.PostgreSql:
                 return $"cast((NOW() AT TIME ZONE 'UTC' + interval '{amount} {addType}S') as Date)";
             case DatabaseType.Oracle:
-                if (addType == "DAY") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount})";
-                if (addType == "WEEK") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount} *7)";
-                if (addType == "MONTH") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,{amount})";
-                if (addType == "YEAR") return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,,{amount})";
-                return $"DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount})";
+                if (addType == "DAY") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount}))";
+                if (addType == "WEEK") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount} *7))";
+                if (addType == "MONTH") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,{amount}))";
+                if (addType == "YEAR") return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,,,{amount}))";
+                return $"TRUNC(DateAdd(SYS_EXTRACT_UTC(SYSTIMESTAMP),,{amount}))";
             case DatabaseType.MicrosoftSQLServer:
-                return $"DATEADD({addType}, {amount}, GETUTCDATE())";
+                return $"CAST(DATEADD({addType}, {amount}, GETUTCDATE()) as Date)";
             case DatabaseType.MySql:
-                return $"DATE_ADD(UTC_DATE(), INTERVAL {amount} {addType})";
+                return $"DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL {amount} {addType}))";
             default:
                 throw new InvalidOperationException("Unknown Database Type");
         }
@@ -99,31 +104,32 @@ public class RemoteAttacher : Attacher, IPluginAttacher
 
     public string SqlHistoricalDataFilter(ILoadMetadata loadMetadata, DatabaseType dbType, string column)
     {
-        const string dateConvert = "Date";
+        // Don't cast to Date - preserve time component for accurate filtering
+        // Casting to Date causes timezone-sensitive failures when time crosses midnight
 
         switch (HistoricalFetchDuration)
         {
             case AttacherHistoricalDurations.Past24Hours:
-                return $" WHERE CAST({column} as {dateConvert}) > {GetCorrectDateAddForDatabaseType(dbType, "DAY", "-1")}";
+                return $" WHERE {column} > {GetCorrectDateAddForDatabaseType(dbType, "DAY", "-1")}";
             case AttacherHistoricalDurations.Past7Days:
-                return $" WHERE CAST({column} as {dateConvert}) > {GetCorrectDateAddForDatabaseType(dbType, "WEEK", "-1")}";
+                return $" WHERE {column} > {GetCorrectDateAddForDatabaseType(dbType, "WEEK", "-1")}";
             case AttacherHistoricalDurations.PastMonth:
-                return $" WHERE CAST({column} as {dateConvert}) > {GetCorrectDateAddForDatabaseType(dbType, "MONTH", "-1")}";
+                return $" WHERE {column} > {GetCorrectDateAddForDatabaseType(dbType, "MONTH", "-1")}";
             case AttacherHistoricalDurations.PastYear:
-                return $" WHERE CAST({column} as {dateConvert}) > {GetCorrectDateAddForDatabaseType(dbType, "YEAR", "-1")}";
+                return $" WHERE {column} > {GetCorrectDateAddForDatabaseType(dbType, "YEAR", "-1")}";
             case AttacherHistoricalDurations.SinceLastUse:
-                return loadMetadata.LastLoadTime is not null ? $" WHERE CAST({column} as {dateConvert}) > {ConvertDateString(dbType, loadMetadata.LastLoadTime.GetValueOrDefault().ToString(RemoteTableDateFormat))}" : "";
+                return loadMetadata.LastLoadTime is not null ? $" WHERE {column} > {ConvertDateString(dbType, loadMetadata.LastLoadTime.GetValueOrDefault().ToString(RemoteTableDateFormat))}" : "";
             case AttacherHistoricalDurations.Custom:
                 if (CustomFetchDurationStartDate == DateTime.MinValue && CustomFetchDurationEndDate != DateTime.MinValue)
                 {
                     //end only
-                    return $" WHERE CAST({column} as {dateConvert}) <= {ConvertDateString(dbType, CustomFetchDurationEndDate.ToString(RemoteTableDateFormat))}";
+                    return $" WHERE {column} <= {ConvertDateString(dbType, CustomFetchDurationEndDate.ToString(RemoteTableDateFormat))}";
                 }
 
                 if (CustomFetchDurationStartDate != DateTime.MinValue && CustomFetchDurationEndDate == DateTime.MinValue)
                 {
                     //start only
-                    return $" WHERE CAST({column} as {dateConvert}) >= {ConvertDateString(dbType, CustomFetchDurationStartDate.ToString(RemoteTableDateFormat))}";
+                    return $" WHERE {column} >= {ConvertDateString(dbType, CustomFetchDurationStartDate.ToString(RemoteTableDateFormat))}";
                 }
 
                 if (CustomFetchDurationStartDate == DateTime.MinValue && CustomFetchDurationEndDate == DateTime.MinValue)
@@ -132,12 +138,12 @@ public class RemoteAttacher : Attacher, IPluginAttacher
                     return "";
                 }
 
-                return $" WHERE CAST({column} as {dateConvert}) >= {ConvertDateString(dbType, CustomFetchDurationStartDate.ToString(RemoteTableDateFormat))} AND CAST({column} as {dateConvert}) <= {ConvertDateString(dbType, CustomFetchDurationEndDate.ToString(RemoteTableDateFormat))}";
+                return $" WHERE {column} >= {ConvertDateString(dbType, CustomFetchDurationStartDate.ToString(RemoteTableDateFormat))} AND {column} <= {ConvertDateString(dbType, CustomFetchDurationEndDate.ToString(RemoteTableDateFormat))}";
             case AttacherHistoricalDurations.DeltaReading:
                 if (DeltaReadingStartDate == DateTime.MinValue) return "";
                 var startDate = DeltaReadingStartDate.AddDays(-DeltaReadingLookBackDays);
                 var endDate = DeltaReadingStartDate.AddDays(DeltaReadingLookForwardDays);
-                return $" WHERE CAST({column} as {dateConvert}) >= {ConvertDateString(dbType, startDate.ToString(RemoteTableDateFormat))} AND CAST({column} as {dateConvert}) < {ConvertDateString(dbType, endDate.ToString(RemoteTableDateFormat))}";
+                return $" WHERE {column} >= {ConvertDateString(dbType, startDate.ToString(RemoteTableDateFormat))} AND {column} < {ConvertDateString(dbType, endDate.ToString(RemoteTableDateFormat))}";
             default:
                 return "";
         }

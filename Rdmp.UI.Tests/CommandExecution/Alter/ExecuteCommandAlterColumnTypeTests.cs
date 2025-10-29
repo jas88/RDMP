@@ -67,38 +67,45 @@ internal class ExecuteCommandAlterColumnTypeTests : DatabaseTests
         var tblArchive = db.CreateTable("MyTbl_Archive",
             new[] { new DatabaseColumnRequest("mycol", new DatabaseTypeRequest(typeof(string), 10)) });
 
-        Import(tbl, out var ti, out _);
-
-        var ui = new UITests();
-        var activator = new TestActivateItems(ui, new MemoryDataExportRepository());
-
-        var myCol = tbl.DiscoverColumn("myCol");
-
-        //should have started out as 10
-        Assert.That(myCol.DataType.GetLengthIfString(), Is.EqualTo(10));
-
-        var oldType = myCol.DataType.SQLType;
-        //we want the new type to be 50 long
-        var newType = oldType.Replace("10", "50");
-        activator.TypeTextResponse = newType;
-
-        var cmd = new ExecuteCommandAlterColumnType(activator, ti.ColumnInfos.Single());
-        cmd.Execute();
-
-        //rediscover the col to get the expected new datatype
-        myCol = tbl.DiscoverColumn("myCol");
-        var myColArchive = tblArchive.DiscoverColumn("myCol");
-
-        Assert.Multiple(() =>
+        try
         {
-            Assert.That(myCol.DataType.SQLType, Is.EqualTo(newType));
-            Assert.That(ti.ColumnInfos[0].Data_type, Is.EqualTo(newType));
+            Import(tbl, out var ti, out _);
 
-            //if they changed the archive then the archive column should also match on Type otherwise it should have stayed the old Type
-            Assert.That(myColArchive.DataType.SQLType, Is.EqualTo(newType));
-        });
+            var ui = new UITests();
+            var activator = new TestActivateItems(ui, new MemoryDataExportRepository());
 
-        tbl.Drop();
-        tblArchive.Drop();
+            var myCol = tbl.DiscoverColumn("myCol");
+
+            //should have started out as 10
+            Assert.That(myCol.DataType.GetLengthIfString(), Is.EqualTo(10));
+
+            var oldType = myCol.DataType.SQLType;
+            //we want the new type to be 50 long
+            var newType = oldType.Replace("10", "50");
+            activator.TypeTextResponse = newType;
+
+            var cmd = new ExecuteCommandAlterColumnType(activator, ti.ColumnInfos.Single());
+            cmd.Execute();
+
+            //rediscover the col to get the expected new datatype
+            myCol = tbl.DiscoverColumn("myCol");
+            var myColArchive = tblArchive.DiscoverColumn("myCol");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(myCol.DataType.SQLType, Is.EqualTo(newType));
+                Assert.That(ti.ColumnInfos[0].Data_type, Is.EqualTo(newType));
+
+                //if they changed the archive then the archive column should also match on Type otherwise it should have stayed the old Type
+                Assert.That(myColArchive.DataType.SQLType, Is.EqualTo(newType));
+            });
+        }
+        finally
+        {
+            if (tbl.Exists())
+                tbl.Drop();
+            if (tblArchive.Exists())
+                tblArchive.Drop();
+        }
     }
 }

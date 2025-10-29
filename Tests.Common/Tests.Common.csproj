@@ -35,10 +35,6 @@
         <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
         <PackageReference Include="NSubstitute" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="NUnit" />

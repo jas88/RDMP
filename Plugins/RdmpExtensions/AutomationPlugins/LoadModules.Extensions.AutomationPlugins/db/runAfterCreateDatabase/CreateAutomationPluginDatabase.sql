@@ -1,4 +1,4 @@
-﻿/****** Object:  Table [dbo].[AutomateExtraction]    Script Date: 05/07/2017 08:37:46 ******/
+/****** Object:  Table [dbo].[AutomateExtraction]    Script Date: 05/07/2017 08:37:46 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON

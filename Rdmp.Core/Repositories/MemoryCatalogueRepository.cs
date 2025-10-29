@@ -428,7 +428,10 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
 
     public IFilter[] GetFilters(IContainer container)
     {
-        return GetAllObjects<IFilter>().Where(f => f is not ExtractionFilter && f.FilterContainer_ID == container.ID)
+        // Optimized: Use GetAllObjectsWhere for container filter, then exclude ExtractionFilter
+        // This scans only filter types with matching container, not all objects
+        return GetAllObjectsWhere<IFilter>("FilterContainer_ID", container.ID)
+            .Where(f => f is not ExtractionFilter)
             .ToArray();
     }
 
