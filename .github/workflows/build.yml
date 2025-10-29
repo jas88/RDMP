@@ -235,7 +235,7 @@ jobs:
   bundle:
     name: Bundle Build
     runs-on: ubuntu-latest
-    needs: [tests_db, tests_file_system, linux-tests_db, linux-tests_file_system]
+    needs: [tests_db, tests_file_system]
     permissions:
       actions: read
       contents: write
