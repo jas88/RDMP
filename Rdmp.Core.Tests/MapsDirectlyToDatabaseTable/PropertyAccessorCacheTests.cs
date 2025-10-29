@@ -289,7 +289,6 @@ public class PropertyAccessorCacheTests
         TestContext.Out.WriteLine($"Compiled accessor (avg): {accessorAvg:F2}ms");
         TestContext.Out.WriteLine($"Reflection (avg): {reflectionAvg:F2}ms");
         TestContext.Out.WriteLine($"Speedup: {speedup:F2}x");
-        }
 
         TestContext.Out.WriteLine("=== Performance Benchmark Results ===");
         TestContext.Out.WriteLine($"Iterations per run: {iterations:N0}");

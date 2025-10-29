@@ -17,7 +17,6 @@ using NUnit.Framework;
 using Rdmp.Core.DataFlowPipeline;
 using Tests.Common;
 using Rdmp.Dicom.PipelineComponents.DicomSources;
-using SynthDicom;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using Rdmp.Core.DataFlowPipeline.Requirements;
 using Rdmp.Core.DataLoad.Engine.Pipeline.Destinations;

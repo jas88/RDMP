@@ -16,7 +16,6 @@ using FellowOakDicom.Network;
 using FellowOakDicom.Network.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
 namespace Rdmp.Dicom.Tests.Unit;
