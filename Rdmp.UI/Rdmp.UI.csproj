@@ -337,6 +337,7 @@
   	<PackageReference Include="AWSSDK.SecurityToken" VersionOverride="4.0.2.10" />
 	<PackageReference Include="AWSSDK.SSO" VersionOverride="4.0.1.10" />
 	<PackageReference Include="AWSSDK.SSOOIDC" VersionOverride="4.0.3" />
+	<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" VersionOverride="9.0.10" />
 	<PackageReference Include="NPOI" VersionOverride="2.7.5" />
 		<Folder Include="PluginChildProvision\" />
 	</ItemGroup>
