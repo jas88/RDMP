@@ -41,6 +41,11 @@ public class MemoryRepository : IRepository
     private readonly object _typeHierarchyLock = new();
 
     /// <summary>
+    /// Cached compatible types - computed once per repository instance
+    /// </summary>
+    private Type[] _compatibleTypesCache;
+
+    /// <summary>
     /// Backward-compatible view of all objects as a concurrent hashset.
     /// Computed on-demand from type-indexed storage. Use sparingly - prefer type-specific methods.
     /// </summary>
@@ -330,7 +335,11 @@ public class MemoryRepository : IRepository
     {
         var prop = typeof(T).GetProperty(property);
 
-        return Objects.Keys.OfType<T>().Where(o => Equals(prop.GetValue(o), value1)).OrderBy(o => o.ID).ToArray();
+        // Optimized: Use GetAllObjects<T>() which leverages type-indexed storage
+        return GetAllObjects<T>()
+            .Where(o => Equals(prop.GetValue(o), value1))
+            .OrderBy(o => o.ID)
+            .ToArray();
     }
 
     public T[] GetAllObjectsWhere<T>(string property1, object value1, ExpressionType operand, string property2,
@@ -339,12 +348,15 @@ public class MemoryRepository : IRepository
         var prop1 = typeof(T).GetProperty(property1);
         var prop2 = typeof(T).GetProperty(property2);
 
+        // Optimized: Use GetAllObjects<T>() which leverages type-indexed storage
+        var allObjects = GetAllObjects<T>();
+
         return operand switch
         {
-            ExpressionType.AndAlso => Objects.Keys.OfType<T>()
+            ExpressionType.AndAlso => allObjects
                 .Where(o => Equals(prop1.GetValue(o), value1) && Equals(prop2.GetValue(o), value2))
                 .OrderBy(o => o.ID).ToArray(),
-            ExpressionType.OrElse => Objects.Keys.OfType<T>()
+            ExpressionType.OrElse => allObjects
                 .Where(o => Equals(prop1.GetValue(o), value1) || Equals(prop2.GetValue(o), value2))
                 .OrderBy(o => o.ID).ToArray(),
             _ => throw new NotSupportedException("operand")
@@ -669,20 +681,25 @@ public class MemoryRepository : IRepository
 
     public Type[] GetCompatibleTypes()
     {
-        return
-            GetType().Assembly.GetTypes()
-                .Where(
-                    t =>
-                        typeof(IMapsDirectlyToDatabaseTable).IsAssignableFrom(t)
-                        && !t.IsAbstract
-                        && !t.IsInterface
+        // Cache the result - assembly types don't change during runtime
+        if (_compatibleTypesCache != null)
+            return _compatibleTypesCache;
 
-                        //nothing called spontaneous
-                        && !t.Name.Contains("Spontaneous")
+        _compatibleTypesCache = GetType().Assembly.GetTypes()
+            .Where(
+                t =>
+                    typeof(IMapsDirectlyToDatabaseTable).IsAssignableFrom(t)
+                    && !t.IsAbstract
+                    && !t.IsInterface
 
-                        //or with a spontaneous base class
-                        && (t.BaseType == null || !t.BaseType.Name.Contains("Spontaneous"))
-                ).ToArray();
+                    //nothing called spontaneous
+                    && !t.Name.Contains("Spontaneous")
+
+                    //or with a spontaneous base class
+                    && (t.BaseType == null || !t.BaseType.Name.Contains("Spontaneous"))
+            ).ToArray();
+
+        return _compatibleTypesCache;
     }
 
 

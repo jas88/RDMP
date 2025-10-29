@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -416,13 +417,20 @@ public abstract class TableRepository : ITableRepository, IDisposable
     public int GetHashCode(IMapsDirectlyToDatabaseTable obj1) => obj1.GetType().GetHashCode() * obj1.ID;
 
     /// <summary>
+    /// Cache for GetPropertyInfos to avoid repeated reflection + attribute checking
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PropertyInfoCache = new();
+
+    /// <summary>
     /// Gets all public properties of the class that are not decorated with [<see cref="NoMappingToDatabase"/>]
+    /// Results are cached for performance.
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
     public static PropertyInfo[] GetPropertyInfos(Type type)
     {
-        return type.GetProperties().Where(prop => !Attribute.IsDefined(prop, typeof(NoMappingToDatabase))).ToArray();
+        return PropertyInfoCache.GetOrAdd(type, static t =>
+            t.GetProperties().Where(prop => !Attribute.IsDefined(prop, typeof(NoMappingToDatabase))).ToArray());
     }
 
     /// <inheritdoc/>
