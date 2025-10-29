@@ -34,6 +34,13 @@ public class MemoryRepository : IRepository
         _objectsByType = new();
 
     /// <summary>
+    /// Precomputed type hierarchy: Interface/BaseClass -> ConcreteTypes[]
+    /// Lazily built on first interface lookup to avoid IsAssignableFrom() overhead
+    /// </summary>
+    private FrozenDictionary<Type, Type[]> _typeHierarchy;
+    private readonly object _typeHierarchyLock = new();
+
+    /// <summary>
     /// Backward-compatible view of all objects as a concurrent hashset.
     /// Computed on-demand from type-indexed storage. Use sparingly - prefer type-specific methods.
     /// </summary>
@@ -61,7 +68,12 @@ public class MemoryRepository : IRepository
     /// </summary>
     protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetOrCreateTypeDictionary(Type type)
     {
-        return _objectsByType.GetOrAdd(type, _ => new ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>());
+        return _objectsByType.GetOrAdd(type, _ =>
+        {
+            // Invalidate type hierarchy when a new type is added
+            InvalidateTypeHierarchy();
+            return new ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>();
+        });
     }
 
     /// <summary>
@@ -107,6 +119,79 @@ public class MemoryRepository : IRepository
     /// Helper: Check if repository is empty
     /// </summary>
     protected bool IsEmpty => _objectsByType.Values.All(typeDict => typeDict.IsEmpty);
+
+    /// <summary>
+    /// Build precomputed type hierarchy for interface/base class lookups.
+    /// Maps each interface/base class to all concrete types that implement/inherit from it.
+    /// </summary>
+    private FrozenDictionary<Type, Type[]> BuildTypeHierarchy()
+    {
+        var hierarchy = new Dictionary<Type, HashSet<Type>>();
+
+        // Get all concrete types currently in storage
+        var concreteTypes = _objectsByType.Keys.ToArray();
+
+        // For each concrete type, find all its interfaces and base classes
+        foreach (var concreteType in concreteTypes)
+        {
+            // Add all interfaces
+            foreach (var iface in concreteType.GetInterfaces())
+            {
+                if (!hierarchy.ContainsKey(iface))
+                    hierarchy[iface] = new HashSet<Type>();
+                hierarchy[iface].Add(concreteType);
+            }
+
+            // Add base class chain
+            var baseType = concreteType.BaseType;
+            while (baseType != null && baseType != typeof(object))
+            {
+                if (!hierarchy.ContainsKey(baseType))
+                    hierarchy[baseType] = new HashSet<Type>();
+                hierarchy[baseType].Add(concreteType);
+                baseType = baseType.BaseType;
+            }
+        }
+
+        // Convert to FrozenDictionary for optimal lookup performance
+        return hierarchy.ToFrozenDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.ToArray());
+    }
+
+    /// <summary>
+    /// Get concrete types that implement/inherit from the given interface or base class.
+    /// Uses precomputed hierarchy for O(1) lookup instead of IsAssignableFrom() checks.
+    /// </summary>
+    private Type[] GetConcreteTypesFor(Type interfaceOrBaseType)
+    {
+        // Lazy-build type hierarchy on first use
+        if (_typeHierarchy == null)
+        {
+            lock (_typeHierarchyLock)
+            {
+                if (_typeHierarchy == null)
+                    _typeHierarchy = BuildTypeHierarchy();
+            }
+        }
+
+        // Return precomputed list of concrete types, or empty if not found
+        return _typeHierarchy.TryGetValue(interfaceOrBaseType, out var concreteTypes)
+            ? concreteTypes
+            : Array.Empty<Type>();
+    }
+
+    /// <summary>
+    /// Invalidate type hierarchy cache when new types are added to storage.
+    /// Called when a new type dictionary is created.
+    /// </summary>
+    private void InvalidateTypeHierarchy()
+    {
+        lock (_typeHierarchyLock)
+        {
+            _typeHierarchy = null;
+        }
+    }
 
     public virtual void InsertAndHydrate<T>(T toCreate, Dictionary<string, object> constructorParameters)
         where T : IMapsDirectlyToDatabaseTable
@@ -187,20 +272,22 @@ public class MemoryRepository : IRepository
 
         var requestedType = typeof(T);
 
-        // Fast path: Try exact type match first
+        // Fast path: Exact concrete type match - O(1)
         if (_objectsByType.TryGetValue(requestedType, out var typeDict) &&
             typeDict.TryGetValue(id, out var obj))
         {
             return (T)obj;
         }
 
-        // Slow path: If T is an interface or base class, search all compatible types
+        // Medium path: Interface/base class - use precomputed hierarchy
         if (requestedType.IsInterface || requestedType.IsAbstract)
         {
-            foreach (var kvp in _objectsByType)
+            var concreteTypes = GetConcreteTypesFor(requestedType);
+
+            foreach (var concreteType in concreteTypes)
             {
-                if (requestedType.IsAssignableFrom(kvp.Key) &&
-                    kvp.Value.TryGetValue(id, out obj))
+                if (_objectsByType.TryGetValue(concreteType, out typeDict) &&
+                    typeDict.TryGetValue(id, out obj))
                 {
                     return (T)obj;
                 }
@@ -213,25 +300,30 @@ public class MemoryRepository : IRepository
     public T[] GetAllObjects<T>() where T : IMapsDirectlyToDatabaseTable
     {
         var requestedType = typeof(T);
+        var results = new List<T>();
 
-        // Fast path: Exact type match
+        // Fast path: Check if exact type exists in storage
         if (_objectsByType.TryGetValue(requestedType, out var typeDict))
         {
-            return typeDict.Values.Cast<T>().OrderBy(o => o.ID).ToArray();
+            results.AddRange(typeDict.Values.Cast<T>());
         }
 
-        // Slow path: If T is an interface or base class, search all compatible types
-        if (requestedType.IsInterface || requestedType.IsAbstract)
+        // Also check for subclasses/implementations using precomputed hierarchy
+        // This handles: interfaces, abstract classes, AND concrete base classes with subclasses
+        var concreteTypes = GetConcreteTypesFor(requestedType);
+        foreach (var concreteType in concreteTypes)
         {
-            return _objectsByType
-                .Where(kvp => requestedType.IsAssignableFrom(kvp.Key))
-                .SelectMany(kvp => kvp.Value.Values)
-                .Cast<T>()
-                .OrderBy(o => o.ID)
-                .ToArray();
+            // Skip the exact type we already added above
+            if (concreteType == requestedType)
+                continue;
+
+            if (_objectsByType.TryGetValue(concreteType, out typeDict))
+            {
+                results.AddRange(typeDict.Values.Cast<T>());
+            }
         }
 
-        return Array.Empty<T>();
+        return results.OrderBy(o => o.ID).ToArray();
     }
 
     public T[] GetAllObjectsWhere<T>(string property, object value1) where T : IMapsDirectlyToDatabaseTable
@@ -278,7 +370,7 @@ public class MemoryRepository : IRepository
         var prop = typeof(T).GetProperty(propertyName);
         var requestedType = typeof(T);
 
-        // Fast path: Exact type match
+        // Fast path: Exact concrete type match
         if (_objectsByType.TryGetValue(requestedType, out var typeDict))
         {
             return typeDict.Values.Cast<T>()
@@ -287,16 +379,22 @@ public class MemoryRepository : IRepository
                 .ToArray();
         }
 
-        // Slow path: Interface or base class lookup
+        // Medium path: Interface/base class - use precomputed hierarchy
         if (requestedType.IsInterface || requestedType.IsAbstract)
         {
-            return _objectsByType
-                .Where(kvp => requestedType.IsAssignableFrom(kvp.Key))
-                .SelectMany(kvp => kvp.Value.Values)
-                .Cast<T>()
-                .Where(o => prop.GetValue(o) as int? == parent.ID)
-                .OrderBy(o => o.ID)
-                .ToArray();
+            var concreteTypes = GetConcreteTypesFor(requestedType);
+            var results = new List<T>();
+
+            foreach (var concreteType in concreteTypes)
+            {
+                if (_objectsByType.TryGetValue(concreteType, out typeDict))
+                {
+                    results.AddRange(typeDict.Values.Cast<T>()
+                        .Where(o => prop.GetValue(o) as int? == parent.ID));
+                }
+            }
+
+            return results.OrderBy(o => o.ID).ToArray();
         }
 
         return Array.Empty<T>();
@@ -311,7 +409,7 @@ public class MemoryRepository : IRepository
         var prop = typeof(T).GetProperty(propertyName);
         var requestedType = typeof(T);
 
-        // Fast path: Exact type match
+        // Fast path: Exact concrete type match
         if (_objectsByType.TryGetValue(requestedType, out var typeDict))
         {
             return typeDict.Values.Cast<T>()
@@ -320,16 +418,22 @@ public class MemoryRepository : IRepository
                 .ToArray();
         }
 
-        // Slow path: Interface or base class lookup
+        // Medium path: Interface/base class - use precomputed hierarchy
         if (requestedType.IsInterface || requestedType.IsAbstract)
         {
-            return _objectsByType
-                .Where(kvp => requestedType.IsAssignableFrom(kvp.Key))
-                .SelectMany(kvp => kvp.Value.Values)
-                .Cast<T>()
-                .Where(o => prop.GetValue(o) as int? == parent.ID)
-                .OrderBy(o => o.ID)
-                .ToArray();
+            var concreteTypes = GetConcreteTypesFor(requestedType);
+            var results = new List<T>();
+
+            foreach (var concreteType in concreteTypes)
+            {
+                if (_objectsByType.TryGetValue(concreteType, out typeDict))
+                {
+                    results.AddRange(typeDict.Values.Cast<T>()
+                        .Where(o => prop.GetValue(o) as int? == parent.ID));
+                }
+            }
+
+            return results.OrderBy(o => o.ID).ToArray();
         }
 
         return Array.Empty<T>();
@@ -446,16 +550,23 @@ public class MemoryRepository : IRepository
     {
         var requestedType = typeof(T);
 
-        // Fast path: Exact type match - O(1)
+        // Fast path: Exact concrete type match - O(1)
         if (_objectsByType.TryGetValue(requestedType, out var typeDict) && typeDict.ContainsKey(allegedParent))
             return true;
 
-        // Slow path: Interface or base class lookup
+        // Medium path: Interface/base class - use precomputed hierarchy
         if (requestedType.IsInterface || requestedType.IsAbstract)
         {
-            return _objectsByType
-                .Where(kvp => requestedType.IsAssignableFrom(kvp.Key))
-                .Any(kvp => kvp.Value.ContainsKey(allegedParent));
+            var concreteTypes = GetConcreteTypesFor(requestedType);
+
+            foreach (var concreteType in concreteTypes)
+            {
+                if (_objectsByType.TryGetValue(concreteType, out typeDict) &&
+                    typeDict.ContainsKey(allegedParent))
+                {
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -487,7 +598,7 @@ public class MemoryRepository : IRepository
         var requestedType = typeof(T);
         var hs = new HashSet<int>(ids);
 
-        // Fast path: Exact type match
+        // Fast path: Exact concrete type match
         if (_objectsByType.TryGetValue(requestedType, out var typeDict))
         {
             return typeDict.Values.Cast<T>()
@@ -495,15 +606,22 @@ public class MemoryRepository : IRepository
                 .OrderBy(o => o.ID);
         }
 
-        // Slow path: Interface or base class lookup
+        // Medium path: Interface/base class - use precomputed hierarchy
         if (requestedType.IsInterface || requestedType.IsAbstract)
         {
-            return _objectsByType
-                .Where(kvp => requestedType.IsAssignableFrom(kvp.Key))
-                .SelectMany(kvp => kvp.Value.Values)
-                .Cast<T>()
-                .Where(o => hs.Contains(o.ID))
-                .OrderBy(o => o.ID);
+            var concreteTypes = GetConcreteTypesFor(requestedType);
+            var results = new List<T>();
+
+            foreach (var concreteType in concreteTypes)
+            {
+                if (_objectsByType.TryGetValue(concreteType, out typeDict))
+                {
+                    results.AddRange(typeDict.Values.Cast<T>()
+                        .Where(o => hs.Contains(o.ID)));
+                }
+            }
+
+            return results.OrderBy(o => o.ID);
         }
 
         return Enumerable.Empty<T>();
@@ -546,6 +664,7 @@ public class MemoryRepository : IRepository
     public virtual void Clear()
     {
         _objectsByType.Clear();
+        InvalidateTypeHierarchy();
     }
 
     public Type[] GetCompatibleTypes()
