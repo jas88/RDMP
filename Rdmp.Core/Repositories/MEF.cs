@@ -127,7 +127,13 @@ public static class MEF
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception
+#if DEBUG
+                ex
+#else
+                _
+#endif
+                )
             {
                 // Silent failure - fall back to reflection
 #if DEBUG
