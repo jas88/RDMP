@@ -127,20 +127,19 @@ public static class MEF
                     }
                 }
             }
-            catch (Exception
 #if DEBUG
-                ex
-#else
-                _
-#endif
-                )
+            catch (Exception ex)
             {
                 // Silent failure - fall back to reflection
-#if DEBUG
                 if (ex.Message.Contains("CompiledTypeRegistry"))
                     Console.WriteLine($"MEF: Error loading CompiledTypeRegistry: {ex.Message}");
-#endif
             }
+#else
+            catch (Exception)
+            {
+                // Silent failure - fall back to reflection
+            }
+#endif
         }
 
         // Fallback: Use reflection to scan all assemblies (slower)

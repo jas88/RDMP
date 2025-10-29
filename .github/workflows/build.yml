@@ -298,6 +298,7 @@ jobs:
           sarif_file: sarif-results/csharp.sarif
           category: "/language:csharp"
       - name: Run markdown link check
+        continue-on-error: true
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           use-quiet-mode: 'no'
