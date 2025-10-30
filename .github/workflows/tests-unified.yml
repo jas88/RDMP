@@ -1,0 +1,520 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  # Windows UI Tests - Both Database and File System modes on single VM
+  tests_windows_ui:
+    name: Windows UI Tests
+    runs-on: windows-latest
+    env:
+      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          cache: true
+          cache-dependency-path: Directory.Packages.props
+
+      - name: Populate Databases.yaml
+        shell: bash
+        run: |
+          cat > ./Tools/rdmp/Databases.yaml << EOF
+          CatalogueConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_Catalogue;Trusted_Connection=True;TrustServerCertificate=true;Connection Timeout=180;
+          DataExportConnectionString: Server=(localdb)\MSSQLLocalDB;Database=TEST_DataExport;Trusted_Connection=True;TrustServerCertificate=true;Connection Timeout=180;
+          EOF
+
+      - name: Set RSA Key
+        run: |
+          $SavePath="D:\a\RDMP\RDMP\key"
+          New-Item -ItemType Directory -Force -Path $SavePath  | Out-Null
+          $text="<?xml version=""1.0"" encoding=""utf-16""?><RSAParameters xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""><Modulus>5CBYA/4GKu57eepMM5dHguZR6QxPakujvUPq81YQlAs9XdAS5OugT9xYATXV0ZUVeQrtCOj1jjS6cSnekJKzXMD48H2IbT+ImRVqyjE19dgeeZtK1cGa8wDKTdNtjo+ur2iaMzItE3VChcMidWncQpiieieSUwQ81uoab7foVdaQm078TzlHLaWiSyAPCOOIeeO2q7HEjVPkbiqCGl2Lkrzvzct84SDMFkyQXzXVJCfdlFn5bX3/8OwC9gWVICPBVbVFZZQ3skUKFqK/aYcgJL/svDyhFsj89TK3xzz8YE1r8VwxVtvqLfRXrWqUCV1n2vEm4XUjuTwQi2nwclREuQ==</Modulus><Exponent>AQAB</Exponent><P>+zfBbR8e3gLc5TDOSoyjclKdPyl62BZvp0kdlmihI5rJ/Bk+CnymYr22vBbWe/wJugWL4bLEAMWiWsa0ri0mJig24aJZ+DMEJDh+wz4J70OBbsE7jydw9whkt6r/8dYCwE2L4aKlL5pUOL/DzgQJ6vxkQ3UAjYMvEzBPapd7Z7c=</P><Q>6HgO3YVz2umROVrHkQ0xa+4a+EMZVAEBhS+ZuJ5KhXBomxYptfAud0WmGN1zOM7TpBYnk8IBx2kuBKoAavFtjbjsoINVxlLlUvUDEJmeElVz5TqRRCNEChY0sfDlR9gVIopB/p7BU5SFRz5i7+qpsWzWdBU/BR93K2vJNsj2Vw8=</Q><DP>ecv4bY1vC7hbnIrjGWXCQMUpE9xqgKWwEGz0eV3U8kwzrZQXbkIs8SaFl/+Cka4KkTPrM8vWF4G6S0SXiPK+0jUhFpf+AsXJNj5lxwcnDeeusyHgXHGE5WAeZKX1XSyjPNTcAtM2PzQVrUXcCuAOZu1jNwlc8T8u7aC4gDddT1U=</DP><DQ>KNlP42Ub4o/AUQ++maJz2L9SReWkgbpbhgfDP0mxVplWCEpwseOuho7ajOv83zKYxfCOq8wfe+bjizZENIaP9aNVES+C1wKiAV3EWBpmSFpzrwgHlq2LuyoDwHDQGTvDGvqodhF3bzRd5xLzV60ofGDfni5NkJzi1+JszQ+rGck=</DQ><InverseQ>BC4M2rtw/lHKW8gDVcQSB1a1yWlgtLqtoX+krelqO59/6Np2ApsPc43SUoy4PY1f+Oxf+Erik1NM1+TRucVBGB8AP1q0SFuTsmWiLE9zv/1zjeJJLOoPbpGia+bQ/r7fP+ZhBK8ldae7FAOctcoSfQ0jAn2IBpDyvlAlcnwRvwQ=</InverseQ><D>q1e/w//gEg7dn0xjv7w4chEcJLaiT2xQp6+DoRFbklZ+2R+XkWmJF3KghwgweSJI5olWUALprM3d23FfQaduIJSwZbFj7upxZsm3U/ZyWRzihuQk6ThpcWt+h8Xt283/nrAqYZmmUZ8ZP+64ywef8EVEhAuE0+Wy7JkZEiBH2W/MEXUvbMV8w282/X6H8zpIkHgjMvy/rouDMFA+ZLR9OOCofw7aVV9VivOVCVIhWe+inrQzG3UCLEEmKNOy0FmqQYvZ4vtwJ+kAByo6xW2YO9cHtEJFiKrZ9O2A0P0xtziOqStDq6JqoeE/bty8y3oM3HPyXMZXG2ecLuwbP4usoQ==</D></RSAParameters>"
+          $text| Out-File $SavePath\private-key.xml
+
+      - name: Install MS SQL LocalDB
+        uses: crazy-max/ghaction-chocolatey@v3
+        with:
+          args: install -r sqllocaldb --no-progress
+
+      - name: Initialise LocalDB
+        shell: bash
+        run: |
+          SqlLocalDB.exe create MSSQLLocalDB -s
+          sqlcmd -l 180 -S '(localdb)\MSSQLLocalDB' -Q "SELECT @@VERSION;"
+          sed -i'' -e 's/localhost/\(localdb\)\\MSSQLLocalDB/' Tests.Common/TestDatabases.txt
+
+      - name: Setup MySQL
+        uses: shogo82148/actions-setup-mysql@v1
+        with:
+          mysql-version: '8.0'
+          root-password: 'YourStrong!Passw0rd'
+          auto-start: true
+
+      - name: Build
+        run: dotnet build --configuration Release --verbosity minimal
+
+      - name: Initialise RDMP (Database)
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" "(localdb)\MSSQLLocalDB" TEST_ -e
+
+      - name: Wait for databases
+        shell: bash
+        run: |
+          # Wait for LocalDB
+          for i in {1..10}; do
+            if sqlcmd -l 60 -S '(localdb)\MSSQLLocalDB' -Q "SELECT 1" > /dev/null 2>&1; then
+              echo "LocalDB is ready!"
+              break
+            fi
+            echo "Attempt $i: LocalDB not ready..."
+            sleep 3
+          done
+
+          # Wait for MySQL
+          for i in {1..30}; do
+            if mysqladmin ping -h127.0.0.1 -uroot -p'YourStrong!Passw0rd' --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Attempt $i: MySQL not ready..."
+            sleep 2
+          done
+
+      - name: Create MySQL external databases
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver LiveLoggingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_logging2" --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver DQE "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe" --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache" --dir ~/rdmp/rdmp-yaml/
+
+      - name: Run integration test scripts
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          cat scripts/create_list_destroy_catalogue.yaml > /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/create_cohort.yaml >> /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/create_dataload.yaml >> /tmp/combined-tests.yaml
+          sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml >> /tmp/combined-tests.yaml
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
+
+      - name: Setup MinIO
+        shell: bash
+        run: |
+          curl -L "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" > minio.exe
+          ./minio.exe server ./minio --console-address :9001 &
+          mkdir ~/.aws
+          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
+
+      - name: Test UI (Database Mode)
+        timeout-minutes: 45
+        shell: bash
+        run: |
+          echo "=== Running UI Tests in Database Mode ==="
+          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage-db \
+            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage-db -type f` windows-ui-db.lcov
+
+      - name: Re-initialise RDMP (File System)
+        shell: bash
+        run: |
+          echo "=== Switching to File System Mode ==="
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 "(localdb)\MSSQLLocalDB" TEST_ -e
+          echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
+
+      - name: Test UI (File System Mode)
+        timeout-minutes: 30
+        shell: bash
+        run: |
+          echo "=== Running UI Tests in File System Mode ==="
+          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage-fs \
+            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          mv `find coverage-fs -type f` windows-ui-fs.lcov
+
+      - name: Merge Windows UI coverage
+        run: |
+          echo "=== Merging Windows UI coverage files ==="
+          FILES=""
+          [ -f "windows-ui-db.lcov" ] && FILES="$FILES -a windows-ui-db.lcov"
+          [ -f "windows-ui-fs.lcov" ] && FILES="$FILES -a windows-ui-fs.lcov"
+
+          if [ -n "$FILES" ]; then
+            lcov $FILES -o windows-ui-merged.lcov
+            echo "Created windows-ui-merged.lcov"
+          else
+            echo "No Windows UI coverage files found!"
+            touch windows-ui-merged.lcov
+          fi
+
+      - name: Upload coverage
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./windows-ui-merged.lcov
+          flag-name: windows-ui
+          fail_ci_if_error: false
+
+  # Linux Database Tests
+  tests_linux_db:
+    name: Linux Database Tests
+    runs-on: ubuntu-22.04
+    env:
+      RDMP_KEY_LOCATION: /tmp/key/private-key.xml
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "developer"
+    services:
+      oracle:
+        image: ghcr.io/gvenzl/oracle-xe:21-slim
+        env:
+          ORACLE_PASSWORD: oracle
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd "echo 'SELECT 1 FROM DUAL;' | sqlplus -s system/oracle@localhost:1521/XEPDB1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          cache: true
+          cache-dependency-path: Directory.Packages.props
+
+      - name: Add Microsoft repository
+        run: |
+          curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/ubuntu/22.04/mssql-server-2022 jammy main"
+
+      - name: Install database packages
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+        with:
+          packages: libeatmydata1 apt-transport-https curl postgresql postgresql-contrib mysql-server libmysqlclient-dev mssql-tools mssql-server
+          version: 1.0
+          execute_install_scripts: true
+
+      - name: Configure and start databases
+        run: |
+          # Configure SQL Server
+          sudo -E /opt/mssql/bin/mssql-conf -n setup accept-eula
+
+          # Start databases
+          sudo systemctl start postgresql
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'pgpass4291';"
+          sudo systemctl start mysql.service
+
+          # Wait for services
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            if pg_isready -h localhost; then
+              echo "PostgreSQL is ready!"
+              break
+            fi
+            sleep 2
+          done
+
+          echo "Waiting for MySQL..."
+          for i in {1..30}; do
+            mysqladmin ping -h127.0.0.1 --silent && echo "MySQL is ready!" && break
+            sleep 2
+          done
+
+          echo "Waiting for SQL Server..."
+          for i in {1..30}; do
+            if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -C -Q "SELECT 1" &>/dev/null; then
+              echo "SQL Server is ready!"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Populate Databases.yaml
+        run: |
+          cat > ./Tools/rdmp/Databases.yaml << EOF
+          CatalogueConnectionString: Server=localhost;Database=TEST_Catalogue;User Id=SA;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
+          DataExportConnectionString: Server=localhost;Database=TEST_DataExport;User Id=SA;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
+          EOF
+
+      - name: Update TestDatabases.txt for Linux
+        run: |
+          cat > ./Tests.Common/TestDatabases.txt << EOF
+          Prefix: TEST_
+          ServerName: localhost
+          Username: SA
+          Password: YourStrong!Passw0rd
+          MySql: server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;AllowPublicKeyRetrieval=True
+          PostgreSql: User ID=postgres;Password=pgpass4291;Host=127.0.0.1;Port=5432
+          Oracle: Data Source=localhost:1521/XEPDB1;User Id=system;Password=oracle
+          EOF
+
+      - name: Set RSA Key
+        run: |
+          mkdir -p /tmp/key
+          echo '<?xml version="1.0" encoding="utf-16"?><RSAParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Modulus>5CBYA/4GKu57eepMM5dHguZR6QxPakujvUPq81YQlAs9XdAS5OugT9xYATXV0ZUVeQrtCOj1jjS6cSnekJKzXMD48H2IbT+ImRVqyjE19dgeeZtK1cGa8wDKTdNtjo+ur2iaMzItE3VChcMidWncQpiieieSUwQ81uoab7foVdaQm078TzlHLaWiSyAPCOOIeeO2q7HEjVPkbiqCGl2Lkrzvzct84SDMFkyQXzXVJCfdlFn5bX3/8OwC9gWVICPBVbVFZZQ3skUKFqK/aYcgJL/svDyhFsj89TK3xzz8YE1r8VwxVtvqLfRXrWqUCV1n2vEm4XUjuTwQi2nwclREuQ==</Modulus><Exponent>AQAB</Exponent><P>+zfBbR8e3gLc5TDOSoyjclKdPyl62BZvp0kdlmihI5rJ/Bk+CnymYr22vBbWe/wJugWL4bLEAMWiWsa0ri0mJig24aJZ+DMEJDh+wz4J70OBbsE7jydw9whkt6r/8dYCwE2L4aKlL5pUOL/DzgQJ6vxkQ3UAjYMvEzBPapd7Z7c=</P><Q>6HgO3YVz2umROVrHkQ0xa+4a+EMZVAEBhS+ZuJ5KhXBomxYptfAud0WmGN1zOM7TpBYnk8IBx2kuBKoAavFtjbjsoINVxlLlUvUDEJmeElVz5TqRRCNEChY0sfDlR9gVIopB/p7BU5SFRz5i7+qpsWzWdBU/BR93K2vJNsj2Vw8=</Q><DP>ecv4bY1vC7hbnIrjGWXCQMUpE9xqgKWwEGz0eV3U8kwzrZQXbkIs8SaFl/+Cka4KkTPrM8vWF4G6S0SXiPK+0jUhFpf+AsXJNj5lxwcnDeeusyHgXHGE5WAeZKX1XSyjPNTcAtM2PzQVrUXcCuAOZu1jNwlc8T8u7aC4gDddT1U=</DP><DQ>KNlP42Ub4o/AUQ++maJz2L9SReWkgbpbhgfDP0mxVplWCEpwseOuho7ajOv83zKYxfCOq8wfe+bjizZENIaP9aNVES+C1wKiAV3EWBpmSFpzrwgHlq2LuyoDwHDQGTvDGvqodhF3bzRd5xLzV60ofGDfni5NkJzi1+JszQ+rGck=</DQ><InverseQ>BC4M2rtw/lHKW8gDVcQSB1a1yWlgtLqtoX+krelqO59/6Np2ApsPc43SUoy4PY1f+Oxf+Erik1NM1+TRucVBGB8AP1q0SFuTsmWiLE9zv/1zjeJJLOoPbpGia+bQ/r7fP+ZhBK8ldae7FAOctcoSfQ0jAn2IBpDyvlAlcnwRvwQ=</InverseQ><D>q1e/w//gEg7dn0xjv7w4chEcJLaiT2xQp6+DoRFbklZ+2R+XkWmJF3KghwgweSJI5olWUALprM3d23FfQaduIJSwZbFj7upxZsm3U/ZyWRzihuQk6ThpcWt+h8Xt283/nrAqYZmmUZ8ZP+64ywef8EVEhAuE0+Wy7JkZEiBH2W/MEXUvbMV8w282/X6H8zpIkHgjMvy/rouDMFA+ZLR9OOCofw7aVV9VivOVCVIhWe+inrQzG3UCLEEmKNOy0FmqQYvZ4vtwJ+kAByo6xW2YO9cHtEJFiKrZ9O2A0P0xtziOqStDq6JqoeE/bty8y3oM3HPyXMZXG2ecLuwbP4usoQ==</D></RSAParameters>' > /tmp/key/private-key.xml
+
+      - name: Build
+        run: dotnet build --configuration Release --verbosity minimal
+
+      - name: Initialise RDMP
+        run: |
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" localhost TEST_ -e
+
+      - name: Setup MinIO
+        run: |
+          curl -L "https://dl.min.io/server/minio/release/linux-amd64/minio" > minio
+          chmod +x minio
+          mkdir -p ./minio-data
+          ./minio server ./minio-data --console-address :9001 &
+          MINIO_PID=$!
+
+          # Wait for MinIO
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready!"
+              break
+            fi
+            sleep 2
+          done
+
+          # Configure AWS credentials
+          mkdir -p ~/.aws
+          cat > ~/.aws/credentials << EOF
+          [minio]
+          aws_access_key_id=minioadmin
+          aws_secret_access_key=minioadmin
+          aws_endpoint_url=http://127.0.0.1:9001
+          EOF
+
+          echo $MINIO_PID > /tmp/minio.pid
+
+      - name: Test Core
+        timeout-minutes: 45
+        run: |
+          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/core \
+            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          CORE_FILE=$(find coverage/core -name "*.lcov" | head -1)
+          if [ -n "$CORE_FILE" ]; then
+            mv "$CORE_FILE" core.lcov
+          fi
+
+      - name: Test DICOM
+        timeout-minutes: 45
+        run: |
+          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/dicom \
+            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          DICOM_FILE=$(find coverage/dicom -name "*.lcov" | head -1)
+          if [ -n "$DICOM_FILE" ]; then
+            mv "$DICOM_FILE" dicom.lcov
+          fi
+
+      - name: Test Plugins (HicPlugin)
+        timeout-minutes: 30
+        run: |
+          dotnet test Plugins/HicPlugin/HICPluginTests/HICPluginTests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/hicplugin \
+            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          HICPLUGIN_FILE=$(find coverage/hicplugin -name "*.lcov" | head -1)
+          if [ -n "$HICPLUGIN_FILE" ]; then
+            mv "$HICPLUGIN_FILE" hicplugin.lcov
+          fi
+
+      - name: Test Plugins (LoadModules.Extensions)
+        timeout-minutes: 30
+        run: |
+          dotnet test Plugins/RdmpExtensions/LoadModules.Extensions.Tests/LoadModules.Extensions.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/extensions \
+            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          EXTENSIONS_FILE=$(find coverage/extensions -name "*.lcov" | head -1)
+          if [ -n "$EXTENSIONS_FILE" ]; then
+            mv "$EXTENSIONS_FILE" extensions.lcov
+          fi
+
+      - name: Cleanup MinIO
+        if: always()
+        run: |
+          if [ -f /tmp/minio.pid ]; then
+            kill $(cat /tmp/minio.pid) || true
+            rm -f /tmp/minio.pid
+          fi
+
+      - name: Merge coverage files
+        run: |
+          sudo apt-get update && sudo apt-get install -y lcov
+
+          # Create merged coverage file
+          FILES=""
+          [ -f "core.lcov" ] && FILES="$FILES core.lcov"
+          [ -f "dicom.lcov" ] && FILES="$FILES dicom.lcov"
+          [ -f "hicplugin.lcov" ] && FILES="$FILES hicplugin.lcov"
+          [ -f "extensions.lcov" ] && FILES="$FILES extensions.lcov"
+
+          if [ -n "$FILES" ]; then
+            echo "Merging coverage files: $FILES"
+            lcov $FILES | while read -r line; do
+              if [[ "$line" == SF:* ]] && [[ -f "${line#SF:}" ]]; then
+                echo "$line"
+              elif [[ "$line" != SF:* ]]; then
+                echo "$line"
+              fi
+            done > merged.lcov
+            echo "Created merged.lcov"
+          else
+            echo "No coverage files found!"
+            touch merged.lcov
+          fi
+
+      - name: Upload coverage
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./merged.lcov
+          flag-name: linux-tests
+          fail_ci_if_error: false
+
+  # Bundle job - depends on ALL test jobs
+  bundle:
+    name: Bundle Build
+    runs-on: ubuntu-latest
+    needs: [tests_windows_ui, tests_linux_db]
+    # Only run bundle if ALL tests passed
+    if: success() && needs.tests_windows_ui.result == 'success' && needs.tests_linux_db.result == 'success'
+    permissions:
+      actions: read
+      contents: write
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          cache: true
+          cache-dependency-path: Directory.Packages.props
+
+      - name: Cache apt packages
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+        with:
+          packages: pixz p7zip-full
+          version: 1.0
+
+      - name: Check test results
+        run: |
+          # Check if any test jobs failed
+          if [[ "${{ needs.tests_windows_ui_db.result }}" == "failure" || \
+                "${{ needs.tests_windows_ui_fs.result }}" == "failure" || \
+                "${{ needs.tests_linux_db.result }}" == "failure" ]]; then
+            echo "⚠️ One or more test jobs failed. See above for details."
+            echo "Continuing with bundle build for debugging purposes..."
+          else
+            echo "✅ All test jobs passed!"
+          fi
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          config-file: ./.github/configs/codeql.yml
+          queries: +security-and-quality
+
+      - name: Build and bundle
+        id: version
+        shell: bash
+        env:
+          AZURE_KEY_VAULT_URI: ${{ secrets.AZURE_KEY_VAULT_URI }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
+        run: ./.github/scripts/build-bundle.sh
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:csharp"
+          upload: false
+          output: sarif-results
+
+      - name: Filter SARIF for generated files
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -**/*.Designer.cs
+            -**/*.g.cs
+            -**/*Generated.cs
+            -**/*.g.i.cs
+            -**/*.designer.cs
+            -**/obj/**
+            -**/bin/**
+          input: sarif-results/csharp.sarif
+          output: sarif-results/csharp.sarif
+
+      - name: Upload CodeQL Results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif-results/csharp.sarif
+          category: "/language:csharp"
+
+      - name: Run markdown link check
+        continue-on-error: true
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
