@@ -1,0 +1,400 @@
+// Copyright (c) The University of Dundee 2018-2019
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using NUnit.Framework;
+using Rdmp.Core.Repositories;
+using Rdmp.Core.ReusableLibraryCode.VisualStudioSolutionFileProcessing;
+using Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
+using Tests.Common;
+
+namespace Rdmp.Core.Tests.DesignPatternTests;
+
+public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
+{
+    private const string SolutionName = "HIC.DataManagementPlatform.sln";
+    private readonly List<string> _csFilesFound = new();
+    private readonly List<string> _errors = new();
+
+    public static readonly HashSet<string> IgnoreList = new()
+    {
+        "Program.cs",
+        "Settings.Designer.cs",
+        "Class1.cs",
+        "Images.Designer.cs",
+        "ToolTips.Designer.cs",
+        "Resources.Designer.cs",
+        "ProjectInstaller.cs",
+        "ProjectInstaller.Designer.cs",
+        "TableView.cs",
+        "TreeView.cs"
+    };
+
+    [Test]
+    public void EvaluateSolutionStructure()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        // Test that solution folders have corresponding physical directories
+        ValidateSolutionFolderStructure(sln, solutionDir);
+
+        // Test that all projects in solution exist physically
+        ValidateAllProjectsExist(sln, solutionDir);
+
+        // Test that there are no duplicate project files
+        ValidateNoDuplicateProjects(sln, solutionDir);
+
+        Assert.That(_errors, Is.Empty, "Solution structure validation failed");
+    }
+
+    [Test]
+    public void EvaluateProjectFileStructure()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        Assert.That(_errors, Is.Empty, "Project file structure validation failed");
+    }
+
+    [Test]
+    public void EvaluateClassNamingAndNamespaces()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        Assert.That(_errors, Is.Empty, "Class naming and namespace validation failed");
+    }
+
+    [Test]
+    public void EvaluateDuplicateFiles()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        // Check for duplicate files (this is where the current failure is)
+        var fileGroups = _csFilesFound.GroupBy(f => Path.GetFileName(f))
+            .Where(g => g.Count() > 1 && !IgnoreList.Contains(g.Key));
+
+        foreach (var group in fileGroups)
+        {
+            Error($"Found 2+ files called {group.Key}:{Environment.NewLine}{string.Join(Environment.NewLine, group.Select(f => f))}");
+        }
+
+        Assert.That(_errors, Is.Empty, "Duplicate files validation failed");
+    }
+
+    [Test]
+    public void EvaluateInterfaceDeclarations()
+    {
+        InterfaceDeclarationsCorrect.FindProblems();
+    }
+
+    [Test]
+    public void EvaluateClassDocumentation()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        var documented = new AllImportantClassesDocumented();
+        documented.FindProblems(_csFilesFound);
+    }
+
+    [Test]
+    public void EvaluateDocumentationCrossExamination()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        var crossExamination = new DocumentationCrossExaminationTest(solutionDir);
+        crossExamination.FindProblems(_csFilesFound);
+    }
+
+    [Test]
+    public void EvaluateRelationshipProperties()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        var propertyChecker = new SuspiciousRelationshipPropertyUse();
+        propertyChecker.FindPropertyMisuse(_csFilesFound);
+    }
+
+    [Test]
+    public void EvaluateExplicitDatabaseNames()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        ExplicitDatabaseNameChecker.FindProblems(_csFilesFound);
+    }
+
+    [Test]
+    public void EvaluateAutoComments()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        var noMappingToDatabaseComments = new AutoCommentsEvaluator();
+        AutoCommentsEvaluator.FindProblems(_csFilesFound);
+    }
+
+    [Test]
+    public void EvaluateCopyrightHeaders()
+    {
+        LoadPluginAssemblies();
+
+        var solutionDir = FindSolutionDirectory();
+        var slnFile = FindSolutionFile(solutionDir);
+        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
+
+        ProcessFolderRecursive(sln.RootFolders, solutionDir);
+
+        foreach (var rootLevelProjects in sln.RootProjects)
+            FindProjectInFolder(rootLevelProjects, solutionDir);
+
+        CopyrightHeaderEvaluator.FindProblems(_csFilesFound);
+    }
+
+    private void LoadPluginAssemblies()
+    {
+        // Load plugin assemblies to ensure types are available
+        // The .Assembly property forces runtime to actually load the assembly
+        var _ = typeof(SCIStorePlugin.Data.SciStoreResult).Assembly;
+        var _2 = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction).Assembly;
+
+        // Refresh MEF cache to discover newly loaded assemblies
+        // (CompiledTypeRegistry will be used if available, providing additional optimization)
+        MEF.RefreshTypes();
+    }
+
+    private DirectoryInfo FindSolutionDirectory()
+    {
+        var solutionDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+        while (solutionDir?.GetFiles("*.sln").Any() != true) solutionDir = solutionDir?.Parent;
+        Assert.That(solutionDir, Is.Not.Null, $"Failed to find {SolutionName} in any parent directories");
+        return solutionDir;
+    }
+
+    private FileInfo FindSolutionFile(DirectoryInfo solutionDir)
+    {
+        var slnFile = solutionDir.GetFiles(SolutionName).FirstOrDefault() ?? throw new FileNotFoundException($"Could not find {SolutionName} in {solutionDir.FullName}");
+        return slnFile;
+    }
+
+    private void ValidateSolutionFolderStructure(VisualStudioSolutionFile sln, DirectoryInfo solutionDir)
+    {
+        foreach (var solutionFolder in sln.RootFolders)
+        {
+            ValidateSolutionFolderRecursive(solutionFolder, solutionDir);
+        }
+    }
+
+    private void ValidateSolutionFolderRecursive(VisualStudioSolutionFolder folder, DirectoryInfo currentPhysicalDirectory)
+    {
+        var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
+            .SingleOrDefault(d => d.Name.Equals(folder.Name));
+
+        if (physicalSolutionFolder == null)
+        {
+            Error($"FAIL: Solution Folder exists called {folder.Name} but there is no corresponding physical folder in {currentPhysicalDirectory.FullName}");
+            return;
+        }
+
+        foreach (var p in folder.ChildrenProjects)
+            FindProjectInFolder(p, physicalSolutionFolder);
+
+        foreach (var childFolder in folder.ChildrenFolders)
+            ValidateSolutionFolderRecursive(childFolder, physicalSolutionFolder);
+    }
+
+    private void ValidateAllProjectsExist(VisualStudioSolutionFile sln, DirectoryInfo solutionDir)
+    {
+        var foundProjects = sln.Projects.ToDictionary(project => project, project => new List<string>());
+        FindUnreferencedProjectsRecursively(foundProjects, solutionDir);
+
+        foreach (var kvp in foundProjects)
+        {
+            if (kvp.Value.Count == 0)
+            {
+                Error($"FAIL: Did not find project {kvp.Key.Name} while traversing solution directories and subdirectories");
+            }
+        }
+    }
+
+    private void ValidateNoDuplicateProjects(VisualStudioSolutionFile sln, DirectoryInfo solutionDir)
+    {
+        var foundProjects = sln.Projects.ToDictionary(project => project, project => new List<string>());
+        FindUnreferencedProjectsRecursively(foundProjects, solutionDir);
+
+        foreach (var kvp in foundProjects)
+        {
+            if (kvp.Value.Count > 1)
+            {
+                Error($"FAIL: Found 2+ copies of project {kvp.Key.Name} while traversing solution directories and subdirectories:{Environment.NewLine}{string.Join(Environment.NewLine, kvp.Value)}");
+            }
+        }
+    }
+
+    private void FindUnreferencedProjectsRecursively(Dictionary<VisualStudioProjectReference, List<string>> projects,
+        DirectoryInfo dir)
+    {
+        var projFiles = dir.EnumerateFiles("*.csproj");
+
+        foreach (var projFile in projFiles)
+        {
+            if (projFile.Directory.FullName.Contains("CodeTutorials"))
+                continue;
+
+            var key = projects.Keys.SingleOrDefault(p => (p.Name + ".csproj").Equals(projFile.Name));
+            if (key == null)
+                Error($"FAIL:Unreferenced csproj file spotted :{projFile.FullName}");
+            else
+                projects[key].Add(projFile.FullName);
+        }
+
+        foreach (var subdir in dir.EnumerateDirectories())
+            FindUnreferencedProjectsRecursively(projects, subdir);
+    }
+
+    private void ProcessFolderRecursive(IEnumerable<VisualStudioSolutionFolder> folders,
+        DirectoryInfo currentPhysicalDirectory)
+    {
+        //Process root folders
+        foreach (var solutionFolder in folders)
+        {
+            var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
+                .SingleOrDefault(d => d.Name.Equals(solutionFolder.Name));
+
+            if (physicalSolutionFolder == null)
+            {
+                Error(
+                    $"FAIL: Solution Folder exists called {solutionFolder.Name} but there is no corresponding physical folder in {currentPhysicalDirectory.FullName}");
+                continue;
+            }
+
+            foreach (var p in solutionFolder.ChildrenProjects)
+                FindProjectInFolder(p, physicalSolutionFolder);
+
+            if (solutionFolder.ChildrenFolders.Any())
+                ProcessFolderRecursive(solutionFolder.ChildrenFolders, physicalSolutionFolder);
+        }
+    }
+
+    private void FindProjectInFolder(VisualStudioProjectReference p, DirectoryInfo physicalSolutionFolder)
+    {
+        var physicalProjectFolder =
+            physicalSolutionFolder.EnumerateDirectories().SingleOrDefault(f => f.Name.Equals(p.Name));
+
+        if (physicalProjectFolder == null)
+        {
+            Error($"FAIL: Physical folder {p.Name} does not exist in directory {physicalSolutionFolder.FullName}");
+        }
+        else
+        {
+            var csProjFile = physicalProjectFolder.EnumerateFiles("*.csproj").SingleOrDefault(f => f.Name.Equals(
+                $"{p.Name}.csproj"));
+            if (csProjFile == null)
+            {
+                Error(
+                    $"FAIL: .csproj file {p.Name}.csproj was not found in folder {physicalProjectFolder.FullName}");
+            }
+            else
+            {
+                var tidy = new CsProjFileTidy(csProjFile);
+
+                foreach (var str in tidy.UntidyMessages)
+                    Error(str);
+
+                foreach (var found in tidy.csFilesFound
+                             .Where(found => _csFilesFound.Any(otherFile =>
+                                 Path.GetFileName(otherFile).Equals(Path.GetFileName(found)))).Where(found =>
+                                 !IgnoreList.Contains(Path.GetFileName(found))))
+                    Error($"Found 2+ files called {Path.GetFileName(found)}");
+
+                _csFilesFound.AddRange(tidy.csFilesFound);
+            }
+        }
+    }
+
+    private void Error(string s)
+    {
+        Console.WriteLine(s);
+        _errors.Add(s);
+    }
+}

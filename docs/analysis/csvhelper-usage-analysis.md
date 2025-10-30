@@ -596,3 +596,5 @@ catch (CsvHandler.MalformedRowException ex)
 *Analysis completed: 2025-01-23*
 *Analyzer: Code Analysis Agent*
 *RDMP Repository: /Users/jas88/Developer/Github/RDMP*
+
+[Pipeline]: ../../Documentation/CodeTutorials/Glossary.md#Pipeline
