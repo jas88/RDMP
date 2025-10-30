@@ -276,7 +276,7 @@ jobs:
           sudo -E /opt/mssql/bin/mssql-conf -n setup accept-eula
 
           # Performance optimizations
-          sudo -E /opt/mssql/bin/mssql-conf set traceflags 3422  # Disable ForceFlush
+          # Note: traceflags set via SQL command after startup
           sudo -E /opt/mssql/bin/mssql-conf set sqlagent.enabled false  # Disable SQL Agent
           sudo -E /opt/mssql/bin/mssql-conf set memory.disablememorypressurealert 1  # Disable memory alerts
           sudo -E /opt/mssql/bin/mssql-conf set telemetry.requestfeedbackqueue.directory /tmp/mssql-telemetry  # Disable telemetry
@@ -319,6 +319,9 @@ jobs:
 
           # Apply SQL Server performance settings after startup
           /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -C -Q "
+            -- Set traceflags for performance (disable ForceFlush)
+            DBCC TRACEON(3422, -1) WITH NO_INFOMSGS;
+
             -- Set simple recovery mode for all databases
             ALTER MODEL SET RECOVERY SIMPLE;
 
