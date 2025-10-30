@@ -11,7 +11,7 @@
     <!-- Preserve original namespaces -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyTitle>RDMP Plugins UI Tests</AssemblyTitle>
-    <AssemblyDescription>Consolidated RDMP plugin UI tests</AssemblyDescription>
+    <AssemblyDescription>Consolidated RDMP plugin UI tests (HicPlugin, RdmpExtensions only)</AssemblyDescription>
     <AssemblyCompany>University of Dundee</AssemblyCompany>
     <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
     <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
@@ -35,17 +35,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Test dependencies (versions managed by Directory.Packages.props) -->
+    <!-- Test dependencies -->
     <PackageReference Include="NUnit" />
-    <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Moq" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Include UI test source files from all plugins -->
+    <!-- Include UI test source files from HicPlugin and RdmpExtensions only -->
     <!-- These would be tests that specifically test UI components -->
-    <!-- For now, we include any UI-related tests from the plugin test suites -->
 
     <!-- HicPlugin - UI related tests -->
     <Compile Include="..\Plugins\HicPlugin\HICPluginTests\**\*UI*.cs">
@@ -59,11 +56,6 @@
     </Compile>
     <Compile Include="..\Plugins\HicPlugin\HICPluginTests\Integration\**\*.cs">
       <Link>HICPluginTests\Integration\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-
-    <!-- RdmpDicom - UI tests (if any exist) -->
-    <Compile Include="..\Plugins\RdmpDicom\Rdmp.Dicom.Tests\**\*UI*.cs">
-      <Link>Rdmp.Dicom.Tests\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
   </ItemGroup>
 
@@ -80,6 +72,9 @@
     <Compile Remove="**\bin\**\*.cs" />
     <Compile Remove="**\obj\**\*.cs" />
     <Compile Remove="**\Properties\AssemblyInfo.cs" />
+
+    <!-- Exclude any duplicate includes -->
+    <Compile Remove="**\ConnectedServices\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

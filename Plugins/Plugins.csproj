@@ -8,7 +8,7 @@
     <!-- Preserve original namespaces -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyTitle>RDMP Plugins</AssemblyTitle>
-    <AssemblyDescription>Consolidated RDMP plugin components (HicPlugin, RdmpDicom, RdmpExtensions)</AssemblyDescription>
+    <AssemblyDescription>Consolidated RDMP plugin components (HicPlugin, RdmpExtensions only)</AssemblyDescription>
     <AssemblyCompany>University of Dundee</AssemblyCompany>
     <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
     <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
@@ -22,6 +22,9 @@
   <ItemGroup>
     <!-- Core RDMP reference -->
     <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
+
+    <!-- RdmpDicom remains external - reference as package if needed -->
+    <!-- <PackageReference Include="Rdmp.Dicom" /> -->
   </ItemGroup>
 
   <ItemGroup>
@@ -33,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Include source files from all plugins, preserving directory structure for namespaces -->
+    <!-- Include source files from HicPlugin and RdmpExtensions only -->
     <!-- HicPlugin - Non-UI components -->
     <Compile Include="..\Plugins\HicPlugin\SCIStorePlugin\**\*.cs">
       <Link>SCIStorePlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -52,11 +55,6 @@
     </Compile>
     <Compile Include="..\Plugins\HicPlugin\JiraPlugin\**\*.cs">
       <Link>JiraPlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-
-    <!-- RdmpDicom - Non-UI components -->
-    <Compile Include="..\Plugins\RdmpDicom\Rdmp.Dicom\**\*.cs">
-      <Link>Rdmp.Dicom\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
 
     <!-- RdmpExtensions - Non-UI components -->
@@ -82,15 +80,15 @@
     <Compile Remove="**\bin\**\*.cs" />
     <Compile Remove="**\obj\**\*.cs" />
     <Compile Remove="**\Properties\AssemblyInfo.cs" />
+
+    <!-- Exclude any duplicate includes that might happen -->
+    <Compile Remove="**\ConnectedServices\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Include necessary resources -->
     <EmbeddedResource Include="..\Plugins\HicPlugin\SCIStorePlugin\**\*.sql">
       <Link>SCIStorePlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\Plugins\RdmpDicom\Rdmp.Dicom\**\*.sql">
-      <Link>Rdmp.Dicom\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </EmbeddedResource>
   </ItemGroup>
 
