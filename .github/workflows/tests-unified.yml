@@ -127,7 +127,7 @@ jobs:
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage-db \
-            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
           mv `find coverage-db -type f` windows-ui-db.lcov
 
       - name: Re-initialise RDMP (File System)
@@ -150,7 +150,7 @@ jobs:
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage-fs \
-            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
           mv `find coverage-fs -type f` windows-ui-fs.lcov
 
       - name: Merge Windows UI coverage
