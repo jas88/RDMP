@@ -341,11 +341,36 @@ jobs:
       - name: Create PostgreSQL databases
         run: |
           # Create PostgreSQL databases that RDMP expects
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_Catalogue;" || echo "Database may already exist"
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_DataExport;" || echo "Database may already exist"
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_DQE;" || echo "Database may already exist"
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_Logging;" || echo "Database may already exist"
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_ScratchArea;" || echo "Database may already exist"
+          # Wait for PostgreSQL to be fully ready
+          until pg_isready -h 127.0.0.1 -U postgres -p 5432; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 2
+          done
+
+          # Create databases with explicit error checking
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_Catalogue;" || {
+            echo "Failed to create TEST_Catalogue database"
+            exit 1
+          }
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_DataExport;" || {
+            echo "Failed to create TEST_DataExport database"
+            exit 1
+          }
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_DQE;" || {
+            echo "Failed to create TEST_DQE database"
+            exit 1
+          }
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_Logging;" || {
+            echo "Failed to create TEST_Logging database"
+            exit 1
+          }
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_ScratchArea;" || {
+            echo "Failed to create TEST_ScratchArea database"
+            exit 1
+          }
+
+          # List created databases to verify
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "\l" | grep TEST_
 
       - name: Setup MinIO
         run: |
