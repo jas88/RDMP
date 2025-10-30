@@ -1,4 +1,4 @@
-name: Linux Non-UI Tests
+name: Linux Non-UI Tests (File System Only)
 
 on:
   push:
@@ -7,69 +7,8 @@ on:
 env:
   DOTNET_NOLOGO: 1
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-  MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
-  ACCEPT_EULA: "Y"
-  MSSQL_PID: "developer"
 
 jobs:
-  tests_db:
-    name: Run Non-UI Tests with SQLite (Linux)
-    runs-on: ubuntu-22.04
-    env:
-      RDMP_KEY_LOCATION: /tmp/key/private-key.xml
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          cache: true
-          cache-dependency-path: Directory.Packages.props
-      - name: Cache and install basic packages
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
-        with:
-          packages: libeatmydata1 apt-transport-https curl
-          version: 1.0
-          execute_install_scripts: true
-      - name: Populate Databases.yaml
-        run: |
-          cat > ./Tools/rdmp/Databases.yaml << EOF
-          CatalogueConnectionString: Data Source=test_catalogue.db;Version=3;
-          DataExportConnectionString: Data Source=test_dataexport.db;Version=3;
-          EOF
-      - name: Set RSA Key
-        run: |
-          mkdir -p /tmp/key
-          echo '<?xml version="1.0" encoding="utf-16"?><RSAParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Modulus>5CBYA/4GKu57eepMM5dHguZR6QxPakujvUPq81YQlAs9XdAS5OugT9xYATXV0ZUVeQrtCOj1jjS6cSnekJKzXMD48H2IbT+ImRVqyjE19dgeeZtK1cGa8wDKTdNtjo+ur2iaMzItE3VChcMidWncQpiieieSUwQ81uoab7foVdaQm078TzlHLaWiSyAPCOOIeeO2q7HEjVPkbiqCGl2Lkrzvzct84SDMFkyQXzXVJCfdlFn5bX3/8OwC9gWVICPBVbVFZZQ3skUKFqK/aYcgJL/svDyhFsj89TK3xzz8YE1r8VwxVtvqLfRXrWqUCV1n2vEm4XUjuTwQi2nwclREuQ==</Modulus><Exponent>AQAB</Exponent><P>+zfBbR8e3gLc5TDOSoyjclKdPyl62BZvp0kdlmihI5rJ/Bk+CnymYr22vBbWe/wJugWL4bLEAMWiWsa0ri0mJig24aJZ+DMEJDh+wz4J70OBbsE7jydw9whkt6r/8dYCwE2L4aKlL5pUOL/DzgQJ6vxkQ3UAjYMvEzBPapd7Z7c=</P><Q>6HgO3YVz2umROVrHkQ0xa+4a+EMZVAEBhS+ZuJ5KhXBomxYptfAud0WmGN1zOM7TpBYnk8IBx2kuBKoAavFtjbjsoINVxlLlUvUDEJmeElVz5TqRRCNEChY0sfDlR9gVIopB/p7BU5SFRz5i7+qpsWzWdBU/BR93K2vJNsj2Vw8=</Q><DP>ecv4bY1vC7hbnIrjGWXCQMUpE9xqgKWwEGz0eV3U8kwzrZQXbkIs8SaFl/+Cka4KkTPrM8vWF4G6S0SXiPK+0jUhFpf+AsXJNj5lxwcnDeeusyHgXHGE5WAeZKX1XSyjPNTcAtM2PzQVrUXcCuAOZu1jNwlc8T8u7aC4gDddT1U=</DP><DQ>KNlP42Ub4o/AUQ++maJz2L9SReWkgbpbhgfDP0mxVplWCEpwseOuho7ajOv83zKYxfCOq8wfe+bjizZENIaP9aNVES+C1wKiAV3EWBpmSFpzrwgHlq2LuyoDwHDQGTvDGvqodhF3bzRd5xLzV60ofGDfni5NkJzi1+JszQ+rGck=</DQ><InverseQ>BC4M2rtw/lHKW8gDVcQSB1a1yWlgtLqtoX+krelqO59/6Np2ApsPc43SUoy4PY1f+Oxf+Erik1NM1+TRucVBGB8AP1q0SFuTsmWiLE9zv/1zjeJJLOoPbpGia+bQ/r7fP+ZhBK8ldae7FAOctcoSfQ0jAn2IBpDyvlAlcnwRvwQ=</InverseQ><D>q1e/w//gEg7dn0xjv7w4chEcJLaiT2xQp6+DoRFbklZ+2R+XkWmJF3KghwgweSJI5olWUALprM3d23FfQaduIJSwZbFj7upxZsm3U/ZyWRzihuQk6ThpcWt+h8Xt283/nrAqYZmmUZ8ZP+64ywef8EVEhAuE0+Wy7JkZEiBH2W/MEXUvbMV8w282/X6H8zpIkHgjMvy/rouDMFA+ZLR9OOCofw7aVV9VivOVCVIhWe+inrQzG3UCLEEmKNOy0FmqQYvZ4vtwJ+kAByo6xW2YO9cHtEJFiKrZ1O2A0P0xtziOqStDq6JqoeE/bty8y3oM3HPyXMZXG2ecLuwbP4usoQ==</D></RSAParameters>' > /tmp/key/private-key.xml
-      - name: Build
-        run: dotnet build --configuration Release --verbosity minimal
-      - name: Initialise RDMP with SQLite
-        run: |
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 "Data Source=test_catalogue.db;Version=3;" TEST_ -e
-      - name: Test (SQLite) - Non-UI Only
-        timeout-minutes: 30
-        run: |
-          # Install MinIO for S3 compatibility
-          curl -L "https://dl.min.io/server/minio/release/linux-amd64/minio" > minio
-          chmod +x minio
-          ./minio server ./minio --console-address :9001 &
-          mkdir ~/.aws
-          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
-          # Run non-UI test projects only
-          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` sqlite-core.lcov
-          dotnet test LoadModules.Extensions.Tests/LoadModules.Extensions.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` sqlite-extensions.lcov
-          dotnet test Plugins/HicPlugin/HICPluginTests/HICPluginTests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` sqlite-hic.lcov
-          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` sqlite-dicom.lcov
-      - uses: coverallsapp/github-action@v2.3.6
-        with:
-          github-token: ${{ secrets.github_token }}
-          files: ./sqlite-core.lcov ./sqlite-extensions.lcov ./sqlite-hic.lcov ./sqlite-dicom.lcov
-          flag-name: linux-sqlite-tests
-
   tests_file_system:
     name: Run Non-UI Tests with File System (Linux)
     runs-on: ubuntu-22.04
@@ -83,25 +22,14 @@ jobs:
         with:
           cache: true
           cache-dependency-path: Directory.Packages.props
-      - name: Cache and install basic packages
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
-        with:
-          packages: libeatmydata1 apt-transport-https curl
-          version: 1.0
-          execute_install_scripts: true
-      - name: Populate Databases.yaml
-        run: |
-          cat > ./Tools/rdmp/Databases.yaml << EOF
-          CatalogueConnectionString: Data Source=test_catalogue.db;Version=3;
-          DataExportConnectionString: Data Source=test_dataexport.db;Version=3;
-          EOF
+      - name: Build
+        run: dotnet build --configuration Release --verbosity minimal
       - name: Set RSA Key
         run: |
           mkdir -p /tmp/key
           echo '<?xml version="1.0" encoding="utf-16"?><RSAParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Modulus>5CBYA/4GKu57eepMM5dHguZR6QxPakujvUPq81YQlAs9XdAS5OugT9xYATXV0ZUVeQrtCOj1jjS6cSnekJKzXMD48H2IbT+ImRVqyjE19dgeeZtK1cGa8wDKTdNtjo+ur2iaMzItE3VChcMidWncQpiieieSUwQ81uoab7foVdaQm078TzlHLaWiSyAPCOOIeeO2q7HEjVPkbiqCGl2Lkrzvzct84SDMFkyQXzXVJCfdlFn5bX3/8OwC9gWVICPBVbVFZZQ3skUKFqK/aYcgJL/svDyhFsj89TK3xzz8YE1r8VwxVtvqLfRXrWqUCV1n2vEm4XUjuTwQi2nwclREuQ==</Modulus><Exponent>AQAB</Exponent><P>+zfBbR8e3gLc5TDOSoyjclKdPyl62BZvp0kdlmihI5rJ/Bk+CnymYr22vBbWe/wJugWL4bLEAMWiWsa0ri0mJig24aJZ+DMEJDh+wz4J70OBbsE7jydw9whkt6r/8dYCwE2L4aKlL5pUOL/DzgQJ6vxkQ3UAjYMvEzBPapd7Z7c=</P><Q>6HgO3YVz2umROVrHkQ0xa+4a+EMZVAEBhS+ZuJ5KhXBomxYptfAud0WmGN1zOM7TpBYnk8IBx2kuBKoAavFtjbjsoINVxlLlUvUDEJmeElVz5TqRRCNEChY0sfDlR9gVIopB/p7BU5SFRz5i7+qpsWzWdBU/BR93K2vJNsj2Vw8=</Q><DP>ecv4bY1vC7hbnIrjGWXCQMUpE9xqgKWwEGz0eV3U8kwzrZQXbkIs8SaFl/+Cka4KkTPrM8vWF4G6S0SXiPK+0jUhFpf+AsXJNj5lxwcnDeeusyHgXHGE5WAeZKX1XSyjPNTcAtM2PzQVrUXcCuAOZu1jNwlc8T8u7aC4gDddT1U=</DP><DQ>KNlP42Ub4o/AUQ++maJz2L9SReWkgbpbhgfDP0mxVplWCEpwseOuho7ajOv83zKYxfCOq8wfe+bjizZENIaP9aNVES+C1wKiAV3EWBpmSFpzrwgHlq2LuyoDwHDQGTvDGvqodhF3bzRd5xLzV60ofGDfni5NkJzi1+JszQ+rGck=</DQ><InverseQ>BC4M2rtw/lHKW8gDVcQSB1a1yWlgtLqtoX+krelqO59/6Np2ApsPc43SUoy4PY1f+Oxf+Erik1NM1+TRucVBGB8AP1q0SFuTsmWiLE9zv/1zjeJJLOoPbpGia+bQ/r7fP+ZhBK8ldae7FAOctcoSfQ0jAn2IBpDyvlAlcnwRvwQ=</InverseQ><D>q1e/w//gEg7dn0xjv7w4chEcJLaiT2xQp6+DoRFbklZ+2R+XkWmJF3KghwgweSJI5olWUALprM3d23FfQaduIJSwZbFj7upxZsm3U/ZyWRzihuQk6ThpcWt+h8Xt283/nrAqYZmmUZ8ZP+64ywef8EVEhAuE0+Wy7JkZEiBH2W/MEXUvbMV8w282/X6H8zpIkHgjMvy/rouDMFA+ZLR9OOCofw7aVV9VivOVCVIhWe+inrQzG3UCLEEmKNOy0FmqQYvZ4vtwJ+kAByo6xW2YO9cHtEJFiKrZ1O2A0P0xtziOqStDq6JqoeE/bty8y3oM3HPyXMZXG2ecLuwbP4usoQ==</D></RSAParameters>' > /tmp/key/private-key.xml
-      - name: Build
-        run: dotnet build --configuration Release --verbosity minimal
       - name: Test with File System - Non-UI Only
+        timeout-minutes: 30
         run: |
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
           # Install MinIO for S3 compatibility
