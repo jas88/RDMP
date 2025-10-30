@@ -1,12 +1,14 @@
-name: Linux Non-UI Tests
+name: Linux Database Tests
 
 on:
   push:
+    branches: [ main, feature/* ]
   pull_request:
 
 env:
   DOTNET_NOLOGO: 1
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
   MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
   ACCEPT_EULA: "Y"
   MSSQL_PID: "developer"
@@ -24,25 +26,34 @@ jobs:
           ORACLE_PASSWORD: oracle
         ports:
           - 1521:1521
+        options: >-
+          --health-cmd "echo 'SELECT 1 FROM DUAL;' | sqlplus -s system/oracle@localhost:1521/XEPDB1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           cache: true
           cache-dependency-path: Directory.Packages.props
+
       - name: MS repo
         run: |
           curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
           echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/mssql-prod.list
           sudo apt-get update
+
       - name: Cache and install database packages
         uses: awalsh128/cache-apt-pkgs-action@v1.6.0
         with:
           packages: libeatmydata1 apt-transport-https curl postgresql postgresql-contrib mysql-server libmysqlclient-dev mssql-tools mssql-server
           version: 1.0
           execute_install_scripts: true
+
       - name: Configure and start databases
         run: |
           # Configure SQL Server
@@ -54,6 +65,7 @@ jobs:
           sudo systemctl start mysql.service
 
           # Wait for services to be ready
+          echo "Waiting for PostgreSQL..."
           for i in {1..30}; do
             if pg_isready -h localhost; then
               echo "PostgreSQL is ready!"
@@ -62,72 +74,193 @@ jobs:
             echo "Attempt $i: PostgreSQL not ready yet..."
             sleep 2
           done
+
+          echo "Waiting for MySQL..."
           for i in {1..30}; do
             mysqladmin ping -h127.0.0.1 --silent && echo "MySQL is ready!" && break
             echo "Attempt $i: MySQL not ready yet..."
             sleep 2
           done
+
+          echo "Waiting for SQL Server..."
+          for i in {1..30}; do
+            if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -C -Q "SELECT 1" &>/dev/null; then
+              echo "SQL Server is ready!"
+              break
+            fi
+            echo "Attempt $i: SQL Server not ready yet..."
+            sleep 2
+          done
+
       - name: Populate Databases.yaml
         run: |
           cat > ./Tools/rdmp/Databases.yaml << EOF
           CatalogueConnectionString: Server=localhost;Database=TEST_Catalogue;User Id=SA;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
           DataExportConnectionString: Server=localhost;Database=TEST_DataExport;User Id=SA;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
           EOF
+
       - name: Update TestDatabases.txt for Linux
         run: |
-          cat > ./Tests.Common/TestDatabases.txt << 'EOF'
-# Expects the following to exist on the server:
-# Catalogue
-# DQE
-# DataExport
-# Logging
-# To achieve this, you can run DatabaseCreation.exe with argument 1 being your ServerName
-# You can apply a prefix e.g. TEST_ as an argument to DatabaseCreation.exe and include that prefix below if you like
+          cat > ./Tests.Common/TestDatabases.txt << EOF
+          # Expects the following to exist on the server:
+          # Catalogue
+          # DQE
+          # DataExport
+          # Logging
+          # To achieve this, you can run DatabaseCreation.exe with argument 1 being your ServerName
+          # You can apply a prefix e.g. TEST_ as an argument to DatabaseCreation.exe and include that prefix below if you like
 
-Prefix: TEST_
-ServerName: localhost
-Username: SA
-Password: YourStrong!Passw0rd
-# Uncomment to run tests with a YamlRepository
-# UseFileSystemRepo: true
-MySql: server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;AllowPublicKeyRetrieval=True
-PostgreSql: User ID=postgres;Password=pgpass4291;Host=127.0.0.1;Port=5432
-Oracle: Data Source=localhost:1521/XEPDB1;User Id=system;Password=oracle
+          Prefix: TEST_
+          ServerName: localhost
+          Username: SA
+          Password: YourStrong!Passw0rd
+          # Uncomment to run tests with a YamlRepository
+          # UseFileSystemRepo: true
+          MySql: server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;AllowPublicKeyRetrieval=True
+          PostgreSql: User ID=postgres;Password=pgpass4291;Host=127.0.0.1;Port=5432
+          Oracle: Data Source=localhost:1521/XEPDB1;User Id=system;Password=oracle
 
-# User accounts you can create with limited access rights (e.g. connect list databases etc). These users will be used in low privilege tests
-# The account will be granted limited read/write access to databases on a per test basis (See DatabaseTests.SetupLowPrivilegeUserRightsFor)
-# If you leave these commented out the associated tests will be Inconclusive
+          # User accounts you can create with limited access rights (e.g. connect list databases etc). These users will be used in low privilege tests
+          # The account will be granted limited read/write access to databases on a per test basis (See DatabaseTests.SetupLowPrivilegeUserRightsFor)
+          # If you leave these commented out the associated tests will be Inconclusive
 
-# SqlServerLowPrivilegeUsername: minion
-# SqlServerLowPrivilegePassword: minionPass
-# MySqlLowPrivilegeUsername: minion
-# MySqlLowPrivilegePassword: minionPass
-# OracleLowPrivilegeUsername: minion
-# OracleLowPrivilegePassword: minionPass
-EOF
+          # SqlServerLowPrivilegeUsername: minion
+          # SqlServerLowPrivilegePassword: minionPass
+          # MySqlLowPrivilegeUsername: minion
+          # MySqlLowPrivilegePassword: minionPass
+          # OracleLowPrivilegeUsername: minion
+          # OracleLowPrivilegePassword: minionPass
+          EOF
+
       - name: Set RSA Key
         run: |
           mkdir -p /tmp/key
           echo '<?xml version="1.0" encoding="utf-16"?><RSAParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Modulus>5CBYA/4GKu57eepMM5dHguZR6QxPakujvUPq81YQlAs9XdAS5OugT9xYATXV0ZUVeQrtCOj1jjS6cSnekJKzXMD48H2IbT+ImRVqyjE19dgeeZtK1cGa8wDKTdNtjo+ur2iaMzItE3VChcMidWncQpiieieSUwQ81uoab7foVdaQm078TzlHLaWiSyAPCOOIeeO2q7HEjVPkbiqCGl2Lkrzvzct84SDMFkyQXzXVJCfdlFn5bX3/8OwC9gWVICPBVbVFZZQ3skUKFqK/aYcgJL/svDyhFsj89TK3xzz8YE1r8VwxVtvqLfRXrWqUCV1n2vEm4XUjuTwQi2nwclREuQ==</Modulus><Exponent>AQAB</Exponent><P>+zfBbR8e3gLc5TDOSoyjclKdPyl62BZvp0kdlmihI5rJ/Bk+CnymYr22vBbWe/wJugWL4bLEAMWiWsa0ri0mJig24aJZ+DMEJDh+wz4J70OBbsE7jydw9whkt6r/8dYCwE2L4aKlL5pUOL/DzgQJ6vxkQ3UAjYMvEzBPapd7Z7c=</P><Q>6HgO3YVz2umROVrHkQ0xa+4a+EMZVAEBhS+ZuJ5KhXBomxYptfAud0WmGN1zOM7TpBYnk8IBx2kuBKoAavFtjbjsoINVxlLlUvUDEJmeElVz5TqRRCNEChY0sfDlR9gVIopB/p7BU5SFRz5i7+qpsWzWdBU/BR93K2vJNsj2Vw8=</Q><DP>ecv4bY1vC7hbnIrjGWXCQMUpE9xqgKWwEGz0eV3U8kwzrZQXbkIs8SaFl/+Cka4KkTPrM8vWF4G6S0SXiPK+0jUhFpf+AsXJNj5lxwcnDeeusyHgXHGE5WAeZKX1XSyjPNTcAtM2PzQVrUXcCuAOZu1jNwlc8T8u7aC4gDddT1U=</DP><DQ>KNlP42Ub4o/AUQ++maJz2L9SReWkgbpbhgfDP0mxVplWCEpwseOuho7ajOv83zKYxfCOq8wfe+bjizZENIaP9aNVES+C1wKiAV3EWBpmSFpzrwgHlq2LuyoDwHDQGTvDGvqodhF3bzRd5xLzV60ofGDfni5NkJzi1+JszQ+rGck=</DQ><InverseQ>BC4M2rtw/lHKW8gDVcQSB1a1yWlgtLqtoX+krelqO59/6Np2ApsPc43SUoy4PY1f+Oxf+Erik1NM1+TRucVBGB8AP1q0SFuTsmWiLE9zv/1zjeJJLOoPbpGia+bQ/r7fP+ZhBK8ldae7FAOctcoSfQ0jAn2IBpDyvlAlcnwRvwQ=</InverseQ><D>q1e/w//gEg7dn0xjv7w4chEcJLaiT2xQp6+DoRFbklZ+2R+XkWmJF3KghwgweSJI5olWUALprM3d23FfQaduIJSwZbFj7upxZsm3U/ZyWRzihuQk6ThpcWt+h8Xt283/nrAqYZmmUZ8ZP+64ywef8EVEhAuE0+Wy7JkZEiBH2W/MEXUvbMV8w282/X6H8zpIkHgjMvy/rouDMFA+ZLR9OOCofw7aVV9VivOVCVIhWe+inrQzG3UCLEEmKNOy0FmqQYvZ4vtwJ+kAByo6xW2YO9cHtEJFiKrZ1O2A0P0xtziOqStDq6JqoeE/bty8y3oM3HPyXMZXG2ecLuwbP4usoQ==</D></RSAParameters>' > /tmp/key/private-key.xml
+
       - name: Build
         run: dotnet build --configuration Release --verbosity minimal
+
       - name: Initialise RDMP
         run: |
           dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" localhost TEST_ -e
-      - name: Test (Rdmp.Core.Tests only)
-        timeout-minutes: 30
+
+      - name: Setup MinIO for S3-compatible storage tests
         run: |
           # Install MinIO for S3 compatibility
           curl -L "https://dl.min.io/server/minio/release/linux-amd64/minio" > minio
           chmod +x minio
-          ./minio server ./minio --console-address :9001 &
-          mkdir ~/.aws
-          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
-          # Run Rdmp.Core.Tests only
-          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --nologo --collect:"XPlat Code Coverage" --no-build --verbosity minimal -c Release -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" --results-directory coverage -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage -type f` core.lcov
-      - uses: coverallsapp/github-action@v2.3.6
+
+          # Create directories for MinIO
+          mkdir -p ./minio-data
+
+          # Start MinIO server in background
+          ./minio server ./minio-data --console-address :9001 &
+          MINIO_PID=$!
+
+          # Wait for MinIO to be ready
+          echo "Waiting for MinIO..."
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready!"
+              break
+            fi
+            echo "Attempt $i: MinIO not ready yet..."
+            sleep 2
+          done
+
+          # Configure AWS credentials for MinIO
+          mkdir -p ~/.aws
+          cat > ~/.aws/credentials << EOF
+          [minio]
+          aws_access_key_id=minioadmin
+          aws_secret_access_key=minioadmin
+          aws_endpoint_url=http://127.0.0.1:9001
+          EOF
+
+          # Save MinIO PID for cleanup
+          echo $MINIO_PID > /tmp/minio.pid
+
+      - name: Test (Rdmp.Core.Tests)
+        timeout-minutes: 45
+        run: |
+          echo "=== Running Rdmp.Core.Tests ==="
+          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/core \
+            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          # Find and rename the coverage file
+          CORE_FILE=$(find coverage/core -name "*.lcov" | head -1)
+          if [ -n "$CORE_FILE" ]; then
+            mv "$CORE_FILE" core.lcov
+            echo "Core coverage file: core.lcov"
+          else
+            echo "Warning: No coverage file found for Rdmp.Core.Tests"
+          fi
+
+      - name: Test (Rdmp.Dicom.Tests)
+        timeout-minutes: 45
+        run: |
+          echo "=== Running Rdmp.Dicom.Tests ==="
+          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/dicom \
+            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          # Find and rename the coverage file
+          DICOM_FILE=$(find coverage/dicom -name "*.lcov" | head -1)
+          if [ -n "$DICOM_FILE" ]; then
+            mv "$DICOM_FILE" dicom.lcov
+            echo "Dicom coverage file: dicom.lcov"
+          else
+            echo "Warning: No coverage file found for Rdmp.Dicom.Tests"
+          fi
+
+      - name: Cleanup MinIO
+        if: always()
+        run: |
+          if [ -f /tmp/minio.pid ]; then
+            kill $(cat /tmp/minio.pid) || true
+            rm -f /tmp/minio.pid
+          fi
+
+      - name: Merge coverage files
+        run: |
+          echo "=== Merging coverage files ==="
+
+          # Install lcov tools if needed
+          sudo apt-get update && sudo apt-get install -y lcov
+
+          # Create merged coverage file if both exist
+          if [ -f "core.lcov" ] && [ -f "dicom.lcov" ]; then
+            echo "Both coverage files found, merging..."
+            lcov -a core.lcov -a dicom.lcov -o merged.lcov
+            echo "Created merged.lcov"
+          elif [ -f "core.lcov" ]; then
+            echo "Only core.lcov found, using as merged"
+            cp core.lcov merged.lcov
+          elif [ -f "dicom.lcov" ]; then
+            echo "Only dicom.lcov found, using as merged"
+            cp dicom.lcov merged.lcov
+          else
+            echo "No coverage files found!"
+            exit 1
+          fi
+
+      - name: Upload coverage to Coveralls
+        uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./core.lcov
+          files: ./merged.lcov
           flag-name: linux-db-tests
+          fail_ci_if_error: false
