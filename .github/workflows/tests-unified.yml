@@ -276,11 +276,9 @@ jobs:
           # Configure SQL Server for performance
           sudo -E /opt/mssql/bin/mssql-conf -n setup accept-eula
 
-          # Performance optimizations
+          # Performance optimizations (only supported settings)
           sudo -E /opt/mssql/bin/mssql-conf set sqlagent.enabled false  # Disable SQL Agent
-          # Note: memory.disablememorypressurealert not supported on this version
-          sudo -E /opt/mssql/bin/mssql-conf set telemetry.requestfeedbackqueue.directory /tmp/mssql-telemetry  # Disable telemetry
-          sudo -E /opt/mssql/bin/mssql-conf set hadr.hadrenabled 0  # Disable Always On
+          # Note: telemetry and memory settings not supported on this version
 
           # Create performance tuning configuration
           sudo mkdir -p /var/opt/mssql/data
@@ -322,22 +320,11 @@ jobs:
             -- Set traceflags for performance (disable ForceFlush)
             DBCC TRACEON(3422, -1) WITH NO_INFOMSGS;
 
-            -- Set simple recovery mode for all databases
+            -- Set simple recovery mode for model database
             ALTER MODEL SET RECOVERY SIMPLE;
-
-            -- Disable auto-close and auto-shrink
-            EXEC sp_MSforeachdb 'ALTER DATABASE [?] SET AUTO_CLOSE OFF';
-            EXEC sp_MSforeachdb 'ALTER DATABASE [?] SET AUTO_SHRINK OFF';
-
-            -- Optimize tempdb
-            ALTER DATABASE tempdb MODIFY FILE (NAME = tempdev, SIZE = 100MB, FILEGROWTH = 10MB);
-            ALTER DATABASE tempdb MODIFY FILE (NAME = templog, SIZE = 10MB, FILEGROWTH = 10MB);
-
-            -- Disable expensive trace flags
-            DBCC TRACEOFF(3604, 3605, -1) WITH NO_INFOMSGS;
           " || echo "SQL Server performance tuning completed with some errors"
 
-          # Restart SQL Server to apply traceflag settings
+          # Restart SQL Server to apply traceflag settings (required for traceflags)
           echo "Restarting SQL Server to apply traceflags..."
           sudo systemctl restart mssql-server
 
