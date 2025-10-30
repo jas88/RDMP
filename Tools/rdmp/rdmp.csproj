@@ -41,7 +41,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
-		<ProjectReference Include="..\..\Plugins\HicPlugin.csproj" />
+		<ProjectReference Include="..\..\Plugins\Plugins.csproj" />
 		<ProjectReference Include="..\..\Plugins\RdmpExtensions\Plugin\RdmpExtensions.Main\RdmpExtensions.Main.csproj" />
 		<PackageReference Include="Terminal.Gui" />
 		<PackageReference Include="System.Threading.ThreadPool" />

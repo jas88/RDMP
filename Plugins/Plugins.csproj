@@ -36,28 +36,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Include source files from HicPlugin and RdmpExtensions only -->
-    <!-- HicPlugin - Non-UI components -->
-    <Compile Include="..\Plugins\HicPlugin\SCIStorePlugin\**\*.cs">
+    <!-- Include source files from HicPlugin and RdmpExtensions only - non-UI only -->
+    <!-- HicPlugin - Core components only (use single level, avoid recursion) -->
+    <Compile Include="..\Plugins\HicPlugin\SCIStorePlugin\*.cs">
       <Link>SCIStorePlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
-    <Compile Include="..\Plugins\HicPlugin\DrsPlugin\**\*.cs">
+    <Compile Include="..\Plugins\HicPlugin\DrsPlugin\*.cs">
       <Link>DrsPlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
-    <Compile Include="..\Plugins\HicPlugin\GoDartsPlugin\**\*.cs">
+    <Compile Include="..\Plugins\HicPlugin\GoDartsPlugin\*.cs">
       <Link>GoDartsPlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
-    <Compile Include="..\Plugins\HicPlugin\HIC.Demography\**\*.cs">
+    <Compile Include="..\Plugins\HicPlugin\HIC.Demography\*.cs">
       <Link>HIC.Demography\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
-    <Compile Include="..\Plugins\HicPlugin\InterfaceToJira\**\*.cs">
-      <Link>InterfaceToJira\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="..\Plugins\HicPlugin\JiraPlugin\**\*.cs">
-      <Link>JiraPlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
 
-    <!-- RdmpExtensions - Non-UI components -->
+    <!-- RdmpExtensions - Non-UI components only -->
     <Compile Include="..\Plugins\RdmpExtensions\AutomationPlugins\LoadModules.Extensions.AutomationPlugins\**\*.cs">
       <Link>LoadModules.Extensions.AutomationPlugins\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>

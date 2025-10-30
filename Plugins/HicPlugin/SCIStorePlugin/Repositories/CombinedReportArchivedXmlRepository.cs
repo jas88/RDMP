@@ -45,7 +45,7 @@ public class CombinedReportArchivedXmlRepository : ISciStoreRepository<CombinedR
                 using var libArchive = new LibArchiveReader(archive.FullName);
                 foreach (var entry in libArchive.Entries())
                 {
-                    var report = DeserializeFromLibArchiveEntry((IArchiveEntry)entry, deserializer);
+                    var report = DeserializeFromLibArchiveEntry(entry, deserializer);
                     if (report != null)
                         reports.Add(report);
                 }
@@ -62,13 +62,16 @@ public class CombinedReportArchivedXmlRepository : ISciStoreRepository<CombinedR
     /// <summary>
     /// Deserialize data directly from libarchive.net entry
     /// </summary>
-    private static CombinedReportData DeserializeFromLibArchiveEntry(IArchiveEntry libArchiveEntry, CombinedReportXmlDeserializer deserializer)
+    private static CombinedReportData DeserializeFromLibArchiveEntry(object libArchiveEntry, CombinedReportXmlDeserializer deserializer)
     {
         try
         {
-            // Use the Open() method to get a stream - no reflection needed!
-            using var stream = libArchiveEntry.Open();
-            return deserializer.DeserializeFromStream(stream);
+            // Use reflection to get the Open method since we don't know the exact type
+            var openMethod = libArchiveEntry.GetType().GetMethod("Open");
+            if (openMethod?.Invoke(libArchiveEntry, null) is Stream stream)
+            {
+                return deserializer.DeserializeFromStream(stream);
+            }
         }
         catch (Exception)
         {
