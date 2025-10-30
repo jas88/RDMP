@@ -234,11 +234,9 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
     private void LoadPluginAssemblies()
     {
         // Load plugin assemblies to ensure types are available
-        // The .Assembly property forces runtime to actually load the assembly
-        var _ = typeof(SCIStorePlugin.Data.SciStoreResult).Assembly;
-        var _2 = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction).Assembly;
+        // Note: Old plugin projects have been consolidated and removed
 
-        // Refresh MEF cache to discover newly loaded assemblies
+        // Refresh MEF cache to discover loaded assemblies
         // (CompiledTypeRegistry will be used if available, providing additional optimization)
         MEF.RefreshTypes();
     }
