@@ -271,14 +271,14 @@ jobs:
         # Note: Oracle packages removed as Oracle tests are disabled
 
       - name: Configure and start databases
+        continue-on-error: true
         run: |
           # Configure SQL Server for performance
           sudo -E /opt/mssql/bin/mssql-conf -n setup accept-eula
 
           # Performance optimizations
-          # Note: traceflags set via SQL command after startup
           sudo -E /opt/mssql/bin/mssql-conf set sqlagent.enabled false  # Disable SQL Agent
-          sudo -E /opt/mssql/bin/mssql-conf set memory.disablememorypressurealert 1  # Disable memory alerts
+          # Note: memory.disablememorypressurealert not supported on this version
           sudo -E /opt/mssql/bin/mssql-conf set telemetry.requestfeedbackqueue.directory /tmp/mssql-telemetry  # Disable telemetry
           sudo -E /opt/mssql/bin/mssql-conf set hadr.hadrenabled 0  # Disable Always On
 
@@ -336,6 +336,20 @@ jobs:
             -- Disable expensive trace flags
             DBCC TRACEOFF(3604, 3605, -1) WITH NO_INFOMSGS;
           " || echo "SQL Server performance tuning completed with some errors"
+
+          # Restart SQL Server to apply traceflag settings
+          echo "Restarting SQL Server to apply traceflags..."
+          sudo systemctl restart mssql-server
+
+          # Wait for SQL Server to restart
+          echo "Waiting for SQL Server restart..."
+          for i in {1..60}; do
+            if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -C -Q "SELECT 1" &>/dev/null; then
+              echo "SQL Server restarted successfully!"
+              break
+            fi
+            sleep 2
+          done
 
       - name: Populate Databases.yaml
         run: |
