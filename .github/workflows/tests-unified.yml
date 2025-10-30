@@ -94,6 +94,12 @@ jobs:
         with:
           args: install -r sqllocaldb lcov --no-progress
 
+      - name: Add lcov to PATH
+        shell: powershell
+        run: |
+          echo "C:\ProgramData\chocolatey\lib\lcov\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Initialise LocalDB
         shell: bash
         run: |
@@ -331,6 +337,15 @@ jobs:
       - name: Initialise RDMP
         run: |
           dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" -u SA -p $MSSQL_SA_PASSWORD localhost TEST_ -e
+
+      - name: Create PostgreSQL databases
+        run: |
+          # Create PostgreSQL databases that RDMP expects
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_Catalogue;" || echo "Database may already exist"
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_DataExport;" || echo "Database may already exist"
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_DQE;" || echo "Database may already exist"
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_Logging;" || echo "Database may already exist"
+          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE TEST_ScratchArea;" || echo "Database may already exist"
 
       - name: Setup MinIO
         run: |
