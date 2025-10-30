@@ -475,39 +475,45 @@ jobs:
             rm -f /tmp/minio.pid
           fi
 
-      - name: Merge coverage files
-        run: |
-          sudo apt-get update && sudo apt-get install -y lcov
-
-          # Create merged coverage file
-          FILES=""
-          [ -f "core.lcov" ] && FILES="$FILES core.lcov"
-          [ -f "dicom.lcov" ] && FILES="$FILES dicom.lcov"
-          [ -f "hicplugin.lcov" ] && FILES="$FILES hicplugin.lcov"
-          [ -f "extensions.lcov" ] && FILES="$FILES extensions.lcov"
-
-          if [ -n "$FILES" ]; then
-            echo "Merging coverage files: $FILES"
-            lcov $FILES | while read -r line; do
-              if [[ "$line" == SF:* ]] && [[ -f "${line#SF:}" ]]; then
-                echo "$line"
-              elif [[ "$line" != SF:* ]]; then
-                echo "$line"
-              fi
-            done > merged.lcov
-            echo "Created merged.lcov"
-          else
-            echo "No coverage files found!"
-            touch merged.lcov
-          fi
-
-      - name: Upload coverage
+      - name: Upload coverage - Core
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./merged.lcov
-          flag-name: linux-tests
+          files: ./core.lcov
+          flag-name: linux-core
           fail_ci_if_error: false
+        continue-on-error: true
+        if: hashFiles('core.lcov') != ''
+
+      - name: Upload coverage - DICOM
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./dicom.lcov
+          flag-name: linux-dicom
+          fail_ci_if_error: false
+        continue-on-error: true
+        if: hashFiles('dicom.lcov') != ''
+
+      - name: Upload coverage - HicPlugin
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./hicplugin.lcov
+          flag-name: linux-hicplugin
+          fail_ci_if_error: false
+        continue-on-error: true
+        if: hashFiles('hicplugin.lcov') != ''
+
+      - name: Upload coverage - Extensions
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./extensions.lcov
+          flag-name: linux-extensions
+          fail_ci_if_error: false
+        continue-on-error: true
+        if: hashFiles('extensions.lcov') != ''
 
   # Bundle job - depends on ALL test jobs
   bundle:
