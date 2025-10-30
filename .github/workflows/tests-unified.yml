@@ -3,7 +3,6 @@ name: Tests
 on:
   push:
     branches: [ main, feature/* ]
-  pull_request:
 
 env:
   DOTNET_NOLOGO: 1
@@ -458,8 +457,7 @@ jobs:
       - name: Check test results
         run: |
           # Check if any test jobs failed
-          if [[ "${{ needs.tests_windows_ui_db.result }}" == "failure" || \
-                "${{ needs.tests_windows_ui_fs.result }}" == "failure" || \
+          if [[ "${{ needs.tests_windows_ui.result }}" == "failure" || \
                 "${{ needs.tests_linux_db.result }}" == "failure" ]]; then
             echo "⚠️ One or more test jobs failed. See above for details."
             echo "Continuing with bundle build for debugging purposes..."
