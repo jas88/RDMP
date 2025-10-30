@@ -413,58 +413,66 @@ jobs:
             mv "$CORE_FILE" core.lcov
           fi
 
-      - name: Test DICOM
+      - name: Test Plugins (Non-UI)
+        timeout-minutes: 30
+        run: |
+          dotnet test Plugins/Plugins.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/plugins-db \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          PLUGINS_DB_FILE=$(find coverage/plugins-db -name "*.lcov" | head -1)
+          if [ -n "$PLUGINS_DB_FILE" ]; then
+            mv "$PLUGINS_DB_FILE" plugins-db.lcov
+          fi
+
+      - name: Switch to File System Mode
+        run: |
+          echo "=== Switching to File System Mode ==="
+          # Add filesystem flag to TestDatabases.txt - RDMP will auto-create YAML repo
+          echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
+
+      - name: Test Core (File System Mode)
         timeout-minutes: 45
         run: |
-          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+          echo "=== Running Core Tests in File System Mode ==="
+          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
             --verbosity minimal \
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/dicom \
+            --results-directory coverage/core-fs \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
-          DICOM_FILE=$(find coverage/dicom -name "*.lcov" | head -1)
-          if [ -n "$DICOM_FILE" ]; then
-            mv "$DICOM_FILE" dicom.lcov
+          CORE_FS_FILE=$(find coverage/core-fs -name "*.lcov" | head -1)
+          if [ -n "$CORE_FS_FILE" ]; then
+            mv "$CORE_FS_FILE" core-fs.lcov
           fi
 
-      - name: Test Plugins (HicPlugin)
+      - name: Test Plugins (Non-UI) - File System Mode
         timeout-minutes: 30
         run: |
-          dotnet test Plugins/HicPlugin/HICPluginTests/HICPluginTests.csproj \
+          echo "=== Running Plugin Tests in File System Mode ==="
+          dotnet test Plugins/Plugins.Tests.csproj \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
             --verbosity minimal \
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/hicplugin \
+            --results-directory coverage/plugins-fs \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
-          HICPLUGIN_FILE=$(find coverage/hicplugin -name "*.lcov" | head -1)
-          if [ -n "$HICPLUGIN_FILE" ]; then
-            mv "$HICPLUGIN_FILE" hicplugin.lcov
-          fi
-
-      - name: Test Plugins (LoadModules.Extensions)
-        timeout-minutes: 30
-        run: |
-          dotnet test Plugins/RdmpExtensions/LoadModules.Extensions.Tests/LoadModules.Extensions.Tests.csproj \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --no-build \
-            --verbosity minimal \
-            -c Release \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/extensions \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-
-          EXTENSIONS_FILE=$(find coverage/extensions -name "*.lcov" | head -1)
-          if [ -n "$EXTENSIONS_FILE" ]; then
-            mv "$EXTENSIONS_FILE" extensions.lcov
+          PLUGINS_FS_FILE=$(find coverage/plugins-fs -name "*.lcov" | head -1)
+          if [ -n "$PLUGINS_FS_FILE" ]; then
+            mv "$PLUGINS_FS_FILE" plugins-fs.lcov
           fi
 
       - name: Cleanup MinIO
@@ -485,35 +493,35 @@ jobs:
         continue-on-error: true
         if: hashFiles('core.lcov') != ''
 
-      - name: Upload coverage - DICOM
+      - name: Upload coverage - Plugins (DB)
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./dicom.lcov
-          flag-name: linux-dicom
+          files: ./plugins-db.lcov
+          flag-name: linux-plugins-db
           fail_ci_if_error: false
         continue-on-error: true
-        if: hashFiles('dicom.lcov') != ''
+        if: hashFiles('plugins-db.lcov') != ''
 
-      - name: Upload coverage - HicPlugin
+      - name: Upload coverage - Core (FS)
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./hicplugin.lcov
-          flag-name: linux-hicplugin
+          files: ./core-fs.lcov
+          flag-name: linux-core-fs
           fail_ci_if_error: false
         continue-on-error: true
-        if: hashFiles('hicplugin.lcov') != ''
+        if: hashFiles('core-fs.lcov') != ''
 
-      - name: Upload coverage - Extensions
+      - name: Upload coverage - Plugins (FS)
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./extensions.lcov
-          flag-name: linux-extensions
+          files: ./plugins-fs.lcov
+          flag-name: linux-plugins-fs
           fail_ci_if_error: false
         continue-on-error: true
-        if: hashFiles('extensions.lcov') != ''
+        if: hashFiles('plugins-fs.lcov') != ''
 
   # Bundle job - depends on ALL test jobs
   bundle:
