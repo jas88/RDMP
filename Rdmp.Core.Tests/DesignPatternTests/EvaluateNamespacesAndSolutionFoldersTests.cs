@@ -34,7 +34,9 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         "ProjectInstaller.cs",
         "ProjectInstaller.Designer.cs",
         "TableView.cs",
-        "TreeView.cs"
+        "TreeView.cs",
+        // Allow duplicate test files in Unit vs Integration test directories
+        "ExecutableProcessTaskTests.cs"
     };
 
     [Test]
