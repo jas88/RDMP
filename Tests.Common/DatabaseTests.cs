@@ -59,7 +59,7 @@ namespace Tests.Common;
 public abstract partial class DatabaseTests
 {
     protected readonly IRDMPPlatformRepositoryServiceLocator RepositoryLocator;
-    protected static TestDatabasesSettings TestDatabaseSettings;
+    public static TestDatabasesSettings TestDatabaseSettings;
     private static bool HaveTriedCreatingTestDatabases;
 
     public ICatalogueRepository CatalogueRepository => RepositoryLocator.CatalogueRepository;
