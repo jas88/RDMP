@@ -272,6 +272,9 @@ jobs:
         run: |
           # Configure SQL Server
           sudo -E /opt/mssql/bin/mssql-conf -n setup accept-eula
+          # Disable ForceFlush for better performance (traceflag 3422)
+          # This reduces aggressive transaction log flushing
+          sudo -E /opt/mssql/bin/mssql-conf set traceflags 3422
 
           # Start databases
           sudo systemctl start postgresql
