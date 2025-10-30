@@ -230,7 +230,7 @@ jobs:
     name: Linux Database Tests
     runs-on: ubuntu-22.04
     env:
-      RDMP_KEY_LOCATION: /tmp/key/private-key.xml
+      # RDMP_KEY_LOCATION not set - will use built-in fallback key
       MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
       ACCEPT_EULA: "Y"
       MSSQL_PID: "developer"
