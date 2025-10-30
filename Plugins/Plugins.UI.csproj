@@ -1,0 +1,126 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace></RootNamespace>
+    <!-- Preserve original namespaces -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyTitle>RDMP Plugins UI</AssemblyTitle>
+    <AssemblyDescription>Consolidated RDMP plugin UI components</AssemblyDescription>
+    <AssemblyCompany>University of Dundee</AssemblyCompany>
+    <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
+    <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all shared assembly info -->
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Core references -->
+    <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
+    <ProjectReference Include="..\Rdmp.UI\Rdmp.UI.csproj" />
+    <ProjectReference Include="..\Plugins\Plugins.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Basic UI dependencies -->
+    <PackageReference Include="NLog" />
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include UI source files from all plugins -->
+    <!-- HicPlugin - UI components -->
+    <Compile Include="..\Plugins\HicPlugin\HICPluginInteractive\**\*.cs">
+      <Link>HICPluginInteractive\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Plugins\HicPlugin\GoDartsPluginUI\**\*.cs">
+      <Link>GoDartsPluginUI\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+
+    <!-- RdmpDicom - UI components -->
+    <Compile Include="..\Plugins\RdmpDicom\Rdmp.Dicom.UI\**\*.cs">
+      <Link>Rdmp.Dicom.UI\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+
+    <!-- Also include any UI files from the main plugin directories -->
+    <Compile Include="..\Plugins\HicPlugin\HICPlugin\**\*UI*.cs">
+      <Link>HICPlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Plugins\HicPlugin\SCIStorePlugin\**\*UI*.cs">
+      <Link>SCIStorePlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Plugins\RdmpDicom\Rdmp.Dicom\**\*UI*.cs">
+      <Link>Rdmp.Dicom\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include all Designer files -->
+    <Compile Include="..\Plugins\HicPlugin\HICPluginInteractive\**\*.Designer.cs">
+      <Link>HICPluginInteractive\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Include="..\Plugins\HicPlugin\GoDartsPluginUI\**\*.Designer.cs">
+      <Link>GoDartsPluginUI\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Include="..\Plugins\RdmpDicom\Rdmp.Dicom.UI\**\*.Designer.cs">
+      <Link>Rdmp.Dicom.UI\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exclude non-UI files -->
+    <Compile Remove="**\!UI.cs" />
+    <Compile Remove="**\Attacher*.cs" />
+    <Compile Remove="**\Data*.cs" />
+    <Compile Remove="**\Cache*.cs" />
+    <Compile Remove="**\Provider*.cs" />
+    <Compile Remove="**\Source*.cs" />
+
+    <!-- Exclude test files -->
+    <Compile Remove="**\Tests\**\*.cs" />
+    <Compile Remove="**\*.Tests.cs" />
+    <Compile Remove="**\Test*.cs" />
+
+    <!-- Exclude temporary and generated files -->
+    <Compile Remove="**\bin\**\*.cs" />
+    <Compile Remove="**\obj\**\*.cs" />
+    <Compile Remove="**\Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include necessary resources and images -->
+    <EmbeddedResource Include="..\Plugins\HicPlugin\HICPluginInteractive\**\*.resx">
+      <Link>HICPluginInteractive\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Plugins\HicPlugin\GoDartsPluginUI\**\*.resx">
+      <Link>GoDartsPluginUI\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Plugins\RdmpDicom\Rdmp.Dicom.UI\**\*.resx">
+      <Link>Rdmp.Dicom.UI\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include any necessary content files -->
+    <Content Include="..\Plugins\HicPlugin\**\*.png">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Plugins\RdmpDicom\**\*.png">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace></RootNamespace>
+    <!-- Preserve original namespaces -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyTitle>RDMP Plugins Tests</AssemblyTitle>
+    <AssemblyDescription>Consolidated RDMP plugin tests (non-UI)</AssemblyDescription>
+    <AssemblyCompany>University of Dundee</AssemblyCompany>
+    <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
+    <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all shared assembly info -->
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Project references -->
+    <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
+    <ProjectReference Include="..\Plugins\Plugins.csproj" />
+    <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
+    <ProjectReference Include="..\Rdmp.Core.Generators\Rdmp.Core.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test dependencies -->
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include test source files from all plugins -->
+    <!-- HicPlugin - Non-UI tests -->
+    <Compile Include="..\Plugins\HicPlugin\HICPluginTests\**\*.cs">
+      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+
+    <!-- RdmpDicom - Non-UI tests -->
+    <Compile Include="..\Plugins\RdmpDicom\Rdmp.Dicom.Tests\**\*.cs">
+      <Link>Rdmp.Dicom.Tests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+
+    <!-- RdmpExtensions - Automation tests (if any) -->
+    <Compile Include="..\Plugins\RdmpExtensions\LoadModules.Extensions.Tests\**\*.cs">
+      <Link>LoadModules.Extensions.Tests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exclude UI tests -->
+    <Compile Remove="**\*UI*.Tests.cs" />
+    <Compile Remove="**\*UITests.cs" />
+    <Compile Remove="**\Interactive\**\*.cs" />
+    <Compile Remove="**\Design\**\*.cs" />
+    <Compile Remove="**\UserInterface\**\*.cs" />
+
+    <!-- Exclude integration tests that require UI (move to UI.Tests project) -->
+    <Compile Remove="**\Integration\**\*UI*.cs" />
+    <Compile Remove="**\Integration\**\*Design*.cs" />
+
+    <!-- Exclude temporary and generated files -->
+    <Compile Remove="**\bin\**\*.cs" />
+    <Compile Remove="**\obj\**\*.cs" />
+    <Compile Remove="**\Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include necessary test data -->
+    <Content Include="..\Plugins\HicPlugin\HICPluginTests\**\*.*">
+      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Plugins\RdmpDicom\Rdmp.Dicom.Tests\**\*.*">
+      <Link>Rdmp.Dicom.Tests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

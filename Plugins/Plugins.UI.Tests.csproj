@@ -1,0 +1,97 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace></RootNamespace>
+    <!-- Preserve original namespaces -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyTitle>RDMP Plugins UI Tests</AssemblyTitle>
+    <AssemblyDescription>Consolidated RDMP plugin UI tests</AssemblyDescription>
+    <AssemblyCompany>University of Dundee</AssemblyCompany>
+    <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
+    <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all shared assembly info -->
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Project references -->
+    <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
+    <ProjectReference Include="..\Rdmp.UI\Rdmp.UI.csproj" />
+    <ProjectReference Include="..\Plugins\Plugins.csproj" />
+    <ProjectReference Include="..\Plugins\Plugins.UI.csproj" />
+    <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
+    <ProjectReference Include="..\Rdmp.Core.Generators\Rdmp.Core.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test dependencies (versions managed by Directory.Packages.props) -->
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include UI test source files from all plugins -->
+    <!-- These would be tests that specifically test UI components -->
+    <!-- For now, we include any UI-related tests from the plugin test suites -->
+
+    <!-- HicPlugin - UI related tests -->
+    <Compile Include="..\Plugins\HicPlugin\HICPluginTests\**\*UI*.cs">
+      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Plugins\HicPlugin\HICPluginTests\**\*Design*.cs">
+      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Plugins\HicPlugin\HICPluginTests\**\*Interactive*.cs">
+      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\Plugins\HicPlugin\HICPluginTests\Integration\**\*.cs">
+      <Link>HICPluginTests\Integration\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+
+    <!-- RdmpDicom - UI tests (if any exist) -->
+    <Compile Include="..\Plugins\RdmpDicom\Rdmp.Dicom.Tests\**\*UI*.cs">
+      <Link>Rdmp.Dicom.Tests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exclude non-UI tests -->
+    <Compile Remove="**\AttacherTests.cs" />
+    <Compile Remove="**\CacheTests.cs" />
+    <Compile Remove="**\SourceTests.cs" />
+    <Compile Remove="**\ExtractionTests.cs" />
+    <Compile Remove="**\ContextTests.cs" />
+    <Compile Remove="**\WebServiceTests.cs" />
+
+    <!-- Exclude temporary and generated files -->
+    <Compile Remove="**\bin\**\*.cs" />
+    <Compile Remove="**\obj\**\*.cs" />
+    <Compile Remove="**\Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include necessary test data for UI tests -->
+    <Content Include="..\Plugins\HicPlugin\HICPluginTests\**\*.xml">
+      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Plugins\HicPlugin\HICPluginTests\**\*.json">
+      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
