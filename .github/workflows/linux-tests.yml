@@ -43,9 +43,8 @@ jobs:
 
       - name: MS repo
         run: |
-          curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-          echo "deb [arch=amd64] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/mssql-prod.list
-          sudo apt-get update
+          curl -sL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/ubuntu/22.04/mssql-server-2022 jammy main"
 
       - name: Cache and install database packages
         uses: awalsh128/cache-apt-pkgs-action@v1.6.0
