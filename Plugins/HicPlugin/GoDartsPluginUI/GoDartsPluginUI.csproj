@@ -21,6 +21,7 @@
   <PackageReference Include="AWSSDK.SSOOIDC" />
   <PackageReference Include="FluentFTP" />
   <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+  <PackageReference Include="NLog" />
   <PackageReference Include="NPOI" />
     <ProjectReference Include="..\..\..\Rdmp.UI\Rdmp.UI.csproj" />
   </ItemGroup>
