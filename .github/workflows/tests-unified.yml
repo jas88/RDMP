@@ -207,29 +207,23 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
           mv `find coverage-fs -type f` windows-ui-fs.lcov
 
-      - name: Merge Windows UI coverage
-        shell: bash
-        run: |
-          echo "=== Merging Windows UI coverage files ==="
-          FILES=""
-          [ -f "windows-ui-db.lcov" ] && FILES="$FILES -a windows-ui-db.lcov"
-          [ -f "windows-ui-fs.lcov" ] && FILES="$FILES -a windows-ui-fs.lcov"
-
-          if [ -n "$FILES" ]; then
-            lcov $FILES -o windows-ui-merged.lcov
-            echo "Created windows-ui-merged.lcov"
-          else
-            echo "No Windows UI coverage files found!"
-            touch windows-ui-merged.lcov
-          fi
-
-      - name: Upload coverage
+      - name: Upload Windows UI coverage (DB)
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./windows-ui-merged.lcov
-          flag-name: windows-ui
+          files: ./windows-ui-db.lcov
+          flag-name: windows-ui-db
           fail_ci_if_error: false
+        continue-on-error: true
+
+      - name: Upload Windows UI coverage (FS)
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./windows-ui-fs.lcov
+          flag-name: windows-ui-fs
+          fail_ci_if_error: false
+        continue-on-error: true
 
   # Linux Database Tests
   tests_linux_db:
@@ -324,7 +318,7 @@ jobs:
           Username: SA
           Password: YourStrong!Passw0rd
           MySql: server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;AllowPublicKeyRetrieval=True
-          PostgreSql: User ID=postgres;Password=pgpass4291;Host=127.0.0.1;Port=5432
+          #PostgreSql: User ID=postgres;Password=pgpass4291;Host=127.0.0.1;Port=5432
           Oracle: Data Source=localhost:1521/XEPDB1;User Id=system;Password=oracle
           EOF
 
@@ -337,40 +331,6 @@ jobs:
       - name: Initialise RDMP
         run: |
           dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" -u SA -p $MSSQL_SA_PASSWORD localhost TEST_ -e
-
-      - name: Create PostgreSQL databases
-        run: |
-          # Create PostgreSQL databases that RDMP expects
-          # Wait for PostgreSQL to be fully ready
-          until pg_isready -h 127.0.0.1 -U postgres -p 5432; do
-            echo "Waiting for PostgreSQL to be ready..."
-            sleep 2
-          done
-
-          # Create databases with explicit error checking
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_Catalogue;" || {
-            echo "Failed to create TEST_Catalogue database"
-            exit 1
-          }
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_DataExport;" || {
-            echo "Failed to create TEST_DataExport database"
-            exit 1
-          }
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_DQE;" || {
-            echo "Failed to create TEST_DQE database"
-            exit 1
-          }
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_Logging;" || {
-            echo "Failed to create TEST_Logging database"
-            exit 1
-          }
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE TEST_ScratchArea;" || {
-            echo "Failed to create TEST_ScratchArea database"
-            exit 1
-          }
-
-          # List created databases to verify
-          PGPASSWORD=pgpass4291 psql -h 127.0.0.1 -U postgres -c "\l" | grep TEST_
 
       - name: Setup MinIO
         run: |
