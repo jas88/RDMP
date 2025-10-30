@@ -89,10 +89,10 @@ jobs:
           $xml.Save($writer)
           $writer.Close()
 
-      - name: Install MS SQL LocalDB
+      - name: Install MS SQL LocalDB and lcov
         uses: crazy-max/ghaction-chocolatey@v3
         with:
-          args: install -r sqllocaldb --no-progress
+          args: install -r sqllocaldb lcov --no-progress
 
       - name: Initialise LocalDB
         shell: bash
@@ -371,7 +371,7 @@ jobs:
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage/core \
-            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
           CORE_FILE=$(find coverage/core -name "*.lcov" | head -1)
           if [ -n "$CORE_FILE" ]; then
@@ -389,7 +389,7 @@ jobs:
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage/dicom \
-            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
           DICOM_FILE=$(find coverage/dicom -name "*.lcov" | head -1)
           if [ -n "$DICOM_FILE" ]; then
@@ -407,7 +407,7 @@ jobs:
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage/hicplugin \
-            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
           HICPLUGIN_FILE=$(find coverage/hicplugin -name "*.lcov" | head -1)
           if [ -n "$HICPLUGIN_FILE" ]; then
@@ -425,7 +425,7 @@ jobs:
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage/extensions \
-            DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
           EXTENSIONS_FILE=$(find coverage/extensions -name "*.lcov" | head -1)
           if [ -n "$EXTENSIONS_FILE" ]; then
