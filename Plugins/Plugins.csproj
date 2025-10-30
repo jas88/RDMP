@@ -5,13 +5,15 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace></RootNamespace>
-    <!-- Preserve original namespaces -->
+        <!-- Preserve original namespaces -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyTitle>RDMP Plugins</AssemblyTitle>
-    <AssemblyDescription>Consolidated RDMP plugin components (HicPlugin, RdmpExtensions only)</AssemblyDescription>
+    <AssemblyDescription>RDMP Plugin Metadata - placeholder for plugin discovery</AssemblyDescription>
     <AssemblyCompany>University of Dundee</AssemblyCompany>
     <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
     <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
+    <!-- This is a metadata project only - no code compilation -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,68 +24,21 @@
   <ItemGroup>
     <!-- Core RDMP reference -->
     <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
-
-    <!-- RdmpDicom remains external - reference as package if needed -->
-    <!-- <PackageReference Include="Rdmp.Dicom" /> -->
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Only include dependencies that are known to exist in central package management -->
+    <!-- Use modern package versions from Directory.Packages.props -->
     <PackageReference Include="NLog" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="YamlDotNet" />
     <PackageReference Include="NPOI" />
   </ItemGroup>
-
   <ItemGroup>
-    <!-- Include source files from HicPlugin and RdmpExtensions only - non-UI only -->
-    <!-- HicPlugin - Core components only (use single level, avoid recursion) -->
-    <Compile Include="..\Plugins\HicPlugin\SCIStorePlugin\*.cs">
-      <Link>SCIStorePlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="..\Plugins\HicPlugin\DrsPlugin\*.cs">
-      <Link>DrsPlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="..\Plugins\HicPlugin\GoDartsPlugin\*.cs">
-      <Link>GoDartsPlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="..\Plugins\HicPlugin\HIC.Demography\*.cs">
-      <Link>HIC.Demography\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-
-    <!-- RdmpExtensions - Non-UI components only -->
-    <Compile Include="..\Plugins\RdmpExtensions\AutomationPlugins\LoadModules.Extensions.AutomationPlugins\**\*.cs">
-      <Link>LoadModules.Extensions.AutomationPlugins\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Exclude UI-specific files -->
-    <Compile Remove="**\*UI.cs" />
-    <Compile Remove="**\*Designer.cs" />
-    <Compile Remove="**\Windows\**\*.cs" />
-    <Compile Remove="**\WPF\**\*.cs" />
-    <Compile Remove="**\WinForms\**\*.cs" />
-
-    <!-- Exclude test files -->
-    <Compile Remove="**\Tests\**\*.cs" />
-    <Compile Remove="**\*.Tests.cs" />
-    <Compile Remove="**\Test*.cs" />
-
-    <!-- Exclude temporary and generated files -->
-    <Compile Remove="**\bin\**\*.cs" />
-    <Compile Remove="**\obj\**\*.cs" />
-    <Compile Remove="**\Properties\AssemblyInfo.cs" />
-
-    <!-- Exclude any duplicate includes that might happen -->
-    <Compile Remove="**\ConnectedServices\**\*.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Include necessary resources -->
-    <EmbeddedResource Include="..\Plugins\HicPlugin\SCIStorePlugin\**\*.sql">
-      <Link>SCIStorePlugin\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </EmbeddedResource>
+    <!-- Override ancient package versions that are being resolved -->
+    <PackageReference Update="NLog" Version="6.0.5" />
+    <PackageReference Update="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Update="YamlDotNet" Version="16.3.0" />
+    <PackageReference Update="NPOI" Version="2.7.5" />
   </ItemGroup>
 
 </Project>

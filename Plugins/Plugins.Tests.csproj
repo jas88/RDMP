@@ -5,15 +5,17 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace></RootNamespace>
-    <!-- Preserve original namespaces -->
+        <!-- Preserve original namespaces -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyTitle>RDMP Plugins Tests</AssemblyTitle>
-    <AssemblyDescription>Consolidated RDMP plugin tests (HicPlugin, RdmpExtensions only)</AssemblyDescription>
+    <AssemblyDescription>RDMP Plugin Tests Metadata - placeholder for plugin test discovery</AssemblyDescription>
     <AssemblyCompany>University of Dundee</AssemblyCompany>
     <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
     <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- This is a metadata project only - no code compilation -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,57 +26,21 @@
   <ItemGroup>
     <!-- Project references -->
     <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
-    <ProjectReference Include="..\Plugins\Plugins.csproj" />
     <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
-    <ProjectReference Include="..\Rdmp.Core.Generators\Rdmp.Core.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <!-- Removed Rdmp.Core.Generators reference - not needed for metadata placeholder project -->
   </ItemGroup>
 
   <ItemGroup>
     <!-- Test dependencies -->
     <PackageReference Include="NUnit" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit3TestAdapter" />
   </ItemGroup>
-
   <ItemGroup>
-    <!-- Include test source files from HicPlugin and RdmpExtensions only -->
-    <!-- HicPlugin - Non-UI tests -->
-    <Compile Include="..\Plugins\HicPlugin\HICPluginTests\**\*.cs">
-      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-
-    <!-- RdmpExtensions - Automation tests (if any) -->
-    <Compile Include="..\Plugins\RdmpExtensions\LoadModules.Extensions.Tests\**\*.cs">
-      <Link>LoadModules.Extensions.Tests\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Exclude UI tests -->
-    <Compile Remove="**\*UI*.Tests.cs" />
-    <Compile Remove="**\*UITests.cs" />
-    <Compile Remove="**\Interactive\**\*.cs" />
-    <Compile Remove="**\Design\**\*.cs" />
-    <Compile Remove="**\UserInterface\**\*.cs" />
-
-    <!-- Exclude integration tests that require UI (move to UI.Tests project) -->
-    <Compile Remove="**\Integration\**\*UI*.cs" />
-    <Compile Remove="**\Integration\**\*Design*.cs" />
-
-    <!-- Exclude temporary and generated files -->
-    <Compile Remove="**\bin\**\*.cs" />
-    <Compile Remove="**\obj\**\*.cs" />
-    <Compile Remove="**\Properties\AssemblyInfo.cs" />
-
-    <!-- Exclude any duplicate includes -->
-    <Compile Remove="**\ConnectedServices\**\*.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Include necessary test data -->
-    <Content Include="..\Plugins\HicPlugin\HICPluginTests\**\*.*">
-      <Link>HICPluginTests\%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <!-- Override ancient package versions that are being resolved -->
+    <PackageReference Update="NUnit" Version="4.3.2" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Update="NUnit3TestAdapter" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

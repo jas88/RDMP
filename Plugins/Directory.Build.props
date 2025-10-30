@@ -1,0 +1,8 @@
+<Project>
+  <!-- Separate obj directories for different target frameworks to avoid conflicts -->
+  <!-- Only apply to root-level plugin projects, not subdirectory projects -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Plugins' OR '$(MSBuildProjectName)' == 'Plugins.Tests' OR '$(MSBuildProjectName)' == 'Plugins.UI' OR '$(MSBuildProjectName)' == 'Plugins.UI.Tests'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(MSBuildProjectName)\$(Configuration)\$(TargetFramework)\</BaseIntermediateOutputPath>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+</Project>

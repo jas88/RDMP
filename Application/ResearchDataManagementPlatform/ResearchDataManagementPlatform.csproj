@@ -108,6 +108,5 @@
     <ProjectReference Include="..\..\Rdmp.UI\Rdmp.UI.csproj" />
     <ProjectReference Include="..\..\Plugins\Plugins.csproj" />
     <ProjectReference Include="..\..\Plugins\Plugins.UI.csproj" />
-    <ProjectReference Include="..\..\Plugins\RdmpExtensions\Plugin\RdmpExtensions.Windows\RdmpExtensions.Windows.csproj" />
-  </ItemGroup>
+    </ItemGroup>
 </Project>

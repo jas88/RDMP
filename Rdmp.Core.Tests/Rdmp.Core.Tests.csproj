@@ -87,8 +87,7 @@
         <!-- Source generator for compile-time type registry -->
         <ProjectReference Include="..\Rdmp.Core.Generators\Rdmp.Core.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <!-- Plugin references to ensure assemblies are loaded for MEF type resolution -->
-        <ProjectReference Include="..\Plugins\HicPlugin\SCIStorePlugin\SCIStorePlugin.csproj" />
-        <ProjectReference Include="..\Plugins\RdmpExtensions\AutomationPlugins\LoadModules.Extensions.AutomationPlugins\LoadModules.Extensions.AutomationPlugins.csproj" />
+        <!-- Old plugin projects removed - consolidated plugins now handle this -->
     </ItemGroup>
     <ItemGroup>
         <Compile Update="Curation\TestResources.Designer.cs">
