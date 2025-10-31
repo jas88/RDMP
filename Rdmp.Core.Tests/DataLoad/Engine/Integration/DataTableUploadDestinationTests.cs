@@ -1201,12 +1201,18 @@ ALTER TABLE DroppedColumnsTable add color varchar(1)
 
         if (dbType == DatabaseType.Oracle)
         {
-            //in the database it should be typed as string
-            Assert.That(tbl.DiscoverColumn("hb_extract").DataType.GetCSharpDataType(), Is.EqualTo(typeof(string)));
+            // Oracle doesn't have native boolean support, so it will be stored as a string type
+            // Even when we request boolean type, Oracle translates this to a string (char/varchar)
+            var columnType = tbl.DiscoverColumn("hb_extract").DataType.GetCSharpDataType();
+            Assert.That(columnType, Is.EqualTo(typeof(string)),
+                $"Expected string type for Oracle boolean column but got {columnType}");
 
             var dt2 = tbl.GetDataTable();
-            Assert.That(dt2.Rows.Cast<DataRow>().Select(r => r[0]).ToArray(), Does.Contain("T"));
-            Assert.That(dt2.Rows.Cast<DataRow>().Select(r => r[0]).ToArray(), Does.Contain("F"));
+            var values = dt2.Rows.Cast<DataRow>().Select(r => r[0]).ToArray();
+
+            // Oracle stores the original string values "T" and "F"
+            Assert.That(values, Does.Contain("T"));
+            Assert.That(values, Does.Contain("F"));
         }
         else
         {
