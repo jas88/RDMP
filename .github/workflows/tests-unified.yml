@@ -230,7 +230,7 @@ jobs:
           github-token: ${{ secrets.github_token }}
           files: ./windows-ui-db.lcov
           flag-name: windows-ui-db
-          fail_ci_if_error: false
+          fail-on-error: false
         continue-on-error: true
 
       - name: Upload Windows UI coverage (FS)
@@ -239,7 +239,7 @@ jobs:
           github-token: ${{ secrets.github_token }}
           files: ./windows-ui-fs.lcov
           flag-name: windows-ui-fs
-          fail_ci_if_error: false
+          fail-on-error: false
         continue-on-error: true
 
   # Linux Database Tests
@@ -251,20 +251,7 @@ jobs:
       MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
       ACCEPT_EULA: "Y"
       MSSQL_PID: "developer"
-    services:
-      # oracle disabled to avoid CI failures
-      # oracle:
-      #   image: ghcr.io/gvenzl/oracle-xe:21-slim
-      #   env:
-      #     ORACLE_PASSWORD: oracle
-      #   ports:
-      #     - 1521:1521
-      #   options: >-
-      #     --health-cmd "echo 'SELECT 1 FROM DUAL;' | sqlplus -s system/oracle@localhost:1521/XEPDB1"
-      #     --health-interval 10s
-      #     --health-timeout 5s
-      #     --health-retries 10
-    steps:
+      steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
@@ -494,7 +481,7 @@ jobs:
           github-token: ${{ secrets.github_token }}
           files: ./core.lcov
           flag-name: linux-core
-          fail_ci_if_error: false
+          fail-on-error: false
         continue-on-error: true
         if: hashFiles('core.lcov') != ''
 
@@ -504,7 +491,7 @@ jobs:
           github-token: ${{ secrets.github_token }}
           files: ./plugins-db.lcov
           flag-name: linux-plugins-db
-          fail_ci_if_error: false
+          fail-on-error: false
         continue-on-error: true
         if: hashFiles('plugins-db.lcov') != ''
 
@@ -514,7 +501,7 @@ jobs:
           github-token: ${{ secrets.github_token }}
           files: ./core-fs.lcov
           flag-name: linux-core-fs
-          fail_ci_if_error: false
+          fail-on-error: false
         continue-on-error: true
         if: hashFiles('core-fs.lcov') != ''
 
@@ -524,7 +511,7 @@ jobs:
           github-token: ${{ secrets.github_token }}
           files: ./plugins-fs.lcov
           flag-name: linux-plugins-fs
-          fail_ci_if_error: false
+          fail-on-error: false
         continue-on-error: true
         if: hashFiles('plugins-fs.lcov') != ''
 
