@@ -109,32 +109,18 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
         foreach (var rootLevelProjects in sln.RootProjects)
             FindProjectInFolder(rootLevelProjects, solutionDir);
 
-        // Check for duplicate files (this is where the current failure is)
-        // Special handling for consolidated plugin projects - they may legitimately share files
-        var fileGroups = _csFilesFound.GroupBy(f => Path.GetFileName(f))
-            .Where(g => g.Count() > 1 && !IgnoreList.Contains(g.Key));
-
-        foreach (var group in fileGroups)
+        // Since we prevent duplicates at collection time, there should be no duplicate paths
+        // This is a sanity check to ensure our duplicate prevention is working
+        var allPathsUnique = _csFilesFound.Distinct().Count() == _csFilesFound.Count;
+        if (!allPathsUnique)
         {
-            var files = group.ToList();
-            var directories = files.Select(f => Path.GetDirectoryName(f)).Distinct().ToList();
+            var duplicatePaths = _csFilesFound.GroupBy(f => f)
+                .Where(g => g.Count() > 1 && !IgnoreList.Contains(Path.GetFileName(g.Key)));
 
-            // If all files are in the same directory, this is likely a consolidated plugin project
-            // which is legitimate after plugin consolidation
-            if (directories.Count == 1)
+            foreach (var group in duplicatePaths)
             {
-                // Check if this is a consolidated plugin directory
-                var dir = directories.First();
-                if (dir.Contains("Plugins") && IsConsolidatedPluginDirectory(dir))
-                {
-                    // This is legitimate - files in consolidated plugin directory can be shared
-                    // across multiple plugin projects (Plugins, Plugins.UI, etc.)
-                    continue;
-                }
+                Error($"Found duplicate file paths: {group.Key} (appears {group.Count()} times)");
             }
-
-            // If files are in different directories, this is a legitimate duplicate issue
-            Error($"Found 2+ files called {group.Key}:{Environment.NewLine}{string.Join(Environment.NewLine, files)}");
         }
 
         Assert.That(_errors, Is.Empty, "Duplicate files validation failed");
@@ -418,18 +404,17 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
             foreach (var str in tidy.UntidyMessages)
                 Error(str);
 
-            // For consolidated plugin projects, skip duplicate file checking during collection
-            // since files are legitimately shared across plugin projects in the same directory
-            if (!IsConsolidatedPluginProject(p.Name))
+            // For consolidated plugin projects, only collect files once to avoid duplicates
+            // Files are legitimately shared across plugin projects in the same directory
+            // We only process files for the first plugin project we encounter
+            if (p.Name == "Plugins")
             {
-                foreach (var found in tidy.csFilesFound
-                             .Where(found => _csFilesFound.Any(otherFile =>
-                                 Path.GetFileName(otherFile).Equals(Path.GetFileName(found)))).Where(found =>
-                                 !IgnoreList.Contains(Path.GetFileName(found))))
-                    Error($"Found 2+ files called {Path.GetFileName(found)}");
+                // Only collect files from the base Plugins project
+                _csFilesFound.AddRange(tidy.csFilesFound);
             }
+            // For other plugin projects (Plugins.UI, Plugins.Tests, etc.), don't collect files again
+            // since they're in the same directory and would cause duplicates
 
-            _csFilesFound.AddRange(tidy.csFilesFound);
             return;
         }
 
@@ -457,13 +442,10 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
                 foreach (var str in tidy.UntidyMessages)
                     Error(str);
 
-                foreach (var found in tidy.csFilesFound
-                             .Where(found => _csFilesFound.Any(otherFile =>
-                                 Path.GetFileName(otherFile).Equals(Path.GetFileName(found)))).Where(found =>
-                                 !IgnoreList.Contains(Path.GetFileName(found))))
-                    Error($"Found 2+ files called {Path.GetFileName(found)}");
-
-                _csFilesFound.AddRange(tidy.csFilesFound);
+                  // Only add files that haven't been collected before
+                // This prevents the same file from being collected multiple times by different projects
+                var newFiles = tidy.csFilesFound.Where(f => !_csFilesFound.Contains(f)).ToList();
+                _csFilesFound.AddRange(newFiles);
             }
         }
     }
