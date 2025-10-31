@@ -251,7 +251,7 @@ jobs:
       MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
       ACCEPT_EULA: "Y"
       MSSQL_PID: "developer"
-      steps:
+    steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
