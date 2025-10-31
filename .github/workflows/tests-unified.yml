@@ -423,6 +423,24 @@ jobs:
             mv "$PLUGINS_DB_FILE" plugins-db.lcov
           fi
 
+      - name: Test RdmpDicom (Non-UI)
+        timeout-minutes: 30
+        run: |
+          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/rdmpdicom-db \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          RDMPDICOM_DB_FILE=$(find coverage/rdmpdicom-db -name "*.lcov" | head -1)
+          if [ -n "$RDMPDICOM_DB_FILE" ]; then
+            mv "$RDMPDICOM_DB_FILE" rdmpdicom-db.lcov
+          fi
+
       - name: Switch to File System Mode
         run: |
           echo "=== Switching to File System Mode ==="
@@ -467,6 +485,25 @@ jobs:
             mv "$PLUGINS_FS_FILE" plugins-fs.lcov
           fi
 
+      - name: Test RdmpDicom (Non-UI) - File System Mode
+        timeout-minutes: 30
+        run: |
+          echo "=== Running RdmpDicom Tests in File System Mode ==="
+          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --no-build \
+            --verbosity minimal \
+            -c Release \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage/rdmpdicom-fs \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+          RDMPDICOM_FS_FILE=$(find coverage/rdmpdicom-fs -name "*.lcov" | head -1)
+          if [ -n "$RDMPDICOM_FS_FILE" ]; then
+            mv "$RDMPDICOM_FS_FILE" rdmpdicom-fs.lcov
+          fi
+
       - name: Cleanup MinIO
         if: always()
         run: |
@@ -495,6 +532,16 @@ jobs:
         continue-on-error: true
         if: hashFiles('plugins-db.lcov') != ''
 
+      - name: Upload coverage - RdmpDicom (DB)
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./rdmpdicom-db.lcov
+          flag-name: linux-rdmpdicom-db
+          fail-on-error: false
+        continue-on-error: true
+        if: hashFiles('rdmpdicom-db.lcov') != ''
+
       - name: Upload coverage - Core (FS)
         uses: coverallsapp/github-action@v2.3.6
         with:
@@ -514,6 +561,16 @@ jobs:
           fail-on-error: false
         continue-on-error: true
         if: hashFiles('plugins-fs.lcov') != ''
+
+      - name: Upload coverage - RdmpDicom (FS)
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          github-token: ${{ secrets.github_token }}
+          files: ./rdmpdicom-fs.lcov
+          flag-name: linux-rdmpdicom-fs
+          fail-on-error: false
+        continue-on-error: true
+        if: hashFiles('rdmpdicom-fs.lcov') != ''
 
   # Bundle job - depends on ALL test jobs
   bundle:
