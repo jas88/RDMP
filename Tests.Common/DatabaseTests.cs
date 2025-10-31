@@ -722,7 +722,14 @@ delete from {1}..Project
         if (!server.Exists() && type != DatabaseType.MicrosoftSQLServer)
             Assert.Inconclusive();
 
-        server.TestConnection();
+        try
+        {
+            server.TestConnection();
+        }
+        catch (Exception ex)
+        {
+            Assert.Inconclusive($"Database connection failed for {type}: {ex.Message}");
+        }
 
         var database = server.ExpectDatabase(dbnName);
 

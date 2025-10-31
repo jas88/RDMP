@@ -320,7 +320,29 @@ internal class DocumentationCrossExaminationTest
 
         // Documentation file names
         "NoteForNewDevelopers",
-        "NlpPlugin"
+        "NlpPlugin",
+
+        // Deprecated plugins that were removed during consolidation
+        "HicPlugin",
+        "RdmpDicom",
+        "SCIStorePlugin",
+        "DrsPlugin",
+        "GoDartsPlugin",
+        "InterfaceToJira",
+        "JiraPlugin",
+
+        // Deprecated test classes that were removed
+        "ScriptExecutionTests",
+        "SlowRollerTest",
+        "SlowRollerAsync",
+
+        // Deprecated classes that were removed
+        "FilenameColumnName",
+        "CsvContextAdapter",
+
+        // Generic terms used in documentation
+        "BaseClass",
+        "ConcreteTypes"
     };
 
     #endregion

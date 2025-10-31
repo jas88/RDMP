@@ -35,6 +35,21 @@ public class SuspiciousRelationshipPropertyUse
         types = types.Union(typeof(Project).Assembly.GetTypes().Where(static t => typeof(DatabaseEntity).IsAssignableFrom(t)))
             .ToArray();
 
+        // Also include types from Rdmp.DataExport assembly if available
+        try
+        {
+            var dataExportAssembly = System.Reflection.Assembly.Load("Rdmp.DataExport");
+            if (dataExportAssembly != null)
+            {
+                types = types.Union(dataExportAssembly.GetTypes().Where(static t => typeof(DatabaseEntity).IsAssignableFrom(t)))
+                    .ToArray();
+            }
+        }
+        catch
+        {
+            // DataExport assembly not available, skip it
+        }
+
         foreach (var type in types)
         {
             //if it's a spontaneous object ignore it
@@ -47,7 +62,8 @@ public class SuspiciousRelationshipPropertyUse
 
             var expectedFileName = $"{type.Name}.cs";
             var files = csFilesFound
-                .Where(f => f.EndsWith($"\\{expectedFileName}", StringComparison.CurrentCultureIgnoreCase)).ToArray();
+                .Where(f => f.EndsWith($@"\{expectedFileName}", StringComparison.CurrentCultureIgnoreCase) ||
+                           f.EndsWith($"/{expectedFileName}", StringComparison.CurrentCultureIgnoreCase)).ToArray();
 
             if (files.Length != 1)
             {
