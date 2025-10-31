@@ -1,0 +1,24 @@
+// Copyright (c) The University of Dundee 2018-2025
+// This file is part of the Research Data Management Platform (RDMP).
+// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
+
+﻿using NUnit.Framework;
+using Rdmp.Core.CommandLine.Interactive;
+using Rdmp.Dicom.CommandExecution;
+using Rdmp.Core.ReusableLibraryCode.Checks;
+using Tests.Common;
+
+namespace Rdmp.Dicom.Tests.Integration;
+
+class ExecuteCommandPacsFetchTest : DatabaseTests
+{
+    [Ignore("Can be run manually, but that's a lot of data to pull!")]
+    [Test]
+    public void TestLocal()
+    {
+        var cmd = new ExecuteCommandPacsFetch(new ConsoleInputManager(RepositoryLocator, ThrowImmediatelyCheckNotifier.Quiet) { DisallowInput = true }, "2013-01-01", "2014-01-01", "www.dicomserver.co.uk", 11112, "you", "localhost", 11112, "me", TestContext.CurrentContext.WorkDirectory, 0);
+        cmd.Execute();
+    }
+}
