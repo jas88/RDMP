@@ -12,7 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Rdmp.Dicom\Rdmp.Dicom.csproj" />
-    <ProjectReference Include="..\..\..\Rdmp.UI\Rdmp.UI.csproj" />
+    <ProjectReference Include="..\..\Rdmp.UI\Rdmp.UI.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="fo-dicom" VersionOverride="5.2.4" />
+    <PackageReference Include="NLog" VersionOverride="6.0.5" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="CreateNewImagingDatasetUI.cs" />

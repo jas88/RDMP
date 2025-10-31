@@ -28,9 +28,10 @@
 	<ItemGroup>
 		<!-- Updated to use DicomTypeTranslation (without HIC. prefix) with FAnsiSql.Legacy 3.3.1 -->
 		<PackageReference Include="DicomTypeTranslation" />
-		<PackageReference Include="fo-dicom" />
+		<PackageReference Include="fo-dicom" VersionOverride="5.2.4" />
+		<PackageReference Include="NLog" VersionOverride="6.0.5" />
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\..\..\Rdmp.Core\Rdmp.Core.csproj" />
+		<ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
 	</ItemGroup>
 </Project>

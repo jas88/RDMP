@@ -18,27 +18,20 @@
 
   <ItemGroup>
     <!-- Include all shared assembly info -->
-    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Core RDMP reference -->
-    <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
+    <ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Use modern package versions from Directory.Packages.props -->
-    <PackageReference Include="NLog" />
-    <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="YamlDotNet" />
-    <PackageReference Include="NPOI" />
-  </ItemGroup>
-  <ItemGroup>
-    <!-- Override ancient package versions that are being resolved -->
-    <PackageReference Update="NLog" Version="6.0.5" />
-    <PackageReference Update="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Update="YamlDotNet" Version="16.3.0" />
-    <PackageReference Update="NPOI" Version="2.7.5" />
+    <PackageReference Include="NLog" VersionOverride="6.0.5" />
+    <PackageReference Include="Newtonsoft.Json" VersionOverride="13.0.3" />
+    <PackageReference Include="YamlDotNet" VersionOverride="16.3.0" />
+    <PackageReference Include="NPOI" VersionOverride="2.7.5" />
   </ItemGroup>
 
 </Project>

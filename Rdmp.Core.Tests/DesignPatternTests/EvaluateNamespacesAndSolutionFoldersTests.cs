@@ -20,7 +20,7 @@ namespace Rdmp.Core.Tests.DesignPatternTests;
 
 public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
 {
-    private const string SolutionName = "HIC.DataManagementPlatform.sln";
+    private const string SolutionName = "DataManagementPlatform.sln";
     private readonly List<string> _csFilesFound = new();
 
     public static readonly HashSet<string> IgnoreList = new()

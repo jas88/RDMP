@@ -38,19 +38,19 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Rdmp.Dicom\Rdmp.Dicom.csproj" />
-    <ProjectReference Include="..\..\..\Tests.Common\Tests.Common.csproj" />
+    <ProjectReference Include="..\..\Tests.Common\Tests.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="SynthDicom" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="NUnit" />
-    <PackageReference Include="NUnit.Analyzers">
+    <PackageReference Include="SynthDicom" VersionOverride="1.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" VersionOverride="9.0.7" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" VersionOverride="18.0.0" />
+    <PackageReference Include="NUnit" VersionOverride="4.3.2" />
+    <PackageReference Include="NUnit.Analyzers" VersionOverride="4.9.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NUnit3TestAdapter" />
-    <PackageReference Include="NunitXml.TestLogger" />
+    <PackageReference Include="NUnit3TestAdapter" VersionOverride="5.0.0" />
+    <PackageReference Include="NunitXml.TestLogger" VersionOverride="6.1.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="TestDatabases.txt">

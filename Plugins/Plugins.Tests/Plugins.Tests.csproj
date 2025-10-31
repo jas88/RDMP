@@ -20,27 +20,21 @@
 
   <ItemGroup>
     <!-- Include all shared assembly info -->
-    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Project references -->
-    <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
-    <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
+    <ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
+    <ProjectReference Include="..\..\Tests.Common\Tests.Common.csproj" />
     <!-- Removed Rdmp.Core.Generators reference - not needed for metadata placeholder project -->
   </ItemGroup>
 
   <ItemGroup>
     <!-- Test dependencies -->
-    <PackageReference Include="NUnit" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="NUnit3TestAdapter" />
-  </ItemGroup>
-  <ItemGroup>
-    <!-- Override ancient package versions that are being resolved -->
-    <PackageReference Update="NUnit" Version="4.3.2" />
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.0.0" />
-    <PackageReference Update="NUnit3TestAdapter" Version="5.0.0" />
+    <PackageReference Include="NUnit" VersionOverride="4.3.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" VersionOverride="18.0.0" />
+    <PackageReference Include="NUnit3TestAdapter" VersionOverride="5.0.0" />
   </ItemGroup>
 
 </Project>

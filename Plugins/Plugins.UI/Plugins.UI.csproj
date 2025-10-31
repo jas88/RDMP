@@ -20,24 +20,19 @@
 
   <ItemGroup>
     <!-- Include all shared assembly info -->
-    <Compile Include="..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Core references -->
-    <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
-    <ProjectReference Include="..\Rdmp.UI\Rdmp.UI.csproj" />
+    <ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
+    <ProjectReference Include="..\..\Rdmp.UI\Rdmp.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Basic UI dependencies -->
-    <PackageReference Include="NLog" />
-    <PackageReference Include="Newtonsoft.Json" />
-  </ItemGroup>
-  <ItemGroup>
-    <!-- Override ancient package versions that are being resolved -->
-    <PackageReference Update="NLog" Version="6.0.5" />
-    <PackageReference Update="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NLog" VersionOverride="6.0.5" />
+    <PackageReference Include="Newtonsoft.Json" VersionOverride="13.0.3" />
   </ItemGroup>
 
 </Project>
