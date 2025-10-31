@@ -689,8 +689,8 @@ delete from {1}..Project
     /// <returns></returns>
     protected DiscoveredDatabase GetCleanedServer(DatabaseType type, string dbnName = null)
     {
-        //the standard scratch area database
-        var standardName = TestDatabaseNames.GetConsistentName("ScratchArea");
+        //the standard scratch area database (use Oracle-safe naming for Oracle databases)
+        var standardName = TestDatabaseNames.GetConsistentName("ScratchArea", type);
 
         //if user specified the standard name or no name
         var isStandardDb = dbnName == null || dbnName == standardName;

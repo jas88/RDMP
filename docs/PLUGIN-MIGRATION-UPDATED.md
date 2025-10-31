@@ -89,3 +89,5 @@ This document describes the updated migration strategy for consolidating the RDM
 - RdmpDicom remains a separate product with its own versioning and release cycle
 - HicPlugin and RdmpExtensions are internal RDMP plugins suitable for consolidation
 - Tests that require RdmpDicom should reference it as an external package
+
+[Project]: ../Documentation/CodeTutorials/Glossary.md#Project

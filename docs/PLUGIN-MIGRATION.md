@@ -98,3 +98,5 @@ To verify the migration works correctly:
 - This approach makes it easier to eventually move plugins into core if needed
 - The consolidated structure is more maintainable than the distributed plugin system
 - Tests can be run independently on Linux (non-UI) and Windows (UI)
+
+[Project]: ../Documentation/CodeTutorials/Glossary.md#Project

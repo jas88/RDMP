@@ -97,8 +97,25 @@ jobs:
       - name: Add lcov to PATH
         shell: powershell
         run: |
+          # Add chocolatey lib directories to PATH
           echo "C:\ProgramData\chocolatey\lib\lcov\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # Verify lcov installation and add to current session PATH
+          $lcovPath = "C:\ProgramData\chocolatey\lib\lcov\tools"
+          if (Test-Path $lcovPath) {
+            $env:PATH += ";$lcovPath"
+            Write-Host "lcov found at: $lcovPath"
+            Get-ChildItem $lcovPath
+          } else {
+            Write-Host "lcov tools not found at expected location, searching..."
+            Get-ChildItem "C:\ProgramData\chocolatey\lib\lcov" -Recurse -Filter "lcov*" | ForEach-Object {
+              if ($_.PSIsContainer) {
+                $env:PATH += ";" + $_.FullName
+                echo $_.FullName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                Write-Host "Found lcov directory: $($_.FullName)"
+              }
+            }
+          }
 
       - name: Initialise LocalDB
         shell: bash
@@ -234,19 +251,18 @@ jobs:
       MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
       ACCEPT_EULA: "Y"
       MSSQL_PID: "developer"
-    # Oracle disabled due to table name length limitations in tests
-    # services:
-    #   oracle:
-    #     image: ghcr.io/gvenzl/oracle-xe:21-slim
-    #     env:
-    #       ORACLE_PASSWORD: oracle
-    #     ports:
-    #       - 1521:1521
-    #     options: >-
-    #       --health-cmd "echo 'SELECT 1 FROM DUAL;' | sqlplus -s system/oracle@localhost:1521/XEPDB1"
-    #       --health-interval 10s
-    #       --health-timeout 5s
-    #       --health-retries 10
+    services:
+      oracle:
+        image: ghcr.io/gvenzl/oracle-xe:21-slim
+        env:
+          ORACLE_PASSWORD: oracle
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd "echo 'SELECT 1 FROM DUAL;' | sqlplus -s system/oracle@localhost:1521/XEPDB1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -265,10 +281,23 @@ jobs:
       - name: Install database packages
         uses: awalsh128/cache-apt-pkgs-action@v1.6.0
         with:
-          packages: libeatmydata1 apt-transport-https curl postgresql postgresql-contrib mysql-server libmysqlclient-dev mssql-tools mssql-server
+          packages: libeatmydata1 apt-transport-https curl mysql-server libmysqlclient-dev mssql-tools mssql-server alien libaio1
           version: 1.0
           execute_install_scripts: true
-        # Note: Oracle packages removed as Oracle tests are disabled
+        # Note: PostgreSQL packages removed as these tests are disabled, Oracle client tools added
+
+      - name: Install Oracle Instant Client
+        run: |
+          # Install Oracle Instant Client for sqlplus
+          wget -q https://download.oracle.com/otn_software/linux/instantclient/2110000/instantclient-basic-linux.x64-21.10.0.0.0dbru.zip
+          wget -q https://download.oracle.com/otn_software/linux/instantclient/2110000/instantclient-sqlplus-linux.x64-21.10.0.0.0dbru.zip
+          unzip instantclient-basic-linux.x64-21.10.0.0.0dbru.zip
+          unzip instantclient-sqlplus-linux.x64-21.10.0.0.0dbru.zip
+          sudo mv instantclient_21_10 /opt/oracle/
+          echo "/opt/oracle/instantclient_21_10" | sudo tee -a /etc/ld.so.conf
+          sudo ldconfig
+          export PATH="/opt/oracle/instantclient_21_10:$PATH"
+          echo "PATH=/opt/oracle/instantclient_21_10:$PATH" >> $GITHUB_ENV
 
       - name: Configure and start databases
         continue-on-error: true
@@ -284,21 +313,9 @@ jobs:
           sudo mkdir -p /var/opt/mssql/data
           sudo chown mssql:mssql /var/opt/mssql/data
 
-          # Start databases
-          sudo systemctl start postgresql
-          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'pgpass4291';"
+          # Start databases (PostgreSQL disabled - tests are commented out)
           sudo systemctl start mysql.service
           sudo systemctl start mssql-server
-
-          # Wait for services
-          echo "Waiting for PostgreSQL..."
-          for i in {1..30}; do
-            if pg_isready -h localhost; then
-              echo "PostgreSQL is ready!"
-              break
-            fi
-            sleep 2
-          done
 
           echo "Waiting for MySQL..."
           for i in {1..30}; do
@@ -313,6 +330,16 @@ jobs:
               break
             fi
             sleep 2
+          done
+
+          echo "Waiting for Oracle..."
+          for i in {1..60}; do
+            if echo 'SELECT 1 FROM DUAL;' | sqlplus -s system/oracle@localhost:1521/XEPDB1 >/dev/null 2>&1; then
+              echo "Oracle is ready!"
+              break
+            fi
+            echo "Attempt $i: Oracle not ready..."
+            sleep 5
           done
 
           # Apply SQL Server performance settings after startup
@@ -354,7 +381,7 @@ jobs:
           Password: YourStrong!Passw0rd
           MySql: server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;AllowPublicKeyRetrieval=True
           #PostgreSql: User ID=postgres;Password=pgpass4291;Host=127.0.0.1;Port=5432
-          #Oracle: Data Source=localhost:1521/XEPDB1;User Id=system;Password=oracle
+          Oracle: Data Source=localhost:1521/XEPDB1;User Id=system;Password=oracle
           EOF
 
     # Skip RSA key creation for Linux to avoid OpenSSL compatibility issues
