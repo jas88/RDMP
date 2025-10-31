@@ -20,3 +20,5 @@ _Extraction Component FoDicomBasedExtraction_
 
 [Project]: ../../../Documentation/CodeTutorials/Glossary.md#Project
 
+
+[Project]: ../../Documentation/CodeTutorials/Glossary.md#Project

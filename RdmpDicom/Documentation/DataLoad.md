@@ -52,3 +52,5 @@ Sometimes there are differences in study/series level tags between images when y
 
 [Image Tables]: #image-tables
 [Catalogue]: ../../../Documentation/CodeTutorials/Glossary.md#Catalogue
+
+[Catalogue]: ../../Documentation/CodeTutorials/Glossary.md#Catalogue

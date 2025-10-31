@@ -4,7 +4,8 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 using NUnit.Framework;
-using Minio;
+using Amazon.S3;
+using Amazon.S3.Model;
 using Rdmp.Core.ReusableLibraryCode.AWS;
 using Tests.Common.Scenarios;
 using Rdmp.Core.DataFlowPipeline;
@@ -17,9 +18,8 @@ using Rdmp.Core.CommandLine.Runners;
 using Rdmp.Core.CommandExecution;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using System.Linq;
-using Minio.DataModel.Args;
 using System.Collections.Generic;
-using Minio.DataModel;
+using Amazon;
 using Rdmp.Core.Curation.Data.DataLoad;
 
 namespace Rdmp.Core.Tests.DataExport.DataRelease;
@@ -29,23 +29,26 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
     private const string Username = "minioadmin";
     private const string Password = "minioadmin";
     private const string Endpoint = "127.0.0.1:9000";
-    private static IMinioClient _minioClient;
+    private static IAmazonS3 _s3Client;
 
 
     [OneTimeTearDown]
     public void OneTimeTearDown()
     {
-        _minioClient?.Dispose();
+        _s3Client?.Dispose();
     }
 
     [OneTimeSetUp]
     public new void OneTimeSetUp()
     {
-        _minioClient = new MinioClient()
-            .WithEndpoint(Endpoint)
-            .WithCredentials(Username, Password)
-            .WithSSL(false)
-            .Build();
+        var config = new AmazonS3Config
+        {
+            RegionEndpoint = RegionEndpoint.USEast1, // MinIO default
+            ServiceURL = $"http://{Endpoint}",
+            ForcePathStyle = true // Required for MinIO compatibility
+        };
+
+        _s3Client = new AmazonS3Client(Username, Password, config);
     }
 
     private void DoExtraction()
@@ -56,16 +59,21 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
 
     private static void MakeBucket(string name)
     {
-        var mbArgs = new MakeBucketArgs()
-            .WithBucket(name);
-        _minioClient.MakeBucketAsync(mbArgs).Wait();
+        var request = new PutBucketRequest
+        {
+            BucketName = name,
+            UseClientRegion = true
+        };
+        _s3Client.PutBucketAsync(request).Wait();
     }
 
     private static void DeleteBucket(string name)
     {
-        var rbArgs = new RemoveBucketArgs()
-            .WithBucket(name);
-        _minioClient.RemoveBucketAsync(rbArgs).Wait();
+        var request = new DeleteBucketRequest
+        {
+            BucketName = name
+        };
+        _s3Client.DeleteBucketAsync(request).Wait();
     }
 
     private static void DeleteBucketAndContents(string name)
@@ -74,21 +82,26 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         var objects = GetObjects(name);
         foreach (var obj in objects)
         {
-            var removeArgs = new RemoveObjectArgs()
-                .WithBucket(name)
-                .WithObject(obj.Key);
-            _minioClient.RemoveObjectAsync(removeArgs).Wait();
+            var request = new DeleteObjectRequest
+            {
+                BucketName = name,
+                Key = obj.Key
+            };
+            _s3Client.DeleteObjectAsync(request).Wait();
         }
 
         // Now delete the empty bucket
         DeleteBucket(name);
     }
 
-    private static List<Minio.DataModel.Item> GetObjects(string bucketName)
+    private static List<S3Object> GetObjects(string bucketName)
     {
-        var loArgs = new ListObjectsArgs().WithBucket(bucketName);
-        var x = _minioClient.ListObjectsEnumAsync(loArgs).ToListAsync();
-        return x.IsCompleted ? x.Result : x.AsTask().Result;
+        var request = new ListObjectsV2Request
+        {
+            BucketName = bucketName
+        };
+        var response = _s3Client.ListObjectsV2Async(request).Result;
+        return response.S3Objects.ToList();
     }
 
     private static void SetArgs(IArgument[] args, Dictionary<string, object> values)

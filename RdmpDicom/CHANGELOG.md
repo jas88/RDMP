@@ -538,3 +538,6 @@ Updated to be compatible with RDMP 4.2
 [Tag Elevation]:https://github.com/SMI/DicomTypeTranslation/tree/main/DicomTypeTranslation/Elevation
 [Pipeline]: ../../Documentation/CodeTutorials/Glossary.md#Pipeline
 [Catalogue]: ../../Documentation/CodeTutorials/Glossary.md#Catalogue
+
+[Pipeline]: ../Documentation/CodeTutorials/Glossary.md#Pipeline
+[Catalogue]: ../Documentation/CodeTutorials/Glossary.md#Catalogue
