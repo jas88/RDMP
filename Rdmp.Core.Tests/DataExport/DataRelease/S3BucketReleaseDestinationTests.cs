@@ -68,6 +68,22 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         _minioClient.RemoveBucketAsync(rbArgs).Wait();
     }
 
+    private static void DeleteBucketAndContents(string name)
+    {
+        // First, delete all objects in the bucket
+        var objects = GetObjects(name);
+        foreach (var obj in objects)
+        {
+            var removeArgs = new RemoveObjectArgs()
+                .WithBucket(name)
+                .WithObject(obj.Key);
+            _minioClient.RemoveObjectAsync(removeArgs).Wait();
+        }
+
+        // Now delete the empty bucket
+        DeleteBucket(name);
+    }
+
     private static List<Minio.DataModel.Item> GetObjects(string bucketName)
     {
         var loArgs = new ListObjectsArgs().WithBucket(bucketName);
@@ -128,6 +144,9 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         Assert.DoesNotThrow(() => runner.Run(RepositoryLocator, ThrowImmediatelyDataLoadEventListener.Quiet, ThrowImmediatelyCheckNotifier.Quiet, new GracefulCancellationToken()));
         var foundObjects = GetObjects("releasetoawsbasictest");
         Assert.That(foundObjects, Has.Count.EqualTo(1));
+
+        // Clean up bucket and its contents after test
+        DeleteBucketAndContents("releasetoawsbasictest");
     }
 
     [Test]
@@ -361,5 +380,8 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         Assert.Throws<AggregateException>(() => runner.Run(RepositoryLocator, ThrowImmediatelyDataLoadEventListener.Quiet, ThrowImmediatelyCheckNotifier.Quiet, new GracefulCancellationToken()));
         foundObjects = GetObjects("locationalreadyexist");
         Assert.That(foundObjects, Has.Count.EqualTo(1));
+
+        // Clean up bucket and its contents after test
+        DeleteBucketAndContents("locationalreadyexist");
     }
 }
