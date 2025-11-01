@@ -101,7 +101,12 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
             BucketName = bucketName
         };
         var response = _s3Client.ListObjectsV2Async(request).Result;
-        return response.S3Objects.ToList();
+
+        // Filter out directory markers and empty objects to match MinIO client behavior
+        return response.S3Objects
+            .Where(obj => !obj.Key.EndsWith("/")) // Exclude directory markers
+            .Where(obj => obj.Size > 0) // Exclude empty marker objects
+            .ToList();
     }
 
     private static void SetArgs(IArgument[] args, Dictionary<string, object> values)
