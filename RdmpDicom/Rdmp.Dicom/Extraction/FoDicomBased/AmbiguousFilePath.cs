@@ -99,8 +99,14 @@ public partial class AmbiguousFilePath
                 return;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            // If it's a zip file extension but we couldn't read it, that's an error
+            if (Path.GetExtension(absPath).Equals(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new AmbiguousFilePathResolutionException(
+                    $"Failed to read zip file '{absPath}': {ex.Message}", ex);
+            }
             // Not a zip so ignore, treat as single file
         }
 
