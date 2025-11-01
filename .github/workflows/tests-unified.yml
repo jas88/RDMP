@@ -174,7 +174,6 @@ jobs:
             -c Release \
             --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage-db -type f` windows-ui-db.lcov
 
       - name: Re-initialise RDMP (File System)
         shell: bash
@@ -193,7 +192,6 @@ jobs:
             -c Release \
             --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-          mv `find coverage-fs -type f` windows-ui-fs.lcov
 
       - name: Upload Windows UI coverage
         uses: coverallsapp/github-action@v2.3.6
