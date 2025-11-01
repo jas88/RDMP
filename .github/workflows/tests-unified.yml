@@ -426,7 +426,7 @@ jobs:
       - name: Test RdmpDicom (Non-UI)
         timeout-minutes: 30
         run: |
-          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
