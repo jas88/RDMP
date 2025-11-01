@@ -378,16 +378,27 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
         // All plugin projects (Plugins, Plugins.UI, Plugins.Tests, Plugins.UI.Tests) are in the same Plugins directory
         if (IsConsolidatedPluginProject(p.Name))
         {
-            // For plugin projects, look in the appropriate subdirectory under Plugins
+            // For plugin projects, look in the Plugins directory structure
             // The project path should be Plugins\Plugins\Plugins.csproj, Plugins\Plugins.UI\Plugins.UI.csproj, etc.
-            var expectedProjectDir = Path.Combine(physicalSolutionFolder.FullName, p.Name);
-
-            // First try to find the project in its named subdirectory
             FileInfo csProjFile = null;
-            if (Directory.Exists(expectedProjectDir))
+
+            // First try the Plugins directory with project subdirectory
+            var pluginsDir = Path.Combine(physicalSolutionFolder.FullName, "Plugins");
+            if (Directory.Exists(pluginsDir))
             {
-                csProjFile = new DirectoryInfo(expectedProjectDir).EnumerateFiles("*.csproj")
-                    .SingleOrDefault(f => f.Name.Equals($"{p.Name}.csproj"));
+                var projectSubDir = Path.Combine(pluginsDir, p.Name);
+                if (Directory.Exists(projectSubDir))
+                {
+                    csProjFile = new DirectoryInfo(projectSubDir).EnumerateFiles("*.csproj")
+                        .SingleOrDefault(f => f.Name.Equals($"{p.Name}.csproj"));
+                }
+
+                // Fallback: look directly in Plugins directory
+                if (csProjFile == null)
+                {
+                    csProjFile = new DirectoryInfo(pluginsDir).EnumerateFiles("*.csproj")
+                        .SingleOrDefault(f => f.Name.Equals($"{p.Name}.csproj"));
+                }
             }
 
             // Fallback: try directly in the physical solution folder (for compatibility)
@@ -397,25 +408,14 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
                     .SingleOrDefault(f => f.Name.Equals($"{p.Name}.csproj"));
             }
 
-            // Fallback: try looking in the Plugins directory specifically (for root-level plugin projects)
+            // Final fallback: try in a subdirectory named after the project
             if (csProjFile == null)
             {
-                var pluginsDir = Path.Combine(physicalSolutionFolder.FullName, "Plugins");
-                if (Directory.Exists(pluginsDir))
+                var expectedProjectDir = Path.Combine(physicalSolutionFolder.FullName, p.Name);
+                if (Directory.Exists(expectedProjectDir))
                 {
-                    var projectSubDir = Path.Combine(pluginsDir, p.Name);
-                    if (Directory.Exists(projectSubDir))
-                    {
-                        csProjFile = new DirectoryInfo(projectSubDir).EnumerateFiles("*.csproj")
-                            .SingleOrDefault(f => f.Name.Equals($"{p.Name}.csproj"));
-                    }
-
-                    // Final fallback: look directly in Plugins directory
-                    if (csProjFile == null)
-                    {
-                        csProjFile = new DirectoryInfo(pluginsDir).EnumerateFiles("*.csproj")
-                            .SingleOrDefault(f => f.Name.Equals($"{p.Name}.csproj"));
-                    }
+                    csProjFile = new DirectoryInfo(expectedProjectDir).EnumerateFiles("*.csproj")
+                        .SingleOrDefault(f => f.Name.Equals($"{p.Name}.csproj"));
                 }
             }
 
