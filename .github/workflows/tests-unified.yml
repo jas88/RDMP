@@ -141,15 +141,17 @@ jobs:
         timeout-minutes: 10
         shell: bash
         run: |
-          echo "Creating MySQL external databases and running integration tests..."
+          {
+            echo "Commands:"
+            echo "  - createnewexternaldatabaseserver LiveLoggingServer_ID \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_logging2\""
+            echo "  - createnewexternaldatabaseserver DQE \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe\""
+            echo "  - createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache\""
+          } > /tmp/db.yaml
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/db.yaml --dir ~/rdmp/rdmp-yaml/
 
           # Create combined YAML with external database setup first
           {
             echo "Commands:"
-            echo "  - createnewexternaldatabaseserver LiveLoggingServer_ID \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_logging2\" --dir ~/rdmp/rdmp-yaml/"
-            echo "  - createnewexternaldatabaseserver DQE \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe\" --dir ~/rdmp/rdmp-yaml/"
-            echo "  - createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache\" --dir ~/rdmp/rdmp-yaml/"
-            echo ""
             # Append integration test scripts (skip the Commands header)
             sed '1,/^Commands:/d' scripts/create_list_destroy_catalogue.yaml
             sed '1,/^Commands:/d' scripts/create_cohort.yaml
