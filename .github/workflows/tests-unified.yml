@@ -470,7 +470,7 @@ jobs:
         timeout-minutes: 30
         run: |
           echo "=== Running Plugin Tests in File System Mode ==="
-          dotnet test Plugins/Plugins.Tests.csproj \
+          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
@@ -489,7 +489,7 @@ jobs:
         timeout-minutes: 30
         run: |
           echo "=== Running RdmpDicom Tests in File System Mode ==="
-          dotnet test Plugins/RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
