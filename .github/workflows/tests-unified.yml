@@ -359,11 +359,6 @@ jobs:
             --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
-          CORE_FILE=$(find coverage/core -name "*.lcov" | head -1)
-          if [ -n "$CORE_FILE" ]; then
-            mv "$CORE_FILE" core-db.lcov
-          fi
-
       - name: Switch to File System Mode
         run: |
           echo "=== Switching to File System Mode ==="
@@ -382,11 +377,6 @@ jobs:
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-
-          CORE_FS_FILE=$(find coverage/core-fs -name "*.lcov" | head -1)
-          if [ -n "$CORE_FS_FILE" ]; then
-            mv "$CORE_FS_FILE" core-fs.lcov
-          fi
 
       - name: Upload coverage
         uses: coverallsapp/github-action@v2.3.6
@@ -446,12 +436,6 @@ jobs:
       - name: Build and bundle
         id: version
         shell: bash
-        env:
-          AZURE_KEY_VAULT_URI: ${{ secrets.AZURE_KEY_VAULT_URI }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
         run: ./.github/scripts/build-bundle.sh
 
       - name: Perform CodeQL Analysis
