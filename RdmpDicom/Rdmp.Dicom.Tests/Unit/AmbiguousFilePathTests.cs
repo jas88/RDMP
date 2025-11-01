@@ -4,7 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
-﻿using FellowOakDicom;
+using FellowOakDicom;
 using NUnit.Framework;
 using Rdmp.Dicom.Extraction.FoDicomBased;
 using System;
@@ -12,7 +12,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using Rdmp.Core.Startup;
 using NUnit.Framework.Legacy;
 
 namespace Rdmp.Dicom.Tests.Unit;
@@ -26,8 +25,12 @@ public class AmbiguousFilePathTests
         var path1 = new AmbiguousFilePath(@"c:\temp\my.dcm");
         var path2 = new AmbiguousFilePath(@"c:\temp", @"c:\temp\my.dcm");
 
-        Assert.That(path1, Is.Not.Null);
-        Assert.That(path2, Is.Not.Null);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(path1, Is.Not.Null);
+            Assert.That(path2, Is.Not.Null);
+        }
+
     }
 
 
@@ -39,13 +42,19 @@ public class AmbiguousFilePathTests
           Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "IM-0001-0013.dcm"),
           f.FullName, true);
 
-        var a = new AmbiguousFilePath(f.FullName);
-        var ds = a.GetDataset().Single().Item2;
-
-        Assert.That(ds.Dataset.GetValue<string>(DicomTag.SOPInstanceUID, 0), Is.Not.Null);
-
-        f.Delete();
+        try
+        {
+            var a = new AmbiguousFilePath(f.FullName);
+            var ds = a.GetDataset().Single().Item2;
+    
+            Assert.That(ds.Dataset.GetValue<string>(DicomTag.SOPInstanceUID, 0), Is.Not.Null);    
+        }
+        finally
+        {
+                f.Delete();
+        }
     }
+
     [Test]
     public void GetDatasetFromZipFileTest()
     {
@@ -54,22 +63,24 @@ public class AmbiguousFilePathTests
         if (fzip.Exists)
             fzip.Delete();
 
-        var bytes = File.ReadAllBytes(Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "IM-0001-0013.dcm"));
-
         using (var z = ZipFile.Open(fzip.FullName, ZipArchiveMode.Create))
         {
-            var entry = z.CreateEntry("test.dcm");
-            using var s = entry.Open();
-            s.Write(bytes, 0, bytes.Length);
+            z.CreateEntryFromFile(Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "IM-0001-0013.dcm"), "test.dcm");
         }
 
-        Assert.Throws<AmbiguousFilePathResolutionException>(() => _ = new AmbiguousFilePath(Path.Combine(TestContext.CurrentContext.WorkDirectory, "omgzip.zip!lol")).GetDataset().ToList());
+        try
+        {
+            Assert.Throws<AmbiguousFilePathResolutionException>(() => _ = new AmbiguousFilePath(Path.Combine(TestContext.CurrentContext.WorkDirectory, "omgzip.zip!lol")).GetDataset().ToList());
 
-        var a = new AmbiguousFilePath(Path.Combine(TestContext.CurrentContext.WorkDirectory, "omgzip.zip!test.dcm"));
-        var ds = a.GetDataset().Single().Item2;
+            var a = new AmbiguousFilePath(Path.Combine(TestContext.CurrentContext.WorkDirectory, "omgzip.zip!test.dcm"));
+            var ds = a.GetDataset().Single().Item2;
 
-        Assert.That(ds.Dataset.GetValue<string>(DicomTag.SOPInstanceUID, 0), Is.Not.Null);
-        fzip.Delete();
+            Assert.That(ds.Dataset.GetValue<string>(DicomTag.SOPInstanceUID, 0), Is.Not.Null);
+        }
+        finally
+        {
+            fzip.Delete();
+        }
     }
 
     [Test]
