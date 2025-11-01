@@ -79,6 +79,7 @@ public sealed class DicomSourceUnitTests
     {
         var zip = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData.zip");
         var dir = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData");
+        var txt = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData.txt");
 
         if (File.Exists(zip))
             File.Delete(zip);
@@ -88,17 +89,19 @@ public sealed class DicomSourceUnitTests
         var fileCount = Directory.GetFiles(dir, "*.dcm").Length;
 
         var source = new DicomFileCollectionSource { FilenameField = "RelativeFileArchiveURI" };
-        source.PreInitialize(new FlatFileToLoadDicomFileWorklist(new(new(zip))), ThrowImmediatelyDataLoadEventListener.Quiet);
+        File.WriteAllLines(txt,
+            Directory.EnumerateFiles(dir).Select(e => $"{zip}!{e}"));
+        source.PreInitialize(new FlatFileToLoadDicomFileWorklist(new(new(txt))), ThrowImmediatelyDataLoadEventListener.Quiet);
         var toMemory = new ToMemoryDataLoadEventListener(true);
         var result = source.GetChunk(toMemory, new());
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             //processed every file once
             Assert.That(toMemory.LastProgressRecieivedByTaskName.Single().Value.Progress.Value, Is.EqualTo(fileCount));
 
             Assert.That(result.Columns, Is.Not.Empty);
-        });
+        }
     }
 
     [Test]
