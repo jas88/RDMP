@@ -15,7 +15,7 @@
     <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
     <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
+    <IsTestProject Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'false'">true</IsTestProject>
     <!-- This is a metadata project only - no code compilation -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
