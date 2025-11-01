@@ -2,7 +2,6 @@ name: Tests
 
 on:
   push:
-    branches: [ main, feature/* ]
 
 env:
   DOTNET_NOLOGO: 1
@@ -89,33 +88,10 @@ jobs:
           $xml.Save($writer)
           $writer.Close()
 
-      - name: Install MS SQL LocalDB and lcov
+      - name: Install MS SQL LocalDB
         uses: crazy-max/ghaction-chocolatey@v3
         with:
-          args: install -r sqllocaldb lcov --no-progress
-
-      - name: Add lcov to PATH
-        shell: powershell
-        run: |
-          # Add chocolatey lib directories to PATH
-          echo "C:\ProgramData\chocolatey\lib\lcov\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          # Verify lcov installation and add to current session PATH
-          $lcovPath = "C:\ProgramData\chocolatey\lib\lcov\tools"
-          if (Test-Path $lcovPath) {
-            $env:PATH += ";$lcovPath"
-            Write-Host "lcov found at: $lcovPath"
-            Get-ChildItem $lcovPath
-          } else {
-            Write-Host "lcov tools not found at expected location, searching..."
-            Get-ChildItem "C:\ProgramData\chocolatey\lib\lcov" -Recurse -Filter "lcov*" | ForEach-Object {
-              if ($_.PSIsContainer) {
-                $env:PATH += ";" + $_.FullName
-                echo $_.FullName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-                Write-Host "Found lcov directory: $($_.FullName)"
-              }
-            }
-          }
+          args: install -r sqllocaldb --no-progress
 
       - name: Initialise LocalDB
         shell: bash
@@ -161,42 +137,39 @@ jobs:
             sleep 2
           done
 
-      - name: Create MySQL external databases
-        run: |
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver LiveLoggingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_logging2" --dir ~/rdmp/rdmp-yaml/
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver DQE "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe" --dir ~/rdmp/rdmp-yaml/
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID "DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache" --dir ~/rdmp/rdmp-yaml/
-
       - name: Run integration test scripts
         timeout-minutes: 10
         shell: bash
         run: |
-          cat scripts/create_list_destroy_catalogue.yaml > /tmp/combined-tests.yaml
-          sed '1,/^Commands:/d' scripts/create_cohort.yaml >> /tmp/combined-tests.yaml
-          sed '1,/^Commands:/d' scripts/create_dataload.yaml >> /tmp/combined-tests.yaml
-          sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml >> /tmp/combined-tests.yaml
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
+          echo "Creating MySQL external databases and running integration tests..."
 
-      - name: Setup MinIO
-        shell: bash
-        run: |
-          curl -L "https://dl.min.io/server/minio/release/windows-amd64/minio.exe" > minio.exe
-          ./minio.exe server ./minio --console-address :9001 &
-          mkdir ~/.aws
-          echo -e "[minio]\naws_access_key_id=minioadmin\naws_secret_access_key=minioadmin\naws_endpoint_url=http://127.0.0.1:9001" > ~/.aws/credentials
+          # Create combined YAML with external database setup first
+          {
+            echo "Commands:"
+            echo "  - createnewexternaldatabaseserver LiveLoggingServer_ID \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_logging2\" --dir ~/rdmp/rdmp-yaml/"
+            echo "  - createnewexternaldatabaseserver DQE \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe\" --dir ~/rdmp/rdmp-yaml/"
+            echo "  - createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache\" --dir ~/rdmp/rdmp-yaml/"
+            echo ""
+            # Append integration test scripts (skip the Commands header)
+            sed '1,/^Commands:/d' scripts/create_list_destroy_catalogue.yaml
+            sed '1,/^Commands:/d' scripts/create_cohort.yaml
+            sed '1,/^Commands:/d' scripts/create_dataload.yaml
+            sed '1,/^Commands:/d' scripts/orphan_extractable_column.yaml
+          } > /tmp/combined-tests.yaml
+
+          # Run all commands in a single invocation
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
 
       - name: Test UI (Database Mode)
         timeout-minutes: 45
         shell: bash
         run: |
-          echo "=== Running UI Tests in Database Mode ==="
-          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj \
+          dotnet test --filter "FullyQualifiedName~.UI. | FullyQualifiedName~BasicPathsTest" \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
             --verbosity minimal \
             -c Release \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage-db \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
           mv `find coverage-db -type f` windows-ui-db.lcov
@@ -204,41 +177,28 @@ jobs:
       - name: Re-initialise RDMP (File System)
         shell: bash
         run: |
-          echo "=== Switching to File System Mode ==="
-          # Just add the filesystem flag to TestDatabases.txt - RDMP will auto-create YAML repo
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
 
       - name: Test UI (File System Mode)
         timeout-minutes: 30
         shell: bash
         run: |
-          echo "=== Running UI Tests in File System Mode ==="
-          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj \
+          dotnet test --filter "FullyQualifiedName~.UI. | FullyQualifiedName~BasicPathsTest" \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
             --verbosity minimal \
             -c Release \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage-fs \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
           mv `find coverage-fs -type f` windows-ui-fs.lcov
 
-      - name: Upload Windows UI coverage (DB)
+      - name: Upload Windows UI coverage
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./windows-ui-db.lcov
-          flag-name: windows-ui-db
-          fail-on-error: false
-        continue-on-error: true
-
-      - name: Upload Windows UI coverage (FS)
-        uses: coverallsapp/github-action@v2.3.6
-        with:
-          github-token: ${{ secrets.github_token }}
-          files: ./windows-ui-fs.lcov
-          flag-name: windows-ui-fs
+          files: ./windows-ui-db.lcov ./windows-ui-fs.lcov
+          flag-name: windows
           fail-on-error: false
         continue-on-error: true
 
@@ -272,8 +232,6 @@ jobs:
           packages: libeatmydata1 apt-transport-https curl mysql-server libmysqlclient-dev mssql-tools mssql-server alien libaio1
           version: 1.0
           execute_install_scripts: true
-        # Note: PostgreSQL packages removed as these tests are disabled
-        # Note: Oracle tests disabled to avoid CI failures
 
       - name: Configure and start databases
         continue-on-error: true
@@ -333,15 +291,13 @@ jobs:
             sleep 2
           done
 
-      - name: Populate Databases.yaml
+      - name: Populate Databases.yaml and TestDatabases.txt
         run: |
           cat > ./Tools/rdmp/Databases.yaml << EOF
           CatalogueConnectionString: Server=localhost;Database=TEST_Catalogue;User Id=SA;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
           DataExportConnectionString: Server=localhost;Database=TEST_DataExport;User Id=SA;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Connection Timeout=180;
           EOF
 
-      - name: Update TestDatabases.txt for Linux
-        run: |
           cat > ./Tests.Common/TestDatabases.txt << EOF
           Prefix: TEST_
           ServerName: localhost
@@ -361,7 +317,7 @@ jobs:
 
       - name: Setup MinIO
         run: |
-          curl -L "https://dl.min.io/server/minio/release/linux-amd64/minio" > minio
+          curl -sL "https://dl.min.io/server/minio/release/linux-amd64/minio" > minio
           chmod +x minio
           mkdir -p ./minio-data
           ./minio server ./minio-data --console-address :9001 &
@@ -387,10 +343,10 @@ jobs:
 
           echo $MINIO_PID > /tmp/minio.pid
 
-      - name: Test Core
+      - name: Test non-UI
         timeout-minutes: 45
         run: |
-          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
+          dotnet test \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
@@ -402,43 +358,7 @@ jobs:
 
           CORE_FILE=$(find coverage/core -name "*.lcov" | head -1)
           if [ -n "$CORE_FILE" ]; then
-            mv "$CORE_FILE" core.lcov
-          fi
-
-      - name: Test Plugins (Non-UI)
-        timeout-minutes: 30
-        run: |
-          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --no-build \
-            --verbosity minimal \
-            -c Release \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/plugins-db \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-
-          PLUGINS_DB_FILE=$(find coverage/plugins-db -name "*.lcov" | head -1)
-          if [ -n "$PLUGINS_DB_FILE" ]; then
-            mv "$PLUGINS_DB_FILE" plugins-db.lcov
-          fi
-
-      - name: Test RdmpDicom (Non-UI)
-        timeout-minutes: 30
-        run: |
-          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --no-build \
-            --verbosity minimal \
-            -c Release \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/rdmpdicom-db \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-
-          RDMPDICOM_DB_FILE=$(find coverage/rdmpdicom-db -name "*.lcov" | head -1)
-          if [ -n "$RDMPDICOM_DB_FILE" ]; then
-            mv "$RDMPDICOM_DB_FILE" rdmpdicom-db.lcov
+            mv "$CORE_FILE" core-db.lcov
           fi
 
       - name: Switch to File System Mode
@@ -450,8 +370,7 @@ jobs:
       - name: Test Core (File System Mode)
         timeout-minutes: 45
         run: |
-          echo "=== Running Core Tests in File System Mode ==="
-          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
+          dotnet test \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
@@ -466,111 +385,14 @@ jobs:
             mv "$CORE_FS_FILE" core-fs.lcov
           fi
 
-      - name: Test Plugins (Non-UI) - File System Mode
-        timeout-minutes: 30
-        run: |
-          echo "=== Running Plugin Tests in File System Mode ==="
-          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --no-build \
-            --verbosity minimal \
-            -c Release \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/plugins-fs \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-
-          PLUGINS_FS_FILE=$(find coverage/plugins-fs -name "*.lcov" | head -1)
-          if [ -n "$PLUGINS_FS_FILE" ]; then
-            mv "$PLUGINS_FS_FILE" plugins-fs.lcov
-          fi
-
-      - name: Test RdmpDicom (Non-UI) - File System Mode
-        timeout-minutes: 30
-        run: |
-          echo "=== Running RdmpDicom Tests in File System Mode ==="
-          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --no-build \
-            --verbosity minimal \
-            -c Release \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/rdmpdicom-fs \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-
-          RDMPDICOM_FS_FILE=$(find coverage/rdmpdicom-fs -name "*.lcov" | head -1)
-          if [ -n "$RDMPDICOM_FS_FILE" ]; then
-            mv "$RDMPDICOM_FS_FILE" rdmpdicom-fs.lcov
-          fi
-
-      - name: Cleanup MinIO
-        if: always()
-        run: |
-          if [ -f /tmp/minio.pid ]; then
-            kill $(cat /tmp/minio.pid) || true
-            rm -f /tmp/minio.pid
-          fi
-
-      - name: Upload coverage - Core
+      - name: Upload coverage
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./core.lcov
+          files: ./core-db.lcov ./core-fs.lcov
           flag-name: linux-core
           fail-on-error: false
         continue-on-error: true
-        if: hashFiles('core.lcov') != ''
-
-      - name: Upload coverage - Plugins (DB)
-        uses: coverallsapp/github-action@v2.3.6
-        with:
-          github-token: ${{ secrets.github_token }}
-          files: ./plugins-db.lcov
-          flag-name: linux-plugins-db
-          fail-on-error: false
-        continue-on-error: true
-        if: hashFiles('plugins-db.lcov') != ''
-
-      - name: Upload coverage - RdmpDicom (DB)
-        uses: coverallsapp/github-action@v2.3.6
-        with:
-          github-token: ${{ secrets.github_token }}
-          files: ./rdmpdicom-db.lcov
-          flag-name: linux-rdmpdicom-db
-          fail-on-error: false
-        continue-on-error: true
-        if: hashFiles('rdmpdicom-db.lcov') != ''
-
-      - name: Upload coverage - Core (FS)
-        uses: coverallsapp/github-action@v2.3.6
-        with:
-          github-token: ${{ secrets.github_token }}
-          files: ./core-fs.lcov
-          flag-name: linux-core-fs
-          fail-on-error: false
-        continue-on-error: true
-        if: hashFiles('core-fs.lcov') != ''
-
-      - name: Upload coverage - Plugins (FS)
-        uses: coverallsapp/github-action@v2.3.6
-        with:
-          github-token: ${{ secrets.github_token }}
-          files: ./plugins-fs.lcov
-          flag-name: linux-plugins-fs
-          fail-on-error: false
-        continue-on-error: true
-        if: hashFiles('plugins-fs.lcov') != ''
-
-      - name: Upload coverage - RdmpDicom (FS)
-        uses: coverallsapp/github-action@v2.3.6
-        with:
-          github-token: ${{ secrets.github_token }}
-          files: ./rdmpdicom-fs.lcov
-          flag-name: linux-rdmpdicom-fs
-          fail-on-error: false
-        continue-on-error: true
-        if: hashFiles('rdmpdicom-fs.lcov') != ''
 
   # Bundle job - depends on ALL test jobs
   bundle:

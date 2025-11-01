@@ -8,7 +8,6 @@
 using NUnit.Framework;
 using Rdmp.Dicom.Extraction.FoDicomBased;
 using System;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -20,16 +19,9 @@ namespace Rdmp.Dicom.Tests.Unit;
 
 public class AmbiguousFilePathTests
 {
-    [Test]
+    [Test, Platform("Win")]
     public void BasicPathsTest()
     {
-        // Skip Windows-specific tests on non-Windows platforms
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            Assert.Ignore("Windows-specific paths are not applicable on non-Windows platforms");
-            return;
-        }
-
         // On Windows, these paths should work fine
         var path1 = new AmbiguousFilePath(@"c:\temp\my.dcm");
         var path2 = new AmbiguousFilePath(@"c:\temp", @"c:\temp\my.dcm");
