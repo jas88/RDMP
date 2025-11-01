@@ -54,7 +54,7 @@ public partial class AmbiguousFilePath
     private static readonly Regex RegexDigitsAndDotsOnly = DigitsAndDotsOnlyRegex();
 
 
-    public AmbiguousFilePath(string fullPath) : this(null, fullPath)
+    public AmbiguousFilePath(string fullPath) : this(null, new[] { (fullPath, fullPath) })
     {
     }
 
@@ -65,11 +65,25 @@ public partial class AmbiguousFilePath
             throw new ArgumentException($"Specified root path '{root}' was not IsAbsolute", nameof(root));
 
         _fullPaths = new SortedDictionary<string, string>();
-        paths.Select(p => (Combine(root, p.Item1), p.Item2)).Each(p => _fullPaths.Add(p.Item1, p.Item2));
+        foreach (var p in paths.Select(p => (Combine(root, p.Item1), p.Item2)))
+        {
+            _fullPaths.Add(p.Item1, p.Item2);
+        }
     }
 
     public AmbiguousFilePath(string fullPath, string fileName)
     {
+        // If fileName is null, treat fullPath as the complete path
+        if (fileName == null)
+        {
+            fileName = fullPath;
+            fullPath = null;
+        }
+
+        // Check if fullPath (as root) is provided but not absolute
+        if (!string.IsNullOrWhiteSpace(fullPath) && !IsAbsolute(fullPath))
+            throw new ArgumentException($"Specified root path '{fullPath}' was not IsAbsolute", nameof(fullPath));
+
         var absPath = Combine(fullPath, fileName);
         try
         {
@@ -78,7 +92,10 @@ public partial class AmbiguousFilePath
             {
                 _fullPaths = new SortedDictionary<string, string>();
                 using var zip = new LibArchiveReader(absPath);
-                zip.Entries().Each(e => _fullPaths.Add($"{absPath}!{e.Name}", $"{fileName}!{e.Name}"));
+                foreach (var e in zip.Entries())
+                {
+                    _fullPaths.Add($"{absPath}!{e.Name}", $"{fileName}!{e.Name}");
+                }
                 return;
             }
         }
@@ -94,6 +111,10 @@ public partial class AmbiguousFilePath
     {
         if (IsAbsolute(path))
             return path;
+
+        // If we don't have a root and the path is not absolute, it's a relative path
+        if (string.IsNullOrEmpty(root))
+            throw new ArgumentException("Relative path was encountered without specifying a root", nameof(path));
 
         if (!IsZipReference(path))
             return Path.Combine(root, path);
