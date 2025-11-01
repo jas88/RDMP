@@ -172,7 +172,7 @@ jobs:
             --no-build \
             --verbosity minimal \
             -c Release \
-            --results-directory coverage-db \
+            --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
           mv `find coverage-db -type f` windows-ui-db.lcov
 
@@ -191,7 +191,7 @@ jobs:
             --no-build \
             --verbosity minimal \
             -c Release \
-            --results-directory coverage-fs \
+            --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
           mv `find coverage-fs -type f` windows-ui-fs.lcov
 
@@ -199,8 +199,9 @@ jobs:
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./windows-ui-db.lcov ./windows-ui-fs.lcov
+          files: ./coverage/**
           flag-name: windows
+          parallel: true
           fail-on-error: false
         continue-on-error: true
 
@@ -355,7 +356,7 @@ jobs:
             --verbosity minimal \
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/core \
+            --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
           CORE_FILE=$(find coverage/core -name "*.lcov" | head -1)
@@ -379,7 +380,7 @@ jobs:
             --verbosity minimal \
             -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage/core-fs \
+            --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
           CORE_FS_FILE=$(find coverage/core-fs -name "*.lcov" | head -1)
@@ -391,8 +392,9 @@ jobs:
         uses: coverallsapp/github-action@v2.3.6
         with:
           github-token: ${{ secrets.github_token }}
-          files: ./core-db.lcov ./core-fs.lcov
+          files: ./coverage/**
           flag-name: linux-core
+          parallel-finished: true
           fail-on-error: false
         continue-on-error: true
 
