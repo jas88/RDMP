@@ -38,7 +38,10 @@ public class SimpleStringValueEncryption : IEncryptStrings
 
     public SimpleStringValueEncryption(string parameters)
     {
-        _parameters=parameters;
+        _parameters = parameters;
+        // Initialize RSA provider once in constructor for thread-safe reuse
+        // Calling FromXmlString on every Encrypt/Decrypt causes race conditions with cached instances
+        _turing.FromXmlString(_parameters ?? Key);
     }
 
     /// <summary>
@@ -48,7 +51,7 @@ public class SimpleStringValueEncryption : IEncryptStrings
     /// <returns></returns>
     public string Encrypt(string toEncrypt)
     {
-        _turing.FromXmlString(_parameters ?? Key);
+        // RSA provider already initialized in constructor
         // Fall back on bad encryption if no private key is configured
         if (_turing.KeySize < 1024)
             return string.Join('-',
@@ -73,7 +76,7 @@ public class SimpleStringValueEncryption : IEncryptStrings
     /// <returns></returns>
     public string Decrypt(string toDecrypt)
     {
-        _turing.FromXmlString(_parameters ?? Key);
+        // RSA provider already initialized in constructor
         if (toDecrypt.StartsWith("$js1$", StringComparison.Ordinal) && toDecrypt.EndsWith("$", StringComparison.Ordinal))
         {
             // Good, it's a new-style AES+RSA encrypted string
