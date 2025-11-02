@@ -66,7 +66,8 @@ namespace Rdmp.Core.DataExport.Data
                 ei.SaveToDatabase();
             }
 
-            // Clear cached extractability status since project associations changed
+            // Clear cached Projects list and extractability status since associations changed
+            eds.ClearAllInjections();
             catalogue.ClearAllInjections();
 
             return eds;
@@ -103,7 +104,8 @@ namespace Rdmp.Core.DataExport.Data
                 ei.SaveToDatabase();
             }
 
-            // Clear cached extractability status since project associations changed
+            // Clear cached Projects list and extractability status since associations changed
+            extractableDataSet.ClearAllInjections();
             catalogue.ClearAllInjections();
         }
     }
