@@ -96,9 +96,12 @@ public sealed class DicomSourceUnitTests
         source.PreInitialize(new FlatFileToLoadDicomFileWorklist(new(new(txt))), ThrowImmediatelyDataLoadEventListener.Quiet);
         var toMemory = new ToMemoryDataLoadEventListener(true);
         DataTable result = null;
+        DataTable lastResult = null;
         do
         {
             result = source.GetChunk(toMemory, new());
+            if (result != null)
+                lastResult = result;
         } while (result != null);
 
         using (Assert.EnterMultipleScope())
@@ -106,7 +109,7 @@ public sealed class DicomSourceUnitTests
             //processed every file once
             Assert.That(toMemory.LastProgressRecieivedByTaskName.Single().Value.Progress.Value, Is.EqualTo(fileCount));
 
-            Assert.That(result.Columns, Is.Not.Empty);
+            Assert.That(lastResult.Columns, Is.Not.Empty);
         }
     }
 
