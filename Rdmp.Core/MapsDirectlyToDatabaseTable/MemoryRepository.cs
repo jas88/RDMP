@@ -256,15 +256,20 @@ public class MemoryRepository : IRepository
         // Get or create the changes set for this object (thread-safe)
         var changesSet = _propertyChanges.GetOrAdd(onObject, _ => new HashSet<PropertyChangedExtendedEventArgs>());
 
-        //if we already knew of a previous change
-        var collision = changesSet.SingleOrDefault(c => c.PropertyName.Equals(changes.PropertyName));
+        // Lock the HashSet to prevent concurrent modification during enumeration/mutation
+        // HashSet is not thread-safe, even though ConcurrentDictionary protects outer access
+        lock (changesSet)
+        {
+            //if we already knew of a previous change
+            var collision = changesSet.SingleOrDefault(c => c.PropertyName.Equals(changes.PropertyName));
 
-        //throw away that knowledge
-        if (collision != null)
-            changesSet.Remove(collision);
+            //throw away that knowledge
+            if (collision != null)
+                changesSet.Remove(collision);
 
-        //we know about this change now
-        changesSet.Add(changes);
+            //we know about this change now
+            changesSet.Add(changes);
+        }
     }
 
 
