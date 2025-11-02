@@ -65,14 +65,7 @@ public sealed class ExecuteCommandChangeExtractionCategory : BasicCommandExecuti
 
         if (c == null)
             return;
-
-        // Check if catalogue is project-specific (re-check at execution time to catch injected statuses)
-        var cata = _extractionInformations.Select(static ei => ei.CatalogueItem.Catalogue).Distinct().ToArray();
-        var isProjectSpecificNow = cata.Length == 1 &&
-                                    BasicActivator.RepositoryLocator.DataExportRepository != null &&
-                                    cata[0].IsProjectSpecific(BasicActivator.RepositoryLocator.DataExportRepository);
-
-        if (isProjectSpecificNow && c == ExtractionCategory.Core)
+        if (_isProjectSpecific && c == ExtractionCategory.Core)
         {
             // Don't allow project specific catalogue items to become core
             c = ExtractionCategory.ProjectSpecific;
