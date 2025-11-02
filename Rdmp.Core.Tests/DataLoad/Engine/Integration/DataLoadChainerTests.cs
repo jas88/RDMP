@@ -16,6 +16,7 @@ using FAnsi;
 using Rdmp.Core.Curation.Data.Defaults;
 using Rdmp.Core.Logging;
 using Rdmp.Core.Curation;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using System.IO;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration
@@ -34,6 +35,9 @@ namespace Rdmp.Core.Tests.DataLoad.Engine.Integration
         [Test]
         public void dlc_RunWithBadLoadMetaData()
         {
+            if (CatalogueRepository is not TableRepository)
+                Assert.Ignore("DataLoadChainer requires database-backed repository (TableRepository)");
+
             var fakeDataLoad = NSubstitute.Substitute.For<LoadMetadata>();
             var provider = new DataLoadChainer();
             var activator = new ConsoleInputManager(RepositoryLocator, ThrowImmediatelyCheckNotifier.Quiet);
@@ -45,6 +49,9 @@ namespace Rdmp.Core.Tests.DataLoad.Engine.Integration
         [Test]
         public void dlc_RunWithLoadMetaData()
         {
+            if (CatalogueRepository is not TableRepository)
+                Assert.Ignore("DataLoadChainer requires database-backed repository (TableRepository)");
+
             var db = GetCleanedServer(DatabaseType.MicrosoftSQLServer);
             const string sql = @"
 if not exists (select * from sysobjects where name='DLCTest' and xtype='U')
