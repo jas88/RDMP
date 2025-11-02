@@ -347,7 +347,7 @@ jobs:
       - name: Test non-UI
         timeout-minutes: 45
         run: |
-          dotnet test \
+          dotnet test --test-modules="**/bin/Release/net9.0/*.Tests.dll" \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
@@ -366,7 +366,7 @@ jobs:
       - name: Test Core (File System Mode)
         timeout-minutes: 45
         run: |
-          dotnet test \
+          dotnet test --test-modules="**/bin/Release/net9.0/*.Tests.dll" \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --no-build \
