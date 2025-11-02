@@ -106,5 +106,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Rdmp.UI\Rdmp.UI.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\..\Plugins\Plugins\Plugins.csproj" />
+    <ProjectReference Include="..\..\Plugins\Plugins.UI\Plugins.UI.csproj" />
+    </ItemGroup>
 </Project>

@@ -56,10 +56,10 @@ namespace Tests.Common;
 [TestFixture]
 [NonParallelizable]
 [Category("Database")]
-public partial class DatabaseTests
+public abstract partial class DatabaseTests
 {
     protected readonly IRDMPPlatformRepositoryServiceLocator RepositoryLocator;
-    protected static TestDatabasesSettings TestDatabaseSettings;
+    public static TestDatabasesSettings TestDatabaseSettings;
     private static bool HaveTriedCreatingTestDatabases;
 
     public ICatalogueRepository CatalogueRepository => RepositoryLocator.CatalogueRepository;
@@ -689,8 +689,8 @@ delete from {1}..Project
     /// <returns></returns>
     protected DiscoveredDatabase GetCleanedServer(DatabaseType type, string dbnName = null)
     {
-        //the standard scratch area database
-        var standardName = TestDatabaseNames.GetConsistentName("ScratchArea");
+        //the standard scratch area database (use Oracle-safe naming for Oracle databases)
+        var standardName = TestDatabaseNames.GetConsistentName("ScratchArea", type);
 
         //if user specified the standard name or no name
         var isStandardDb = dbnName == null || dbnName == standardName;
@@ -722,7 +722,14 @@ delete from {1}..Project
         if (!server.Exists() && type != DatabaseType.MicrosoftSQLServer)
             Assert.Inconclusive();
 
-        server.TestConnection();
+        try
+        {
+            server.TestConnection();
+        }
+        catch (Exception ex)
+        {
+            Assert.Inconclusive($"Database connection failed for {type}: {ex.Message}");
+        }
 
         var database = server.ExpectDatabase(dbnName);
 

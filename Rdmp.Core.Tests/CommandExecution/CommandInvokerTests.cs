@@ -15,7 +15,9 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.CommandExecution;
 
+#pragma warning disable NUnit1034 // Class used as base class but has tests
 public class CommandInvokerTests : UnitTests
+#pragma warning restore NUnit1034
 {
     [Test]
     public void Test_ListSupportedCommands_NoPicker()

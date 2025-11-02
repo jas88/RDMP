@@ -14,7 +14,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.QueryCaching;
 
-public class QueryCachingDatabaseTests : DatabaseTests
+public abstract class QueryCachingDatabaseTests : DatabaseTests
 {
     protected string QueryCachingDatabaseName = TestDatabaseNames.GetConsistentName("QueryCaching");
     public DiscoveredDatabase DiscoveredQueryCachingDatabase { get; set; }

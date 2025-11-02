@@ -1,0 +1,90 @@
+#!/bin/bash
+# Pre-commit hook to build and check for compilation errors
+
+echo "Running pre-commit checks..."
+
+# Check YAML syntax in staged files
+STAGED_YAML_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(yml|yaml)$')
+
+if [ -n "$STAGED_YAML_FILES" ]; then
+    echo "Checking YAML syntax..."
+    YAML_CHECK_FAILED=0
+
+    while IFS= read -r file; do
+        if [ -f "$file" ]; then
+            echo "  Checking: $file"
+            if ! python3 -c "import yaml; yaml.safe_load(open('$file', 'r'))" 2>/dev/null; then
+                echo "❌ YAML syntax error in: $file"
+                python3 -c "import yaml; yaml.safe_load(open('$file', 'r'))" 2>&1 | head -5
+                YAML_CHECK_FAILED=1
+            fi
+        fi
+    done <<< "$STAGED_YAML_FILES"
+
+    if [ $YAML_CHECK_FAILED -ne 0 ]; then
+        echo ""
+        echo "❌ YAML validation failed! Commit blocked."
+        echo "Fix YAML syntax errors before committing."
+        exit 1
+    fi
+
+    echo "✓ YAML validation passed"
+fi
+
+# Check markdown links in staged files
+STAGED_MD_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.md$')
+
+if [ -n "$STAGED_MD_FILES" ]; then
+    echo "Checking markdown links..."
+    LINK_CHECK_FAILED=0
+
+    while IFS= read -r file; do
+        if [ -f "$file" ]; then
+            echo "  Checking: $file"
+            if ! markdown-link-check --config deadlinksconfig.json --quiet "$file"; then
+                LINK_CHECK_FAILED=1
+            fi
+        fi
+    done <<< "$STAGED_MD_FILES"
+
+    if [ $LINK_CHECK_FAILED -ne 0 ]; then
+        echo ""
+        echo "❌ Markdown link check failed! Commit blocked."
+        echo "Fix broken links before committing."
+        exit 1
+    fi
+
+    echo "✓ Markdown link check passed"
+fi
+
+# Build in Debug configuration
+echo "Building Debug configuration..."
+dotnet build -c Debug --no-restore -v quiet
+
+DEBUG_EXIT_CODE=$?
+
+if [ $DEBUG_EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "❌ Debug build failed! Commit blocked."
+    echo "Fix compilation errors before committing."
+    exit 1
+fi
+
+echo "✓ Debug build succeeded"
+
+# Build in Release configuration
+echo "Building Release configuration..."
+dotnet build -c Release --no-restore -v quiet
+
+RELEASE_EXIT_CODE=$?
+
+if [ $RELEASE_EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "❌ Release build failed! Commit blocked."
+    echo "Fix compilation errors before committing."
+    exit 1
+fi
+
+echo "✓ Release build succeeded"
+echo "✓ All checks passed"
+exit 0

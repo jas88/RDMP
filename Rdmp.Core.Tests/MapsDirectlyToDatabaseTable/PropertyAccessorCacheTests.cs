@@ -278,7 +278,7 @@ public class PropertyAccessorCacheTests
             var sw = Stopwatch.StartNew();
             for (var i = 0; i < iterations; i++)
                 prop.GetValue(entity);
-            sw.Stop();
+          sw.Stop();
             if (run > 0) // Discard first run
                 reflectionTimes.Add(sw.ElapsedMilliseconds);
         }
@@ -286,6 +286,9 @@ public class PropertyAccessorCacheTests
         var accessorAvg = accessorTimes.Average();
         var reflectionAvg = reflectionTimes.Average();
         var speedup = reflectionAvg / accessorAvg;
+        TestContext.Out.WriteLine($"Compiled accessor (avg): {accessorAvg:F2}ms");
+        TestContext.Out.WriteLine($"Reflection (avg): {reflectionAvg:F2}ms");
+        TestContext.Out.WriteLine($"Speedup: {speedup:F2}x");
 
         TestContext.Out.WriteLine("=== Performance Benchmark Results ===");
         TestContext.Out.WriteLine($"Iterations per run: {iterations:N0}");

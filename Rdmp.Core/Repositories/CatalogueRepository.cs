@@ -174,7 +174,8 @@ public class CatalogueRepository : TableRepository, ICatalogueRepository
     /// <inheritdoc/>
     public TicketingSystemConfiguration GetTicketingSystem()
     {
-        var configuration = GetAllObjects<TicketingSystemConfiguration>().Where(t => t.IsActive).ToArray();
+        // Optimized: Use GetAllObjectsWhere for boolean property filter
+        var configuration = GetAllObjectsWhere<TicketingSystemConfiguration>("IsActive", true).ToArray();
 
         return configuration.Length switch
         {

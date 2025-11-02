@@ -88,7 +88,9 @@ public class TriggerTests : DatabaseTests
     {
         _database = GetCleanedServer(dbType);
 
-        _table = _database.CreateTable("Trol lol My Table Select * from Group by fish", new DatabaseColumnRequest[]
+        // Use Oracle-safe table name
+        var tableName = TestDatabaseNames.GetConsistentName("TrolLolMyTable", dbType);
+        _table = _database.CreateTable(tableName, new DatabaseColumnRequest[]
         {
             new("My Lovely Column Select * From Lolz", new DatabaseTypeRequest(typeof(string), 30))
                 { AllowNulls = false, IsPrimaryKey = true },

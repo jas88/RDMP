@@ -6,35 +6,69 @@
 
 using FAnsi;
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Tests.Common;
 
 public class All
 {
     /// <summary>
-    /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all DBMS
+    /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all configured DBMS
+    /// Only returns database types that are actually configured in TestDatabases.txt
     /// </summary>
-    public static DatabaseType[] DatabaseTypes =
+    public static DatabaseType[] DatabaseTypes
     {
-        DatabaseType.MicrosoftSQLServer,
-        DatabaseType.MySql,
-        DatabaseType.Oracle,
-        DatabaseType.PostgreSql
-    };
+        get
+        {
+            var types = new List<DatabaseType> { DatabaseType.MicrosoftSQLServer };
+
+            if (DatabaseTests.TestDatabaseSettings?.MySql != null)
+                types.Add(DatabaseType.MySql);
+
+            if (DatabaseTests.TestDatabaseSettings?.Oracle != null)
+                types.Add(DatabaseType.Oracle);
+
+            if (DatabaseTests.TestDatabaseSettings?.PostgreSql != null)
+                types.Add(DatabaseType.PostgreSql);
+
+            return types.ToArray();
+        }
+    }
 
     /// <summary>
-    /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all DBMS
+    /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all configured DBMS
     /// with both permutations of true/false.  Matches exhaustively method signature (DatabaseType,bool)
     /// </summary>
-    public static object[] DatabaseTypesWithBoolFlags =
+    public static object[] DatabaseTypesWithBoolFlags
     {
-        new object[] { DatabaseType.MicrosoftSQLServer, true },
-        new object[] { DatabaseType.MySql, true },
-        new object[] { DatabaseType.Oracle, true },
-        new object[] { DatabaseType.PostgreSql, true },
-        new object[] { DatabaseType.MicrosoftSQLServer, false },
-        new object[] { DatabaseType.MySql, false },
-        new object[] { DatabaseType.Oracle, false },
-        new object[] { DatabaseType.PostgreSql, false }
-    };
+        get
+        {
+            var types = new List<object>
+            {
+                new object[] { DatabaseType.MicrosoftSQLServer, true },
+                new object[] { DatabaseType.MicrosoftSQLServer, false }
+            };
+
+            if (DatabaseTests.TestDatabaseSettings?.MySql != null)
+            {
+                types.Add(new object[] { DatabaseType.MySql, true });
+                types.Add(new object[] { DatabaseType.MySql, false });
+            }
+
+            if (DatabaseTests.TestDatabaseSettings?.Oracle != null)
+            {
+                types.Add(new object[] { DatabaseType.Oracle, true });
+                types.Add(new object[] { DatabaseType.Oracle, false });
+            }
+
+            if (DatabaseTests.TestDatabaseSettings?.PostgreSql != null)
+            {
+                types.Add(new object[] { DatabaseType.PostgreSql, true });
+                types.Add(new object[] { DatabaseType.PostgreSql, false });
+            }
+
+            return types.ToArray();
+        }
+    }
 }

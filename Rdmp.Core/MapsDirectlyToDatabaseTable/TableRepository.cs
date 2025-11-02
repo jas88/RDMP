@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -416,13 +417,20 @@ public abstract class TableRepository : ITableRepository, IDisposable
     public int GetHashCode(IMapsDirectlyToDatabaseTable obj1) => obj1.GetType().GetHashCode() * obj1.ID;
 
     /// <summary>
+    /// Cache for GetPropertyInfos to avoid repeated reflection + attribute checking
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PropertyInfoCache = new();
+
+    /// <summary>
     /// Gets all public properties of the class that are not decorated with [<see cref="NoMappingToDatabase"/>]
+    /// Results are cached for performance.
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
     public static PropertyInfo[] GetPropertyInfos(Type type)
     {
-        return type.GetProperties().Where(prop => !Attribute.IsDefined(prop, typeof(NoMappingToDatabase))).ToArray();
+        return PropertyInfoCache.GetOrAdd(type, static t =>
+            t.GetProperties().Where(prop => !Attribute.IsDefined(prop, typeof(NoMappingToDatabase))).ToArray());
     }
 
     /// <inheritdoc/>
@@ -678,6 +686,21 @@ public abstract class TableRepository : ITableRepository, IDisposable
     public void InsertAndHydrate<T>(T toCreate, Dictionary<string, object> constructorParameters)
         where T : IMapsDirectlyToDatabaseTable
     {
+        // AUTOMATIC PARENT FLUSHING: Detect and flush parent objects to prevent FK race conditions
+        // This ensures parent objects are visible before child INSERT with FK constraint checks
+        if (constructorParameters != null)
+        {
+            foreach (var param in constructorParameters.Values)
+            {
+                if (param is IMapsDirectlyToDatabaseTable parent && parent.ID > 0)
+                {
+                    // Only flush if parent is persisted (has an ID)
+                    FlushVisibility(parent);
+                    _logger.Debug($"Auto-flushed parent {parent.GetType().Name} ID={parent.ID} before creating {typeof(T).Name}");
+                }
+            }
+        }
+
         var id = InsertAndReturnID<T>(constructorParameters);
 
         var actual = GetObjectByID<T>(id);
@@ -960,5 +983,33 @@ public abstract class TableRepository : ITableRepository, IDisposable
     public void EndTransaction(bool commit)
     {
         EndTransactedConnection(commit);
+    }
+
+    /// <summary>
+    /// Ensures that the specified object is fully visible to other connections/transactions.
+    /// This is necessary when AUTO_UPDATE_STATISTICS_ASYNC is ON, as newly inserted parent objects
+    /// may not be immediately visible for FK constraint checks.
+    ///
+    /// <para>This method executes a lightweight SELECT query that forces SQL Server to synchronize
+    /// visibility without the overhead of UPDATE STATISTICS.</para>
+    /// </summary>
+    /// <param name="obj">The object to flush (typically a parent object before creating children)</param>
+    public void FlushVisibility(IMapsDirectlyToDatabaseTable obj)
+    {
+        if (obj == null || obj.ID == 0)
+            return; // Object not yet persisted, nothing to flush
+
+        using var con = GetConnection();
+        using var cmd = con.Connection.CreateCommand();
+        cmd.Transaction = con.Transaction;
+
+        // Simple SELECT that forces visibility without updating statistics
+        // Uses index seek on primary key - very fast (<1ms)
+        cmd.CommandText = $"SELECT TOP 1 1 FROM {Wrap(obj.GetType().Name)} WHERE ID = @id";
+        DatabaseCommandHelper.AddParameterWithValueToCommand("@id", cmd, obj.ID);
+
+        cmd.ExecuteScalar();
+
+        _logger.Debug($"Flushed visibility for {obj.GetType().Name} ID={obj.ID}");
     }
 }

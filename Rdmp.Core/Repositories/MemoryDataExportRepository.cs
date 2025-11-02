@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.DataExport.DataRelease.Audit;
@@ -37,7 +38,8 @@ public class MemoryDataExportRepository : MemoryCatalogueRepository, IDataExport
 
     public ISelectedDataSets[] GetSelectedDatasetsWithNoExtractionIdentifiers()
     {
-        var col = GetAllObjects<ExtractableColumn>().Where(ec => ec.IsExtractionIdentifier).ToArray();
+        // Optimized: Use GetAllObjectsWhere for boolean property filter
+        var col = GetAllObjectsWhere<ExtractableColumn>("IsExtractionIdentifier", true).ToArray();
 
         return GetAllObjects<ISelectedDataSets>()
             .Where(sds => !col.Any(c => c.ExtractableDataSet_ID == sds.ExtractableDataSet_ID
@@ -101,8 +103,11 @@ public class MemoryDataExportRepository : MemoryCatalogueRepository, IDataExport
     public IEnumerable<ICumulativeExtractionResults> GetAllCumulativeExtractionResultsFor(
         IExtractionConfiguration configuration, IExtractableDataSet dataset)
     {
-        return GetAllObjects<CumulativeExtractionResults>().Where(e =>
-            e.ExtractionConfiguration_ID == configuration.ID && e.ExtractableDataSet_ID == dataset.ID);
+        // Optimized: Use GetAllObjectsWhere with AND condition for dual ID filter
+        return GetAllObjectsWhere<CumulativeExtractionResults>(
+            "ExtractionConfiguration_ID", configuration.ID,
+            ExpressionType.AndAlso,
+            "ExtractableDataSet_ID", dataset.ID);
     }
 
     public IReleaseLog GetReleaseLogEntryIfAny(CumulativeExtractionResults cumulativeExtractionResults) =>

@@ -265,8 +265,19 @@ public class OverviewModel
 
     public List<CumulativeExtractionResults> GetExtractions()
     {
-        var datasets = _activator.RepositoryLocator.DataExportRepository.GetAllObjectsWhere<ExtractableDataSet>("Catalogue_ID", _catalogue.ID).Select(d => d.ID);
-        var results = _activator.RepositoryLocator.DataExportRepository.GetAllObjects<CumulativeExtractionResults>().Where(result => datasets.Contains(result.ExtractableDataSet_ID)).ToList();
+        var datasetIds = _activator.RepositoryLocator.DataExportRepository
+            .GetAllObjectsWhere<ExtractableDataSet>("Catalogue_ID", _catalogue.ID)
+            .Select(d => d.ID)
+            .ToList();
+
+        // Optimized: Instead of scanning all results, query each dataset individually
+        var results = new List<CumulativeExtractionResults>();
+        foreach (var datasetId in datasetIds)
+        {
+            results.AddRange(_activator.RepositoryLocator.DataExportRepository
+                .GetAllObjectsWhere<CumulativeExtractionResults>("ExtractableDataSet_ID", datasetId));
+        }
+
         return results;
     }
 }

@@ -7,6 +7,7 @@
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Aggregation;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration.QueryBuildingTests.AggregateBuilderTests;
@@ -35,6 +36,9 @@ public abstract class AggregateBuilderTestsBase : DatabaseTests
         _cataItem2 = new CatalogueItem(CatalogueRepository, _c, "Col2");
 
         _ti = new TableInfo(CatalogueRepository, "T1");
+        // Ensure TableInfo is visible before creating dependent ColumnInfo objects
+        _ti.SaveAndFlush();
+
         _columnInfo1 = new ColumnInfo(CatalogueRepository, "Col1", "varchar(100)", _ti);
         _columnInfo2 = new ColumnInfo(CatalogueRepository, "Col2", "date", _ti);
 
