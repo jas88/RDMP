@@ -131,7 +131,7 @@ public class MemoryRepository : IRepository
     /// </summary>
     private FrozenDictionary<Type, Type[]> BuildTypeHierarchy()
     {
-        var hierarchy = new Dictionary<Type, HashSet<Type>>();
+        var hierarchy = new ConcurrentDictionary<Type, ConcurrentBag<Type>>();
 
         // Get all concrete types currently in storage
         var concreteTypes = _objectsByType.Keys.ToArray();
@@ -142,18 +142,16 @@ public class MemoryRepository : IRepository
             // Add all interfaces
             foreach (var iface in concreteType.GetInterfaces())
             {
-                if (!hierarchy.ContainsKey(iface))
-                    hierarchy[iface] = new HashSet<Type>();
-                hierarchy[iface].Add(concreteType);
+                var ifaceBag = hierarchy.GetOrAdd(iface, _ => new ConcurrentBag<Type>());
+                ifaceBag.Add(concreteType);
             }
 
             // Add base class chain
             var baseType = concreteType.BaseType;
             while (baseType != null && baseType != typeof(object))
             {
-                if (!hierarchy.ContainsKey(baseType))
-                    hierarchy[baseType] = new HashSet<Type>();
-                hierarchy[baseType].Add(concreteType);
+                var baseBag = hierarchy.GetOrAdd(baseType, _ => new ConcurrentBag<Type>());
+                baseBag.Add(concreteType);
                 baseType = baseType.BaseType;
             }
         }
@@ -161,7 +159,7 @@ public class MemoryRepository : IRepository
         // Convert to FrozenDictionary for optimal lookup performance
         return hierarchy.ToFrozenDictionary(
             kvp => kvp.Key,
-            kvp => kvp.Value.ToArray());
+            kvp => kvp.Value.Distinct().ToArray());
     }
 
     /// <summary>
@@ -255,18 +253,18 @@ public class MemoryRepository : IRepository
         var changes = (PropertyChangedExtendedEventArgs)e;
         var onObject = (IMapsDirectlyToDatabaseTable)sender;
 
-        //if we don't know about this object yet
-        _propertyChanges.TryAdd(onObject, new HashSet<PropertyChangedExtendedEventArgs>());
+        // Get or create the changes set for this object (thread-safe)
+        var changesSet = _propertyChanges.GetOrAdd(onObject, _ => new HashSet<PropertyChangedExtendedEventArgs>());
 
         //if we already knew of a previous change
-        var collision = _propertyChanges[onObject].SingleOrDefault(c => c.PropertyName.Equals(changes.PropertyName));
+        var collision = changesSet.SingleOrDefault(c => c.PropertyName.Equals(changes.PropertyName));
 
         //throw away that knowledge
         if (collision != null)
-            _propertyChanges[onObject].Remove(collision);
+            changesSet.Remove(collision);
 
         //we know about this change now
-        _propertyChanges[onObject].Add(changes);
+        changesSet.Add(changes);
     }
 
 
@@ -462,11 +460,12 @@ public class MemoryRepository : IRepository
         if (typeDict.TryGetValue(oTableWrapperObject.ID, out var existing) &&
             !ReferenceEquals(existing, oTableWrapperObject))
         {
+            // Atomically update the reference
             typeDict[oTableWrapperObject.ID] = oTableWrapperObject;
         }
         else
         {
-            // New object, add it
+            // New object, add it safely
             typeDict.TryAdd(oTableWrapperObject.ID, oTableWrapperObject);
         }
 
