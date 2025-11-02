@@ -65,6 +65,10 @@ namespace Rdmp.Core.DataExport.Data
                 ei.ExtractionCategory = ExtractionCategory.ProjectSpecific;
                 ei.SaveToDatabase();
             }
+
+            // Clear cached extractability status since project associations changed
+            catalogue.ClearAllInjections();
+
             return eds;
         }
 
@@ -98,6 +102,9 @@ namespace Rdmp.Core.DataExport.Data
                 ei.ExtractionCategory = ExtractionCategory.Core;
                 ei.SaveToDatabase();
             }
+
+            // Clear cached extractability status since project associations changed
+            catalogue.ClearAllInjections();
         }
     }
 }
