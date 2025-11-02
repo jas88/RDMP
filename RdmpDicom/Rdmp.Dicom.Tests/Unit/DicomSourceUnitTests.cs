@@ -17,6 +17,7 @@ using Rdmp.Core.DataLoad.Engine.Job;
 using Rdmp.Dicom.PipelineComponents.DicomSources;
 using Rdmp.Dicom.PipelineComponents.DicomSources.Worklists;
 using Rdmp.Core.ReusableLibraryCode.Progress;
+using System.Data;
 
 namespace Rdmp.Dicom.Tests.Unit;
 
@@ -94,7 +95,11 @@ public sealed class DicomSourceUnitTests
         File.ReadAllLines(txt).Each(Console.Error.WriteLine);
         source.PreInitialize(new FlatFileToLoadDicomFileWorklist(new(new(txt))), ThrowImmediatelyDataLoadEventListener.Quiet);
         var toMemory = new ToMemoryDataLoadEventListener(true);
-        var result = source.GetChunk(toMemory, new());
+        DataTable result = null;
+        do
+        {
+            result = source.GetChunk(toMemory, new());
+        } while (result != null);
 
         using (Assert.EnterMultipleScope())
         {
