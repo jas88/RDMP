@@ -7,6 +7,7 @@
 using NUnit.Framework;
 using Rdmp.Core.CommandExecution;
 using Rdmp.Core.Curation.Data;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.MapsDirectlyToDatabaseTable.Revertable;
 using Tests.Common;
 
@@ -49,6 +50,9 @@ public class CommitInProgressTests : DatabaseTests
     [Test]
     public void CommitInProgress_TestCancellation()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Transaction rollback requires database-backed repository (TableRepository)");
+
         var c = new Catalogue(CatalogueRepository, "Hey");
 
         Assert.That(c.HasLocalChanges().Evaluation, Is.EqualTo(ChangeDescription.NoChanges),

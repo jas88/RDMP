@@ -62,9 +62,21 @@ public class DataLoadChainer : IDataProvider, IInteractiveCheckable
             return;
         }
 
-        var catalogueString = (_activator.RepositoryLocator.CatalogueRepository as TableRepository).ConnectionString;
+        if (_activator.RepositoryLocator.CatalogueRepository is not TableRepository catalogueRepo)
+        {
+            notifier.OnCheckPerformed(new CheckEventArgs("DataLoadChainer requires database-backed CatalogueRepository (TableRepository)", CheckResult.Fail));
+            return;
+        }
 
-        var dataExportManagerConnectionString = (_activator.RepositoryLocator.DataExportRepository as TableRepository).ConnectionString;
+        if (_activator.RepositoryLocator.DataExportRepository is not TableRepository exportRepo)
+        {
+            notifier.OnCheckPerformed(new CheckEventArgs("DataLoadChainer requires database-backed DataExportRepository (TableRepository)", CheckResult.Fail));
+            return;
+        }
+
+        var catalogueString = catalogueRepo.ConnectionString;
+
+        var dataExportManagerConnectionString = exportRepo.ConnectionString;
 
         LinkedRepositoryProvider newrepo;
 

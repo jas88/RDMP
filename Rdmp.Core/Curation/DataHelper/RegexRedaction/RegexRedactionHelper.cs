@@ -137,8 +137,14 @@ namespace Rdmp.Core.Curation.DataHelper.RegexRedaction
                 INSERT INTO RegexRedactionKey(RegexRedaction_ID,ColumnInfo_ID,Value)
 			    select RegexRedaction_ID,ColumnInfo_ID,Value  FROM @IDMATCHER;
             ";
-           
-                (catalogueRepo as TableRepository).Insert(sql, null, timeout);
+
+            if (catalogueRepo is not TableRepository tableRepo)
+                throw new NotSupportedException(
+                    "Redaction operations require a database-backed repository and cannot be performed in File System mode. " +
+                    "Redaction tracking uses database-specific features (transactions, OUTPUT clause, referential integrity) " +
+                    "that are not available in YamlRepository/MemoryRepository.");
+
+            tableRepo.Insert(sql, null, timeout);
         }
 
         public static void DoJoinUpdate(ColumnInfo column, DiscoveredTable _discoveredTable, DiscoveredServer _server, DataTable redactionUpates, DiscoveredColumn[] _discoveredPKColumns, int timeout = 30000)

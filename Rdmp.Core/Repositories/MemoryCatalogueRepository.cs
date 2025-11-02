@@ -267,11 +267,12 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
         var toreturn = Enum.GetValues(typeof(DataAccessContext)).Cast<DataAccessContext>()
             .ToDictionary(context => context, _ => new List<ITableInfo>());
 
-        //add the keys
+        //add the keys - only for tables using the specified credentials
 
         foreach (var kvp in CredentialsDictionary)
             foreach (var forNode in kvp.Value)
-                toreturn[forNode.Key].Add(kvp.Key);
+                if (Equals(forNode.Value, credentials))
+                    toreturn[forNode.Key].Add(kvp.Key);
 
         return toreturn;
     }

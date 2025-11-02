@@ -18,6 +18,7 @@ using Rdmp.Core.ReusableLibraryCode.Checks;
 using System.Data;
 using FAnsi.Discovery;
 using Rdmp.Core.CommandExecution;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 
 namespace Rdmp.Core.Tests.CommandExecution;
 
@@ -95,6 +96,10 @@ public class ExecuteCommandPerformRegexRedactionOnCatalogueTests : DatabaseTests
     [SetUp]
     public new void SetUp()
     {
+        // Redaction operations require database-specific SQL features not available in File System mode
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         _dt.Rows.Clear();
     }
 

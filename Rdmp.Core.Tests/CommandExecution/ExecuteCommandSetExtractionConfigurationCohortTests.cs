@@ -15,6 +15,7 @@ using Rdmp.Core.CohortCommitting.Pipeline;
 using Rdmp.Core.CommandExecution.AtomicCommands;
 using Rdmp.Core.CommandLine.Interactive;
 using Rdmp.Core.DataExport.Data;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using System.Linq;
 using Tests.Common.Scenarios;
@@ -122,6 +123,9 @@ public class ExecuteCommandSetExtractionConfigurationCohortTests : TestsRequirin
         ec1.SaveToDatabase();
         var activator = new ConsoleInputManager(RepositoryLocator, ThrowImmediatelyCheckNotifier.Quiet)
         { DisallowInput = true };
+        if (DataExportRepository is not TableRepository)
+            Assert.Ignore("SQL exception validation requires database-backed repository (TableRepository)");
+
         var cmd = new ExecuteCommandSetExtractionConfigurationCohort(activator, ec1, new ExtractableCohort()
         {
             ID = -1

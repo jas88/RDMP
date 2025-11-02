@@ -423,17 +423,25 @@ public class CredentialsTests : DatabaseTests
 
         var credCount = CatalogueRepository.GetAllObjects<DataAccessCredentials>().Length;
 
-        //if there is a username then we need to associate it with the TableInfo we just created
-        var credentialsFactory = new DataAccessCredentialsFactory(CatalogueRepository);
-        var cred = credentialsFactory.Create(t1, "blarg", "flarg", DataAccessContext.Any);
-        var cred2 = credentialsFactory.Create(t2, "blarg", "flarg", DataAccessContext.Any);
-
-        Assert.Multiple(() =>
+        try
         {
-            Assert.That(CatalogueRepository.GetAllObjects<DataAccessCredentials>(), Has.Length.EqualTo(credCount + 1));
+            //if there is a username then we need to associate it with the TableInfo we just created
+            var credentialsFactory = new DataAccessCredentialsFactory(CatalogueRepository);
+            var cred = credentialsFactory.Create(t1, "blarg", "flarg", DataAccessContext.Any);
+            var cred2 = credentialsFactory.Create(t2, "blarg", "flarg", DataAccessContext.Any);
 
-            Assert.That(cred2, Is.EqualTo(cred),
-                $"Expected {nameof(DataAccessCredentialsFactory)} to reuse existing credentials for both tables as they have the same username/password - e.g. bulk insert");
-        });
+            Assert.Multiple(() =>
+            {
+                Assert.That(CatalogueRepository.GetAllObjects<DataAccessCredentials>(), Has.Length.EqualTo(credCount + 1));
+
+                Assert.That(cred2, Is.EqualTo(cred),
+                    $"Expected {nameof(DataAccessCredentialsFactory)} to reuse existing credentials for both tables as they have the same username/password - e.g. bulk insert");
+            });
+        }
+        finally
+        {
+            t1.DeleteInDatabase();
+            t2.DeleteInDatabase();
+        }
     }
 }

@@ -11,6 +11,7 @@
 
 using Microsoft.Data.SqlClient;
 using NUnit.Framework;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using System.Linq;
 using Tests.Common;
 
@@ -22,6 +23,9 @@ public class SettingValidationTest : DatabaseTests
     [Test]
     public void SettingManagement()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("SQL exception validation requires database-backed repository (TableRepository)");
+
         //create new setting
         var setting = new Core.Setting.Setting(RepositoryLocator.CatalogueRepository, "Key", "Value");
         Assert.DoesNotThrow(()=>setting.SaveToDatabase());

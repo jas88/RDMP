@@ -158,6 +158,8 @@ public class TypeRegistryGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("namespace Rdmp.Core.Repositories;");
         sb.AppendLine();
+        sb.AppendLine("#pragma warning disable CS0612 // Type or member is obsolete");
+        sb.AppendLine();
         sb.AppendLine("/// <summary>");
         sb.AppendLine("/// Compile-time generated type registry containing all types from referenced assemblies.");
         sb.AppendLine($"/// Generated at compile-time with {types.Count} types.");
@@ -239,6 +241,8 @@ public class TypeRegistryGenerator : IIncrementalGenerator
         sb.AppendLine("using System.Linq;");
         sb.AppendLine();
         sb.AppendLine("namespace Rdmp.Core.Repositories;");
+        sb.AppendLine();
+        sb.AppendLine("#pragma warning disable CS0612 // Type or member is obsolete");
         sb.AppendLine();
         sb.AppendLine("public static partial class CompiledTypeRegistry");
         sb.AppendLine("{");
