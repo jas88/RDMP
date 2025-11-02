@@ -347,12 +347,10 @@ jobs:
       - name: Test non-UI
         timeout-minutes: 45
         run: |
-          dotnet test --test-modules "**/bin/Release/net9.0/*Tests.dll" \
+          dotnet test linuxtests.slnf \
             --nologo \
             --collect:"XPlat Code Coverage" \
-            --no-build \
             --verbosity minimal \
-            -c Release \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
@@ -366,7 +364,7 @@ jobs:
       - name: Test Core (File System Mode)
         timeout-minutes: 45
         run: |
-          dotnet test --test-modules "**/bin/Release/net9.0/*Tests.dll" \
+          dotnet test linuxtests.slnf \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --verbosity minimal \
