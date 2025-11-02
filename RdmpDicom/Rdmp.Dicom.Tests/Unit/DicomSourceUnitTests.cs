@@ -92,7 +92,6 @@ public sealed class DicomSourceUnitTests
         var source = new DicomFileCollectionSource { FilenameField = "RelativeFileArchiveURI" };
         File.WriteAllLines(txt,
             Directory.EnumerateFileSystemEntries(dir).Select(e => $"{zip}!{Path.GetRelativePath(dir,e)}"));
-        File.ReadAllLines(txt).Each(Console.Error.WriteLine);
         source.PreInitialize(new FlatFileToLoadDicomFileWorklist(new(new(txt))), ThrowImmediatelyDataLoadEventListener.Quiet);
         var toMemory = new ToMemoryDataLoadEventListener(true);
         DataTable result = null;
