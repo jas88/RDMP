@@ -1,0 +1,16 @@
+{
+  "solution": {
+    "path": "DataManagementPlatform.sln",
+    "projects": [
+      "Rdmp.Core\\Rdmp.Core.csproj",
+      "Tools\\rdmp\\rdmp.csproj",
+      "Plugins\\Plugins\\Plugins.csproj",
+      "Plugins\\Plugins.Tests\\Plugins.Tests.csproj",
+      "Rdmp.Core.Tests\\Rdmp.Core.Tests.csproj",
+      "RdmpDicom\\Rdmp.Dicom\\Rdmp.Dicom.csproj",
+      "RdmpDicom\\Rdmp.Dicom.Tests\\Rdmp.Dicom.Tests.csproj",
+      "Tests.Common\\Tests.Common.csproj",
+      "Rdmp.Core.Generators\\Rdmp.Core.Generators.csproj"
+    ]
+  }
+}

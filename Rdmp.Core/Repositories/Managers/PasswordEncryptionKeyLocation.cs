@@ -37,7 +37,9 @@ public class PasswordEncryptionKeyLocation : IEncryptionManager, IInjectKnown
         ClearAllInjections();
     }
 
-    public IEncryptStrings GetEncrypter() => new SimpleStringValueEncryption(OpenKeyFile());
+    private Lazy<IEncryptStrings> _cachedEncrypter;
+
+    public IEncryptStrings GetEncrypter() => _cachedEncrypter.Value;
 
     private Lazy<string> _knownKeyFileLocation;
 
@@ -160,5 +162,6 @@ public class PasswordEncryptionKeyLocation : IEncryptionManager, IInjectKnown
     public void ClearAllInjections()
     {
         _knownKeyFileLocation = new Lazy<string>(GetKeyFileLocationImpl);
+        _cachedEncrypter = new Lazy<IEncryptStrings>(() => new SimpleStringValueEncryption(OpenKeyFile()));
     }
 }

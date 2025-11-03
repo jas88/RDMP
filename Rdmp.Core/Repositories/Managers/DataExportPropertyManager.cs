@@ -21,7 +21,7 @@ internal class DataExportPropertyManager : IDataExportPropertyManager
 {
     private readonly bool _allowCaching;
     private readonly DataExportRepository _repository;
-    private bool _cacheOutOfDate = true;
+    private volatile bool _cacheOutOfDate = true;
     private readonly ConcurrentDictionary<string, string> _cacheDictionary = new();
 
     /// <summary>

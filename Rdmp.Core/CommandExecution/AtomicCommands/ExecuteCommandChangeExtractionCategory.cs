@@ -37,7 +37,10 @@ public sealed class ExecuteCommandChangeExtractionCategory : BasicCommandExecuti
 
         var cata = _extractionInformations.Select(static ei => ei.CatalogueItem.Catalogue).Distinct().ToArray();
         if (cata.Length == 1)
-            _isProjectSpecific = cata[0].IsProjectSpecific(BasicActivator.RepositoryLocator.DataExportRepository);
+        {
+            var dataExportRepo = BasicActivator.RepositoryLocator.DataExportRepository;
+            _isProjectSpecific = dataExportRepo != null && cata[0].IsProjectSpecific(dataExportRepo);
+        }
 
     }
 

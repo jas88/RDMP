@@ -7,7 +7,9 @@
 #You can apply a prefix e.g. TEST_ as an argument to DatabaseCreation.exe and include that prefix below if you like
 
 Prefix:	TEST_
-ServerName:	(localdb)\MSSQLLocalDB
+ServerName:	localhost
+Username:	SA
+Password:	YourStrong!Passw0rd
 #Uncomment to run tests with a YamlRepository
 #UseFileSystemRepo: true
 MySql:	server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;AllowPublicKeyRetrieval=True

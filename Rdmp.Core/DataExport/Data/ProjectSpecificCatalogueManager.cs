@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.DirectoryServices.Protocols;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -64,6 +65,11 @@ namespace Rdmp.Core.DataExport.Data
                 ei.ExtractionCategory = ExtractionCategory.ProjectSpecific;
                 ei.SaveToDatabase();
             }
+
+            // Clear cached Projects list and extractability status since associations changed
+            eds.ClearAllInjections();
+            catalogue.ClearAllInjections();
+
             return eds;
         }
 
@@ -81,7 +87,11 @@ namespace Rdmp.Core.DataExport.Data
             if (extractableDataSet is null) return;
             if (catalogue is null) return;
 
-            var p = dqeRepo.GetAllObjects<ExtractableDataSetProject>().Where(edsp => edsp.ExtractableDataSet_ID == extractableDataSet.ID && edsp.Project_ID == project.ID).FirstOrDefault();
+            // Optimized: Use GetAllObjectsWhere with AND condition instead of scanning all objects
+            var p = dqeRepo.GetAllObjectsWhere<ExtractableDataSetProject>(
+                "ExtractableDataSet_ID", extractableDataSet.ID,
+                ExpressionType.AndAlso,
+                "Project_ID", project.ID).FirstOrDefault();
             if (p is not null)
             {
                 p.DeleteInDatabase();
@@ -93,6 +103,10 @@ namespace Rdmp.Core.DataExport.Data
                 ei.ExtractionCategory = ExtractionCategory.Core;
                 ei.SaveToDatabase();
             }
+
+            // Clear cached Projects list and extractability status since associations changed
+            extractableDataSet.ClearAllInjections();
+            catalogue.ClearAllInjections();
         }
     }
 }

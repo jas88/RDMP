@@ -65,10 +65,10 @@ public class YamlRepository : MemoryDataExportRepository
             }
         }
         
-        LoadObjects();      
+        LoadObjects();
 
         // Don't create new objects with the ID of existing objects
-        NextObjectId = Objects.IsEmpty ? 0 : Objects.Max(o => o.Key.ID);
+        NextObjectId = GetMaxId();
     }
 
     /// <summary>
@@ -118,7 +118,13 @@ public class YamlRepository : MemoryDataExportRepository
                         var obj = (IMapsDirectlyToDatabaseTable)deserializer.Deserialize(
                             File.ReadAllText(yaml.FullName), t);
                         SetRepositoryOnObject(obj);
-                        Objects.TryAdd(obj, 0);
+
+                        // Hook up property change tracking (same as InsertAndHydrate)
+                        obj.PropertyChanged += toCreate_PropertyChanged;
+
+                        // Use type-indexed storage instead of Objects
+                        var typeDict = GetOrCreateTypeDictionary(t);
+                        typeDict.TryAdd(obj.ID, obj);
                     }
                     catch (Exception ex)
                     {

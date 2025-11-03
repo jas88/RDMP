@@ -30,7 +30,7 @@ namespace Rdmp.Core.DataLoad.Modules.DataFlowOperations.Swapping;
 /// <summary>
 /// Swaps values stored in a given column for values found in a mapping table (e.g. swap ReleaseID for PrivateID)
 /// </summary>
-internal class ColumnSwapper : IPluginDataFlowComponent<DataTable>, IPipelineOptionalRequirement<IExtractCommand>,
+public class ColumnSwapper : IPluginDataFlowComponent<DataTable>, IPipelineOptionalRequirement<IExtractCommand>,
     IPipelineOptionalRequirement<ICohortCreationRequest>
 {
     [DemandsInitialization(

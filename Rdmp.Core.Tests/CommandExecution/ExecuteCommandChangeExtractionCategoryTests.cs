@@ -13,6 +13,7 @@ using NUnit.Framework;
 using Rdmp.Core.CommandExecution;
 using Rdmp.Core.CommandExecution.AtomicCommands;
 using Rdmp.Core.Curation.Data;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Tests.Common;
 namespace Rdmp.Core.Tests.CommandExecution;
 
@@ -53,6 +54,9 @@ public class ExecuteCommandChangeExtractionCategoryTests : DatabaseTests
     [Test]
     public void TestExtractionCategoryCatalogueChangeFromSupplementalToCore()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Project-specific catalogue validation requires database-backed repository with ExtractableDataSet/Project relationships");
+
         //change a project specific column to core
         _cata1 = new Catalogue(CatalogueRepository, "Dataset1");
         _t1 = new TableInfo(CatalogueRepository, "T1");

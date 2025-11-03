@@ -178,6 +178,7 @@ public class ExtractableDataSet : DatabaseEntity, IExtractableDataSet, IInjectKn
     public void ClearAllInjections()
     {
         _catalogue = new Lazy<ICatalogue>(FetchCatalogue);
+        _projects = null; // Clear cached Projects list to force reload from repository
     }
 
     private ICatalogue FetchCatalogue()

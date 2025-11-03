@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace Rdmp.Core.Curation;
 
@@ -20,6 +21,7 @@ namespace Rdmp.Core.Curation;
 public class SimpleStringValueEncryption : IEncryptStrings
 {
     private readonly RSACryptoServiceProvider _turing = new();
+    private readonly Lock _rsaLock = new();
 
     private const string Key =
        @"<?xml version=""1.0"" encoding=""utf-16""?>
@@ -38,7 +40,10 @@ public class SimpleStringValueEncryption : IEncryptStrings
 
     public SimpleStringValueEncryption(string parameters)
     {
-        _parameters=parameters;
+        _parameters = parameters;
+        // Initialize RSA provider once in constructor for thread-safe reuse
+        // Calling FromXmlString on every Encrypt/Decrypt causes race conditions with cached instances
+        _turing.FromXmlString(_parameters ?? Key);
     }
 
     /// <summary>
@@ -48,22 +53,26 @@ public class SimpleStringValueEncryption : IEncryptStrings
     /// <returns></returns>
     public string Encrypt(string toEncrypt)
     {
-        _turing.FromXmlString(_parameters ?? Key);
-        // Fall back on bad encryption if no private key is configured
-        if (_turing.KeySize < 1024)
-            return string.Join('-',
-                _turing.Encrypt(Encoding.UTF8.GetBytes(toEncrypt), false).Select(octet => octet.ToString("X2")));
-        using var aes = Aes.Create();
-        aes.KeySize = 256;
-        aes.GenerateIV();
-        aes.GenerateKey();
-        var cipherText = Convert.ToBase64String(aes.EncryptCfb(Encoding.UTF8.GetBytes(toEncrypt), aes.IV));
-        var keyBlock = new byte[1 + aes.IV.Length + aes.Key.Length];
-        keyBlock[0] = (byte)aes.IV.Length; // Note: this encoding assumes IV cannot exceed 255 bytes!
-        Array.Copy(aes.IV, 0, keyBlock, 1, aes.IV.Length);
-        Array.Copy(aes.Key, 0, keyBlock, 1 + aes.IV.Length, aes.Key.Length);
-        var key = Convert.ToBase64String(_turing.Encrypt(keyBlock, true));
-        return $"$js1${key}${cipherText}$";
+        // Lock required: RSACryptoServiceProvider is not thread-safe on Linux (OpenSSL backend)
+        using (_rsaLock.EnterScope())
+        {
+            // RSA provider already initialized in constructor
+            // Fall back on bad encryption if no private key is configured
+            if (_turing.KeySize < 1024)
+                return string.Join('-',
+                    _turing.Encrypt(Encoding.UTF8.GetBytes(toEncrypt), false).Select(octet => octet.ToString("X2")));
+            using var aes = Aes.Create();
+            aes.KeySize = 256;
+            aes.GenerateIV();
+            aes.GenerateKey();
+            var cipherText = Convert.ToBase64String(aes.EncryptCfb(Encoding.UTF8.GetBytes(toEncrypt), aes.IV));
+            var keyBlock = new byte[1 + aes.IV.Length + aes.Key.Length];
+            keyBlock[0] = (byte)aes.IV.Length; // Note: this encoding assumes IV cannot exceed 255 bytes!
+            Array.Copy(aes.IV, 0, keyBlock, 1, aes.IV.Length);
+            Array.Copy(aes.Key, 0, keyBlock, 1 + aes.IV.Length, aes.Key.Length);
+            var key = Convert.ToBase64String(_turing.Encrypt(keyBlock, true));
+            return $"$js1${key}${cipherText}$";
+        }
     }
 
     /// <summary>
@@ -73,37 +82,41 @@ public class SimpleStringValueEncryption : IEncryptStrings
     /// <returns></returns>
     public string Decrypt(string toDecrypt)
     {
-        _turing.FromXmlString(_parameters ?? Key);
-        if (toDecrypt.StartsWith("$js1$", StringComparison.Ordinal) && toDecrypt.EndsWith("$", StringComparison.Ordinal))
+        // Lock required: RSACryptoServiceProvider is not thread-safe on Linux (OpenSSL backend)
+        using (_rsaLock.EnterScope())
         {
-            // Good, it's a new-style AES+RSA encrypted string
-            var parts = toDecrypt.Split('$');
-            if (parts.Length != 5)
-                throw new CryptographicException(
-                    "Could not decrypt an encrypted string, it was not in the expected format of $js1$<base64key>$<base64ciphertext>$");
-            var keyBlock = _turing.Decrypt(Convert.FromBase64String(parts[2]), true);
-            var ivLength = keyBlock[0];
-            var iv = new byte[ivLength];
-            var key = new byte[keyBlock.Length - 1 - ivLength];
-            Array.Copy(keyBlock, 1, iv, 0, ivLength);
-            Array.Copy(keyBlock, 1 + ivLength, key, 0, key.Length);
-            var cipherText = Convert.FromBase64String(parts[3]);
-            using var aes = Aes.Create();
-            aes.KeySize = 256;
-            aes.IV = iv;
-            aes.Key = key;
-            return Encoding.UTF8.GetString(aes.DecryptCfb(cipherText, aes.IV));
-        }
+            // RSA provider already initialized in constructor
+            if (toDecrypt.StartsWith("$js1$", StringComparison.Ordinal) && toDecrypt.EndsWith("$", StringComparison.Ordinal))
+            {
+                // Good, it's a new-style AES+RSA encrypted string
+                var parts = toDecrypt.Split('$');
+                if (parts.Length != 5)
+                    throw new CryptographicException(
+                        "Could not decrypt an encrypted string, it was not in the expected format of $js1$<base64key>$<base64ciphertext>$");
+                var keyBlock = _turing.Decrypt(Convert.FromBase64String(parts[2]), true);
+                var ivLength = keyBlock[0];
+                var iv = new byte[ivLength];
+                var key = new byte[keyBlock.Length - 1 - ivLength];
+                Array.Copy(keyBlock, 1, iv, 0, ivLength);
+                Array.Copy(keyBlock, 1 + ivLength, key, 0, key.Length);
+                var cipherText = Convert.FromBase64String(parts[3]);
+                using var aes = Aes.Create();
+                aes.KeySize = 256;
+                aes.IV = iv;
+                aes.Key = key;
+                return Encoding.UTF8.GetString(aes.DecryptCfb(cipherText, aes.IV));
+            }
 
-        try
-        {
-            return Encoding.UTF8.GetString(_turing.Decrypt(ByteConverterGetBytes(toDecrypt), false));
-        }
-        catch (CryptographicException e)
-        {
-            throw new CryptographicException(
-                "Could not decrypt an encrypted string, possibly you are trying to decrypt it after having changed the PrivateKey to a different one than at the time it was encrypted?",
-                e);
+            try
+            {
+                return Encoding.UTF8.GetString(_turing.Decrypt(ByteConverterGetBytes(toDecrypt), false));
+            }
+            catch (CryptographicException e)
+            {
+                throw new CryptographicException(
+                    "Could not decrypt an encrypted string, possibly you are trying to decrypt it after having changed the PrivateKey to a different one than at the time it was encrypted?",
+                    e);
+            }
         }
     }
 

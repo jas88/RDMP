@@ -13,7 +13,9 @@ using Rdmp.Core.Curation.Data.Cohort;
 using Rdmp.Core.Curation.Data.Defaults;
 using Rdmp.Core.Curation.Data.Governance;
 using Rdmp.Core.Curation.Data.Referencing;
+using Rdmp.Core.Curation.Data.Spontaneous;
 using Rdmp.Core.DataExport;
+using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Logging;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.MapsDirectlyToDatabaseTable.Versioning;
@@ -265,11 +267,12 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
         var toreturn = Enum.GetValues(typeof(DataAccessContext)).Cast<DataAccessContext>()
             .ToDictionary(context => context, _ => new List<ITableInfo>());
 
-        //add the keys
+        //add the keys - only for tables using the specified credentials
 
         foreach (var kvp in CredentialsDictionary)
             foreach (var forNode in kvp.Value)
-                toreturn[forNode.Key].Add(kvp.Key);
+                if (Equals(forNode.Value, credentials))
+                    toreturn[forNode.Key].Add(kvp.Key);
 
         return toreturn;
     }
@@ -428,8 +431,27 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
 
     public IFilter[] GetFilters(IContainer container)
     {
-        return GetAllObjects<IFilter>().Where(f => f is not ExtractionFilter && f.FilterContainer_ID == container.ID)
-            .ToArray();
+        var results = new List<IFilter>();
+
+        // Query database-backed filters efficiently
+        // AggregateFilter
+        var aggregateFilters = GetAllObjectsWhere<AggregateFilter>("FilterContainer_ID", container.ID)
+            .Cast<IFilter>();
+        results.AddRange(aggregateFilters);
+
+        // DeployedExtractionFilter
+        var deployedFilters = GetAllObjectsWhere<DeployedExtractionFilter>("FilterContainer_ID", container.ID)
+            .Cast<IFilter>();
+        results.AddRange(deployedFilters);
+
+        // Add memory-only filters that don't have database mapping
+        var memoryFilters = GetAllObjects<SpontaneouslyInventedFilter>()
+            .Where(f => f.FilterContainer_ID == container.ID)
+            .Cast<IFilter>();
+
+        results.AddRange(memoryFilters);
+
+        return results.ToArray();
     }
 
     public void AddChild(IContainer container, IFilter filter)

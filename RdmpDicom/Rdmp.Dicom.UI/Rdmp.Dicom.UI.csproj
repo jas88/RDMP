@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Rdmp.Dicom.UI</RootNamespace>
+    <AssemblyName>Rdmp.Dicom.UI</AssemblyName>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rdmp.Dicom\Rdmp.Dicom.csproj" />
+    <ProjectReference Include="..\..\Rdmp.UI\Rdmp.UI.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="fo-dicom" VersionOverride="5.2.4" />
+    <PackageReference Include="NLog" VersionOverride="6.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="CreateNewImagingDatasetUI.cs" />
+    <Compile Update="CreateNewImagingDatasetUI.Designer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="IsolationTableUI.cs" />
+    <Compile Update="IsolationTableUI.Designer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="TagColumnAdderUI.cs" />
+    <Compile Update="TagColumnAdderUI.Designer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="TagElevationXmlUI.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  </Project>

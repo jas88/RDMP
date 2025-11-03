@@ -114,7 +114,10 @@ public class RegexRedactionMutilator : MatchingTablesMutilatorWithDataLoadJob
 
                 dt.EndLoadData();
                 var redactionUpates = dt.Clone();
-                var columnInfo = relatedCatalogues.SelectMany(static c => c.CatalogueItems).ToArray().Select(static ci => ci.ColumnInfo).FirstOrDefault(ci => ci.GetRuntimeName() == column.GetRuntimeName());
+                // Optimized: Use Select().ToArray() instead of ToArray().Select()
+                var columnInfo = relatedCatalogues.SelectMany(static c => c.CatalogueItems)
+                    .Select(static ci => ci.ColumnInfo)
+                    .FirstOrDefault(ci => ci.GetRuntimeName() == column.GetRuntimeName());
                 if (columnInfo is null)
                 {
                     job.OnNotify(this, new NotifyEventArgs(ProgressEventType.Error, "Unable to find the related column info"));
