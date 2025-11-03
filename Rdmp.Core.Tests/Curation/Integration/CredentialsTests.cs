@@ -22,31 +22,63 @@ public class CredentialsTests : DatabaseTests
     {
         base.OneTimeSetUp();
 
-        foreach (var table in CatalogueRepository.GetAllObjects<TableInfo>())
-            if (table.Name.Equals("GetCredentialsFromATableInfo")
-                ||
-                table.Name.Equals("Create2TableInfosThatShareTheSameCredentialAndTestDeletingIt1")
-                ||
-                table.Name.Equals("Create2TableInfosThatShareTheSameCredentialAndTestDeletingIt2")
-                ||
-                table.Name.Equals("Dependency1")
-                ||
-                table.Name.Equals("Dependency2")
-                ||
-                table.Name.Equals("My Exciting Table")
-                ||
-                table.Name.Equals("Test")
-                ||
-                table.Name.Equals("Tableinfo1")
-               )
-                table.DeleteInDatabase();
+        // First break all credential links for tables we want to clean up
+        var tablesToClean = CatalogueRepository.GetAllObjects<TableInfo>()
+            .Where(t => t.Name.Equals("GetCredentialsFromATableInfo")
+                || t.Name.Equals("Create2TableInfosThatShareTheSameCredentialAndTestDeletingIt1")
+                || t.Name.Equals("Create2TableInfosThatShareTheSameCredentialAndTestDeletingIt2")
+                || t.Name.Equals("Dependency1")
+                || t.Name.Equals("Dependency2")
+                || t.Name.Equals("My Exciting Table")
+                || t.Name.Equals("Test")
+                || t.Name.Equals("Tableinfo1"))
+            .ToList();
 
-        foreach (var cred in CatalogueRepository.GetAllObjects<DataAccessCredentials>())
-            if (cred.Name.Equals("bob")
-                ||
-                cred.Name.Equals("Test")
-               )
+        var credsToClean = CatalogueRepository.GetAllObjects<DataAccessCredentials>()
+            .Where(c => c.Name.Equals("bob") || c.Name.Equals("Test"))
+            .ToList();
+
+        // Break all links between these tables and credentials
+        foreach (var table in tablesToClean)
+        {
+            foreach (var cred in credsToClean)
+            {
+                try
+                {
+                    CatalogueRepository.TableInfoCredentialsManager.BreakAllLinksBetween(cred, table);
+                }
+                catch
+                {
+                    // Ignore if link doesn't exist
+                }
+            }
+        }
+
+        // Now delete the tables
+        foreach (var table in tablesToClean)
+        {
+            try
+            {
+                table.DeleteInDatabase();
+            }
+            catch
+            {
+                // Ignore if already deleted
+            }
+        }
+
+        // Finally delete the credentials
+        foreach (var cred in credsToClean)
+        {
+            try
+            {
                 cred.DeleteInDatabase();
+            }
+            catch
+            {
+                // Ignore if already deleted
+            }
+        }
     }
 
     [Test]
@@ -391,17 +423,25 @@ public class CredentialsTests : DatabaseTests
 
         var credCount = CatalogueRepository.GetAllObjects<DataAccessCredentials>().Length;
 
-        //if there is a username then we need to associate it with the TableInfo we just created
-        var credentialsFactory = new DataAccessCredentialsFactory(CatalogueRepository);
-        var cred = credentialsFactory.Create(t1, "blarg", "flarg", DataAccessContext.Any);
-        var cred2 = credentialsFactory.Create(t2, "blarg", "flarg", DataAccessContext.Any);
-
-        Assert.Multiple(() =>
+        try
         {
-            Assert.That(CatalogueRepository.GetAllObjects<DataAccessCredentials>(), Has.Length.EqualTo(credCount + 1));
+            //if there is a username then we need to associate it with the TableInfo we just created
+            var credentialsFactory = new DataAccessCredentialsFactory(CatalogueRepository);
+            var cred = credentialsFactory.Create(t1, "blarg", "flarg", DataAccessContext.Any);
+            var cred2 = credentialsFactory.Create(t2, "blarg", "flarg", DataAccessContext.Any);
 
-            Assert.That(cred2, Is.EqualTo(cred),
-                $"Expected {nameof(DataAccessCredentialsFactory)} to reuse existing credentials for both tables as they have the same username/password - e.g. bulk insert");
-        });
+            Assert.Multiple(() =>
+            {
+                Assert.That(CatalogueRepository.GetAllObjects<DataAccessCredentials>(), Has.Length.EqualTo(credCount + 1));
+
+                Assert.That(cred2, Is.EqualTo(cred),
+                    $"Expected {nameof(DataAccessCredentialsFactory)} to reuse existing credentials for both tables as they have the same username/password - e.g. bulk insert");
+            });
+        }
+        finally
+        {
+            t1.DeleteInDatabase();
+            t2.DeleteInDatabase();
+        }
     }
 }

@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
@@ -116,14 +117,12 @@ AND
 ec.ExtractionConfiguration_ID = sds.ExtractionConfiguration_ID
 )", "ID").ToArray();
 
-    private readonly Dictionary<Type, IRowVerCache> _caches = new();
+    private readonly ConcurrentDictionary<Type, IRowVerCache> _caches = new();
 
     public override T[] GetAllObjects<T>()
     {
-        if (!_caches.ContainsKey(typeof(T)))
-            _caches.Add(typeof(T), new RowVerCache<T>(this));
-
-        return _caches[typeof(T)].GetAllObjects<T>();
+        var cache = _caches.GetOrAdd(typeof(T), _ => new RowVerCache<T>(this));
+        return cache.GetAllObjects<T>();
     }
 
     public override T[] GetAllObjectsNoCache<T>() => base.GetAllObjects<T>();

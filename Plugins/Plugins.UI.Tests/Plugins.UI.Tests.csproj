@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace></RootNamespace>
+        <!-- Preserve original namespaces -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyTitle>RDMP Plugins UI Tests</AssemblyTitle>
+    <AssemblyDescription>RDMP Plugin UI Tests Metadata - placeholder for UI plugin test discovery</AssemblyDescription>
+    <AssemblyCompany>University of Dundee</AssemblyCompany>
+    <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
+    <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
+    <IsPackable>false</IsPackable>
+    <IsTestProject Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'false'">true</IsTestProject>
+    <!-- This is a metadata project only - no code compilation -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all shared assembly info -->
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Project references -->
+    <ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
+    <ProjectReference Include="..\..\Rdmp.UI\Rdmp.UI.csproj" />
+    <ProjectReference Include="..\..\Tests.Common\Tests.Common.csproj" />
+    <!-- Removed Rdmp.Core.Generators reference - not needed for metadata placeholder project -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test dependencies -->
+    <PackageReference Include="NUnit" VersionOverride="4.3.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" VersionOverride="18.0.0" />
+    <PackageReference Include="NUnit3TestAdapter" VersionOverride="5.0.0" />
+  </ItemGroup>
+
+</Project>

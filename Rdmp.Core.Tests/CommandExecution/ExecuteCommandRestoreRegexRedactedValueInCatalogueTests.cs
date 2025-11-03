@@ -17,6 +17,7 @@ using System.Text.RegularExpressions;
 using Tests.Common;
 using FAnsi.Discovery;
 using System;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 
 namespace Rdmp.Core.Tests.CommandExecution;
 
@@ -70,6 +71,9 @@ public class ExecuteCommandRestoreRegexRedactedValueInCatalogueTests: DatabaseTe
     [Test]
     public void RedactionRestore_BasicTest()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var db = GetCleanedServer(DatabaseType.MicrosoftSQLServer);
         var dt = GetRedactionTestDataTable();
         dt.Rows.Add(new object[] { DateTime.Now, '1', "1234TEST1234" });
@@ -95,6 +99,9 @@ public class ExecuteCommandRestoreRegexRedactedValueInCatalogueTests: DatabaseTe
     [Test]
     public void RedactionRestore_RestoreTwice()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var db = GetCleanedServer(DatabaseType.MicrosoftSQLServer);
         var dt = GetRedactionTestDataTable();
         dt.Rows.Add(new object[] { DateTime.Now, '1', "1234TEST1234" });
@@ -135,6 +142,9 @@ public class ExecuteCommandRestoreRegexRedactedValueInCatalogueTests: DatabaseTe
     [Test]
     public void RedactionRestore_MultipleInOneCell()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var db = GetCleanedServer(DatabaseType.MicrosoftSQLServer);
         var dt = GetRedactionTestDataTable();
         dt.Rows.Add(new object[] { DateTime.Now, '1', "1234TEST1234TEST1234" });

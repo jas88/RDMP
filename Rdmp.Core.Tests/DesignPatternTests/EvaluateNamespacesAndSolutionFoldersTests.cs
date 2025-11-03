@@ -20,7 +20,7 @@ namespace Rdmp.Core.Tests.DesignPatternTests;
 
 public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
 {
-    private const string SolutionName = "HIC.DataManagementPlatform.sln";
+    private const string SolutionName = "DataManagementPlatform.sln";
     private readonly List<string> _csFilesFound = new();
 
     public static readonly HashSet<string> IgnoreList = new()
@@ -34,94 +34,65 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         "ProjectInstaller.cs",
         "ProjectInstaller.Designer.cs",
         "TableView.cs",
-        "TreeView.cs"
+        "TreeView.cs",
+        // Allow duplicate test files in Unit vs Integration test directories
+        "ExecutableProcessTaskTests.cs"
     };
 
     [Test]
     public void EvaluateNamespacesAndSolutionFolders()
     {
-        // Load plugin assemblies to ensure types are available
-        // The .Assembly property forces runtime to actually load the assembly
-        var _ = typeof(SCIStorePlugin.Data.SciStoreResult).Assembly;
-        var _2 = typeof(LoadModules.Extensions.AutomationPlugins.Data.AutomateExtraction).Assembly;
+        // This test now runs all separated tests to maintain compatibility with existing test runners
+        // Each test is run individually so failures can be traced to specific validation areas
 
-        // Refresh MEF cache to discover newly loaded assemblies
-        // (CompiledTypeRegistry will be used if available, providing additional optimization)
-        MEF.RefreshTypes();
+        var allTests = new[]
+        {
+            "EvaluateSolutionStructure",
+            "EvaluateProjectFileStructure",
+            "EvaluateClassNamingAndNamespaces",
+            "EvaluateDuplicateFiles",
+            "EvaluateInterfaceDeclarations",
+            "EvaluateClassDocumentation",
+            "EvaluateDocumentationCrossExamination",
+            "EvaluateRelationshipProperties",
+            "EvaluateExplicitDatabaseNames",
+            "EvaluateAutoComments",
+            "EvaluateCopyrightHeaders"
+        };
 
-        var solutionDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
-        while (solutionDir?.GetFiles("*.sln").Any() != true) solutionDir = solutionDir?.Parent;
-        Assert.That(solutionDir, Is.Not.Null, $"Failed to find {SolutionName} in any parent directories");
+        var testRunner = new EvaluateNamespacesAndSolutionFoldersTestsSeparated();
+        var failedTests = new List<string>();
 
-        var slnFile = solutionDir.GetFiles(SolutionName).FirstOrDefault() ?? throw new FileNotFoundException($"Could not find {SolutionName} in {solutionDir.FullName}");
-        var sln = new VisualStudioSolutionFile(solutionDir, slnFile);
-
-        ProcessFolderRecursive(sln.RootFolders, solutionDir);
-
-        foreach (var rootLevelProjects in sln.RootProjects)
-            FindProjectInFolder(rootLevelProjects, solutionDir);
-
-        var foundProjects = sln.Projects.ToDictionary(project => project, project => new List<string>());
-
-        FindUnreferencedProjectsRecursively(foundProjects, solutionDir);
-
-        foreach (var kvp in foundProjects)
-            switch (kvp.Value.Count)
+        foreach (var testName in allTests)
+        {
+            try
             {
-                case 0:
-                    Error(
-                        $"FAIL: Did not find project {kvp.Key.Name} while traversing solution directories and subdirectories");
-                    break;
-                case > 1:
-                    Error(
-                        $"FAIL: Found 2+ copies of project {kvp.Key.Name} while traversing solution directories and subdirectories:{Environment.NewLine}{string.Join(Environment.NewLine, kvp.Value)}");
-                    break;
+                var testMethod = testRunner.GetType().GetMethod(testName);
+                Assert.That(testMethod, Is.Not.Null, $"Test method {testName} not found");
+
+                Console.WriteLine($"Running {testName}...");
+                testMethod.Invoke(testRunner, null);
+                Console.WriteLine($"✓ {testName} passed");
             }
+            catch (Exception ex)
+            {
+                var message = $"✗ {testName} failed: {ex.Message}";
+                Console.WriteLine(message);
+                failedTests.Add(message);
 
-        Assert.That(_errors, Is.Empty);
-        //      DependenciesEvaluation dependencies = new DependenciesEvaluation();
-        //      dependencies.FindProblems(sln);
+                // Also add inner exception details if available
+                if (ex.InnerException != null)
+                {
+                    failedTests.Add($"  Inner: {ex.InnerException.Message}");
+                }
+            }
+        }
 
-        InterfaceDeclarationsCorrect.FindProblems();
-
-        var documented = new AllImportantClassesDocumented();
-        documented.FindProblems(_csFilesFound);
-
-        // UI standardization check skipped in Core.Tests (UI-specific validation)
-        // var uiStandardisationTest = new UserInterfaceStandardisationChecker();
-        // uiStandardisationTest.FindProblems(_csFilesFound);
-
-        var crossExamination = new DocumentationCrossExaminationTest(solutionDir);
-        crossExamination.FindProblems(_csFilesFound);
-
-        //Assuming all files are present and correct we can now evaluate the RDMP specific stuff:
-        // UI form initialization check skipped in Core.Tests (UI-specific validation)
-        // var otherTestRunner = new RDMPFormInitializationTests();
-        // otherTestRunner.FindUninitializedForms(_csFilesFound);
-
-        var propertyChecker = new SuspiciousRelationshipPropertyUse();
-        propertyChecker.FindPropertyMisuse(_csFilesFound);
-
-        ExplicitDatabaseNameChecker.FindProblems(_csFilesFound);
-
-        var noMappingToDatabaseComments = new AutoCommentsEvaluator();
-        AutoCommentsEvaluator.FindProblems(_csFilesFound);
-
-        CopyrightHeaderEvaluator.FindProblems(_csFilesFound);
-
-        //foreach (var file in slndir.EnumerateFiles("*.cs", SearchOption.AllDirectories))
-        //{
-
-        //    if (file.Name.StartsWith("AssemblyInfo") || file.Name.StartsWith("TemporaryGenerated") || file.Name.EndsWith("Designer.cs"))
-        //        continue;
-
-        //    var line = File.ReadLines(file.FullName).FirstOrDefault();
-        //    if (line != null && line.StartsWith("// Copyright"))
-        //        continue;
-
-
-        //    Console.WriteLine(file.FullName);
-        //}
+        if (failedTests.Any())
+        {
+            var failureMessage = $"The following tests failed:{Environment.NewLine}{string.Join(Environment.NewLine, failedTests)}";
+            Assert.Fail(failureMessage);
+        }
     }
 
     private void FindUnreferencedProjectsRecursively(Dictionary<VisualStudioProjectReference, List<string>> projects,

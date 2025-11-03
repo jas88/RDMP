@@ -31,7 +31,9 @@ public class EndToEndDLETest : TestsRequiringADle
     {
         var db = GetCleanedServer(dbType);
 
-        var tbl = db.CreateTable("Troll Select * Loll", new DatabaseColumnRequest[]
+        // Use Oracle-safe table name
+        var tableName = TestDatabaseNames.GetConsistentName("TrollSelect", dbType);
+        var tbl = db.CreateTable(tableName, new DatabaseColumnRequest[]
         {
             new("group by", new DatabaseTypeRequest(typeof(string), 100)) { IsPrimaryKey = true },
             new(",,,,", new DatabaseTypeRequest(typeof(string)))
@@ -44,7 +46,9 @@ public class EndToEndDLETest : TestsRequiringADle
         });
 
         var cata = Import(tbl);
-        var lmd = new LoadMetadata(CatalogueRepository, nameof(TestDle_DodgyColumnNames));
+        // Use Oracle-safe LoadMetadata name
+        var loadName = TestDatabaseNames.GetConsistentName("TestDleDodgyNames", dbType);
+        var lmd = new LoadMetadata(CatalogueRepository, loadName);
         LoadDirectory.PopulateLoadMetadata(lmd);
         lmd.SaveToDatabase();
 

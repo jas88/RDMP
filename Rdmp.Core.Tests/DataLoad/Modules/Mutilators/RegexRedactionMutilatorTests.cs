@@ -17,6 +17,7 @@ using Rdmp.Core.DataLoad.Engine.LoadExecution;
 using Rdmp.Core.DataLoad.Engine.LoadProcess;
 using Rdmp.Core.DataLoad.Modules.Mutilators;
 using Rdmp.Core.Logging;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using Rdmp.Core.Tests.DataLoad.Engine.Integration;
@@ -35,6 +36,9 @@ internal class RegexRedactionMutilatorTests : DataLoadEngineTestsBase
     [Test]
     public void RedactionMutilator_BasicTest()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var defaults = CatalogueRepository;
         var logServer = defaults.GetDefaultFor(PermissableDefaults.LiveLoggingServer_ID);
         var logManager = new LogManager(logServer);
@@ -142,6 +146,9 @@ MrMurder,2001-01-01,Yella");
     [Test]
     public void RedactionMutilator_OddStringLength()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var defaults = CatalogueRepository;
         var logServer = defaults.GetDefaultFor(PermissableDefaults.LiveLoggingServer_ID);
         var logManager = new LogManager(logServer);
@@ -249,6 +256,9 @@ MrMurder,2001-01-01,Yella");
     [Test]
     public void RedactionMutilator_RedactionTooLong()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var defaults = CatalogueRepository;
         var logServer = defaults.GetDefaultFor(PermissableDefaults.LiveLoggingServer_ID);
         var logManager = new LogManager(logServer);
@@ -344,6 +354,9 @@ MrMurder,2001-01-01,Yella");
     [Test]
     public void RedactionMutilator_RedactAPK()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var defaults = CatalogueRepository;
         var logServer = defaults.GetDefaultFor(PermissableDefaults.LiveLoggingServer_ID);
         var logManager = new LogManager(logServer);
@@ -439,6 +452,9 @@ MrMurder,2001-01-01,Yella");
     [Test]
     public void RedactionMutilator_NoPKS()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var defaults = CatalogueRepository;
         var logServer = defaults.GetDefaultFor(PermissableDefaults.LiveLoggingServer_ID);
         var logManager = new LogManager(logServer);
@@ -534,6 +550,9 @@ MrMurder,2001-01-01,Yella");
     [Test]
     public void RedactionMutilator_MultipleInOneCell()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var defaults = CatalogueRepository;
         var logServer = defaults.GetDefaultFor(PermissableDefaults.LiveLoggingServer_ID);
         var logManager = new LogManager(logServer);
@@ -645,6 +664,9 @@ MrMurder,2001-01-01,YellaUUUYella");
     [Test]
     public void RedactionMutilator_SpeedTest()
     {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Redaction operations require a database-backed repository (TableRepository)");
+
         var defaults = CatalogueRepository;
         var logServer = defaults.GetDefaultFor(PermissableDefaults.LiveLoggingServer_ID);
         var logManager = new LogManager(logServer);

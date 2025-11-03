@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.Build.Traversal/2.0.24">
   <ItemGroup>
-    <ProjectReference Include="..\Reusable\Tests\ReusableCodeTests\ReusableCodeTests.csproj" />
     <ProjectReference Include="..\Rdmp.Core.Tests\Rdmp.Core.Tests.csproj" />
+    <ProjectReference Include="..\Plugins\HicPlugin\HICPluginTests\HICPluginTests.csproj" />
+    <ProjectReference Include="..\Plugins\RdmpExtensions\LoadModules.Extensions.Tests\LoadModules.Extensions.Tests.csproj" />
+    <ProjectReference Include="..\Plugins\RdmpDicom\Rdmp.Dicom.Tests\Rdmp.Dicom.Tests.csproj" />
   </ItemGroup>
 </Project>

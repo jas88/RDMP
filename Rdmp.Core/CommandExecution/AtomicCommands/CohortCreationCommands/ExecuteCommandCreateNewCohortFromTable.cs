@@ -8,6 +8,7 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Pipelines;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using SixLabors.ImageSharp;
@@ -74,6 +75,9 @@ public class ExecuteCommandCreateNewCohortFromTable : CohortCreationCommandExecu
             Database = tbl.Database.GetRuntimeName(),
             Server = tbl.Database.Server.Name
         };
+        // Ensure TableInfo is visible before creating dependent ColumnInfo
+        fakeTableInfo.SaveAndFlush();
+
         var fakeColumnInfo = new ColumnInfo(m, col.GetFullyQualifiedName(), col.DataType.ToString(), fakeTableInfo);
         var fakeExtractionInformation = new ExtractionInformation(m, fakeCatalogueItem, fakeColumnInfo,
             col.GetFullyQualifiedName())

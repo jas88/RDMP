@@ -401,7 +401,7 @@ public static class ObjectConstructorMigration
     {
         ConstructorInfo targetConstructor = null;
         int priority = 0;
-        string reason = "Candidate for AOT factory";
+        string reason;
 
         // Prefer constructors marked with UseWithObjectConstructorAttribute
         var markedConstructor = constructors.FirstOrDefault(c => c.GetCustomAttribute<UseWithObjectConstructorAttribute>() != null);

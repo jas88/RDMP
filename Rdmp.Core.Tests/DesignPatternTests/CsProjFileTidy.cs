@@ -156,6 +156,7 @@ internal class CsProjFileTidy
 
         //trim off the "\myclass.cs" bit
         relative = relative[..^(csFile.Name.Length + 1)];
-        return relative.Replace('\\', '.');
+        // Handle both Windows and Linux path separators
+        return relative.Replace('\\', '.').Replace('/', '.');
     }
 }

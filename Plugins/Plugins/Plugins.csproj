@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace></RootNamespace>
+        <!-- Preserve original namespaces -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyTitle>RDMP Plugins</AssemblyTitle>
+    <AssemblyDescription>RDMP Plugin Metadata - placeholder for plugin discovery</AssemblyDescription>
+    <AssemblyCompany>University of Dundee</AssemblyCompany>
+    <AssemblyProduct>Research Data Management Platform</AssemblyProduct>
+    <AssemblyCopyright>Copyright (c) The University of Dundee 2018-2019</AssemblyCopyright>
+    <!-- This is a metadata project only - no code compilation -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include all shared assembly info -->
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Core RDMP reference -->
+    <ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Use modern package versions from Directory.Packages.props -->
+    <PackageReference Include="NLog" VersionOverride="6.0.5" />
+    <PackageReference Include="Newtonsoft.Json" VersionOverride="13.0.3" />
+    <PackageReference Include="YamlDotNet" VersionOverride="16.3.0" />
+    <PackageReference Include="NPOI" VersionOverride="2.7.5" />
+  </ItemGroup>
+
+</Project>

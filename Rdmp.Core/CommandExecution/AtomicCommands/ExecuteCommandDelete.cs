@@ -81,13 +81,14 @@ public class ExecuteCommandDelete : BasicCommandExecution
     {
         base.Execute();
 
-        // Always use transactions for delete operations to ensure consistency
-        // This prevents issues with connections that have pending transactions
-        ExecuteWithCommit(ExecuteImpl, GetDescription(),
-            _deletables.OfType<IMapsDirectlyToDatabaseTable>().ToArray());
-
-        // Publish after transaction is complete to avoid connection state conflicts
-        PublishNearest();
+      // Always use transactions for delete operations to ensure consistency
+        // This prevents "ExecuteReader/ExecuteScalar requires command transaction when connection is in pending local transaction" errors
+        if (ExecuteWithCommit(ExecuteImpl, GetDescription(),
+            _deletables.OfType<IMapsDirectlyToDatabaseTable>().ToArray()))
+        {
+            // Only publish after successful commit to avoid connection state conflicts
+            PublishNearest();
+        }
     }
 
     private string GetDescription() =>
