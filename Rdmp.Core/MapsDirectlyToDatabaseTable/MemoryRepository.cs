@@ -37,7 +37,7 @@ public class MemoryRepository : IRepository
     /// Precomputed type hierarchy: Interface/BaseClass -> ConcreteTypes[]
     /// Lazily built on first interface lookup to avoid IsAssignableFrom() overhead
     /// </summary>
-    private FrozenDictionary<Type, Type[]> _typeHierarchy;
+    private volatile FrozenDictionary<Type, Type[]> _typeHierarchy;
     private readonly object _typeHierarchyLock = new();
 
     /// <summary>
@@ -55,8 +55,12 @@ public class MemoryRepository : IRepository
         {
             var result = new ConcurrentDictionary<IMapsDirectlyToDatabaseTable, byte>();
             foreach (var typeDict in _objectsByType.Values)
-            foreach (var obj in typeDict.Values)
-                result.TryAdd(obj, 0);
+            {
+                foreach (var obj in typeDict.Values)
+                {
+                    result.TryAdd(obj, 0);
+                }
+            }
             return result;
         }
     }

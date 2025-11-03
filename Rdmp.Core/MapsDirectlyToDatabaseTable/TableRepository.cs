@@ -234,8 +234,16 @@ public abstract class TableRepository : ITableRepository, IDisposable
 
         var typename = Wrap(type.Name);
 
-        var useExternalConnection = externalConnection != null;
-        var connection = useExternalConnection ? externalConnection : GetConnection();
+        IManagedConnection connectionToDispose = null;
+        var connection = externalConnection;
+        if (connection == null)
+        {
+            connection = GetConnection();
+            connectionToDispose = connection; // Track for disposal
+        }
+
+        if (connection == null)
+            throw new InvalidOperationException($"Cannot retrieve {type.Name} with ID {id} - no database connection available");
 
         try
         {
@@ -249,9 +257,7 @@ public abstract class TableRepository : ITableRepository, IDisposable
         }
         finally
         {
-            // Only dispose the connection if we created it
-            if (!useExternalConnection)
-                connection?.Dispose();
+            connectionToDispose?.Dispose();
         }
     }
 
@@ -288,12 +294,20 @@ public abstract class TableRepository : ITableRepository, IDisposable
 
         var toReturn = new List<T>();
 
-        var useExternalConnection = externalConnection != null;
-        var connection = useExternalConnection ? externalConnection : GetConnection();
+        IManagedConnection connectionToDispose = null;
+        var connection = externalConnection;
+        if (connection == null)
+        {
+            connection = GetConnection();
+            connectionToDispose = connection; // Track for disposal
+        }
+
+        if (connection == null)
+            throw new InvalidOperationException($"Cannot select {typeof(T).Name} objects - no database connection available");
 
         try
         {
-            var selectCommand = DatabaseCommandHelper.GetCommand($"SELECT * FROM {typename} {whereSQL ?? ""}",
+            using var selectCommand = DatabaseCommandHelper.GetCommand($"SELECT * FROM {typename} {whereSQL ?? ""}",
                 connection.Connection, connection.Transaction);
 
                   using var r = selectCommand.ExecuteReader();
@@ -302,9 +316,7 @@ public abstract class TableRepository : ITableRepository, IDisposable
         }
         finally
         {
-            // Only dispose the connection if we created it
-            if (!useExternalConnection)
-                connection?.Dispose();
+            connectionToDispose?.Dispose();
         }
 
         return toReturn.ToArray();
@@ -690,14 +702,13 @@ public abstract class TableRepository : ITableRepository, IDisposable
         // This ensures parent objects are visible before child INSERT with FK constraint checks
         if (constructorParameters != null)
         {
-            foreach (var param in constructorParameters.Values)
+            foreach (var parent in constructorParameters.Values
+                .OfType<IMapsDirectlyToDatabaseTable>()
+                .Where(p => p.ID > 0))
             {
-                if (param is IMapsDirectlyToDatabaseTable parent && parent.ID > 0)
-                {
-                    // Only flush if parent is persisted (has an ID)
-                    FlushVisibility(parent);
-                    _logger.Debug($"Auto-flushed parent {parent.GetType().Name} ID={parent.ID} before creating {typeof(T).Name}");
-                }
+                // Only flush if parent is persisted (has an ID)
+                FlushVisibility(parent);
+                _logger.Debug($"Auto-flushed parent {parent.GetType().Name} ID={parent.ID} before creating {typeof(T).Name}");
             }
         }
 
@@ -716,7 +727,7 @@ public abstract class TableRepository : ITableRepository, IDisposable
         Inserting?.Invoke(this, new IMapsDirectlyToDatabaseTableEventArgs(toCreate));
     }
 
-    private object ongoingConnectionsLock = new();
+    private readonly object ongoingConnectionsLock = new();
     private readonly Dictionary<Thread, IManagedConnection> ongoingConnections = new();
     private readonly Dictionary<Thread, IManagedTransaction> ongoingTransactions = new();
 
