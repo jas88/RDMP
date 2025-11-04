@@ -15,8 +15,8 @@
     <ProjectReference Include="..\..\Rdmp.UI\Rdmp.UI.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="fo-dicom" VersionOverride="5.2.4" />
-    <PackageReference Include="NLog" VersionOverride="6.0.5" />
+    <PackageReference Include="fo-dicom" />
+    <PackageReference Include="NLog" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="CreateNewImagingDatasetUI.cs" />

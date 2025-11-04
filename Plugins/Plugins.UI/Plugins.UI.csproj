@@ -31,8 +31,8 @@
 
   <ItemGroup>
     <!-- Basic UI dependencies -->
-    <PackageReference Include="NLog" VersionOverride="6.0.5" />
-    <PackageReference Include="Newtonsoft.Json" VersionOverride="13.0.3" />
+    <PackageReference Include="NLog" />
+    <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
 </Project>
