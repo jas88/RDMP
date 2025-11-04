@@ -28,10 +28,10 @@
 
   <ItemGroup>
     <!-- Use modern package versions from Directory.Packages.props -->
-    <PackageReference Include="NLog" VersionOverride="6.0.5" />
-    <PackageReference Include="Newtonsoft.Json" VersionOverride="13.0.3" />
-    <PackageReference Include="YamlDotNet" VersionOverride="16.3.0" />
-    <PackageReference Include="NPOI" VersionOverride="2.7.5" />
+    <PackageReference Include="NLog" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="YamlDotNet" />
+    <PackageReference Include="NPOI" />
   </ItemGroup>
 
 </Project>
