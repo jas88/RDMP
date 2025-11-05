@@ -241,7 +241,7 @@ public abstract class Argument : DatabaseEntity, IArgument
             {
                 var t = MEF.GetType(concreteType.FullName);
 
-                result = (ICustomUIDrivenClass)ObjectConstructor.Construct(t, (ICatalogueRepository)Repository);
+                result = (ICustomUIDrivenClass)AotObjectConstructor.Construct(t, (ICatalogueRepository)Repository);
             }
             catch (Exception e)
             {

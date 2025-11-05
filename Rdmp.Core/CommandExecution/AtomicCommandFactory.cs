@@ -144,7 +144,7 @@ public class AtomicCommandFactory : CommandFactoryBase
                 continue;
 
             // Try to construct the command with available parameters
-            var cmd = ObjectConstructor.ConstructIfPossible(cmdType, _activator, o) as IAtomicCommand;
+            var cmd = AotObjectConstructor.ConstructIfPossible(cmdType, _activator, o) as IAtomicCommand;
 
             // Only yield commands that were successfully constructed and are possible
             if (cmd?.IsImpossible == false)

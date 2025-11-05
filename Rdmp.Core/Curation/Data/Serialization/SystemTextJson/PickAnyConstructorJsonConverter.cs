@@ -66,7 +66,7 @@ public class PickAnyConstructorJsonConverter : JsonConverterFactory
     }
 
     private Dictionary<ConstructorInfo, List<object>> GetConstructors(Type objectType) =>
-        ObjectConstructor.GetConstructors(objectType, false, false, _constructorObjects);
+        AotObjectConstructor.GetConstructors(objectType, false, false, _constructorObjects);
 
     /// <summary>
     /// Inner generic converter that handles the actual serialization/deserialization
@@ -87,7 +87,7 @@ public class PickAnyConstructorJsonConverter : JsonConverterFactory
             var root = document.RootElement;
 
             // Find the compatible constructor
-            var constructors = ObjectConstructor.GetConstructors(typeToConvert, false, false, _constructorObjects);
+            var constructors = AotObjectConstructor.GetConstructors(typeToConvert, false, false, _constructorObjects);
 
             if (constructors.Count == 0)
                 throw new JsonException($"No compatible constructor found for type {typeToConvert.Name}");

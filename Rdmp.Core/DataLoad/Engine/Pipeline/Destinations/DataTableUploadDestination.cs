@@ -189,7 +189,7 @@ public class DataTableUploadDestination : IPluginDataFlowComponent<DataTable>, I
         RemoveInvalidCharactersInSchema(toProcess);
 
         IDatabaseColumnRequestAdjuster adjuster = null;
-        if (Adjuster != null) adjuster = (IDatabaseColumnRequestAdjuster)ObjectConstructor.Construct(Adjuster);
+        if (Adjuster != null) adjuster = (IDatabaseColumnRequestAdjuster)AotObjectConstructor.Construct(Adjuster);
 
         //work out the table name for the table we are going to create
         if (TargetTableName == null)
