@@ -33,6 +33,10 @@ internal class CohortContainerManager : ICohortContainerManager
 
     public void Add(CohortAggregateContainer parent, AggregateConfiguration child, int order)
     {
+        // Flush parent and child to ensure FK visibility in AUTO_UPDATE_STATISTICS_ASYNC mode
+        CatalogueRepository.FlushVisibility(parent);
+        CatalogueRepository.FlushVisibility(child);
+
         CatalogueRepository.Insert(
             "INSERT INTO CohortAggregateContainer_AggregateConfiguration (CohortAggregateContainer_ID, AggregateConfiguration_ID, [Order]) VALUES (@CohortAggregateContainer_ID, @AggregateConfiguration_ID, @Order)",
             new Dictionary<string, object>
@@ -121,6 +125,10 @@ internal class CohortContainerManager : ICohortContainerManager
 
     public void Add(CohortAggregateContainer parent, CohortAggregateContainer child)
     {
+        // Flush parent and child to ensure FK visibility in AUTO_UPDATE_STATISTICS_ASYNC mode
+        CatalogueRepository.FlushVisibility(parent);
+        CatalogueRepository.FlushVisibility(child);
+
         CatalogueRepository.Insert(
             "INSERT INTO CohortAggregateSubContainer(CohortAggregateContainer_ParentID,CohortAggregateContainer_ChildID) VALUES (@CohortAggregateContainer_ParentID, @CohortAggregateContainer_ChildID)",
             new Dictionary<string, object>
