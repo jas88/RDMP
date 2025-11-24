@@ -194,7 +194,7 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Upload Windows UI coverage
-        uses: coverallsapp/github-action@v2.3.6
+        uses: coverallsapp/github-action@v2.3.7
         with:
           github-token: ${{ secrets.github_token }}
           files: ./coverage/**
@@ -373,7 +373,7 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Upload coverage
-        uses: coverallsapp/github-action@v2.3.6
+        uses: coverallsapp/github-action@v2.3.7
         with:
           github-token: ${{ secrets.github_token }}
           files: ./coverage/**
