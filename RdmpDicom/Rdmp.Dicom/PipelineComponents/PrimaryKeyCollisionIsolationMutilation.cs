@@ -274,7 +274,7 @@ public class PrimaryKeyCollisionIsolationMutilation:IPluginMutilateDataTables
             bulkInsert.Upload(value);
         }
 
-        foreach (var t in TablesToIsolate.Reverse())
+        foreach (var t in TablesToIsolate.AsEnumerable().Reverse())
             DeleteRows(t, deleteOnColumnName, deleteValues, con);
 
         con.Close();
