@@ -62,7 +62,8 @@ public class PickAnyConstructorJsonConverter : JsonConverterFactory
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         var converterType = typeof(PickAnyConstructorJsonConverterInner<>).MakeGenericType(typeToConvert);
-        return (JsonConverter)Activator.CreateInstance(converterType, _constructorObjects);
+        // Must wrap in object[] to pass as single parameter, not expanded params
+        return (JsonConverter)Activator.CreateInstance(converterType, new object[] { _constructorObjects });
     }
 
     private Dictionary<ConstructorInfo, List<object>> GetConstructors(Type objectType) =>
