@@ -29,17 +29,41 @@ if exists (select 1 from sys.indexes where name = 'IX_RemoteRDMP_NameMustBeUniqu
 	DROP INDEX [IX_RemoteRDMP_NameMustBeUnique] ON [dbo].[RemoteRDMP]
 
 
-if exists (select 1 from sys.default_constraints where name = 'DF_AggregateConfiguration_CountSQL')
-	ALTER TABLE [dbo].[AggregateConfiguration] DROP CONSTRAINT [DF_AggregateConfiguration_CountSQL]
+-- Drop any existing default constraint on AggregateConfiguration.CountSQL
+DECLARE @constraintName1 NVARCHAR(200)
+SELECT @constraintName1 = dc.name
+FROM sys.default_constraints dc
+JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+WHERE dc.parent_object_id = OBJECT_ID('dbo.AggregateConfiguration') AND c.name = 'CountSQL'
+IF @constraintName1 IS NOT NULL
+	EXEC('ALTER TABLE [dbo].[AggregateConfiguration] DROP CONSTRAINT [' + @constraintName1 + ']')
 
-if exists (select 1 from sys.default_constraints where name = 'DF_AggregateContinuousDateAxis_EndDate')
-	ALTER TABLE [dbo].[AggregateContinuousDateAxis] DROP CONSTRAINT [DF_AggregateContinuousDateAxis_EndDate]
+-- Drop any existing default constraint on AggregateContinuousDateAxis.EndDate
+DECLARE @constraintName2 NVARCHAR(200)
+SELECT @constraintName2 = dc.name
+FROM sys.default_constraints dc
+JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+WHERE dc.parent_object_id = OBJECT_ID('dbo.AggregateContinuousDateAxis') AND c.name = 'EndDate'
+IF @constraintName2 IS NOT NULL
+	EXEC('ALTER TABLE [dbo].[AggregateContinuousDateAxis] DROP CONSTRAINT [' + @constraintName2 + ']')
 
-if exists (select 1 from sys.default_constraints where name = 'DF_AggregateContinuousDateAxis_StartDate')
-	ALTER TABLE [dbo].[AggregateContinuousDateAxis] DROP CONSTRAINT [DF_AggregateContinuousDateAxis_StartDate]
+-- Drop any existing default constraint on AggregateContinuousDateAxis.StartDate
+DECLARE @constraintName3 NVARCHAR(200)
+SELECT @constraintName3 = dc.name
+FROM sys.default_constraints dc
+JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+WHERE dc.parent_object_id = OBJECT_ID('dbo.AggregateContinuousDateAxis') AND c.name = 'StartDate'
+IF @constraintName3 IS NOT NULL
+	EXEC('ALTER TABLE [dbo].[AggregateContinuousDateAxis] DROP CONSTRAINT [' + @constraintName3 + ']')
 
-if exists (select 1 from sys.default_constraints where name = 'DF_Folder')
-	ALTER TABLE [dbo].[Catalogue] DROP CONSTRAINT [DF_Folder]
+-- Drop any existing default constraint on Catalogue.Folder
+DECLARE @constraintName4 NVARCHAR(200)
+SELECT @constraintName4 = dc.name
+FROM sys.default_constraints dc
+JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+WHERE dc.parent_object_id = OBJECT_ID('dbo.Catalogue') AND c.name = 'Folder'
+IF @constraintName4 IS NOT NULL
+	EXEC('ALTER TABLE [dbo].[Catalogue] DROP CONSTRAINT [' + @constraintName4 + ']')
 
 GO
 
@@ -296,14 +320,34 @@ if not exists (select 1 from sys.indexes where name = 'IX_RemoteRDMP_NameMustBeU
 		[Name] ASC
 	)
 
-if not exists (select 1 from sys.default_constraints where name = 'DF_AggregateConfiguration_CountSQL')
-	ALTER TABLE [dbo].[AggregateConfiguration] ADD  CONSTRAINT [DF_AggregateConfiguration_CountSQL]  DEFAULT ('count(*)') FOR [CountSQL]
+-- Add default for AggregateConfiguration.CountSQL if no default exists on this column
+IF NOT EXISTS (
+    SELECT 1 FROM sys.default_constraints dc
+    JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+    WHERE dc.parent_object_id = OBJECT_ID('dbo.AggregateConfiguration') AND c.name = 'CountSQL'
+)
+	ALTER TABLE [dbo].[AggregateConfiguration] ADD CONSTRAINT [DF_AggregateConfiguration_CountSQL] DEFAULT ('count(*)') FOR [CountSQL]
 
-if not exists (select 1 from sys.default_constraints where name = 'DF_AggregateContinuousDateAxis_StartDate')
-	ALTER TABLE [dbo].[AggregateContinuousDateAxis] ADD  CONSTRAINT [DF_AggregateContinuousDateAxis_StartDate]  DEFAULT ('''2001-01-01''') FOR [StartDate]
+-- Add default for AggregateContinuousDateAxis.StartDate if no default exists on this column
+IF NOT EXISTS (
+    SELECT 1 FROM sys.default_constraints dc
+    JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+    WHERE dc.parent_object_id = OBJECT_ID('dbo.AggregateContinuousDateAxis') AND c.name = 'StartDate'
+)
+	ALTER TABLE [dbo].[AggregateContinuousDateAxis] ADD CONSTRAINT [DF_AggregateContinuousDateAxis_StartDate] DEFAULT ('''2001-01-01''') FOR [StartDate]
 
-if not exists (select 1 from sys.default_constraints where name = 'DF_AggregateContinuousDateAxis_EndDate')
-	ALTER TABLE [dbo].[AggregateContinuousDateAxis] ADD  CONSTRAINT [DF_AggregateContinuousDateAxis_EndDate]  DEFAULT ('getdate()') FOR [EndDate]
+-- Add default for AggregateContinuousDateAxis.EndDate if no default exists on this column
+IF NOT EXISTS (
+    SELECT 1 FROM sys.default_constraints dc
+    JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+    WHERE dc.parent_object_id = OBJECT_ID('dbo.AggregateContinuousDateAxis') AND c.name = 'EndDate'
+)
+	ALTER TABLE [dbo].[AggregateContinuousDateAxis] ADD CONSTRAINT [DF_AggregateContinuousDateAxis_EndDate] DEFAULT ('getdate()') FOR [EndDate]
 
-if not exists (select 1 from sys.default_constraints where name = 'DF_Folder')
-	ALTER TABLE [dbo].[Catalogue] ADD  CONSTRAINT [DF_Folder]  DEFAULT ('\') FOR [Folder]
+-- Add default for Catalogue.Folder if no default exists on this column
+IF NOT EXISTS (
+    SELECT 1 FROM sys.default_constraints dc
+    JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+    WHERE dc.parent_object_id = OBJECT_ID('dbo.Catalogue') AND c.name = 'Folder'
+)
+	ALTER TABLE [dbo].[Catalogue] ADD CONSTRAINT [DF_Folder] DEFAULT ('\') FOR [Folder]
