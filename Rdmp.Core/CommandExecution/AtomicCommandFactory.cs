@@ -150,6 +150,11 @@ public class AtomicCommandFactory : CommandFactoryBase
             if (cmd?.IsImpossible == false)
                 yield return cmd;
         }
+
+        // Special case: ArbitraryFolderNode with CommandGetter delegate
+        if (o is Providers.Nodes.ArbitraryFolderNode f && f.CommandGetter != null)
+            foreach (var cmd in f.CommandGetter())
+                yield return cmd;
     }
 
     /// <summary>
