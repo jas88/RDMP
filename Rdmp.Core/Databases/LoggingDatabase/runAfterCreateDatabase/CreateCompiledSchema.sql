@@ -249,22 +249,27 @@ GO
 
 -- Reference Data (for z_ tables)
 
+SET IDENTITY_INSERT [dbo].[z_DataLoadTaskStatus] ON;
 INSERT INTO [dbo].[z_DataLoadTaskStatus] ([ID], [status], [description])
     VALUES (1, N'Open', NULL);
 INSERT INTO [dbo].[z_DataLoadTaskStatus] ([ID], [status], [description])
     VALUES (2, N'Ready', NULL);
 INSERT INTO [dbo].[z_DataLoadTaskStatus] ([ID], [status], [description])
     VALUES (3, N'Committed', NULL);
+SET IDENTITY_INSERT [dbo].[z_DataLoadTaskStatus] OFF;
 GO
 
+SET IDENTITY_INSERT [dbo].[z_FatalErrorStatus] ON;
 INSERT INTO [dbo].[z_FatalErrorStatus] ([ID], [status])
     VALUES (1, N'Outstanding');
 INSERT INTO [dbo].[z_FatalErrorStatus] ([ID], [status])
     VALUES (2, N'Resolved');
 INSERT INTO [dbo].[z_FatalErrorStatus] ([ID], [status])
     VALUES (3, N'Blocked');
+SET IDENTITY_INSERT [dbo].[z_FatalErrorStatus] OFF;
 GO
 
+SET IDENTITY_INSERT [dbo].[z_RowErrorType] ON;
 INSERT INTO [dbo].[z_RowErrorType] ([ID], [type])
     VALUES (1, N'LoadRow');
 INSERT INTO [dbo].[z_RowErrorType] ([ID], [type])
@@ -275,5 +280,6 @@ INSERT INTO [dbo].[z_RowErrorType] ([ID], [type])
     VALUES (4, N'DatabaseOperation');
 INSERT INTO [dbo].[z_RowErrorType] ([ID], [type])
     VALUES (5, N'Unknown');
+SET IDENTITY_INSERT [dbo].[z_RowErrorType] OFF;
 GO
 

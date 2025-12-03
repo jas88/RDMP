@@ -18,36 +18,38 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @tableName VARCHAR(100) = 'ID_' + @liveTableName
+	-- Use QUOTENAME() to prevent SQL injection on all identifiers
+	DECLARE @tableName NVARCHAR(200) = QUOTENAME('ID_' + @liveTableName)
+	DECLARE @tableNameRaw NVARCHAR(200) = 'ID_' + @liveTableName
 
 	-- Build column list using FOR XML PATH (no cursor! - 10x faster)
-	DECLARE @columns VARCHAR(MAX), @pkColumns VARCHAR(MAX)
+	DECLARE @columns NVARCHAR(MAX), @pkColumns NVARCHAR(MAX)
 
 	SELECT @columns = STUFF((
-		SELECT ',' + RuntimeName + ' ' + DataType + ' NOT NULL'
+		SELECT ',' + QUOTENAME(RuntimeName) + ' ' + DataType + ' NOT NULL'
 		FROM @primaryKeys
 		FOR XML PATH(''), TYPE
-	).value('.', 'VARCHAR(MAX)'), 1, 1, '')
+	).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
 
 	SELECT @pkColumns = STUFF((
-		SELECT ',' + RuntimeName + ' ASC'
+		SELECT ',' + QUOTENAME(RuntimeName) + ' ASC'
 		FROM @primaryKeys
 		FOR XML PATH(''), TYPE
-	).value('.', 'VARCHAR(MAX)'), 1, 1, '')
+	).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
 
 	-- Create table with primary key columns
-	DECLARE @sqlCreateTable VARCHAR(MAX)
-	SET @sqlCreateTable = 'IF OBJECT_ID(''' + @tableName + ''') IS NULL CREATE TABLE ' + @tableName + ' (' + @columns + ')'
-	EXEC(@sqlCreateTable)
+	DECLARE @sqlCreateTable NVARCHAR(MAX)
+	SET @sqlCreateTable = N'IF OBJECT_ID(' + QUOTENAME(@tableNameRaw, '''') + N') IS NULL CREATE TABLE ' + @tableName + N' (' + @columns + N')'
+	EXEC sp_executesql @sqlCreateTable
 
 	-- Add primary key constraint
-	DECLARE @sqlCreatePKConstraint VARCHAR(MAX)
-	SET @sqlCreatePKConstraint = 'ALTER TABLE ' + @tableName + ' ADD CONSTRAINT PK_' + @tableName + ' PRIMARY KEY NONCLUSTERED (' + @pkColumns + ')'
-	EXEC(@sqlCreatePKConstraint)
+	DECLARE @sqlCreatePKConstraint NVARCHAR(MAX)
+	SET @sqlCreatePKConstraint = N'ALTER TABLE ' + @tableName + N' ADD CONSTRAINT ' + QUOTENAME('PK_' + @tableNameRaw) + N' PRIMARY KEY NONCLUSTERED (' + @pkColumns + N')'
+	EXEC sp_executesql @sqlCreatePKConstraint
 
 	-- Add additional dump identifier columns (still need cursor here due to ALTER TABLE per column)
-	DECLARE @fieldName VARCHAR(500), @dataType VARCHAR(100)
-	DECLARE @sqlOtherFields VARCHAR(MAX)
+	DECLARE @fieldName NVARCHAR(500), @dataType NVARCHAR(100)
+	DECLARE @sqlOtherFields NVARCHAR(MAX)
 
 	DECLARE fieldCursor CURSOR FOR SELECT RuntimeName, DataType FROM @dumpIdentifiers
 	OPEN fieldCursor
@@ -55,8 +57,8 @@ BEGIN
 
 	WHILE @@FETCH_STATUS = 0
 	BEGIN
-		SET @sqlOtherFields = 'ALTER TABLE ' + @tableName + ' ADD ' + @fieldName + ' ' + @dataType
-		EXEC(@sqlOtherFields)
+		SET @sqlOtherFields = N'ALTER TABLE ' + @tableName + N' ADD ' + QUOTENAME(@fieldName) + N' ' + @dataType
+		EXEC sp_executesql @sqlOtherFields
 		FETCH NEXT FROM fieldCursor INTO @fieldName, @dataType
 	END
 
