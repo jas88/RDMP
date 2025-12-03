@@ -1,4 +1,4 @@
-﻿--Version:1.4.0.0
+--Version:1.4.0.0
 --Description: Coincides with Catalogue patch 022 (1.16.0.0), removes the explicit JIRA names in all Ticketing columns
  --rename all the JIRATicket fields to ticket
  if exists(select  1 from sys.columns where name = 'JIRAMasterTicket' and OBJECT_NAME(object_id) ='Project')

@@ -7,7 +7,6 @@ CREATE TABLE [dbo].[PermissionWindow](
 	[ID] [int] NOT NULL,
 	[PermissionPeriodConfig] [varchar](max) NOT NULL,
 	[RequiresSynchronousAccess] [bit] NOT NULL,
-	[SoftwareVersion] [nvarchar](50) NOT NULL,
  CONSTRAINT [PK_PermissionWindow] PRIMARY KEY CLUSTERED 
 (
 	[ID] ASC
@@ -17,10 +16,16 @@ CREATE TABLE [dbo].[PermissionWindow](
 
 END
 
--- Add default for 'RequiresSynchronousAccess' (true)
-IF NOT EXISTS (SELECT 1 FROM sys.default_constraints WHERE name = 'DF_PermissionWindow_RequiresSynchronousAccess')
+-- Add default for 'RequiresSynchronousAccess' (true) - check for ANY default on this column
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.default_constraints dc
+    JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+    WHERE dc.parent_object_id = OBJECT_ID('dbo.PermissionWindow')
+    AND c.name = 'RequiresSynchronousAccess'
+)
 BEGIN
 
-ALTER TABLE [dbo].[PermissionWindow] ADD  CONSTRAINT [DF_PermissionWindow_RequiresSynchronousAccess]  DEFAULT ((1)) FOR [RequiresSynchronousAccess]
+ALTER TABLE [dbo].[PermissionWindow] ADD CONSTRAINT [DF_PermissionWindow_RequiresSynchronousAccess] DEFAULT ((1)) FOR [RequiresSynchronousAccess]
 
 END

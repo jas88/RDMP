@@ -1,4 +1,4 @@
-﻿--Version:7.0.0
+--Version:7.0.0
 --Description: Updates database to support custom folders on Project
  
 -- Add to LoadMetadata table

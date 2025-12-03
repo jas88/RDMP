@@ -1,4 +1,4 @@
-﻿--Version:7.0.0
+--Version:7.0.0
 --Description: Adds the ExtractionProgress object table.  This class stores the progress through a batch extraction
 
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='ExtractionProgress')

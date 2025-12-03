@@ -1,35 +1,44 @@
 --Version:1.16.0.0
 --Description: Removes the systems dependency on the HIC specific JIRA server as the sole source of ticketing (and releasability) and lets you configure a custom JIRA server (or any other plugin ticketing system with support for ITicketingSystem)
-CREATE TABLE [dbo].[TicketingSystemConfiguration](
-	[ID] [int] IDENTITY(1,1) NOT NULL,
-	[Name] [varchar](1000) NOT NULL,
-	[IsActive] [bit] NOT NULL,
-	[Url] [varchar](5000) NULL,
-	[Type] [varchar](500) NULL,
-	[DataAccessCredentials_ID] [int] NULL,
- CONSTRAINT [PK_TicketingSystemConfiguration] PRIMARY KEY CLUSTERED 
-(
-	[ID] ASC
-)
-)
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='TicketingSystemConfiguration')
+BEGIN
+	CREATE TABLE [dbo].[TicketingSystemConfiguration](
+		[ID] [int] IDENTITY(1,1) NOT NULL,
+		[Name] [varchar](1000) NOT NULL,
+		[IsActive] [bit] NOT NULL,
+		[Url] [varchar](5000) NULL,
+		[Type] [varchar](500) NULL,
+		[DataAccessCredentials_ID] [int] NULL,
+	 CONSTRAINT [PK_TicketingSystemConfiguration] PRIMARY KEY CLUSTERED
+	(
+		[ID] ASC
+	)
+	)
+END
 
 GO
 
 SET ANSI_PADDING OFF
 GO
 
-ALTER TABLE [dbo].[TicketingSystemConfiguration]  WITH CHECK ADD  CONSTRAINT [FK_TicketingSystemConfiguration_DataAccessCredentials] FOREIGN KEY([DataAccessCredentials_ID])
-REFERENCES [dbo].[DataAccessCredentials] ([ID])
-ON DELETE CASCADE
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name='FK_TicketingSystemConfiguration_DataAccessCredentials')
+BEGIN
+	ALTER TABLE [dbo].[TicketingSystemConfiguration]  WITH CHECK ADD  CONSTRAINT [FK_TicketingSystemConfiguration_DataAccessCredentials] FOREIGN KEY([DataAccessCredentials_ID])
+	REFERENCES [dbo].[DataAccessCredentials] ([ID])
+	ON DELETE CASCADE
+
+	ALTER TABLE [dbo].[TicketingSystemConfiguration] CHECK CONSTRAINT [FK_TicketingSystemConfiguration_DataAccessCredentials]
+END
 GO
 
-ALTER TABLE [dbo].[TicketingSystemConfiguration] CHECK CONSTRAINT [FK_TicketingSystemConfiguration_DataAccessCredentials]
-GO
-
-CREATE UNIQUE NONCLUSTERED INDEX [idx_CanOnlyBeOneActiveTicketingSystemConfiguration] ON [dbo].[TicketingSystemConfiguration]
-(
-	[IsActive] ASC
-)
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='idx_CanOnlyBeOneActiveTicketingSystemConfiguration')
+BEGIN
+	CREATE UNIQUE NONCLUSTERED INDEX [idx_CanOnlyBeOneActiveTicketingSystemConfiguration] ON [dbo].[TicketingSystemConfiguration]
+	(
+		[IsActive] ASC
+	)
+END
 GO
  
  --rename all the JIRATicket fields to ticket

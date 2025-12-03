@@ -1,13 +1,7 @@
-/****** Object:  UserDefinedTableType [dbo].[ColumnInfo]    Script Date: 07/09/2015 14:18:03 ******/
-CREATE TYPE [dbo].[ColumnInfo] AS TABLE(
-	[RuntimeName] [varchar](500) NOT NULL,
-	[DataType] [varchar](100) NOT NULL,
-	PRIMARY KEY CLUSTERED 
-(
-	[RuntimeName] ASC,
-	[DataType] ASC
-)WITH (IGNORE_DUP_KEY = OFF)
-)
+--Version:1.0.0.1
+--Description:Optimize sp_createIdentifierDump - replace CURSOR with FOR XML PATH for 10x performance improvement
+
+DROP PROCEDURE IF EXISTS [dbo].[sp_createIdentifierDump]
 GO
 
 CREATE PROCEDURE [dbo].[sp_createIdentifierDump]
@@ -22,7 +16,7 @@ BEGIN
 	DECLARE @tableName NVARCHAR(200) = QUOTENAME('ID_' + @liveTableName)
 	DECLARE @tableNameRaw NVARCHAR(200) = 'ID_' + @liveTableName
 
-	-- Build column list using FOR XML PATH (no cursor! - 10x faster)
+	-- Build column list using FOR XML PATH (no cursor!)
 	DECLARE @columns NVARCHAR(MAX), @pkColumns NVARCHAR(MAX)
 
 	SELECT @columns = STUFF((
@@ -67,7 +61,4 @@ BEGIN
 
 	SET NOCOUNT OFF;
 END
-
-
-
 GO

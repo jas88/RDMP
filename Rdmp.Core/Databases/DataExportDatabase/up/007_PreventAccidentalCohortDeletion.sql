@@ -1,4 +1,4 @@
-﻿--Version:1.7.0.0
+--Version:1.7.0.0
 --Description: Changes [FK_ExtractionConfiguration_Cohort] from Cascade set null to No Action to prevent accidentally deleting cohorts which are used in configurations
 if exists (select * from sys.foreign_keys where name='FK_ExtractionConfiguration_Cohort' and delete_referential_action = 2 /*SET_NULL*/)
 begin

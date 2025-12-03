@@ -1,4 +1,4 @@
-﻿----Version: 9.0.0
+----Version: 9.0.0
 ----Description: Allow a catalogue to be linked to multiple projects
 
 if exists(select 1 from sys.indexes where name='PreventDoubleAddingCatalogueIdx' and OBJECT_NAME(object_id) = 'ExtractableDataSet')

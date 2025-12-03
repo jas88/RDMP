@@ -1,4 +1,4 @@
-﻿--Version:7.0.0
+--Version:7.0.0
 --Description: Adds Retry column to ExtractionProgress table.
 
   if(not exists (select * from sys.all_columns where name ='Retry' AND OBJECT_NAME(object_id) = 'ExtractionProgress'))
