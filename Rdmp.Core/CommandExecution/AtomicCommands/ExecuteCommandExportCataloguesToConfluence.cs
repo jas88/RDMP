@@ -3,7 +3,6 @@
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
-using Newtonsoft.Json;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Dataset.Confluence;
 using System;
@@ -11,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands
@@ -109,20 +109,20 @@ namespace Rdmp.Core.CommandExecution.AtomicCommands
         private static ConfluencePageResponse ResponseToConfluenceResponseObject(HttpResponseMessage response)
         {
             var content = Task.Run(async () => await response.Content.ReadAsStringAsync()).Result;
-            return JsonConvert.DeserializeObject<ConfluencePageResponse>(content);
+            return JsonSerializer.Deserialize<ConfluencePageResponse>(content);
         }
 
         private static ConfluencePostErrors PostResponseToConfluenceErrorsObject(HttpResponseMessage response)
         {
             var content = Task.Run(async () => await response.Content.ReadAsStringAsync()).Result;
-            return JsonConvert.DeserializeObject<ConfluencePostErrors>(content);
+            return JsonSerializer.Deserialize<ConfluencePostErrors>(content);
         }
 
         private ConfluenceGetResults GetConfluencePage(string uri, string title)
         {
             var result = Task.Run(async () => await _client.GetAsync($"{uri}?title={title}&space-id={_spaceId}")).Result;
             var content = Task.Run(async () => await result.Content.ReadAsStringAsync()).Result;
-            return JsonConvert.DeserializeObject<ConfluenceGetResults>(content);
+            return JsonSerializer.Deserialize<ConfluenceGetResults>(content);
         }
 
 

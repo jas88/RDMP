@@ -7,8 +7,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using FAnsi.Discovery;
-using Newtonsoft.Json;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Defaults;
 using Rdmp.Core.Curation.Data.ImportExport;

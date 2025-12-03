@@ -27,7 +27,6 @@ public class RunnerFactory
                 ExtractionOptions extractionOpts => new ExtractionRunner(activator, extractionOpts),
                 ReleaseOptions releaseOpts => new ReleaseRunner(activator,releaseOpts),
                 CohortCreationOptions cohortOpts => new CohortCreationRunner(cohortOpts),
-                PackOptions packOpts => new PackPluginRunner(packOpts),
                 ExecuteCommandOptions executeOpts => new ExecuteCommandRunner(executeOpts),
                 _ => throw new Exception($"RDMPCommandLineOptions Type '{command.GetType()}'")
             };

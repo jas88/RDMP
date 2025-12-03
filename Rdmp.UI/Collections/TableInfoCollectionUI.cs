@@ -124,7 +124,6 @@ public partial class TableInfoCollectionUI : RDMPCollectionUI, ILifetimeSubscrib
         tlvTableInfos.AddObject(Activator.CoreChildProvider.AllServersNode);
         tlvTableInfos.AddObject(Activator.CoreChildProvider.AllConnectionStringKeywordsNode);
         tlvTableInfos.AddObject(Activator.CoreChildProvider.AllStandardRegexesNode);
-        tlvTableInfos.AddObject(Activator.CoreChildProvider.AllPluginsNode);
     }
 
     public void RefreshBus_RefreshObject(object sender, RefreshObjectEventArgs e)

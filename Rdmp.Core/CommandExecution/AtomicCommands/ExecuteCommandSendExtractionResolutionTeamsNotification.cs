@@ -3,13 +3,12 @@
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json;
 using Rdmp.Core.DataExport.Data;
 using System;
-using System.Globalization;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Rdmp.Core.ReusableLibraryCode.Settings;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands
@@ -60,163 +59,173 @@ namespace Rdmp.Core.CommandExecution.AtomicCommands
 
 partial class AdaptiveCard
 {
-    [JsonProperty("type")]
-    public string Type { get; set; } 
+    [JsonPropertyName("type")]
+    public string Type { get; set; }
 
-    [JsonProperty("attachments")]
+    [JsonPropertyName("attachments")]
     public Attachment[] Attachments { get; set; }
 }
 
 partial class Attachment
 {
-    [JsonProperty("contentType")]
+    [JsonPropertyName("contentType")]
     public string ContentType { get; set; }
 
-    [JsonProperty("contentUrl")]
+    [JsonPropertyName("contentUrl")]
     public object ContentUrl { get; set; }
 
-    [JsonProperty("content")]
+    [JsonPropertyName("content")]
     public Content Content { get; set; }
 }
 
 partial class Content
 {
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; }
 
-    [JsonProperty("$schema")]
+    [JsonPropertyName("$schema")]
     public Uri Schema { get; set; }
 
-    [JsonProperty("version")]
+    [JsonPropertyName("version")]
     public string Version { get; set; }
 
-    [JsonProperty("body")]
+    [JsonPropertyName("body")]
     public Body[] Body { get; set; }
 
-    [JsonProperty("msteams")]
+    [JsonPropertyName("msteams")]
     public Msteams Msteams { get; set; }
 }
 
 partial class Body
 {
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; }
 
-    [JsonProperty("columns", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("columns")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Column[] Columns { get; set; }
 
-    [JsonProperty("rows", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("rows")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Row[] Rows { get; set; }
 
-    [JsonProperty("text", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("text")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Text { get; set; }
 }
 
 partial class Column
 {
-    [JsonProperty("width")]
+    [JsonPropertyName("width")]
     public long Width { get; set; }
 }
 
 partial class Row
 {
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; }
 
-    [JsonProperty("cells")]
+    [JsonPropertyName("cells")]
     public Cell[] Cells { get; set; }
 }
 
 partial class Cell
 {
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; }
 
-    [JsonProperty("items", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("items")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Item[] Items { get; set; }
 
-    [JsonProperty("verticalContentAlignment", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("verticalContentAlignment")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string VerticalContentAlignment { get; set; }
 
-    [JsonProperty("targetWidth", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("targetWidth")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string TargetWidth { get; set; }
 
-    [JsonProperty("bleed", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("bleed")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Bleed { get; set; }
 
-    [JsonProperty("isVisible", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("isVisible")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? IsVisible { get; set; }
 }
 
 partial class Item
 {
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; }
 
-    [JsonProperty("url", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("url")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Url { get; set; }
 
-    [JsonProperty("size", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("size")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Size { get; set; }
 
-    [JsonProperty("width", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("width")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Width { get; set; }
 
-    [JsonProperty("text", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("text")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Text { get; set; }
 
-    [JsonProperty("wrap", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("wrap")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Wrap { get; set; }
 
-    [JsonProperty("maxLines", NullValueHandling = NullValueHandling.Ignore)]
+    [JsonPropertyName("maxLines")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public long? MaxLines { get; set; }
 }
 
 partial class Msteams
 {
-    [JsonProperty("entities")]
+    [JsonPropertyName("entities")]
     public Entity[] Entities { get; set; }
 }
 
 partial class Entity
 {
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; }
 
-    [JsonProperty("text")]
+    [JsonPropertyName("text")]
     public string Text { get; set; }
 
-    [JsonProperty("mentioned")]
+    [JsonPropertyName("mentioned")]
     public Mentioned Mentioned { get; set; }
 }
 
 partial class Mentioned
 {
-    [JsonProperty("id")]
+    [JsonPropertyName("id")]
     public string Id { get; set; }
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 }
 
 partial class AdaptiveCard
 {
-    public static AdaptiveCard FromJson(string json) => JsonConvert.DeserializeObject<AdaptiveCard>(json, Converter.Settings);
+    public static AdaptiveCard FromJson(string json) => JsonSerializer.Deserialize<AdaptiveCard>(json, Converter.Options);
 }
 
 static class Serialize
 {
-    public static string ToJson(this AdaptiveCard self) => JsonConvert.SerializeObject(self, Converter.Settings);
+    public static string ToJson(this AdaptiveCard self) => JsonSerializer.Serialize(self, Converter.Options);
 }
 
 internal static class Converter
 {
-    public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+    public static readonly JsonSerializerOptions Options = new JsonSerializerOptions
     {
-        MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-        DateParseHandling = DateParseHandling.None,
-        Converters =
-            {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-            },
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        PropertyNameCaseInsensitive = false
     };
 }

@@ -157,7 +157,7 @@ public class YamlRepository : MemoryDataExportRepository
         if (arg == typeof(Plugin))
             return 1;
 
-        return arg == typeof(LoadModuleAssembly) ? 2 : 3;
+        return 3;
     }
 
 

@@ -194,7 +194,6 @@ public class CatalogueChildProvider : ICoreChildProvider
 	private CommentStore _commentStore;
 
 	public JoinableCohortAggregateConfigurationUse[] AllJoinableCohortAggregateConfigurationUse { get; private set; }
-	public AllPluginsNode AllPluginsNode { get; private set; }
 	public HashSet<StandardPipelineUseCaseNode> PipelineUseCases { get; set; } = new();
 
 	/// <summary>
@@ -447,8 +446,6 @@ public class CatalogueChildProvider : ICoreChildProvider
 
 		ReportProgress("After Governance");
 
-		AllPluginsNode = new AllPluginsNode();
-		AddChildren(AllPluginsNode);
 
 		ReportProgress("After Plugins");
 
@@ -601,12 +598,6 @@ public class CatalogueChildProvider : ICoreChildProvider
 		}
 	}
 
-	private void AddChildren(AllPluginsNode allPluginsNode)
-	{
-		var children = new HashSet<object>(LoadModuleAssembly.Assemblies);
-		var descendancy = new DescendancyList(allPluginsNode);
-		AddToDictionaries(children, descendancy);
-	}
 
 	private void AddChildren(AllRegexRedactionConfigurationsNode allRegexRedactionConfigurationsNode)
 	{
@@ -1841,7 +1832,6 @@ public class CatalogueChildProvider : ICoreChildProvider
 		AllGovernanceDocuments = otherCat.AllGovernanceDocuments;
 		GovernanceCoverage = otherCat.GovernanceCoverage;
 		AllJoinableCohortAggregateConfigurationUse = otherCat.AllJoinableCohortAggregateConfigurationUse;
-		AllPluginsNode = otherCat.AllPluginsNode;
 		PipelineUseCases = otherCat.PipelineUseCases;
 		OrphanAggregateConfigurationsNode = otherCat.OrphanAggregateConfigurationsNode;
 		TemplateAggregateConfigurationsNode = otherCat.TemplateAggregateConfigurationsNode;
