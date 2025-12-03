@@ -178,7 +178,7 @@ public abstract class BasicActivateItems : IBasicActivateItems
     {
         PluginUserInterfaces = new List<IPluginUserInterface>();
 
-        foreach (var pluginType in MEF.GetTypes<IPluginUserInterface>())
+        foreach (var pluginType in MEF.PluginRegistry.GetPluginTypes<IPluginUserInterface>())
             try
             {
                 PluginUserInterfaces.Add((IPluginUserInterface)ObjectConstructor.Construct(pluginType, this, false));

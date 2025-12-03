@@ -384,6 +384,97 @@ public static class MEF
     }
 
     /// <summary>
+    /// Static plugin registry for AOT/Trim compatibility.
+    /// This replaces runtime plugin loading with compile-time registration.
+    /// All "plugins" (RdmpDicom, Plugins, Plugins.UI) are now integrated into the main application.
+    /// </summary>
+    public static class PluginRegistry
+    {
+        // Note: We use GetType() with string names rather than typeof() because some plugin types
+        // may be in conditional compilation blocks or may not be available in all build configurations.
+        // This approach is more flexible for gradual migration to compile-time registration.
+        private static readonly Lazy<Dictionary<Type, Type[]>> _registeredPlugins = new(BuildPluginRegistry);
+
+        private static Dictionary<Type, Type[]> BuildPluginRegistry()
+        {
+            var registry = new Dictionary<Type, Type[]>();
+
+            // IPluginUserInterface implementations
+            // These provide custom UI integration and right-click menu items
+            var pluginUITypes = new List<Type>();
+            AddTypeIfExists(pluginUITypes, "Rdmp.Dicom.UI.RdmpDicomUserInterface"); // WinForms UI
+            AddTypeIfExists(pluginUITypes, "Rdmp.Dicom.RdmpDicomConsoleUserInterface"); // Console UI
+            AddTypeIfExists(pluginUITypes, "Rdmp.Core.Providers.ExamplePluginCohortCompilerUI"); // Example UI
+            if (pluginUITypes.Count > 0)
+                registry[MEF.GetType("Rdmp.Core.IPluginUserInterface")] = pluginUITypes.ToArray();
+
+            // IPluginCohortCompiler implementations
+            // These provide custom cohort building tasks (e.g., SemEHR API integration)
+            var pluginCohortCompilers = new List<Type>();
+            AddTypeIfExists(pluginCohortCompilers, "Rdmp.Dicom.ExternalApis.SemEHRApiCaller");
+            AddTypeIfExists(pluginCohortCompilers, "Rdmp.Core.CohortCreation.Execution.ExamplePluginCohortCompiler");
+            if (pluginCohortCompilers.Count > 0)
+                registry[MEF.GetType("Rdmp.Core.CohortCreation.Execution.IPluginCohortCompiler")] = pluginCohortCompilers.ToArray();
+
+            // PluginPatcher implementations
+            // These provide database schema patching for plugin-specific tables
+            var pluginPatchers = new List<Type>();
+            AddTypeIfExists(pluginPatchers, "Rdmp.Dicom.SMIDatabasePatcher");
+            if (pluginPatchers.Count > 0)
+                registry[MEF.GetType("Rdmp.Core.MapsDirectlyToDatabaseTable.Versioning.PluginPatcher")] = pluginPatchers.ToArray();
+
+            // IPluginRepositoryFinder implementations
+            // Currently no implementations - this interface may be deprecated
+            // registry[GetType("Rdmp.Core.Startup.IPluginRepositoryFinder")] = Array.Empty<Type>();
+
+            return registry;
+        }
+
+        private static void AddTypeIfExists(List<Type> list, string typeName)
+        {
+            var type = MEF.GetType(typeName);
+            if (type != null)
+                list.Add(type);
+        }
+
+        /// <summary>
+        /// Gets registered plugin types for the specified interface/base class.
+        /// Returns an empty array if no plugins are registered for the type.
+        /// </summary>
+        public static IEnumerable<Type> GetPluginTypes<T>() where T : class
+        {
+            return GetPluginTypes(typeof(T));
+        }
+
+        /// <summary>
+        /// Gets registered plugin types for the specified interface/base class.
+        /// Returns an empty array if no plugins are registered for the type.
+        /// </summary>
+        public static IEnumerable<Type> GetPluginTypes(Type type)
+        {
+            return _registeredPlugins.Value.TryGetValue(type, out var types)
+                ? types
+                : Array.Empty<Type>();
+        }
+
+        /// <summary>
+        /// Returns true if any plugins are registered for the specified type.
+        /// </summary>
+        public static bool HasPlugins<T>() where T : class
+        {
+            return _registeredPlugins.Value.ContainsKey(typeof(T));
+        }
+
+        /// <summary>
+        /// Gets all registered plugin types across all interfaces.
+        /// </summary>
+        public static IEnumerable<Type> GetAllPluginTypes()
+        {
+            return _registeredPlugins.Value.Values.SelectMany(types => types).Distinct();
+        }
+    }
+
+    /// <summary>
     /// Returns all MEF exported classes decorated with the specified generic export e.g.
     /// </summary>
     /// <param name="genericType"></param>

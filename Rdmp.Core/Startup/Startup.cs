@@ -115,8 +115,6 @@ public class Startup
         //only load data export manager if catalogue worked
         if (!foundCatalogue) return;
 
-        LoadMEF(RepositoryLocator.CatalogueRepository, notifier);
-
         //find tier 2 databases
         foreach (var patcher in _patcherManager.Tier2Patchers)
             FindWithPatcher(patcher, notifier);
@@ -227,43 +225,6 @@ public class Startup
                 notifier.OnCheckPerformed(new CheckEventArgs($"Could not resolve ExternalDatabaseServer '{server}'",
                     CheckResult.Warning, e));
             }
-    }
-
-    #endregion
-
-
-    #region MEF
-
-    /// <summary>
-    /// Load the plugins from the platform DB
-    /// </summary>
-    /// <param name="catalogueRepository"></param>
-    /// <param name="notifier"></param>
-    private static void LoadMEF(ICatalogueRepository catalogueRepository, ICheckNotifier notifier)
-    {
-        foreach (var (name, body) in LoadModuleAssembly.PluginFiles().SelectMany(LoadModuleAssembly.GetContents))
-            try
-            {
-                AssemblyLoadContext.Default.LoadFromStream(body);
-            }
-            catch (Exception e)
-            {
-                var msg = $"Could not load plugin component {name} due to {e.Message}";
-                Console.Error.WriteLine(msg);
-                notifier.OnCheckPerformed(new CheckEventArgs(msg, CheckResult.Warning, e));
-            }
-            finally
-            {
-                body.Dispose();
-            }
-
-        if (CatalogueRepository.SuppressHelpLoading) return;
-
-        notifier.OnCheckPerformed(new CheckEventArgs("Loading Help...", CheckResult.Success));
-        var sw = Stopwatch.StartNew();
-        catalogueRepository.CommentStore.ReadComments("SourceCodeForSelfAwareness.zip");
-        sw.Stop();
-        notifier.OnCheckPerformed(new CheckEventArgs($"Help loading took:{sw.Elapsed}", CheckResult.Success));
     }
 
     #endregion

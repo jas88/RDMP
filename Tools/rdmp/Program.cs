@@ -83,7 +83,6 @@ internal class Program
             returnCode =
                 UsefulStuff.GetParser()
                     .ParseArguments<
-                        PackOptions,
                         ConsoleGuiOptions,
                         PlatformDatabaseCreationOptions,
                         PatchDatabaseOptions,
@@ -94,8 +93,7 @@ internal class Program
                         ReleaseOptions,
                         CohortCreationOptions,
                         ExecuteCommandOptions>(args)
-                    .MapResult(static (PackOptions opts) => RdmpCommandLineBootStrapper.Run(opts),
-                        static (ConsoleGuiOptions opts) =>
+                    .MapResult(static (ConsoleGuiOptions opts) =>
                             RdmpCommandLineBootStrapper.Run(opts, new ConsoleGuiRunner(opts)),
                         static (PlatformDatabaseCreationOptions opts) => Run(opts),
                         static (PatchDatabaseOptions opts) => Run(opts),
