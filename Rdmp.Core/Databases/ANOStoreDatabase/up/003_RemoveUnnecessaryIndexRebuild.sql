@@ -49,7 +49,9 @@ BEGIN
 
 	DECLARE @sql NVARCHAR(max)
 
-	SET @sql = 'SELECT DISTINCT '+@identifiableColumn+ ',' + @anonymousColumn + ' FROM ' + @tableName + ' INNER JOIN #tempBatch b on '+ @identifiableColumn  + '= b.Identifier'
+	SET @sql = N'SELECT DISTINCT ' + QUOTENAME(@identifiableColumn) + N',' + QUOTENAME(@anonymousColumn) +
+	           N' FROM ' + QUOTENAME(@tableName) +
+	           N' INNER JOIN #tempBatch b ON ' + QUOTENAME(@identifiableColumn) + N' = b.Identifier'
 
 	EXECUTE sp_executesql @sql, N'@batch Batch READONLY', @batch
 END
