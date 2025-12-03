@@ -40,7 +40,9 @@ internal class CsProjFileTidy
         // Duplicate filenames across projects
         "ToMemoryDataLoadJob.cs",
         // Namespace intentionally different from location
-        "NotifyEventArgsProxy.cs"
+        "NotifyEventArgsProxy.cs",
+        // File with intentional nested class (PluginRegistry inside MEF)
+        "MEF.cs"
     };
 
     public CsProjFileTidy(FileInfo csProjFile)
