@@ -35,7 +35,8 @@ public static class JsonSerializerExtensions
         bool writeIndented = false)
     {
         var options = CreateSerializerOptions(repositoryLocator, writeIndented);
-        return JsonSerializer.Serialize(value, value.GetType(), options);
+        var typeToSerialize = value?.GetType() ?? typeof(object);
+        return JsonSerializer.Serialize(value, typeToSerialize, options);
     }
 
     /// <summary>

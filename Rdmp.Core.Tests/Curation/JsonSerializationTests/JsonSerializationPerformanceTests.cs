@@ -23,6 +23,7 @@ namespace Rdmp.Core.Tests.Curation.JsonSerializationTests;
 /// </summary>
 [TestFixture]
 [Category("Performance")]
+[Explicit("Performance benchmarks - run manually, not in CI")]
 public class JsonSerializationPerformanceTests : DatabaseTests
 {
     private const int IterationCount = 100;
@@ -157,7 +158,7 @@ public class JsonSerializationPerformanceTests : DatabaseTests
         var beforeNewtonsoft = GC.GetTotalMemory(true);
         for (int i = 0; i < IterationCount; i++)
         {
-            var json = NewtonsoftExtensions.SerializeObject(catalogue, RepositoryLocator);
+            _ = NewtonsoftExtensions.SerializeObject(catalogue, RepositoryLocator);
         }
         var afterNewtonsoft = GC.GetTotalMemory(true);
         var newtonsoftAllocations = afterNewtonsoft - beforeNewtonsoft;
@@ -165,7 +166,7 @@ public class JsonSerializationPerformanceTests : DatabaseTests
         var beforeSystemText = GC.GetTotalMemory(true);
         for (int i = 0; i < IterationCount; i++)
         {
-            var json = SystemTextJsonExtensions.SerializeObject(catalogue, RepositoryLocator);
+            _ = SystemTextJsonExtensions.SerializeObject(catalogue, RepositoryLocator);
         }
         var afterSystemText = GC.GetTotalMemory(true);
         var systemTextAllocations = afterSystemText - beforeSystemText;
