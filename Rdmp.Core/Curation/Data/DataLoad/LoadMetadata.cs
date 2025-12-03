@@ -246,7 +246,8 @@ public class LoadMetadata : DatabaseEntity, ILoadMetadata, IHasDependencies, IHa
             { "IgnoreTrigger", false /*todo could be system global default here*/ },
             { "Folder", FolderHelper.Root },
             {"LastLoadTime", null },
-            {"RootLoadMetadata_ID", rootLoadMetadata is null? null: rootLoadMetadata.ID }
+            {"RootLoadMetadata_ID", rootLoadMetadata is null? null: rootLoadMetadata.ID },
+            {"CacheArchiveType", (int)CacheArchiveType.None }
         });
     }
 
