@@ -48,8 +48,9 @@ public class DataTableUploadDestinationTests : DatabaseTests
         destination.ProcessPipelineData(dt1, toConsole, token);
         var ex = Assert.Throws<Exception>(() => destination.ProcessPipelineData(dt2, toConsole, token));
 
+        // FAnsiSql 3.6.x changed error message format
         var expectedText =
-            "BulkInsert failed on data row 1 the complaint was about source column <<name>> which had value <<BigFish>> destination data type was <<varchar(4)>>";
+            "source column <<name>> has value <<BigFish>> (length 7) which exceeds maximum length 4 for destination column <<name>>";
 
         Assert.That(ex.InnerException, Is.Not.Null);
         Assert.That(ex.InnerException.Message, Does.Contain(expectedText));
@@ -147,12 +148,12 @@ public class DataTableUploadDestinationTests : DatabaseTests
             var ex = Assert.Throws<Exception>(() => destination.ProcessPipelineData(dt1, toConsole, token));
 
             var exceptionMessage = ex.InnerException.Message;
-            var interestingBit =
-                exceptionMessage[(exceptionMessage.IndexOf(": <<", StringComparison.Ordinal) + ": ".Length)..];
 
+            // FAnsiSql 3.6.x changed error message format
+            var expectedValue = dt1.Rows[0][errorColumn]?.ToString() ?? "";
             var expectedErrorMessage =
-                $"<<{errorColumn}>> which had value <<{dt1.Rows[0][errorColumn]}>> destination data type was <<varchar(1)>>";
-            Assert.That(interestingBit, Does.Contain(expectedErrorMessage));
+                $"source column <<{errorColumn}>> has value <<{expectedValue}>> (length {expectedValue.Length}) which exceeds maximum length 1 for destination column <<{errorColumn}>>";
+            Assert.That(exceptionMessage, Does.Contain(expectedErrorMessage));
 
             destination.Dispose(ThrowImmediatelyDataLoadEventListener.Quiet, ex);
             tbl.Drop();
@@ -207,11 +208,11 @@ ALTER TABLE DroppedColumnsTable add color varchar(1)
             destination.ProcessPipelineData(dt1, ThrowImmediatelyDataLoadEventListener.Quiet, token));
 
         var exceptionMessage = ex.InnerException.Message;
-        var interestingBit = exceptionMessage[(exceptionMessage.IndexOf(": <<", StringComparison.Ordinal) + 2)..];
 
+        // FAnsiSql 3.6.x changed error message format
         const string expectedErrorMessage =
-            "<<color>> which had value <<blue>> destination data type was <<varchar(1)>>";
-        Assert.That(interestingBit, Does.Contain(expectedErrorMessage));
+            "source column <<color>> has value <<blue>> (length 4) which exceeds maximum length 1 for destination column <<color>>";
+        Assert.That(exceptionMessage, Does.Contain(expectedErrorMessage));
 
         destination.Dispose(ThrowImmediatelyDataLoadEventListener.Quiet, ex);
 

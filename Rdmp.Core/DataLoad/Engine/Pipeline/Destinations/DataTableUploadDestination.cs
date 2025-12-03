@@ -553,17 +553,37 @@ public class DataTableUploadDestination : IPluginDataFlowComponent<DataTable>, I
             {
                 var col = tbl.DiscoverColumn(column.ColumnName, _managedConnection.ManagedTransaction);
 
-
-                if (AbandonAlter(col.DataType.SQLType, newSqlType, out var reason))
+                // Skip primary key columns - SQL Server doesn't allow altering them
+                if (col.IsPrimaryKey)
                 {
                     listener.OnNotify(this,
                         new NotifyEventArgs(ProgressEventType.Warning,
-                            $"Considered resizing column '{column}' from '{col.DataType.SQLType}' to '{newSqlType}' but decided not to because:{reason}"));
+                            $"Skipping resize of column '{column}' because it is a primary key column"));
+                    continue;
+                }
+
+                // Only resize if we're enlarging string columns, not shrinking
+                var actualSqlType = col.DataType.SQLType;
+                var oldLength = typeTranslater.GetLengthIfString(actualSqlType);
+                var newLength = typeTranslater.GetLengthIfString(newSqlType);
+                if (oldLength >= 0 && newLength >= 0 && newLength <= oldLength)
+                {
+                    listener.OnNotify(this,
+                        new NotifyEventArgs(ProgressEventType.Information,
+                            $"Skipping resize of column '{column}' from '{actualSqlType}' to '{newSqlType}' because new type is not larger"));
+                    continue;
+                }
+
+                if (AbandonAlter(actualSqlType, newSqlType, out var reason))
+                {
+                    listener.OnNotify(this,
+                        new NotifyEventArgs(ProgressEventType.Warning,
+                            $"Considered resizing column '{column}' from '{actualSqlType}' to '{newSqlType}' but decided not to because:{reason}"));
                     continue;
                 }
 
                 listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
-                    $"Resizing column '{column}' from '{col.DataType.SQLType}' to '{newSqlType}'"));
+                    $"Resizing column '{column}' from '{actualSqlType}' to '{newSqlType}'"));
 
                 //try changing the Type to the legit type
                 col.DataType.AlterTypeTo(newSqlType, _managedConnection.ManagedTransaction, AlterTimeout);
