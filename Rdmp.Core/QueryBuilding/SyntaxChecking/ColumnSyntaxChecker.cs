@@ -31,6 +31,7 @@ public class ColumnSyntaxChecker : SyntaxChecker
 
     /// <summary>
     /// Checks to see if there is an alias and if there is whether it is wrapped. If it is not wrapped and there are invalid characters or whitespace in the alias this causes a SyntaxErrorException to be thrown.
+    /// Also validates that function expressions have an alias since GetRuntimeName cannot derive a name from them.
     /// </summary>
     /// <param name="notifier"></param>
     public override void Check(ICheckNotifier notifier)
@@ -50,5 +51,37 @@ public class ColumnSyntaxChecker : SyntaxChecker
                 throw new SyntaxErrorException($"Whitespace found in unwrapped Alias \"{_column.Alias}\"");
 
         ParityCheckCharacterPairs(openingCharacters, closingCharacters, _column.SelectSQL);
+
+        // Function expressions (containing parentheses outside of identifier wrappers) require an alias
+        // since GetRuntimeName cannot derive a valid column name from them
+        if (string.IsNullOrWhiteSpace(_column.Alias) && !string.IsNullOrWhiteSpace(_column.SelectSQL) &&
+            LooksLikeFunctionExpression(_column.SelectSQL))
+            throw new SyntaxErrorException(
+                $"SelectSQL \"{_column.SelectSQL}\" appears to be a function expression and requires an Alias");
+    }
+
+    /// <summary>
+    /// Returns true if the SQL looks like a function call (e.g., "MangleQuery([col])") rather than
+    /// a simple column reference (e.g., "[db]..[col]").
+    /// </summary>
+    private static bool LooksLikeFunctionExpression(string sql)
+    {
+        // Check if there are parentheses that aren't at the start (which would indicate a wrapped identifier)
+        // A function call has the pattern: identifier( ... )
+        var trimmed = sql.Trim();
+        var parenIndex = trimmed.IndexOf('(');
+
+        if (parenIndex <= 0)
+            return false; // No parentheses or starts with paren (unlikely to be function)
+
+        // Check what comes before the parenthesis - if it's an identifier (not ending with ], `, or .)
+        // then it's likely a function call
+        var beforeParen = trimmed[..parenIndex].TrimEnd();
+        if (beforeParen.Length == 0)
+            return false;
+
+        var lastChar = beforeParen[^1];
+        // If the character before ( is ], `, or . then it's part of a qualified name, not a function
+        return lastChar != ']' && lastChar != '`' && lastChar != '.';
     }
 }

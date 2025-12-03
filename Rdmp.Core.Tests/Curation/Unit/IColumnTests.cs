@@ -88,14 +88,15 @@ internal class IColumnTests
     }
 
     [Test]
-    public void GetRuntimeName_IColumns_ThrowBecauseMissingAliasOnScalarValueFunction()
+    public void CheckSyntax_IColumn_ThrowBecauseMissingAliasOnScalarValueFunction()
     {
         var tc = new TestColumn
         {
             SelectSQL = "MangleQuery([mydb]..[myExcitingField])"
         };
 
-        var ex = Assert.Throws<RuntimeNameException>(() => tc.GetRuntimeName());
+        var ex = Assert.Throws<SyntaxErrorException>(() => tc.Check(ThrowImmediatelyCheckNotifier.Quiet));
+        Assert.That(ex.Message, Does.Contain("requires an Alias"));
     }
 
 
