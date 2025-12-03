@@ -1,4 +1,4 @@
-﻿--Version:3.2.0
+--Version:3.2.0
 --Description: Changes all varchar(x) columns that involve user provided values into nvarchar(x)
 
 if exists (select 1 from sys.foreign_keys where name = 'FK_DataLoadTask_DataSet')

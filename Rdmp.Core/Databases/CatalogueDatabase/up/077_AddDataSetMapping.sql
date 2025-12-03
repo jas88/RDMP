@@ -1,4 +1,4 @@
-﻿--Version:8.1.1
+--Version:8.1.1
 --Description: Adds tables to model external datasets
  GO
 -- Create Dataset table

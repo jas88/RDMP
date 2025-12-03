@@ -1,4 +1,4 @@
-﻿--Version:2.9.0.1
+--Version:2.9.0.1
 --Description: New SupplementalExtractionResults child of CumulativeExtractionResult
 
 if not exists (select 1 from sys.tables where name = 'SupplementalExtractionResults')

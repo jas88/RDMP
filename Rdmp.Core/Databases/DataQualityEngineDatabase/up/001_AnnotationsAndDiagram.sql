@@ -1,4 +1,4 @@
-﻿--Version:1.1.0.0
+--Version:1.1.0.0
 --Description: Added the ability to annotate graphs in Dashboard, added diagram 
 
 if not exists (select 1 from sys.tables where name ='DQEGraphAnnotation') 

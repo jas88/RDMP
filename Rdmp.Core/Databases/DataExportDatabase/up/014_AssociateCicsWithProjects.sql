@@ -1,4 +1,4 @@
-﻿--Version:2.4.0.1
+--Version:2.4.0.1
 --Description: Adds the ability to associate a Cohort Identification Configuration with a Project
 if not exists( select 1 from sys.tables where name ='ProjectCohortIdentificationConfigurationAssociation')
 begin

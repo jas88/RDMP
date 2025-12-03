@@ -1,4 +1,4 @@
-﻿--Version: 8.4.3
+--Version: 8.4.3
 --Description: Add new metadata fields for catalogues
 if not exists (select 1 from sys.columns where name = 'ControlledVocabulary' and OBJECT_NAME(object_id) = 'Catalogue')
 BEGIN

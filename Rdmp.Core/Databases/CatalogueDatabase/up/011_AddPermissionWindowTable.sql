@@ -7,7 +7,6 @@ CREATE TABLE [dbo].[PermissionWindow](
 	[ID] [int] NOT NULL,
 	[PermissionPeriodConfig] [varchar](max) NOT NULL,
 	[RequiresSynchronousAccess] [bit] NOT NULL,
-	[SoftwareVersion] [nvarchar](50) NOT NULL,
  CONSTRAINT [PK_PermissionWindow] PRIMARY KEY CLUSTERED 
 (
 	[ID] ASC

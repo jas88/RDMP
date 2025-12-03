@@ -1,4 +1,4 @@
-﻿--Version:3.2.0
+--Version:3.2.0
 --Description: Changes all varchar(x) columns that involve user provided values into nvarchar(x)
 
 alter table [DQEGraphAnnotation] alter column [Text] nvarchar(500)NOT NULL

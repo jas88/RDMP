@@ -1,4 +1,4 @@
-﻿--Version: 8.2.0
+--Version: 8.2.0
 --Description: Adds unified instance settings
 if not exists (select 1 from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='Setting')
 BEGIN

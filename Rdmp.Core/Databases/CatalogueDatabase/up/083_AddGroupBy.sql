@@ -1,4 +1,4 @@
-﻿--Version: 8.2.0
+--Version: 8.2.0
 --Description: Adds linking table to allow for multiple load metadatas per catalogue
  if not exists (select 1 from sys.columns where name = 'GroupBy' and OBJECT_NAME(object_id) = 'AggregateDimension')
 BEGIN
