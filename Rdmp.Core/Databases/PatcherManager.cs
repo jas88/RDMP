@@ -48,7 +48,7 @@ public class PatcherManager
 
             try
             {
-                instance = (PluginPatcher)ObjectConstructor.Construct(patcherType);
+                instance = (PluginPatcher)AotObjectConstructor.Construct(patcherType);
 
                 events?.Invoke(this,
                     new PluginPatcherFoundEventArgs(patcherType, instance, PluginPatcherStatus.Healthy));

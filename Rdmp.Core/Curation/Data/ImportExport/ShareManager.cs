@@ -329,7 +329,7 @@ public class ShareManager
                     actual?.DeleteInDatabase();
                 }
 
-                var instance = (IMapsDirectlyToDatabaseTable)ObjectConstructor.ConstructIfPossible(sd.Type, this, sd) ??
+                var instance = (IMapsDirectlyToDatabaseTable)AotObjectConstructor.ConstructIfPossible(sd.Type, this, sd) ??
                                throw new ObjectLacksCompatibleConstructorException(
                                    $"Could not find a ShareManager constructor for '{sd.Type}'");
                 if (instance.GetType() == typeof(LoadMetadataCatalogueLinkage))

@@ -81,5 +81,5 @@ public class DQERepository : TableRepository, IDQERepository
     public bool HasEvaluations(ICatalogue catalogue) => GetAllEvaluationsFor(catalogue).Any();
 
     protected override IMapsDirectlyToDatabaseTable ConstructEntity(Type t, DbDataReader reader) =>
-        ObjectConstructor.ConstructIMapsDirectlyToDatabaseObject(t, this, reader);
+        AotObjectConstructor.ConstructIMapsDirectlyToDatabaseObject(t, this, reader);
 }
