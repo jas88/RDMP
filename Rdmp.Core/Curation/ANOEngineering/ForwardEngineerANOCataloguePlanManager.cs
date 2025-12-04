@@ -32,13 +32,19 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
 {
     private readonly ShareManager _shareManager;
 
+    /// <summary>
+    /// Flag to prevent RefreshTableInfos() during deserialization, which would overwrite deserialized Plans
+    /// </summary>
+    private bool _isDeserializing;
+
     public ICatalogue Catalogue
     {
         get => _catalogue;
         set
         {
             _catalogue = value;
-            RefreshTableInfos();
+            if (!_isDeserializing)
+                RefreshTableInfos();
         }
     }
 
@@ -65,6 +71,7 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
     /// </summary>
     public ForwardEngineerANOCataloguePlanManager(IRDMPPlatformRepositoryServiceLocator repositoryLocator)
     {
+        _isDeserializing = true; // Prevent RefreshTableInfos() during property population
         _shareManager = new ShareManager(repositoryLocator);
 
         DilutionOperations = new List<IDilutionOperation>();
@@ -76,6 +83,7 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
     public ForwardEngineerANOCataloguePlanManager(IRDMPPlatformRepositoryServiceLocator repositoryLocator,
         ICatalogue catalogue) : this(repositoryLocator)
     {
+        _isDeserializing = false; // Normal construction - allow RefreshTableInfos()
         Catalogue = catalogue;
 
         foreach (var plan in Plans.Values)
@@ -276,6 +284,12 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
 
     public void AfterConstruction()
     {
+        _isDeserializing = false;
+
+        // After deserialization, ensure TableInfos is populated (but don't rebuild Plans)
+        if (Catalogue != null && TableInfos == null)
+            TableInfos = Catalogue.GetTableInfoList(true);
+
         InitializePlans();
     }
 }
