@@ -42,9 +42,10 @@ internal class ArbitraryFolderNodeTests : UITests
         var menu2 = common.GetMenuIfExists(node);
         var updatedItems = menu2.Items.Cast<ToolStripItem>().ToList();
 
-        // Expect "Do Nothing" command from CommandGetter
-        Assert.That(updatedItems.Any(i => i.Text == "Do Nothing"), Is.True,
-            "Expected 'Do Nothing' command from CommandGetter in menu");
+        // Expect "Impossible Command" from CommandGetter (GetCommandName() returns this from the type name)
+        // The "Do Nothing" string passed to ImpossibleCommand constructor is the reason, not the command name
+        Assert.That(updatedItems.Any(i => i.Text == "Impossible Command"), Is.True,
+            "Expected 'Impossible Command' from CommandGetter in menu");
 
         // Expect a separator between CommandGetter commands (bucket -1) and other items (bucket 0+)
         // CommandGetter commands get Weight -1.0f, which creates bucket -1, causing OrderMenuItems
