@@ -40,9 +40,11 @@ internal class ArbitraryFolderNodeTests : UITests
 
         var count2 = menu2.Items.Count;
 
-        // expect 2 new entries in the context menu.  The "Do Nothing" command added above
-        // and a tool strip separator to divide the menu commands from the common commands
-        Assert.That(count2, Is.EqualTo(count1 + 2));
+        // expect 1 new entry in the context menu - the "Do Nothing" command added above
+        // Note: separators are only added between different weight buckets, not between
+        // custom commands and common commands. Since ImpossibleCommand has default weight 0
+        // (same as common items), they end up in the same bucket with no separator.
+        Assert.That(count2, Is.EqualTo(count1 + 1));
 
         //what happens if the delegate crashes?
         node.CommandGetter = () => throw new NotSupportedException("It went wrong!");
