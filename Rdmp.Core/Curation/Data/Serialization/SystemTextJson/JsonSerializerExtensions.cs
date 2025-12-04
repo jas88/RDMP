@@ -94,6 +94,7 @@ public static class JsonSerializerExtensions
         options.Converters.Add(new DictionaryAsArrayConverterFactory());
         options.Converters.Add(new TypeJsonConverterFactory());
         options.Converters.Add(new AttributeJsonConverterFactory());
+        options.Converters.Add(new ObjectJsonConverter());
 
         return options;
     }
@@ -118,6 +119,7 @@ public static class JsonSerializerExtensions
         options.Converters.Add(new DictionaryAsArrayConverterFactory());
         options.Converters.Add(new TypeJsonConverterFactory());
         options.Converters.Add(new AttributeJsonConverterFactory());
+        options.Converters.Add(new ObjectJsonConverter());
 
         return options;
     }
