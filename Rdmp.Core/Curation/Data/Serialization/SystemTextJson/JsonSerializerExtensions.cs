@@ -89,6 +89,7 @@ public static class JsonSerializerExtensions
         };
 
         // Add custom converters
+        options.Converters.Add(new TypeJsonConverter());
         options.Converters.Add(new DatabaseEntityJsonConverter(repositoryLocator));
         options.Converters.Add(new DictionaryAsArrayConverterFactory());
 
@@ -109,6 +110,7 @@ public static class JsonSerializerExtensions
         };
 
         // Add custom converters
+        options.Converters.Add(new TypeJsonConverter());
         options.Converters.Add(new DatabaseEntityJsonConverter(repositoryLocator));
         options.Converters.Add(new PickAnyConstructorJsonConverter(
             new[] { repositoryLocator }.Union(objectsForConstructingStuffWith).ToArray()));

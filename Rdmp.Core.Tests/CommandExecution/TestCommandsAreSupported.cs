@@ -23,6 +23,9 @@ public class TestCommandsAreSupported : UnitTests
     private static readonly HashSet<Type> KnownIncompatibleCommands = new()
     {
         typeof(ExecuteCommandSetDataAccessContextForCredentials), // Not currently CLI compatible
+        typeof(Rdmp.Core.CommandExecution.AtomicCommands.Automation.ExecuteCommandGenerateRunCommand), // Requires UI context
+        typeof(Rdmp.Core.CommandExecution.AtomicCommands.Automation.ExecuteCommandRunDetached), // Requires UI context
+        typeof(ExecuteCommandPerformRegexRedactionOnCatalogue), // Requires interactive UI
     };
 
     [OneTimeSetUp]
