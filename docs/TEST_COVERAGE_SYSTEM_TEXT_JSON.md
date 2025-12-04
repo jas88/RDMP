@@ -70,7 +70,7 @@
 - ✅ `DatabaseEntityJsonConverter_InvalidPersistenceString_ThrowsException`
 - ✅ `DictionaryAsArrayConverter_InvalidArrayFormat_ThrowsJsonException`
 - ✅ `DictionaryAsArrayConverter_NotAnArray_ThrowsJsonException`
-- ✅ `PickAnyConstructorJsonConverter_NoCompatibleConstructor_ThrowsJsonException`
+- ✅ `PickAnyConstructorJsonConverter_NoCompatibleConstructor_ThrowsException`
 
 #### Special Values (2 tests)
 - ✅ `DatabaseEntityJsonConverter_EmptyString_HandledGracefully`
@@ -179,7 +179,7 @@
 ### Database Dependency
 
 Most tests require a configured database backend because they:
-- Create real `Catalogue` objects in the database
+- Create real [Catalogue] objects in the database
 - Test persistence string resolution
 - Verify round-trip through database
 
@@ -264,3 +264,5 @@ The System.Text.Json implementation has **comprehensive test coverage** exceedin
 - **Performance benchmarks** included for regression detection
 
 The implementation is **production-ready** pending CI validation with actual databases.
+
+[Catalogue]: ../Documentation/CodeTutorials/Glossary.md#Catalogue

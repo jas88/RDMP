@@ -12,13 +12,13 @@ namespace Rdmp.Core.Curation.Data.Serialization.SystemTextJson;
 
 /// <summary>
 /// System.Text.Json converter factory for <see cref="System.Type"/> instances.
-/// Handles both <see cref="Type"/> and RuntimeType (the actual runtime type).
-/// Serializes types as their AssemblyQualifiedName string for compatibility with Newtonsoft.Json behavior.
+/// Handles both the base Type class and the internal runtime type representation.
+/// Serializes types as their AssemblyQualifiedName string for compatibility.
 /// </summary>
 /// <remarks>
-/// System.Text.Json does not support Type serialization by default for security reasons.
-/// This converter provides explicit opt-in support matching Newtonsoft.Json's TypeNameHandling behavior.
-/// Must be a factory to handle RuntimeType which is the actual type returned by typeof() at runtime.
+/// <para>System.Text.Json does not support Type serialization by default for security reasons.
+/// This converter provides explicit opt-in support for type name handling.</para>
+/// <para>Must be a factory to handle the internal runtime type returned by typeof() at runtime.</para>
 /// </remarks>
 public class TypeJsonConverterFactory : JsonConverterFactory
 {

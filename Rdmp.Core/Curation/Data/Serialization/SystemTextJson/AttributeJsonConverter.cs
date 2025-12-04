@@ -13,23 +13,6 @@ using System.Text.Json.Serialization;
 namespace Rdmp.Core.Curation.Data.Serialization.SystemTextJson;
 
 /// <summary>
-/// System.Text.Json converter factory for <see cref="Attribute"/>-derived types.
-/// Excludes the inherited <see cref="Attribute.TypeId"/> property which contains a <see cref="Type"/>
-/// boxed as <see cref="object"/>, causing serialization issues with RuntimeType.
-/// </summary>
-public class AttributeJsonConverterFactory : JsonConverterFactory
-{
-    public override bool CanConvert(Type typeToConvert) =>
-        typeof(Attribute).IsAssignableFrom(typeToConvert) && typeToConvert != typeof(Attribute);
-
-    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-    {
-        var converterType = typeof(AttributeJsonConverter<>).MakeGenericType(typeToConvert);
-        return (JsonConverter)Activator.CreateInstance(converterType);
-    }
-}
-
-/// <summary>
 /// Generic converter for attribute types that excludes TypeId
 /// </summary>
 public class AttributeJsonConverter<T> : JsonConverter<T> where T : Attribute
