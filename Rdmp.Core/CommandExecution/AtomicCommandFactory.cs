@@ -52,6 +52,90 @@ public class AtomicCommandFactory : CommandFactoryBase
     private static readonly Lazy<Dictionary<Type, HashSet<Type>>> _commandCompatibility =
         new(BuildCompatibilityMap, System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
 
+    /// <summary>
+    /// Maps SuggestedCategory values to default weights for menu ordering.
+    /// Lower weights appear first in menus. Separators are added between integer buckets.
+    /// </summary>
+    private static readonly Dictionary<string, float> CategoryWeights = new()
+    {
+        { GoTo, -100f },        // Navigation commands at very top
+        { Add, -99f },          // Add/create commands near top
+        { New, -99f },          // New commands near top
+        { View, -98f },         // View commands high priority
+        { Extraction, -97f },   // Extraction settings
+        { Dimensions, -96f },   // Dimension settings
+        { Metadata, -95f },     // Metadata operations
+        { Alter, -90f },        // Alter/modify operations
+        { SetContainerOperation, -85f },
+        { SetUsageContext, -85f },
+        { Deprecation, -50f },  // Deprecation commands mid-priority
+        { Advanced, 1f },       // Advanced operations lower priority
+        { Batching, 2f }        // Batch operations at bottom
+    };
+
+    /// <summary>
+    /// Maps specific command types to their default weights when no category is set.
+    /// This restores the menu ordering that was previously achieved through explicit
+    /// Weight assignments in the manual yield statements.
+    /// </summary>
+    private static readonly Dictionary<Type, float> TypeWeights = new()
+    {
+        // View commands - highest priority
+        { typeof(ExecuteCommandViewData), -99.5f },
+        { typeof(ExecuteCommandViewLogs), -99.4f },
+        { typeof(ExecuteCommandViewExtractionSql), -99.3f },
+
+        // Add commands
+        { typeof(ExecuteCommandAddNewCatalogueItem), -99.9f },
+        { typeof(ExecuteCommandAddNewAggregateGraph), -98.9f },
+        { typeof(ExecuteCommandAddNewSupportingDocument), -87.8f },
+        { typeof(ExecuteCommandAddNewSupportingSqlTable), -87.9f },
+
+        // Extraction commands
+        { typeof(ExecuteCommandMakeCatalogueInternal), -99.01f },
+        { typeof(ExecuteCommandMakeCatalogueNotInternal), -99.01f },
+        { typeof(ExecuteCommandMakeCatalogueProjectSpecific), -99.01f },
+        { typeof(ExecuteCommandSetExtractionIdentifier), -99.01f },
+
+        // Clone/association commands
+        { typeof(ExecuteCommandCloneCohortIdentificationConfiguration), -50.4f },
+        { typeof(ExecuteCommandCloneExtractionConfiguration), 1.3f },
+        { typeof(ExecuteCommandClonePipeline), -50.4f },
+
+        // Configuration commands
+        { typeof(ExecuteCommandFreezeExtractionConfiguration), 1.2f },
+        { typeof(ExecuteCommandUnfreezeExtractionConfiguration), 1.2f },
+        { typeof(ExecuteCommandResetExtractionProgress), 1.4f },
+        { typeof(ExecuteCommandGenerateReleaseDocument), -99.4f },
+
+        // Common menu items - give negative weight so they separate from custom commands (Weight -1 = bucket -1)
+        { typeof(ExecuteCommandAddFavourite), -1f }
+        // Note: ExecuteCommandAddToSession, ExecuteCommandRefreshObject, ExecuteCommandShowKeywordHelp,
+        // ExecuteCommandViewCommits are in Rdmp.UI and will get weights applied there
+    };
+
+    /// <summary>
+    /// Applies a default weight to the command based on its SuggestedCategory or Type.
+    /// Only sets weight if command hasn't already been assigned a non-zero weight.
+    /// </summary>
+    private static void ApplyDefaultWeight(IAtomicCommand cmd)
+    {
+        // Don't override explicitly set weights
+        if (cmd.Weight != 0)
+            return;
+
+        // First try category-based weight
+        if (cmd.SuggestedCategory != null && CategoryWeights.TryGetValue(cmd.SuggestedCategory, out var categoryWeight))
+        {
+            cmd.Weight = categoryWeight;
+            return;
+        }
+
+        // Fall back to type-based weight
+        if (TypeWeights.TryGetValue(cmd.GetType(), out var typeWeight))
+            cmd.Weight = typeWeight;
+    }
+
     public AtomicCommandFactory(IBasicActivateItems activator)
     {
         _activator = activator;
@@ -123,12 +207,17 @@ public class AtomicCommandFactory : CommandFactoryBase
         foreach (var cmd in _goto.GetCommands(o))
         {
             cmd.SuggestedCategory = GoTo;
+            ApplyDefaultWeight(cmd);
             yield return cmd;
         }
 
         // Special case: Activate command (always try if activatable)
         if (_activator.CanActivate(o))
-            yield return new ExecuteCommandActivate(_activator, o);
+        {
+            var activateCmd = new ExecuteCommandActivate(_activator, o);
+            ApplyDefaultWeight(activateCmd);
+            yield return activateCmd;
+        }
 
         // Auto-discover all compatible commands
         var targetType = o.GetType();
@@ -148,13 +237,19 @@ public class AtomicCommandFactory : CommandFactoryBase
 
             // Only yield commands that were successfully constructed and are possible
             if (cmd?.IsImpossible == false)
+            {
+                ApplyDefaultWeight(cmd);
                 yield return cmd;
+            }
         }
 
         // Special case: ArbitraryFolderNode with CommandGetter delegate
         if (o is Providers.Nodes.ArbitraryFolderNode f && f.CommandGetter != null)
             foreach (var cmd in f.CommandGetter())
+            {
+                ApplyDefaultWeight(cmd);
                 yield return cmd;
+            }
     }
 
     /// <summary>

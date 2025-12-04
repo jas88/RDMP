@@ -7,6 +7,7 @@
 using NUnit.Framework;
 using Rdmp.Core.CommandExecution;
 using Rdmp.Core.CommandExecution.AtomicCommands;
+using Rdmp.Core.CommandExecution.AtomicCommands.Automation;
 using Rdmp.Core.Repositories;
 using System;
 using System.Collections.Generic;
@@ -19,10 +20,13 @@ public class TestCommandsAreSupported : UnitTests
 {
     private CommandInvoker invoker;
 
-    // Commands known to not be CLI compatible
+    // Commands known to not be CLI compatible (require UI context, callbacks, or special parameter types)
     private static readonly HashSet<Type> KnownIncompatibleCommands = new()
     {
         typeof(ExecuteCommandSetDataAccessContextForCredentials), // Not currently CLI compatible
+        typeof(ExecuteCommandGenerateRunCommand), // Requires Func<RDMPCommandLineOptions> callback from UI
+        typeof(ExecuteCommandRunDetached), // Requires Func<RDMPCommandLineOptions> callback from UI
+        typeof(ExecuteCommandPerformRegexRedactionOnCatalogue), // Requires List<ColumnInfo> (not array)
     };
 
     [OneTimeSetUp]
