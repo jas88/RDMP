@@ -151,43 +151,6 @@ public static class AotObjectConstructor
         return ObjectConstructor.Construct(typeToConstruct, constructorParameter1, allowBlank);
     }
 
-    #region Generic overloads for better type safety
-
-    /// <summary>
-    /// Constructs a new instance of Type t using the blank constructor, returning it as type T.
-    /// T may be a base class or interface that t implements.
-    /// </summary>
-    /// <typeparam name="T">The return type (may be wider than t, e.g., an interface)</typeparam>
-    /// <param name="t">The concrete type to construct</param>
-    /// <returns>A new instance of the specified type cast to T</returns>
-    public static T Construct<T>(Type t) where T : class
-        => (T)Construct(t);
-
-    /// <summary>
-    /// Constructs a new instance of Type t using the default constructor or one that takes an IRDMPPlatformRepositoryServiceLocator,
-    /// returning it as type T. T may be a base class or interface that t implements.
-    /// </summary>
-    /// <typeparam name="T">The return type (may be wider than t, e.g., an interface)</typeparam>
-    /// <param name="t">The concrete type to construct</param>
-    /// <param name="serviceLocator">The service locator parameter</param>
-    /// <param name="allowBlank">Whether to allow blank constructors</param>
-    /// <returns>A new instance of the specified type cast to T</returns>
-    public static T Construct<T>(Type t, IRDMPPlatformRepositoryServiceLocator serviceLocator, bool allowBlank = true) where T : class
-        => (T)Construct(t, serviceLocator, allowBlank);
-
-    /// <summary>
-    /// Attempts to construct an instance of Type t using the provided constructorValues,
-    /// returning it as type T. T may be a base class or interface that t implements.
-    /// </summary>
-    /// <typeparam name="T">The return type (may be wider than t, e.g., an interface)</typeparam>
-    /// <param name="t">The concrete type to construct</param>
-    /// <param name="constructorValues">Constructor parameter values</param>
-    /// <returns>A new instance cast to T, or null if no compatible constructor was found</returns>
-    /// <exception cref="InvalidCastException">Thrown if construction succeeds but the result cannot be cast to T</exception>
-    public static T ConstructIfPossible<T>(Type t, params object[] constructorValues) where T : class
-        => (T)ConstructIfPossible(t, constructorValues);
-
-    #endregion
 
     /// <summary>
     /// Returns all constructors defined for class 'type' that are compatible with any set or subset of the provided parameters
