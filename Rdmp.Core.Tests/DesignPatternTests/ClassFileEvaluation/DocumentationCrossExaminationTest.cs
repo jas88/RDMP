@@ -165,6 +165,7 @@ internal class DocumentationCrossExaminationTest
         "FolderOfX",
 
         //PluginWriting.md
+        "MyPlugin",
         "MyPluginUserInterface",
         "ExecuteCommandRenameCatalogueToBunnies",
         "BasicDataTableAnonymiser1",
