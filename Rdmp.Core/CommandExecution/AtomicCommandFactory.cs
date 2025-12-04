@@ -244,14 +244,15 @@ public class AtomicCommandFactory : CommandFactoryBase
         }
 
         // Special case: ArbitraryFolderNode with CommandGetter delegate
-        // Commands from CommandGetter get weight -0.5 to create a separate bucket from auto-discovered
+        // Commands from CommandGetter get weight -1.0 to create a separate bucket from auto-discovered
         // commands (bucket 0) while staying above GoTo commands (bucket -100). This ensures a separator
         // is added between custom folder commands and common menu items.
+        // Note: The bucket is calculated as (int)weight, so -1.0 gives bucket -1, distinct from bucket 0.
         if (o is Providers.Nodes.ArbitraryFolderNode f && f.CommandGetter != null)
             foreach (var cmd in f.CommandGetter())
             {
                 if (cmd.Weight == 0)
-                    cmd.Weight = -0.5f;
+                    cmd.Weight = -1.0f;
                 yield return cmd;
             }
     }
