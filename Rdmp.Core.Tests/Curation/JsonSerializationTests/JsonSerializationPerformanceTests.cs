@@ -23,6 +23,7 @@ namespace Rdmp.Core.Tests.Curation.JsonSerializationTests;
 /// </summary>
 [TestFixture]
 [Category("Performance")]
+[Explicit("Performance benchmarks - run manually, not in CI")]
 public class JsonSerializationPerformanceTests : DatabaseTests
 {
     private const int IterationCount = 100;
@@ -157,7 +158,7 @@ public class JsonSerializationPerformanceTests : DatabaseTests
         var beforeNewtonsoft = GC.GetTotalMemory(true);
         for (int i = 0; i < IterationCount; i++)
         {
-            var json = NewtonsoftExtensions.SerializeObject(catalogue, RepositoryLocator);
+            _ = NewtonsoftExtensions.SerializeObject(catalogue, RepositoryLocator);
         }
         var afterNewtonsoft = GC.GetTotalMemory(true);
         var newtonsoftAllocations = afterNewtonsoft - beforeNewtonsoft;
@@ -165,7 +166,7 @@ public class JsonSerializationPerformanceTests : DatabaseTests
         var beforeSystemText = GC.GetTotalMemory(true);
         for (int i = 0; i < IterationCount; i++)
         {
-            var json = SystemTextJsonExtensions.SerializeObject(catalogue, RepositoryLocator);
+            _ = SystemTextJsonExtensions.SerializeObject(catalogue, RepositoryLocator);
         }
         var afterSystemText = GC.GetTotalMemory(true);
         var systemTextAllocations = afterSystemText - beforeSystemText;
@@ -175,10 +176,8 @@ public class JsonSerializationPerformanceTests : DatabaseTests
         TestContext.Out.WriteLine($"System.Text.Json allocations: {systemTextAllocations:N0} bytes");
         TestContext.Out.WriteLine($"Reduction: {(1.0 - ((double)systemTextAllocations / newtonsoftAllocations)) * 100:F1}%");
 
-        // Assert - System.Text.Json should allocate comparable memory
-        // Note: GC measurements are inherently imprecise, so we use a generous threshold
-        // The goal is to detect major regressions, not enforce strict allocation guarantees
-        Assert.That(systemTextAllocations, Is.LessThanOrEqualTo(newtonsoftAllocations * 2.0),
+        // Assert - System.Text.Json should allocate less or comparable memory
+        Assert.That(systemTextAllocations, Is.LessThanOrEqualTo(newtonsoftAllocations * 1.2),
             "System.Text.Json should have comparable or lower memory allocations");
 
         // Cleanup

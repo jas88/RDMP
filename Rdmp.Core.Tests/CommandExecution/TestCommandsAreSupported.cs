@@ -1,4 +1,4 @@
-﻿// Copyright (c) The University of Dundee 2018-2019
+// Copyright (c) The University of Dundee 2018-2019
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -7,6 +7,7 @@
 using NUnit.Framework;
 using Rdmp.Core.CommandExecution;
 using Rdmp.Core.CommandExecution.AtomicCommands;
+using Rdmp.Core.CommandExecution.AtomicCommands.Automation;
 using Rdmp.Core.Repositories;
 using System;
 using System.Collections.Generic;
@@ -19,13 +20,13 @@ public class TestCommandsAreSupported : UnitTests
 {
     private CommandInvoker invoker;
 
-    // Commands known to not be CLI compatible
+    // Commands known to not be CLI compatible (require UI context, callbacks, or special parameter types)
     private static readonly HashSet<Type> KnownIncompatibleCommands = new()
     {
         typeof(ExecuteCommandSetDataAccessContextForCredentials), // Not currently CLI compatible
-        typeof(Rdmp.Core.CommandExecution.AtomicCommands.Automation.ExecuteCommandGenerateRunCommand), // Requires UI context
-        typeof(Rdmp.Core.CommandExecution.AtomicCommands.Automation.ExecuteCommandRunDetached), // Requires UI context
-        typeof(ExecuteCommandPerformRegexRedactionOnCatalogue), // Requires interactive UI
+        typeof(ExecuteCommandGenerateRunCommand), // Requires Func<RDMPCommandLineOptions> callback from UI
+        typeof(ExecuteCommandRunDetached), // Requires Func<RDMPCommandLineOptions> callback from UI
+        typeof(ExecuteCommandPerformRegexRedactionOnCatalogue), // Requires List<ColumnInfo> (not array)
     };
 
     [OneTimeSetUp]

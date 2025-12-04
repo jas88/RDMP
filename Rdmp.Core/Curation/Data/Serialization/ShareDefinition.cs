@@ -50,7 +50,17 @@ public class ShareDefinition
     /// The values of all foreign key properties on the <see cref="DatabaseEntity"/> (e.g. <see cref="CatalogueItem.Catalogue_ID"/>).  This is the SharingGuid of the referenced object.
     /// An object cannot be shared unless it is also shared with all such dependencies.
     /// </summary>
-    public Dictionary<RelationshipAttribute, Guid> RelationshipProperties = new();
+    public Dictionary<RelationshipAttribute, Guid> RelationshipProperties { get; set; } = new();
+
+    /// <summary>
+    /// Parameterless constructor for JSON deserialization
+    /// </summary>
+    [JsonConstructor]
+    public ShareDefinition()
+    {
+        Properties = new Dictionary<string, object>();
+        RelationshipProperties = new Dictionary<RelationshipAttribute, Guid>();
+    }
 
     /// <inheritdoc cref="ShareDefinition"/>
     public ShareDefinition(Guid sharingGuid, int id, Type type, Dictionary<string, object> properties,

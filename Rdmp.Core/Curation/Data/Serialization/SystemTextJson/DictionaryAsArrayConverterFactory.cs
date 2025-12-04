@@ -5,7 +5,6 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -33,7 +32,7 @@ public class DictionaryAsArrayConverterFactory : JsonConverterFactory
             return false;
 
         var genericDef = typeToConvert.GetGenericTypeDefinition();
-        return genericDef == typeof(Dictionary<,>) || genericDef == typeof(IDictionary<,>);
+        return genericDef == typeof(Dictionary<,>);
     }
 
     /// <summary>

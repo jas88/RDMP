@@ -88,9 +88,11 @@ public class SystemTextJsonEdgeCaseTests : DatabaseTests
         var json = "{\"Value\":\"test\"}";
 
         // Act & Assert
-        // System.Text.Json throws InvalidOperationException when constructor parameters don't bind
-        Assert.Throws<InvalidOperationException>(() =>
+        // PickAnyConstructorJsonConverter throws JsonException when no compatible constructor is found
+        var ex = Assert.Throws<JsonException>(() =>
             SystemTextJsonExtensions.DeserializeObject<ClassWithNoCompatibleConstructor>(json, RepositoryLocator));
+
+        Assert.That(ex.Message, Does.Contain("constructor"));
     }
 
     #endregion
@@ -237,7 +239,8 @@ public class SystemTextJsonEdgeCaseTests : DatabaseTests
         var json = SystemTextJsonExtensions.SerializeObject(catalogue, RepositoryLocator);
 
         // Act & Assert
-        // Trying to deserialize a Catalogue as a different type should fail with InvalidCastException
+        // Trying to deserialize a Catalogue as a different type should fail
+        // System.Text.Json throws InvalidCastException when it can't cast to the expected type
         Assert.Throws<InvalidCastException>(() =>
             SystemTextJsonExtensions.DeserializeObject<CatalogueItem>(json, RepositoryLocator));
 

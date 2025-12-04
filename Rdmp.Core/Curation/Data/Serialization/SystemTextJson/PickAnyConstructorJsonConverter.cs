@@ -62,13 +62,12 @@ public class PickAnyConstructorJsonConverter : JsonConverterFactory
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         var converterType = typeof(PickAnyConstructorJsonConverterInner<>).MakeGenericType(typeToConvert);
-        // Must wrap in object[] to pass as single argument, otherwise Activator.CreateInstance
-        // treats the array elements as individual arguments
+        // Must wrap in object[] to pass as single parameter, not expanded params
         return (JsonConverter)Activator.CreateInstance(converterType, new object[] { _constructorObjects });
     }
 
     private Dictionary<ConstructorInfo, List<object>> GetConstructors(Type objectType) =>
-        AotObjectConstructor.GetConstructors(objectType, false, false, _constructorObjects);
+        ObjectConstructor.GetConstructors(objectType, false, false, _constructorObjects);
 
     /// <summary>
     /// Inner generic converter that handles the actual serialization/deserialization
@@ -89,7 +88,7 @@ public class PickAnyConstructorJsonConverter : JsonConverterFactory
             var root = document.RootElement;
 
             // Find the compatible constructor
-            var constructors = AotObjectConstructor.GetConstructors(typeToConvert, false, false, _constructorObjects);
+            var constructors = ObjectConstructor.GetConstructors(typeToConvert, false, false, _constructorObjects);
 
             if (constructors.Count == 0)
                 throw new JsonException($"No compatible constructor found for type {typeToConvert.Name}");
