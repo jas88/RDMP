@@ -35,7 +35,16 @@ public class ObjectJsonConverter : JsonConverter<object>
         }
 
         // Use the actual runtime type for serialization
-        JsonSerializer.Serialize(writer, value, value.GetType(), options);
+        var type = value.GetType();
+        if (type == typeof(object))
+        {
+            // Avoid infinite recursion - write an empty object for pure object instances
+            writer.WriteStartObject();
+            writer.WriteEndObject();
+            return;
+        }
+
+        JsonSerializer.Serialize(writer, value, type, options);
     }
 
     /// <summary>

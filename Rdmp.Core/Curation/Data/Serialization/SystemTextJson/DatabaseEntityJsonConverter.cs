@@ -50,6 +50,8 @@ public class DatabaseEntityJsonConverter : JsonConverter<IMapsDirectlyToDatabase
         }
 
         writer.WriteStartObject();
+        // Write the actual concrete type name so we can deserialize interfaces/base classes correctly
+        writer.WriteString("$type", value.GetType().Name);
         writer.WriteString("PersistenceString", _shareManager.GetPersistenceString(value));
         writer.WriteEndObject();
     }
@@ -73,25 +75,47 @@ public class DatabaseEntityJsonConverter : JsonConverter<IMapsDirectlyToDatabase
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException($"Expected StartObject token, got {reader.TokenType}");
 
-        // Read to property name
-        if (!reader.Read() || reader.TokenType != JsonTokenType.PropertyName)
-            throw new JsonException("Expected PropertyName token");
+        string typeName = null;
+        string persistenceString = null;
 
-        var propertyName = reader.GetString();
-        if (propertyName != "PersistenceString")
-            throw new JsonException($"Expected 'PersistenceString' property, got '{propertyName}'");
+        // Read all properties in the object
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject)
+                break;
 
-        // Read the persistence string value
-        if (!reader.Read() || reader.TokenType != JsonTokenType.String)
-            throw new JsonException("Expected String token for PersistenceString value");
+            if (reader.TokenType != JsonTokenType.PropertyName)
+                throw new JsonException($"Expected PropertyName token, got {reader.TokenType}");
 
-        var persistenceString = reader.GetString();
+            var propertyName = reader.GetString();
+
+            // Read the property value
+            if (!reader.Read())
+                throw new JsonException($"Unexpected end of JSON while reading value for property '{propertyName}'");
+
+            switch (propertyName)
+            {
+                case "$type":
+                    if (reader.TokenType != JsonTokenType.String)
+                        throw new JsonException("Expected String token for $type value");
+                    typeName = reader.GetString();
+                    break;
+                case "PersistenceString":
+                    if (reader.TokenType != JsonTokenType.String)
+                        throw new JsonException("Expected String token for PersistenceString value");
+                    persistenceString = reader.GetString();
+                    break;
+                default:
+                    // Skip unknown properties
+                    reader.Skip();
+                    break;
+            }
+        }
+
+        if (string.IsNullOrEmpty(persistenceString))
+            throw new JsonException("PersistenceString property not found or empty");
+
         var resolvedObject = _shareManager.GetObjectFromPersistenceString(persistenceString);
-
-        // Read to end object
-        if (!reader.Read() || reader.TokenType != JsonTokenType.EndObject)
-            throw new JsonException("Expected EndObject token");
-
         return resolvedObject;
     }
 

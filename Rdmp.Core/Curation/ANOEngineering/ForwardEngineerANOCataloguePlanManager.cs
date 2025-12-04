@@ -55,7 +55,7 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
 
     [JsonIgnore] public List<IDilutionOperation> DilutionOperations { get; private set; }
 
-    public ITableInfo[] TableInfos { get; private set; }
+    public ITableInfo[] TableInfos { get; set; }
 
     [JsonIgnore] public DiscoveredDatabase TargetDatabase { get; set; }
 
@@ -289,6 +289,33 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
         // After deserialization, ensure TableInfos is populated (but don't rebuild Plans)
         if (Catalogue != null && TableInfos == null)
             TableInfos = Catalogue.GetTableInfoList(true);
+
+        // Ensure SkippedTables is initialized (field initializers may not run during deserialization)
+        SkippedTables ??= new HashSet<ITableInfo>();
+
+        // After deserialization, rebuild the Plans dictionary with fresh ColumnInfo instances from repository
+        // This ensures dictionary keys match the ColumnInfo instances used elsewhere
+        if (Plans.Count > 0 && TableInfos != null)
+        {
+            var deserializedPlans = new Dictionary<ColumnInfo, ColumnInfoANOPlan>(Plans);
+            Plans.Clear();
+
+            // Reload all ColumnInfos from repository to get current instances
+            var allColumnInfos = Catalogue.Repository.GetAllObjects<ColumnInfo>();
+
+            foreach (var kvp in deserializedPlans)
+            {
+                // Find the current ColumnInfo instance by ID
+                var currentColumnInfo = allColumnInfos.FirstOrDefault(ci => ci.ID == kvp.Key.ID);
+                if (currentColumnInfo != null)
+                {
+                    // Update the plan's ColumnInfo reference
+                    kvp.Value.ColumnInfo = currentColumnInfo;
+                    // Re-add to dictionary with current instance
+                    Plans[currentColumnInfo] = kvp.Value;
+                }
+            }
+        }
 
         InitializePlans();
     }
