@@ -86,7 +86,8 @@ public static class JsonSerializerExtensions
         {
             WriteIndented = writeIndented,
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            IncludeFields = true
         };
 
         // Add custom converters
@@ -109,7 +110,8 @@ public static class JsonSerializerExtensions
         var options = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.Never
+            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            IncludeFields = true
         };
 
         // Add custom converters
