@@ -189,7 +189,7 @@ public class CatalogueRepository : TableRepository, ICatalogueRepository
     protected override IMapsDirectlyToDatabaseTable ConstructEntity(Type t, DbDataReader reader) =>
         Constructors.TryGetValue(t, out var constructor)
             ? constructor(this, reader)
-            : ObjectConstructor.ConstructIMapsDirectlyToDatabaseObject<ICatalogueRepository>(t, this, reader);
+            : AotObjectConstructor.ConstructIMapsDirectlyToDatabaseObject<ICatalogueRepository>(t, this, reader);
 
     private readonly ConcurrentDictionary<Type, IRowVerCache> _caches = new();
 

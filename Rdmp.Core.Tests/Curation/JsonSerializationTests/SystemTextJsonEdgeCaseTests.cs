@@ -88,11 +88,12 @@ public class SystemTextJsonEdgeCaseTests : DatabaseTests
         var json = "{\"Value\":\"test\"}";
 
         // Act & Assert
-        // System.Text.Json throws InvalidOperationException when constructor parameters don't bind to properties
+        // When PickAnyConstructorJsonConverter can't find a compatible constructor, it doesn't handle the type
+        // and the default System.Text.Json converter throws InvalidOperationException
         var ex = Assert.Throws<InvalidOperationException>(() =>
             SystemTextJsonExtensions.DeserializeObject<ClassWithNoCompatibleConstructor>(json, RepositoryLocator));
 
-        Assert.That(ex.Message, Does.Contain("constructor"));
+        Assert.That(ex.Message, Does.Contain("constructor").IgnoreCase);
     }
 
     #endregion
@@ -263,6 +264,7 @@ public class SystemTextJsonEdgeCaseTests : DatabaseTests
         {
             Description = "日本語 Français Español 中文 العربية 🎉"
         };
+        catalogue.SaveToDatabase();
 
         var wrapper = new TestWrapper(RepositoryLocator)
         {

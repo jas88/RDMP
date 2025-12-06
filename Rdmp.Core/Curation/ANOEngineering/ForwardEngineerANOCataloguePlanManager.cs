@@ -32,24 +32,30 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
 {
     private readonly ShareManager _shareManager;
 
+    /// <summary>
+    /// Flag to prevent RefreshTableInfos() during deserialization, which would overwrite deserialized Plans
+    /// </summary>
+    private bool _isDeserializing;
+
     public ICatalogue Catalogue
     {
         get => _catalogue;
         set
         {
             _catalogue = value;
-            RefreshTableInfos();
+            if (!_isDeserializing)
+                RefreshTableInfos();
         }
     }
 
     private ExtractionInformation[] _allExtractionInformations;
     private CatalogueItem[] _allCatalogueItems;
 
-    public Dictionary<ColumnInfo, ColumnInfoANOPlan> Plans = new();
+    public Dictionary<ColumnInfo, ColumnInfoANOPlan> Plans { get; set; } = new();
 
     [JsonIgnore] public List<IDilutionOperation> DilutionOperations { get; private set; }
 
-    public ITableInfo[] TableInfos { get; private set; }
+    public ITableInfo[] TableInfos { get; set; }
 
     [JsonIgnore] public DiscoveredDatabase TargetDatabase { get; set; }
 
@@ -65,17 +71,19 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
     /// </summary>
     public ForwardEngineerANOCataloguePlanManager(IRDMPPlatformRepositoryServiceLocator repositoryLocator)
     {
+        _isDeserializing = true; // Prevent RefreshTableInfos() during property population
         _shareManager = new ShareManager(repositoryLocator);
 
         DilutionOperations = new List<IDilutionOperation>();
 
         foreach (var operationType in MEF.GetTypes<IDilutionOperation>())
-            DilutionOperations.Add((IDilutionOperation)ObjectConstructor.Construct(operationType));
+            DilutionOperations.Add((IDilutionOperation)AotObjectConstructor.Construct(operationType));
     }
 
     public ForwardEngineerANOCataloguePlanManager(IRDMPPlatformRepositoryServiceLocator repositoryLocator,
         ICatalogue catalogue) : this(repositoryLocator)
     {
+        _isDeserializing = false; // Normal construction - allow RefreshTableInfos()
         Catalogue = catalogue;
 
         foreach (var plan in Plans.Values)
@@ -276,6 +284,39 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
 
     public void AfterConstruction()
     {
+        _isDeserializing = false;
+
+        // After deserialization, ensure TableInfos is populated (but don't rebuild Plans)
+        if (Catalogue != null && TableInfos == null)
+            TableInfos = Catalogue.GetTableInfoList(true);
+
+        // Ensure SkippedTables is initialized (field initializers may not run during deserialization)
+        SkippedTables ??= new HashSet<ITableInfo>();
+
+        // After deserialization, rebuild the Plans dictionary with fresh ColumnInfo instances from repository
+        // This ensures dictionary keys match the ColumnInfo instances used elsewhere
+        if (Plans.Count > 0 && TableInfos != null)
+        {
+            var deserializedPlans = new Dictionary<ColumnInfo, ColumnInfoANOPlan>(Plans);
+            Plans.Clear();
+
+            // Reload all ColumnInfos from repository to get current instances
+            var allColumnInfos = Catalogue.Repository.GetAllObjects<ColumnInfo>();
+
+            foreach (var kvp in deserializedPlans)
+            {
+                // Find the current ColumnInfo instance by ID
+                var currentColumnInfo = allColumnInfos.FirstOrDefault(ci => ci.ID == kvp.Key.ID);
+                if (currentColumnInfo != null)
+                {
+                    // Update the plan's ColumnInfo reference
+                    kvp.Value.ColumnInfo = currentColumnInfo;
+                    // Re-add to dictionary with current instance
+                    Plans[currentColumnInfo] = kvp.Value;
+                }
+            }
+        }
+
         InitializePlans();
     }
 }

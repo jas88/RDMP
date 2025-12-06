@@ -110,7 +110,7 @@ public class DashboardControlFactory
         if (!IsCompatibleType(t))
             throw new ArgumentException($"Type '{t}' is not a compatible Type", nameof(t));
 
-        var instance = (UserControl)ObjectConstructor.Construct(t);
+        var instance = (UserControl)AotObjectConstructor.Construct(t);
 
         instance.Dock = DockStyle.None;
         instance.Anchor = AnchorStyles.Top | AnchorStyles.Left;

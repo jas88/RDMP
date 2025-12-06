@@ -98,7 +98,7 @@ public class PersistenceDecisionFactory
         var uiType = GetTypeByName(tokens[1], typeof(Control), repositoryLocator);
         var collectionType = GetTypeByName(tokens[2], typeof(IPersistableObjectCollection), repositoryLocator);
 
-        var collectionInstance = (IPersistableObjectCollection)ObjectConstructor.Construct(collectionType);
+        var collectionInstance = (IPersistableObjectCollection)AotObjectConstructor.Construct(collectionType);
 
         if (collectionInstance.DatabaseObjects == null)
             throw new PersistenceException(

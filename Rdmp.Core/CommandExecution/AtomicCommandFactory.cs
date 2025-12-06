@@ -15,6 +15,7 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.DataLoad;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
+using Rdmp.Core.Providers.Nodes;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.Repositories.Construction;
 
@@ -232,8 +233,8 @@ public class AtomicCommandFactory : CommandFactoryBase
             if (!IsCompatible(cmdType, targetType))
                 continue;
 
-            // Try to construct the command with available parameters
-            var cmd = ObjectConstructor.ConstructIfPossible(cmdType, _activator, o) as IAtomicCommand;
+            // Try to construct the command with available parameters (using AOT-compatible constructor)
+            var cmd = AotObjectConstructor.ConstructIfPossible(cmdType, _activator, o) as IAtomicCommand;
 
             // Only yield commands that were successfully constructed and are possible
             if (cmd?.IsImpossible == false)
@@ -248,7 +249,7 @@ public class AtomicCommandFactory : CommandFactoryBase
         // commands (bucket 0) while staying above GoTo commands (bucket -100). This ensures a separator
         // is added between custom folder commands and common menu items.
         // Note: The bucket is calculated as (int)weight, so -1.0 gives bucket -1, distinct from bucket 0.
-        if (o is Providers.Nodes.ArbitraryFolderNode f && f.CommandGetter != null)
+        if (o is ArbitraryFolderNode f && f.CommandGetter != null)
             foreach (var cmd in f.CommandGetter())
             {
                 if (cmd.Weight == 0)

@@ -36,7 +36,7 @@ public class RDMPCommandExecutionFactory : ICommandExecutionFactory
         foreach (var proposerType in MEF.GetTypes<ICommandExecutionProposal>())
             try
             {
-                _proposers.Add((ICommandExecutionProposal)ObjectConstructor.Construct(proposerType, activator));
+                _proposers.Add((ICommandExecutionProposal)AotObjectConstructor.Construct(proposerType, activator));
             }
             catch (Exception ex)
             {

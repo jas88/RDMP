@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Rdmp.Core.Repositories;
 
 namespace Rdmp.Core.Curation.Data.Serialization.SystemTextJson;
@@ -18,7 +19,8 @@ namespace Rdmp.Core.Curation.Data.Serialization.SystemTextJson;
 /// </summary>
 /// <remarks>
 /// This is the System.Text.Json equivalent of <see cref="JsonConvertExtensions"/>.
-/// Provides identical functionality for AOT compatibility.
+/// Provides identical functionality for AOT compatibility using source-generated
+/// <see cref="RdmpJsonSerializerContext"/> combined with runtime converters.
 /// </remarks>
 public static class JsonSerializerExtensions
 {
@@ -76,7 +78,7 @@ public static class JsonSerializerExtensions
     }
 
     /// <summary>
-    /// Creates serializer options configured with RDMP-specific converters
+    /// Creates serializer options configured with RDMP-specific converters and source-generated type info.
     /// </summary>
     private static JsonSerializerOptions CreateSerializerOptions(
         IRDMPPlatformRepositoryServiceLocator repositoryLocator,
@@ -86,20 +88,26 @@ public static class JsonSerializerExtensions
         {
             WriteIndented = writeIndented,
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            IncludeFields = true,
+            // Use source-generated context for AOT compatibility, with fallback to default resolver
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(
+                RdmpJsonSerializerContext.Default,
+                new DefaultJsonTypeInfoResolver())
         };
 
-        // Add custom converters
+        // Add custom converters for runtime behavior (database references, complex keys, etc.)
         options.Converters.Add(new DatabaseEntityJsonConverter(repositoryLocator));
         options.Converters.Add(new DictionaryAsArrayConverterFactory());
         options.Converters.Add(new TypeJsonConverterFactory());
         options.Converters.Add(new AttributeJsonConverterFactory());
+        options.Converters.Add(new ObjectJsonConverter());
 
         return options;
     }
 
     /// <summary>
-    /// Creates deserializer options configured with RDMP-specific converters
+    /// Creates deserializer options configured with RDMP-specific converters and source-generated type info.
     /// </summary>
     private static JsonSerializerOptions CreateDeserializerOptions(
         IRDMPPlatformRepositoryServiceLocator repositoryLocator,
@@ -108,16 +116,22 @@ public static class JsonSerializerExtensions
         var options = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.Never
+            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            IncludeFields = true,
+            // Use source-generated context for AOT compatibility, with fallback to default resolver
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(
+                RdmpJsonSerializerContext.Default,
+                new DefaultJsonTypeInfoResolver())
         };
 
-        // Add custom converters
+        // Add custom converters for runtime behavior (database references, constructor injection, etc.)
         options.Converters.Add(new DatabaseEntityJsonConverter(repositoryLocator));
         options.Converters.Add(new PickAnyConstructorJsonConverter(
             new[] { repositoryLocator }.Union(objectsForConstructingStuffWith).ToArray()));
         options.Converters.Add(new DictionaryAsArrayConverterFactory());
         options.Converters.Add(new TypeJsonConverterFactory());
         options.Converters.Add(new AttributeJsonConverterFactory());
+        options.Converters.Add(new ObjectJsonConverter());
 
         return options;
     }

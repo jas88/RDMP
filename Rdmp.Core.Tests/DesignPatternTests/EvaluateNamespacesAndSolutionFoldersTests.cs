@@ -70,14 +70,11 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
                 var testMethod = testRunner.GetType().GetMethod(testName);
                 Assert.That(testMethod, Is.Not.Null, $"Test method {testName} not found");
 
-                Console.WriteLine($"Running {testName}...");
                 testMethod.Invoke(testRunner, null);
-                Console.WriteLine($"✓ {testName} passed");
             }
             catch (Exception ex)
             {
                 var message = $"✗ {testName} failed: {ex.Message}";
-                Console.WriteLine(message);
                 failedTests.Add(message);
 
                 // Also add inner exception details if available
@@ -180,7 +177,6 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
 
     private void Error(string s)
     {
-        Console.WriteLine(s);
         _errors.Add(s);
     }
 }

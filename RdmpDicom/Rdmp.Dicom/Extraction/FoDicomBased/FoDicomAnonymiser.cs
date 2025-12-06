@@ -109,7 +109,7 @@ public partial class FoDicomAnonymiser : IPluginDataFlowComponent<DataTable>, IP
             return toProcess;
         }
 
-        _putter ??= (IPutDicomFilesInExtractionDirectories)ObjectConstructor.Construct(PutterType);
+        _putter ??= (IPutDicomFilesInExtractionDirectories)AotObjectConstructor.Construct(PutterType);
 
         if (!initialized)
         {

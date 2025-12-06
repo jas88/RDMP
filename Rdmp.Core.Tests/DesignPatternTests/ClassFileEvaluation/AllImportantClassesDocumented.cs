@@ -135,13 +135,7 @@ public partial class AllImportantClassesDocumented
             }
         }
 
-        foreach (var fail in problems)
-            Console.WriteLine(fail);
-
-        Console.WriteLine($"Total Documented Classes:{commentedCount}");
-        Console.WriteLine($"Total Lines of Classes Documentation:{commentLineCount}");
-
-        Assert.That(problems, Is.Empty);
+        Assert.That(problems, Is.Empty, string.Join(Environment.NewLine, problems));
     }
 
     [GeneratedRegex("namespace (.*)")]
