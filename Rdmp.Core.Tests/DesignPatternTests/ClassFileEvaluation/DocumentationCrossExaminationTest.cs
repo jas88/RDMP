@@ -443,7 +443,11 @@ internal class DocumentationCrossExaminationTest
                 .Where(l => l.Contains('\n'))
                 .Select(p => $"\"{p.Split('\n')[1]}\""));
 
-            Assert.Fail($"Found terms in comments not in codebase. Add to DocumentationCrossExaminationTest.IgnoreList: {suggestedTerms}");
+            var fullProblems = string.Join(Environment.NewLine, problems);
+
+            Assert.Fail($"Found {problems.Count} terms in comments not in codebase.{Environment.NewLine}{Environment.NewLine}" +
+                       $"Add to DocumentationCrossExaminationTest.IgnoreList: {suggestedTerms}{Environment.NewLine}{Environment.NewLine}" +
+                       $"Full details:{Environment.NewLine}{fullProblems}");
         }
     }
 

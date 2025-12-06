@@ -69,9 +69,8 @@ public class ObjectJsonConverter : JsonConverter<object>
                 return reader.GetString();
 
             case JsonTokenType.Number:
-                // Try integer types first (prefer long for large values)
-                if (reader.TryGetInt32(out var int32))
-                    return int32;
+                // Try long first to match Newtonsoft.Json behavior (integers deserialize as long)
+                // This ensures backward compatibility for code relying on long types (e.g., SQL parameter binding)
                 if (reader.TryGetInt64(out var int64))
                     return int64;
                 // Fall back to double for floating point
