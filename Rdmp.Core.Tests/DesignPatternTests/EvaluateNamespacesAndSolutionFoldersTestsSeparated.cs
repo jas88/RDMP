@@ -491,7 +491,6 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
 
     private void Error(string s)
     {
-        Console.WriteLine(s);
         _errors.Add(s);
     }
 }

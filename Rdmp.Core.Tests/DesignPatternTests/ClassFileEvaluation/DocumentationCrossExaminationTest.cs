@@ -343,7 +343,10 @@ internal class DocumentationCrossExaminationTest
 
         // Generic terms used in documentation
         "BaseClass",
-        "ConcreteTypes"
+        "ConcreteTypes",
+
+        // .NET BCL types referenced in comments
+        "TypeInfoResolverChain"
     };
 
     #endregion
@@ -436,16 +439,12 @@ internal class DocumentationCrossExaminationTest
 
         if (problems.Any())
         {
-            Console.WriteLine(
-                "Found problem words in comments (Scroll down to see by file then if you think they are fine add them to DocumentationCrossExaminationTest.Ignorelist):");
-            foreach (var pLine in problems.Where(l => l.Contains('\n')).Select(p => p.Split('\n')))
-                Console.WriteLine($"\"{pLine[1]}\",");
-            foreach (var problem in problems)
-                Console.WriteLine(problem);
-        }
+            var suggestedTerms = string.Join(", ", problems
+                .Where(l => l.Contains('\n'))
+                .Select(p => $"\"{p.Split('\n')[1]}\""));
 
-        Assert.That(problems, Is.Empty,
-            "Expected there to be nothing talked about in comments that doesn't appear in the codebase somewhere");
+            Assert.Fail($"Found terms in comments not in codebase. Add to DocumentationCrossExaminationTest.IgnoreList: {suggestedTerms}");
+        }
     }
 
     private static void EnsureCodeBlocksCompile(string mdFile, List<string> problems)
