@@ -36,9 +36,10 @@ BEGIN
 	SET @sqlCreateTable = N'IF OBJECT_ID(' + QUOTENAME(@tableNameRaw, '''') + N') IS NULL CREATE TABLE ' + @tableName + N' (' + @columns + N')'
 	EXEC sp_executesql @sqlCreateTable
 
-	-- Add primary key constraint
+	-- Add primary key constraint (only if not already present)
 	DECLARE @sqlCreatePKConstraint NVARCHAR(MAX)
-	SET @sqlCreatePKConstraint = N'ALTER TABLE ' + @tableName + N' ADD CONSTRAINT ' + QUOTENAME('PK_' + @tableNameRaw) + N' PRIMARY KEY NONCLUSTERED (' + @pkColumns + N')'
+	SET @sqlCreatePKConstraint = N'IF NOT EXISTS (SELECT 1 FROM sys.key_constraints WHERE name = ' + QUOTENAME('PK_' + @tableNameRaw, '''') + N' AND parent_object_id = OBJECT_ID(' + QUOTENAME(@tableNameRaw, '''') + N'))
+		ALTER TABLE ' + @tableName + N' ADD CONSTRAINT ' + QUOTENAME('PK_' + @tableNameRaw) + N' PRIMARY KEY NONCLUSTERED (' + @pkColumns + N')'
 	EXEC sp_executesql @sqlCreatePKConstraint
 
 	-- Add additional dump identifier columns (still need cursor here due to ALTER TABLE per column)
@@ -51,7 +52,9 @@ BEGIN
 
 	WHILE @@FETCH_STATUS = 0
 	BEGIN
-		SET @sqlOtherFields = N'ALTER TABLE ' + @tableName + N' ADD ' + QUOTENAME(@fieldName) + N' ' + @dataType
+		-- Only add column if it doesn't already exist
+		SET @sqlOtherFields = N'IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE name = ' + QUOTENAME(@fieldName, '''') + N' AND object_id = OBJECT_ID(' + QUOTENAME(@tableNameRaw, '''') + N'))
+			ALTER TABLE ' + @tableName + N' ADD ' + QUOTENAME(@fieldName) + N' ' + @dataType
 		EXEC sp_executesql @sqlOtherFields
 		FETCH NEXT FROM fieldCursor INTO @fieldName, @dataType
 	END
