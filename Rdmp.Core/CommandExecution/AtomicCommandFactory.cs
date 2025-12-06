@@ -266,35 +266,14 @@ public class AtomicCommandFactory : CommandFactoryBase
     /// <returns>Enumerable of batch commands that can operate on all objects in the collection</returns>
     public IEnumerable<IAtomicCommand> CreateManyObjectCommands(ICollection many)
     {
-        var allDisableable = true;
-        var allHasFolder = true;
-        var allTableInfo = true;
-        var allCatalogueItem = true;
-        var allDeleteable = true;
-        var allExtractionFilterParameterSet = true;
-        var allDeprecated = true;
-        var allUnDeprecated = true;
-
-        foreach (var o in many)
-        {
-            allDisableable &= o is IDisableable;
-            allHasFolder &= o is IHasFolder;
-            allTableInfo &= o is TableInfo;
-            allCatalogueItem &= o is CatalogueItem;
-            allDeleteable &= o is IDeleteable;
-            allExtractionFilterParameterSet &= o is ExtractionFilterParameterSet;
-
-            if (o is IMightBeDeprecated d)
-            {
-                allDeprecated &= d.IsDeprecated;
-                allUnDeprecated &= !d.IsDeprecated;
-            }
-            else
-            {
-                allDeprecated = false;
-                allUnDeprecated = false;
-            }
-        }
+        var allDisableable = many.Cast<object>().All(o => o is IDisableable);
+        var allHasFolder = many.Cast<object>().All(o => o is IHasFolder);
+        var allTableInfo = many.Cast<object>().All(o => o is TableInfo);
+        var allCatalogueItem = many.Cast<object>().All(o => o is CatalogueItem);
+        var allDeleteable = many.Cast<object>().All(o => o is IDeleteable);
+        var allExtractionFilterParameterSet = many.Cast<object>().All(o => o is ExtractionFilterParameterSet);
+        var allDeprecated = many.Cast<object>().All(o => o is IMightBeDeprecated d && d.IsDeprecated);
+        var allUnDeprecated = many.Cast<object>().All(o => o is IMightBeDeprecated d && !d.IsDeprecated);
 
         if (allDisableable)
             yield return new ExecuteCommandDisableOrEnable(_activator, many.Cast<IDisableable>().ToArray());

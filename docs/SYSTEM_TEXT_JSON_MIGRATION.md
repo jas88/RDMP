@@ -17,7 +17,7 @@ All System.Text.Json converters have been implemented with full unit test covera
 
 **Location:** `Rdmp.Core/Curation/Data/Serialization/SystemTextJson/`
 
-**Test Coverage:** 44 unit tests across 4 test files
+**Test Coverage:** 43 unit tests across 4 test files
 - `SystemTextJsonSerializationTests.cs` - Core functionality
 - `SystemTextJsonEdgeCaseTests.cs` - Error handling and edge cases
 - `DictionaryAsArrayConverterTests.cs` - Dictionary-specific tests

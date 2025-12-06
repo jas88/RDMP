@@ -81,14 +81,14 @@ public class JsonSerializationPerformanceTests : DatabaseTests
         var json = NewtonsoftExtensions.SerializeObject(catalogue, RepositoryLocator);
 
         // Warm up
-        NewtonsoftExtensions.DeserializeObject(json, typeof(Catalogue), RepositoryLocator);
-        SystemTextJsonExtensions.DeserializeObject<Catalogue>(json, RepositoryLocator);
+        _ = NewtonsoftExtensions.DeserializeObject(json, typeof(Catalogue), RepositoryLocator);
+        _ = SystemTextJsonExtensions.DeserializeObject<Catalogue>(json, RepositoryLocator);
 
         // Act - Newtonsoft.Json
         var swNewtonsoft = Stopwatch.StartNew();
         for (int i = 0; i < IterationCount; i++)
         {
-            NewtonsoftExtensions.DeserializeObject(json, typeof(Catalogue), RepositoryLocator);
+            _ = NewtonsoftExtensions.DeserializeObject(json, typeof(Catalogue), RepositoryLocator);
         }
         swNewtonsoft.Stop();
 
@@ -96,7 +96,7 @@ public class JsonSerializationPerformanceTests : DatabaseTests
         var swSystemText = Stopwatch.StartNew();
         for (int i = 0; i < IterationCount; i++)
         {
-            SystemTextJsonExtensions.DeserializeObject<Catalogue>(json, RepositoryLocator);
+            _ = SystemTextJsonExtensions.DeserializeObject<Catalogue>(json, RepositoryLocator);
         }
         swSystemText.Stop();
 

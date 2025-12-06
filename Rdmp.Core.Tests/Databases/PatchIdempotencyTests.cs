@@ -100,9 +100,9 @@ public class PatchIdempotencyTests : DatabaseTests
         }
 
         // Report results
-        var failed = allPatchResults.Where(r => r.Error != null).ToList();
-        var schemaChanging = allPatchResults.Where(r => r.Error == null && !r.IsIdempotent).ToList();
-        var idempotent = allPatchResults.Where(r => r.IsIdempotent).ToList();
+        var failed = allPatchResults.Where(static r => r.Error != null).ToList();
+        var schemaChanging = allPatchResults.Where(static r => r.Error == null && !r.IsIdempotent).ToList();
+        var idempotent = allPatchResults.Where(static r => r.IsIdempotent).ToList();
 
         TestContext.Out.WriteLine($"\n=== SUMMARY ===");
         TestContext.Out.WriteLine($"✓ Idempotent: {idempotent.Count}");
@@ -310,18 +310,13 @@ public class PatchIdempotencyTests : DatabaseTests
         var missingCols = schema2.Keys.Except(schema1.Keys).ToList();
         var extraCols = schema1.Keys.Except(schema2.Keys).ToList();
 
-        foreach (var col in missingCols)
-            differences.Add($"- MISSING: {schema2[col]}");
-
-        foreach (var col in extraCols)
-            differences.Add($"+ EXTRA: {schema1[col]}");
+        differences.AddRange(missingCols.Select(col => $"- MISSING: {schema2[col]}"));
+        differences.AddRange(extraCols.Select(col => $"+ EXTRA: {schema1[col]}"));
 
         var common = schema1.Keys.Intersect(schema2.Keys);
-        foreach (var col in common)
-        {
-            if (schema1[col] != schema2[col])
-                differences.Add($"≠ DIFFERENT: {col}\n    Compiled: {schema1[col]}\n    Migrated: {schema2[col]}");
-        }
+        differences.AddRange(common
+            .Where(col => schema1[col] != schema2[col])
+            .Select(col => $"≠ DIFFERENT: {col}\n    Compiled: {schema1[col]}\n    Migrated: {schema2[col]}"));
 
         return differences;
     }
