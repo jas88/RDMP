@@ -89,6 +89,7 @@ public static class JsonSerializerExtensions
             WriteIndented = writeIndented,
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
             PropertyNameCaseInsensitive = true,
+            IncludeFields = true,
             // Use source-generated context for AOT compatibility, with fallback to default resolver
             TypeInfoResolver = JsonTypeInfoResolver.Combine(
                 RdmpJsonSerializerContext.Default,
@@ -116,6 +117,7 @@ public static class JsonSerializerExtensions
         {
             PropertyNameCaseInsensitive = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            IncludeFields = true,
             // Use source-generated context for AOT compatibility, with fallback to default resolver
             TypeInfoResolver = JsonTypeInfoResolver.Combine(
                 RdmpJsonSerializerContext.Default,
