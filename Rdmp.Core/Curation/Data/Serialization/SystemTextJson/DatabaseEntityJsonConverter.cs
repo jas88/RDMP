@@ -75,7 +75,6 @@ public class DatabaseEntityJsonConverter : JsonConverter<IMapsDirectlyToDatabase
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException($"Expected StartObject token, got {reader.TokenType}");
 
-        string typeName = null;
         string persistenceString = null;
 
         // Read all properties in the object
@@ -96,9 +95,9 @@ public class DatabaseEntityJsonConverter : JsonConverter<IMapsDirectlyToDatabase
             switch (propertyName)
             {
                 case "$type":
-                    if (reader.TokenType != JsonTokenType.String)
-                        throw new JsonException("Expected String token for $type value");
-                    typeName = reader.GetString();
+                    // $type is written for compatibility but not needed for deserialization
+                    // since PersistenceString contains the full type information
+                    reader.Skip();
                     break;
                 case "PersistenceString":
                     if (reader.TokenType != JsonTokenType.String)
