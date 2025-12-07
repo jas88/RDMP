@@ -48,7 +48,7 @@
 		<PackageReference Include="HIC.System.Windows.Forms.DataVisualization" />
 		<PackageReference Include="ObjectListView.Repack.NET6Plus" />
 		<PackageReference Include="Scintilla.NET" />
-		<PackageReference Include="System.Resources.Extensions" />
+		<PackageReference Include="System.Resources.Extensions" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
 		<PackageReference Include="VPKSoft.ScintillaLexers.NET" />
 		<PackageReference Include="WeCantSpell.Hunspell" />
 	</ItemGroup>
