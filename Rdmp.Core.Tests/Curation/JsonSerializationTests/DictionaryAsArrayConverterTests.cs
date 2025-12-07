@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using Rdmp.Core.MapsDirectlyToDatabaseTable.Attributes;
 using Rdmp.Core.Repositories;
@@ -80,21 +81,40 @@ public class DictionaryAsArrayConverterTests : DatabaseTests
     public void SerializeDeserialize_RelationshipAttributeKeys_RoundTrips()
     {
         // Arrange
+        var guid1 = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var guid2 = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var attr1 = new RelationshipAttribute(typeof(string), RelationshipType.SharedObject, "prop1");
         var attr2 = new RelationshipAttribute(typeof(int), RelationshipType.SharedObject, "prop2");
 
         var original = new Dictionary<RelationshipAttribute, Guid>
         {
-            { attr1, Guid.Parse("11111111-1111-1111-1111-111111111111") },
-            { attr2, Guid.Parse("22222222-2222-2222-2222-222222222222") }
+            { attr1, guid1 },
+            { attr2, guid2 }
         };
 
         // Act
         var json = SystemTextJsonExtensions.SerializeObject(original, RepositoryLocator);
         var deserialized = SystemTextJsonExtensions.DeserializeObject<Dictionary<RelationshipAttribute, Guid>>(json, RepositoryLocator);
 
-        // Assert
-        Assert.That(deserialized, Has.Count.EqualTo(2));
+        // Assert - verify count and that key-value pairs match originals
+        Assert.Multiple(() =>
+        {
+            Assert.That(deserialized, Has.Count.EqualTo(2));
+            Assert.That(deserialized[attr1], Is.EqualTo(guid1));
+            Assert.That(deserialized[attr2], Is.EqualTo(guid2));
+        });
+
+        // Also verify the key metadata round-tripped correctly by finding keys by property
+        var deserializedAttr1 = deserialized.Keys.Single(k => k.PropertyName == "prop1");
+        var deserializedAttr2 = deserialized.Keys.Single(k => k.PropertyName == "prop2");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(deserializedAttr1.Cref, Is.EqualTo(typeof(string)));
+            Assert.That(deserializedAttr1.Type, Is.EqualTo(RelationshipType.SharedObject));
+            Assert.That(deserializedAttr2.Cref, Is.EqualTo(typeof(int)));
+            Assert.That(deserializedAttr2.Type, Is.EqualTo(RelationshipType.SharedObject));
+        });
     }
 
     [Test]
