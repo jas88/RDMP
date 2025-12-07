@@ -122,7 +122,7 @@ public class AtomicCommandFactory : CommandFactoryBase
     private static void ApplyDefaultWeight(IAtomicCommand cmd)
     {
         // Don't override explicitly set weights
-        if (cmd.Weight != 0)
+        if (cmd.Weight is not 0f)
             return;
 
         // First try category-based weight
@@ -252,7 +252,7 @@ public class AtomicCommandFactory : CommandFactoryBase
         if (o is ArbitraryFolderNode f && f.CommandGetter != null)
             foreach (var cmd in f.CommandGetter())
             {
-                if (cmd.Weight == 0)
+                if (cmd.Weight is 0f)
                     cmd.Weight = -1.0f;
                 yield return cmd;
             }
@@ -260,13 +260,13 @@ public class AtomicCommandFactory : CommandFactoryBase
 
     /// <summary>
     /// Returns commands that can operate on multiple objects at once (batch operations).
-    /// Single-pass enumeration for efficiency.
+    /// Single-pass enumeration with early-exit for efficiency.
     /// </summary>
     /// <param name="many">Collection of objects to create batch commands for</param>
     /// <returns>Enumerable of batch commands that can operate on all objects in the collection</returns>
     public IEnumerable<IAtomicCommand> CreateManyObjectCommands(ICollection many)
     {
-        // Single-pass enumeration to check all type conditions at once
+        // Single-pass enumeration with early-exit when all flags become false
         var allDisableable = true;
         var allHasFolder = true;
         var allTableInfo = true;
@@ -278,14 +278,19 @@ public class AtomicCommandFactory : CommandFactoryBase
 
         foreach (var o in many)
         {
-            allDisableable = allDisableable && o is IDisableable;
-            allHasFolder = allHasFolder && o is IHasFolder;
-            allTableInfo = allTableInfo && o is TableInfo;
-            allCatalogueItem = allCatalogueItem && o is CatalogueItem;
-            allDeleteable = allDeleteable && o is IDeleteable;
-            allExtractionFilterParameterSet = allExtractionFilterParameterSet && o is ExtractionFilterParameterSet;
-            allDeprecated = allDeprecated && o is IMightBeDeprecated d && d.IsDeprecated;
-            allUnDeprecated = allUnDeprecated && o is IMightBeDeprecated d2 && !d2.IsDeprecated;
+            if (allDisableable && o is not IDisableable) allDisableable = false;
+            if (allHasFolder && o is not IHasFolder) allHasFolder = false;
+            if (allTableInfo && o is not TableInfo) allTableInfo = false;
+            if (allCatalogueItem && o is not CatalogueItem) allCatalogueItem = false;
+            if (allDeleteable && o is not IDeleteable) allDeleteable = false;
+            if (allExtractionFilterParameterSet && o is not ExtractionFilterParameterSet) allExtractionFilterParameterSet = false;
+            if (allDeprecated && o is not IMightBeDeprecated { IsDeprecated: true }) allDeprecated = false;
+            if (allUnDeprecated && o is not IMightBeDeprecated { IsDeprecated: false }) allUnDeprecated = false;
+
+            // Early exit: no point continuing if all flags are already false
+            if (!allDisableable && !allHasFolder && !allTableInfo && !allCatalogueItem &&
+                !allDeleteable && !allExtractionFilterParameterSet && !allDeprecated && !allUnDeprecated)
+                break;
         }
 
         if (allDisableable)
