@@ -43,7 +43,6 @@
 		<ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
 		<ProjectReference Include="..\..\Plugins\Plugins\Plugins.csproj" />
 			<PackageReference Include="Terminal.Gui" />
-		<PackageReference Include="System.Threading.ThreadPool" />
 		<PackageReference Include="YamlDotNet" />
 	</ItemGroup>
 </Project>

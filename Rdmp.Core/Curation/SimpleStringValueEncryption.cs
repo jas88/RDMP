@@ -21,7 +21,7 @@ namespace Rdmp.Core.Curation;
 public class SimpleStringValueEncryption : IEncryptStrings
 {
     private readonly RSACryptoServiceProvider _turing = new();
-    private readonly Lock _rsaLock = new();
+    private readonly object _rsaLock = new();
 
     private const string Key =
        @"<?xml version=""1.0"" encoding=""utf-16""?>
@@ -54,7 +54,7 @@ public class SimpleStringValueEncryption : IEncryptStrings
     public string Encrypt(string toEncrypt)
     {
         // Lock required: RSACryptoServiceProvider is not thread-safe on Linux (OpenSSL backend)
-        using (_rsaLock.EnterScope())
+        lock (_rsaLock)
         {
             // RSA provider already initialized in constructor
             // Fall back on bad encryption if no private key is configured
@@ -83,7 +83,7 @@ public class SimpleStringValueEncryption : IEncryptStrings
     public string Decrypt(string toDecrypt)
     {
         // Lock required: RSACryptoServiceProvider is not thread-safe on Linux (OpenSSL backend)
-        using (_rsaLock.EnterScope())
+        lock (_rsaLock)
         {
             // RSA provider already initialized in constructor
             if (toDecrypt.StartsWith("$js1$", StringComparison.Ordinal) && toDecrypt.EndsWith("$", StringComparison.Ordinal))
