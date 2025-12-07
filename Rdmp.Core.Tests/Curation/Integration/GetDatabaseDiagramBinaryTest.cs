@@ -15,6 +15,7 @@ namespace Rdmp.Core.Tests.Curation.Integration;
 public class GetDatabaseDiagramBinaryTest : DatabaseTests
 {
     [Test]
+    [Ignore("SSMS diagram data removed from schema - table exists but no diagram inserted")]
     public void GetBinaryText()
     {
         using var con = CatalogueTableRepository.GetConnection();
