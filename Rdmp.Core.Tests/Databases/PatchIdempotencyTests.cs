@@ -111,16 +111,29 @@ public class PatchIdempotencyTests : DatabaseTests
 
         if (failed.Any())
         {
-            TestContext.Out.WriteLine($"\nFailing patches:");
+            TestContext.Out.WriteLine($"\nPatches that threw exceptions:");
             foreach (var (db, patch, _, error) in failed)
             {
                 TestContext.Out.WriteLine($"  {db}/{patch}: {error}");
             }
         }
 
-        Assert.That(failed, Is.Empty,
-            $"{failed.Count} patches are not idempotent and fail when re-applied. " +
-            $"All patches must be safe to re-apply. See test output for details.");
+        if (schemaChanging.Any())
+        {
+            TestContext.Out.WriteLine($"\nPatches that changed schema on re-application:");
+            foreach (var (db, patch, _, _) in schemaChanging)
+            {
+                TestContext.Out.WriteLine($"  {db}/{patch}");
+            }
+        }
+
+        // Both error-throwing and schema-changing patches are non-idempotent failures
+        var nonIdempotent = failed.Concat(schemaChanging).ToList();
+
+        Assert.That(nonIdempotent, Is.Empty,
+            $"{nonIdempotent.Count} patches are not idempotent ({failed.Count} threw exceptions, " +
+            $"{schemaChanging.Count} changed schema). All patches must be safe to re-apply " +
+            $"without errors or schema changes. See test output for details.");
     }
 
     /// <summary>
