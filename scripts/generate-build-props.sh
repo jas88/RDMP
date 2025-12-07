@@ -3,9 +3,8 @@
 # based on .NET SDK version. If any files differ from what's in git, commit and push, then exit with error.
 #
 # RDMP project structure:
-# - Libraries (multi-target): Rdmp.Core, Tests.Common
-# - Windows Libraries (multi-target -windows): Rdmp.UI, Plugins/Plugins.UI
-# - RdmpDicom projects (single target): DicomTypeTranslation dependency only supports latest .NET
+# - Libraries (multi-target): Rdmp.Core, Tests.Common, RdmpDicom/Rdmp.Dicom
+# - Windows Libraries (multi-target -windows): Rdmp.UI, Plugins/Plugins.UI, RdmpDicom/Rdmp.Dicom.UI
 # - Tests/Tools/Apps (single target latest): Everything else
 # - Special: Rdmp.Core.Generators stays netstandard2.0 (Roslyn requirement)
 
@@ -203,9 +202,9 @@ generate_library_props "Tests.Common"
 generate_windows_library_props "Rdmp.UI"
 generate_windows_library_props "Plugins/Plugins.UI"
 
-# RdmpDicom projects use single target due to DicomTypeTranslation dependency constraints
-generate_single_target_props "RdmpDicom/Rdmp.Dicom"
-generate_single_target_windows_props "RdmpDicom/Rdmp.Dicom.UI"
+# RdmpDicom library projects (multi-target now that DicomTypeTranslation 5.0.1 supports net8/9/10)
+generate_library_props "RdmpDicom/Rdmp.Dicom"
+generate_windows_library_props "RdmpDicom/Rdmp.Dicom.UI"
 
 # Generate props for test projects (single target latest)
 generate_single_target_props "Rdmp.Core.Tests"
