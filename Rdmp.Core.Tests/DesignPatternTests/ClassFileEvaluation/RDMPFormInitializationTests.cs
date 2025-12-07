@@ -108,7 +108,7 @@ public class RDMPFormInitializationTests
         }
         else
         {
-            Console.WriteLine($"Class {className} is an RDMPForm/RDMPUserControl but doesn't have a constructor!");
+            // No constructor found - acceptable for RDMPForm/RDMPUserControl classes
         }
     }
 
@@ -118,10 +118,7 @@ public class RDMPFormInitializationTests
         var lineNumber = readToEnd[..readToEnd.IndexOf("LicenseManager.UsageMode", StringComparison.Ordinal)]
             .Count(c => c == '\n');
 
-        var msg =
-            $"FAIL: Use protected variable VisualStudioDesignMode instead of LicenseManager.UsageMode (line number:{lineNumber})";
-        Console.WriteLine(msg);
-        _fails.Add(msg);
+        _fails.Add($"Use protected variable VisualStudioDesignMode instead of LicenseManager.UsageMode (line number:{lineNumber})");
     }
 
     private static Regex GetConstructorRegex(string className) =>

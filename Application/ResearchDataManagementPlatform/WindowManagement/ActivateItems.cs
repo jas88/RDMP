@@ -654,7 +654,6 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
     {
         yield return typeof(ExecuteCommandRefreshObject);
         yield return typeof(ExecuteCommandOpenInExplorer);
-        yield return typeof(ExecuteCommandDeletePlugin);
         yield return typeof(ExecuteCommandCreateNewFileBasedProcessTask);
     }
 

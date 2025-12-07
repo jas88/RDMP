@@ -457,7 +457,6 @@ internal class ConsoleMainWindow
         yield return _activator.CoreChildProvider.AllServersNode;
         yield return _activator.CoreChildProvider.AllConnectionStringKeywordsNode;
         yield return _activator.CoreChildProvider.AllStandardRegexesNode;
-        yield return _activator.CoreChildProvider.AllPluginsNode;
     }
 
     /// <summary>

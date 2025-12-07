@@ -33,7 +33,6 @@ public partial class SuspiciousEmptyChecksMethodsOrNotICheckablePlugins
                 !contents.Contains("[DemandsNestedInitialization(\""))
                 continue;
 
-            Console.WriteLine($"Found Demander:{file}");
 
             var index = contents.IndexOf(checkMethodSignature, StringComparison.Ordinal);
 
@@ -66,16 +65,12 @@ public partial class SuspiciousEmptyChecksMethodsOrNotICheckablePlugins
 
             var methodBody = sbChecksMethodBody.ToString();
 
-            Console.WriteLine($"Demander Check Method Is:{Environment.NewLine}{methodBody}");
 
             if (!methodBody.Contains(';'))
                 _fails.Add($"FAIL:Method body of Checks in file {file} is empty (does not contain any semicolons)");
         }
 
-        foreach (var fail in _fails)
-            Console.WriteLine(fail);
-
-        Assert.That(_fails, Is.Empty);
+        Assert.That(_fails, Is.Empty, string.Join(Environment.NewLine, _fails));
     }
 
     [GeneratedRegex("(\\b|[a-z])Test(\\b|[A-Z])")]

@@ -34,5 +34,5 @@ public abstract class PluginRepository : TableRepository
     }
 
     protected override IMapsDirectlyToDatabaseTable ConstructEntity(Type t, DbDataReader reader) =>
-        ObjectConstructor.ConstructIMapsDirectlyToDatabaseObject(t, this, reader);
+        AotObjectConstructor.ConstructIMapsDirectlyToDatabaseObject(t, this, reader);
 }

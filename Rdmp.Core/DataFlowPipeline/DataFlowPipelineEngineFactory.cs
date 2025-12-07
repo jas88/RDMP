@@ -63,7 +63,7 @@ public class DataFlowPipelineEngineFactory : IDataFlowPipelineEngineFactory
 
         //engine (this is the source, target is the destination)
         var dataFlowEngine =
-            (IDataFlowPipelineEngine)ObjectConstructor.ConstructIfPossible(_engineType, _context, source, destination,
+            (IDataFlowPipelineEngine)AotObjectConstructor.ConstructIfPossible(_engineType, _context, source, destination,
                 listener, pipeline);
 
         //now go fetch everything that the user has configured for this particular pipeline except the source and destination
@@ -131,7 +131,7 @@ public class DataFlowPipelineEngineFactory : IDataFlowPipelineEngineFactory
     private static object CreateComponent(IPipelineComponent toBuild)
     {
         var type = toBuild.GetClassAsSystemType() ?? throw new Exception($"Could not find Type '{toBuild.Class}'");
-        var toReturn = ObjectConstructor.Construct(type);
+        var toReturn = AotObjectConstructor.Construct(type);
 
         //all the IArguments we need to initialize the class
         var allArguments = toBuild.GetAllArguments().ToArray();

@@ -792,7 +792,7 @@ public sealed class RDMPCollectionCommonFunctionality : IRefreshBusSubscriber
         //parameter 1 must be args
         //parameter 2 must be object compatible Type
 
-        var menu = (RDMPContextMenuStrip)ObjectConstructor.ConstructIfPossible(type, args, o);
+        var menu = (RDMPContextMenuStrip)AotObjectConstructor.ConstructIfPossible(type, args, o);
 
         menu?.AddCommonMenuItems(this);
 

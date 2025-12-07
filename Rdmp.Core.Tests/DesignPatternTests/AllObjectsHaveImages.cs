@@ -46,10 +46,7 @@ public class AllObjectsHaveImages : DatabaseTests
             .Where(typeName => !exceptionsAllowed.Any(s => s.Equals(typeName)))
             .Where(typeName => !Enum.TryParse(typeof(RDMPConcept), typeName, out _)).ToList();
 
-        if (missingConcepts.Count > 0)
-            Console.WriteLine(
-                $"The following Database Object Types are missing concepts (and therefore images) in CatalogueManager.exe{Environment.NewLine}{string.Join($",{Environment.NewLine}", missingConcepts)}");
-
-        Assert.That(missingConcepts, Is.Empty);
+        Assert.That(missingConcepts, Is.Empty,
+            $"Database object types missing concepts/images: {string.Join(", ", missingConcepts)}");
     }
 }

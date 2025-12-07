@@ -77,10 +77,9 @@ public class ExplicitDatabaseNameChecker
             }
         }
 
-        foreach (var kvp in problemFiles)
-            Console.WriteLine(
-                $"FAIL: File '{kvp.Key}' contains a reference to an explicitly prohibited database name string ('{kvp.Value}')");
+        var failures = problemFiles.Select(kvp =>
+            $"File '{kvp.Key}' contains prohibited database name '{kvp.Value}'");
 
-        Assert.That(problemFiles, Is.Empty);
+        Assert.That(problemFiles, Is.Empty, string.Join(Environment.NewLine, failures));
     }
 }

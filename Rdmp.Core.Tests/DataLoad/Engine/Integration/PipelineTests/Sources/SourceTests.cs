@@ -89,25 +89,6 @@ public class SourceTests : DatabaseTests
             ex.Message, Does.Contain("Type TableInfo is not an allowable PreInitialize parameters type under the current DataFlowPipelineContext (check which flags you passed to the DataFlowPipelineContextFactory and the interfaces IPipelineRequirement<> that your components implement) "));
     }
 
-    [Test]
-    public void TestPipelineContextInitialization_UninitializedInterface()
-    {
-        var contextFactory = new DataFlowPipelineContextFactory<DataTable>();
-        var context = contextFactory.Create(PipelineUsage.FixedDestination | PipelineUsage.LoadsSingleTableInfo);
-
-        //component is both IPipelineRequirement<TableInfo> AND IPipelineRequirement<LoadModuleAssembly> but only TableInfo is passed in params
-        var component = new TestObject_RequiresTableInfoAndFreakyObject();
-
-        var testTableInfo = new TableInfo(mockRepo, "")
-        {
-            Name = "Test Table Info"
-        };
-
-        var ex = Assert.Throws<Exception>(() =>
-            context.PreInitialize(ThrowImmediatelyDataLoadEventListener.Quiet, component, testTableInfo));
-        Assert.That(
-            ex.Message, Does.Contain($"The following expected types were not passed to PreInitialize:LoadModuleAssembly{Environment.NewLine}The object types passed were:{Environment.NewLine}Rdmp.Core.Curation.Data.TableInfo:Test Table Info"));
-    }
 
     [Test]
     public void TestPipelineContextIsAllowable()
@@ -202,35 +183,6 @@ public class SourceTests : DatabaseTests
         }
     }
 
-    public class TestObject_RequiresTableInfoAndFreakyObject : IDataFlowComponent<DataTable>,
-        IPipelineRequirement<TableInfo>, IPipelineRequirement<LoadModuleAssembly>
-    {
-        public TableInfo PreInitToThis { get; private set; }
-
-        public DataTable ProcessPipelineData(DataTable toProcess, IDataLoadEventListener listener,
-            GracefulCancellationToken cancellationToken) => throw new NotImplementedException();
-
-        public void Dispose(IDataLoadEventListener listener, Exception pipelineFailureExceptionIfAny)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Abort(IDataLoadEventListener listener)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void PreInitialize(TableInfo value, IDataLoadEventListener listener)
-        {
-            PreInitToThis = value;
-        }
-
-
-        public void PreInitialize(LoadModuleAssembly value, IDataLoadEventListener listener)
-        {
-            throw new NotImplementedException();
-        }
-    }
 }
 
 public class TestObjectNoRequirements : IDataFlowComponent<DataTable>

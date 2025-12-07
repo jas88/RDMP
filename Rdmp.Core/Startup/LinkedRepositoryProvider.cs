@@ -106,8 +106,8 @@ public class LinkedRepositoryProvider : RepositoryProvider
         _pluginRepositoryFinders = new List<IPluginRepositoryFinder>();
 
         //it's a plugin?
-        foreach (var type in MEF.GetTypes<IPluginRepositoryFinder>())
-            _pluginRepositoryFinders.Add((IPluginRepositoryFinder)ObjectConstructor.Construct(type, this));
+        foreach (var type in MEF.PluginRegistry.GetPluginTypes<IPluginRepositoryFinder>())
+            _pluginRepositoryFinders.Add((IPluginRepositoryFinder)AotObjectConstructor.Construct(type, this));
     }
 
     public override IEnumerable<IRepository> GetAllRepositories()

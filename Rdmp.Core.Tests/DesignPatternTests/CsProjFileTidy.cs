@@ -40,7 +40,9 @@ internal class CsProjFileTidy
         // Duplicate filenames across projects
         "ToMemoryDataLoadJob.cs",
         // Namespace intentionally different from location
-        "NotifyEventArgsProxy.cs"
+        "NotifyEventArgsProxy.cs",
+        // File with intentional nested class (PluginRegistry inside MEF)
+        "MEF.cs"
     };
 
     public CsProjFileTidy(FileInfo csProjFile)
@@ -54,7 +56,7 @@ internal class CsProjFileTidy
         var allText = File.ReadAllText(csProjFile.FullName);
 
         if (allText.Contains("<CopyToOutputDirectory>Always</CopyToOutputDirectory>"))
-            Console.WriteLine($"WARNING:Csproj '{csProjFile}' contains CopyAlways");
+            UntidyMessages.Add($"Csproj '{csProjFile}' contains CopyAlways");
 
         var doc = new XmlDocument();
         doc.LoadXml(allText);

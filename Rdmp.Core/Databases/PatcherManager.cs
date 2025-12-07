@@ -42,13 +42,13 @@ public class PatcherManager
 
     public IEnumerable<PluginPatcher> GetTier3Patchers(PluginPatcherFoundHandler events)
     {
-        foreach (var patcherType in MEF.GetTypes<PluginPatcher>().Where(static type => type.IsPublic))
+        foreach (var patcherType in MEF.PluginRegistry.GetPluginTypes<PluginPatcher>().Where(static type => type.IsPublic))
         {
             PluginPatcher instance = null;
 
             try
             {
-                instance = (PluginPatcher)ObjectConstructor.Construct(patcherType);
+                instance = (PluginPatcher)AotObjectConstructor.Construct(patcherType);
 
                 events?.Invoke(this,
                     new PluginPatcherFoundEventArgs(patcherType, instance, PluginPatcherStatus.Healthy));

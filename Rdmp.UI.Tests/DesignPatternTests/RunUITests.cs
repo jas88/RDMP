@@ -73,7 +73,6 @@ public class RunUITests : DatabaseTests
             typeof(ExecuteCommandImportFilterDescriptionsFromShare),
             typeof(ExecuteCommandSetArgument),
             typeof(ExecuteCommandAddToSession),
-            typeof(ExecuteCommandDeletePlugin),
             typeof(ExecuteCommandPerformRegexRedactionOnCatalogue)
         });
 

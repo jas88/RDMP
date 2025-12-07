@@ -200,7 +200,7 @@ public class ReleaseRunner : ManyRunner
             {
                 //it's been extracted!, who extracted it?
                 var destinationThatExtractedIt =
-                    (IExecuteDatasetExtractionDestination)ObjectConstructor.Construct(extractionResults
+                    (IExecuteDatasetExtractionDestination)AotObjectConstructor.Construct(extractionResults
                         .GetDestinationType());
 
                 //destination tell us how releasable it is

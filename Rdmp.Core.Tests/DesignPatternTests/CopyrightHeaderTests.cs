@@ -78,18 +78,6 @@ public class CopyrightHeaderTests
                 suggestedNewFileContents.Add(file, sbSuggestedText.ToString());
         }
 
-        // Report issues
-        if (copyrightIssues.Any())
-        {
-            Console.WriteLine($"Found {copyrightIssues.Count} file(s) with missing or incorrect copyright headers:");
-            foreach (var kvp in copyrightIssues)
-            {
-                Console.WriteLine($"  {kvp.Key}");
-                Console.WriteLine($"    Actual:   {kvp.Value.actual}");
-                Console.WriteLine($"    Expected: {kvp.Value.expected}");
-            }
-        }
-
         // Assert
         foreach (var kvp in suggestedNewFileContents)
         {
