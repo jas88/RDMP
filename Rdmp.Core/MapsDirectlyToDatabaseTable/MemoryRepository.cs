@@ -29,21 +29,21 @@ public class MemoryRepository : IRepository
 
     /// <summary>
     /// Type-indexed storage for O(1) lookups: Type -> (ID -> Object)
+    /// Pre-populated with all compatible types at construction for optimal read performance.
+    /// Additional types (e.g., Spontaneous objects) can be added dynamically.
     /// </summary>
-    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>>
-        _objectsByType = new();
+    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>> _objectsByType;
 
     /// <summary>
     /// Precomputed type hierarchy: Interface/BaseClass -> ConcreteTypes[]
-    /// Lazily built on first interface lookup to avoid IsAssignableFrom() overhead
+    /// Built once at construction from compatible types.
     /// </summary>
-    private volatile FrozenDictionary<Type, Type[]> _typeHierarchy;
-    private readonly object _typeHierarchyLock = new();
+    private readonly FrozenDictionary<Type, Type[]> _typeHierarchy;
 
     /// <summary>
-    /// Cached compatible types - computed once per repository instance
+    /// All compatible concrete types for this repository.
     /// </summary>
-    private Type[] _compatibleTypesCache;
+    private readonly Type[] _compatibleTypes;
 
     /// <summary>
     /// Backward-compatible view of all objects as a concurrent hashset.
@@ -72,17 +72,99 @@ public class MemoryRepository : IRepository
     public event EventHandler<IMapsDirectlyToDatabaseTableEventArgs> Inserting;
     public event EventHandler<IMapsDirectlyToDatabaseTableEventArgs> Deleting;
 
+    public MemoryRepository()
+    {
+        // Get all compatible types from the assembly
+        _compatibleTypes = BuildCompatibleTypes();
+
+        // Pre-populate type storage with empty dictionaries for all compatible types
+        _objectsByType = new ConcurrentDictionary<Type, ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>>();
+        foreach (var type in _compatibleTypes)
+        {
+            _objectsByType[type] = new ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>();
+        }
+
+        // Build type hierarchy once at construction
+        _typeHierarchy = BuildTypeHierarchy(_compatibleTypes);
+    }
+
     /// <summary>
-    /// Helper: Get or create the type-specific dictionary for a given type
+    /// Build the list of compatible types from the assembly.
     /// </summary>
+    private Type[] BuildCompatibleTypes()
+    {
+        return GetType().Assembly.GetTypes()
+            .Where(
+                t =>
+                    typeof(IMapsDirectlyToDatabaseTable).IsAssignableFrom(t)
+                    && !t.IsAbstract
+                    && !t.IsInterface
+                    // nothing called spontaneous
+                    && !t.Name.Contains("Spontaneous")
+                    // or with a spontaneous base class
+                    && (t.BaseType == null || !t.BaseType.Name.Contains("Spontaneous"))
+            ).ToArray();
+    }
+
+    /// <summary>
+    /// Build precomputed type hierarchy for interface/base class lookups.
+    /// Maps each interface/base class to all concrete types that implement/inherit from it.
+    /// </summary>
+    private static FrozenDictionary<Type, Type[]> BuildTypeHierarchy(Type[] concreteTypes)
+    {
+        var hierarchy = new Dictionary<Type, List<Type>>();
+
+        // For each concrete type, find all its interfaces and base classes
+        foreach (var concreteType in concreteTypes)
+        {
+            // Add all interfaces
+            foreach (var iface in concreteType.GetInterfaces())
+            {
+                if (!hierarchy.TryGetValue(iface, out var ifaceList))
+                {
+                    ifaceList = new List<Type>();
+                    hierarchy[iface] = ifaceList;
+                }
+                ifaceList.Add(concreteType);
+            }
+
+            // Add base class chain
+            var baseType = concreteType.BaseType;
+            while (baseType != null && baseType != typeof(object))
+            {
+                if (!hierarchy.TryGetValue(baseType, out var baseList))
+                {
+                    baseList = new List<Type>();
+                    hierarchy[baseType] = baseList;
+                }
+                baseList.Add(concreteType);
+                baseType = baseType.BaseType;
+            }
+        }
+
+        // Convert to FrozenDictionary for optimal lookup performance
+        return hierarchy.ToFrozenDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.Distinct().ToArray());
+    }
+
+    /// <summary>
+    /// Get the type-specific dictionary for a given type.
+    /// Returns null if type is not known to this repository.
+    /// </summary>
+    protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetTypeDictionary(Type type)
+    {
+        return _objectsByType.GetValueOrDefault(type);
+    }
+
+    /// <summary>
+    /// Get or create the type-specific dictionary for a given type.
+    /// Creates dictionary for types not in the pre-populated list (e.g., Spontaneous objects).
+    /// </summary>
+    [NotNull]
     protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetOrCreateTypeDictionary(Type type)
     {
-        return _objectsByType.GetOrAdd(type, _ =>
-        {
-            // Invalidate type hierarchy when a new type is added
-            InvalidateTypeHierarchy();
-            return new ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>();
-        });
+        return _objectsByType.GetOrAdd(type, _ => new ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>());
     }
 
     /// <summary>
@@ -90,8 +172,7 @@ public class MemoryRepository : IRepository
     /// </summary>
     private bool AddToTypeIndex(IMapsDirectlyToDatabaseTable obj)
     {
-        var typeDict = GetOrCreateTypeDictionary(obj.GetType());
-        return typeDict.TryAdd(obj.ID, obj);
+        return GetOrCreateTypeDictionary(obj.GetType()).TryAdd(obj.ID, obj);
     }
 
     /// <summary>
@@ -99,9 +180,8 @@ public class MemoryRepository : IRepository
     /// </summary>
     private bool RemoveFromTypeIndex(IMapsDirectlyToDatabaseTable obj)
     {
-        if (_objectsByType.TryGetValue(obj.GetType(), out var typeDict))
-            return typeDict.TryRemove(obj.ID, out _);
-        return false;
+        var typeDict = GetTypeDictionary(obj.GetType());
+        return typeDict?.TryRemove(obj.ID, out _) ?? false;
     }
 
     /// <summary>
@@ -109,7 +189,8 @@ public class MemoryRepository : IRepository
     /// </summary>
     private bool ContainsInTypeIndex(IMapsDirectlyToDatabaseTable obj)
     {
-        return _objectsByType.TryGetValue(obj.GetType(), out var typeDict) && typeDict.ContainsKey(obj.ID);
+        var typeDict = GetTypeDictionary(obj.GetType());
+        return typeDict?.ContainsKey(obj.ID) ?? false;
     }
 
     /// <summary>
@@ -130,74 +211,12 @@ public class MemoryRepository : IRepository
     protected bool IsEmpty => _objectsByType.Values.All(typeDict => typeDict.IsEmpty);
 
     /// <summary>
-    /// Build precomputed type hierarchy for interface/base class lookups.
-    /// Maps each interface/base class to all concrete types that implement/inherit from it.
-    /// </summary>
-    private FrozenDictionary<Type, Type[]> BuildTypeHierarchy()
-    {
-        var hierarchy = new ConcurrentDictionary<Type, ConcurrentBag<Type>>();
-
-        // Get all concrete types currently in storage
-        var concreteTypes = _objectsByType.Keys.ToArray();
-
-        // For each concrete type, find all its interfaces and base classes
-        foreach (var concreteType in concreteTypes)
-        {
-            // Add all interfaces
-            foreach (var iface in concreteType.GetInterfaces())
-            {
-                var ifaceBag = hierarchy.GetOrAdd(iface, _ => new ConcurrentBag<Type>());
-                ifaceBag.Add(concreteType);
-            }
-
-            // Add base class chain
-            var baseType = concreteType.BaseType;
-            while (baseType != null && baseType != typeof(object))
-            {
-                var baseBag = hierarchy.GetOrAdd(baseType, _ => new ConcurrentBag<Type>());
-                baseBag.Add(concreteType);
-                baseType = baseType.BaseType;
-            }
-        }
-
-        // Convert to FrozenDictionary for optimal lookup performance
-        return hierarchy.ToFrozenDictionary(
-            kvp => kvp.Key,
-            kvp => kvp.Value.Distinct().ToArray());
-    }
-
-    /// <summary>
     /// Get concrete types that implement/inherit from the given interface or base class.
     /// Uses precomputed hierarchy for O(1) lookup instead of IsAssignableFrom() checks.
     /// </summary>
     private Type[] GetConcreteTypesFor(Type interfaceOrBaseType)
     {
-        // Lazy-build type hierarchy on first use
-        if (_typeHierarchy == null)
-        {
-            lock (_typeHierarchyLock)
-            {
-                if (_typeHierarchy == null)
-                    _typeHierarchy = BuildTypeHierarchy();
-            }
-        }
-
-        // Return precomputed list of concrete types, or empty if not found
-        return _typeHierarchy.TryGetValue(interfaceOrBaseType, out var concreteTypes)
-            ? concreteTypes
-            : Array.Empty<Type>();
-    }
-
-    /// <summary>
-    /// Invalidate type hierarchy cache when new types are added to storage.
-    /// Called when a new type dictionary is created.
-    /// </summary>
-    private void InvalidateTypeHierarchy()
-    {
-        lock (_typeHierarchyLock)
-        {
-            _typeHierarchy = null;
-        }
+        return _typeHierarchy.GetValueOrDefault(interfaceOrBaseType, Array.Empty<Type>());
     }
 
     public virtual void InsertAndHydrate<T>(T toCreate, Dictionary<string, object> constructorParameters)
@@ -285,8 +304,8 @@ public class MemoryRepository : IRepository
         var requestedType = typeof(T);
 
         // Fast path: Exact concrete type match - O(1)
-        if (_objectsByType.TryGetValue(requestedType, out var typeDict) &&
-            typeDict.TryGetValue(id, out var obj))
+        var typeDict = GetTypeDictionary(requestedType);
+        if (typeDict != null && typeDict.TryGetValue(id, out var obj))
         {
             return (T)obj;
         }
@@ -298,8 +317,8 @@ public class MemoryRepository : IRepository
 
             foreach (var concreteType in concreteTypes)
             {
-                if (_objectsByType.TryGetValue(concreteType, out typeDict) &&
-                    typeDict.TryGetValue(id, out obj))
+                typeDict = GetTypeDictionary(concreteType);
+                if (typeDict != null && typeDict.TryGetValue(id, out obj))
                 {
                     return (T)obj;
                 }
@@ -315,7 +334,8 @@ public class MemoryRepository : IRepository
         var results = new List<T>();
 
         // Fast path: Check if exact type exists in storage
-        if (_objectsByType.TryGetValue(requestedType, out var typeDict))
+        var typeDict = GetTypeDictionary(requestedType);
+        if (typeDict != null)
         {
             results.AddRange(typeDict.Values.Cast<T>());
         }
@@ -329,7 +349,8 @@ public class MemoryRepository : IRepository
             if (concreteType == requestedType)
                 continue;
 
-            if (_objectsByType.TryGetValue(concreteType, out typeDict))
+            typeDict = GetTypeDictionary(concreteType);
+            if (typeDict != null)
             {
                 results.AddRange(typeDict.Values.Cast<T>());
             }
@@ -373,12 +394,8 @@ public class MemoryRepository : IRepository
     public IEnumerable<IMapsDirectlyToDatabaseTable> GetAllObjects(Type t)
     {
         // O(m) where m = count of type t only
-        if (_objectsByType.TryGetValue(t, out var typeDict))
-        {
-            return typeDict.Values;
-        }
-
-        return Enumerable.Empty<IMapsDirectlyToDatabaseTable>();
+        var typeDict = GetTypeDictionary(t);
+        return typeDict?.Values ?? Enumerable.Empty<IMapsDirectlyToDatabaseTable>();
     }
 
     public T[] GetAllObjectsWithParent<T>(IMapsDirectlyToDatabaseTable parent) where T : IMapsDirectlyToDatabaseTable
@@ -390,7 +407,8 @@ public class MemoryRepository : IRepository
         var requestedType = typeof(T);
 
         // Fast path: Exact concrete type match
-        if (_objectsByType.TryGetValue(requestedType, out var typeDict))
+        var typeDict = GetTypeDictionary(requestedType);
+        if (typeDict != null)
         {
             return typeDict.Values.Cast<T>()
                 .Where(o => prop.GetValue(o) as int? == parent.ID)
@@ -406,7 +424,8 @@ public class MemoryRepository : IRepository
 
             foreach (var concreteType in concreteTypes)
             {
-                if (_objectsByType.TryGetValue(concreteType, out typeDict))
+                typeDict = GetTypeDictionary(concreteType);
+                if (typeDict != null)
                 {
                     results.AddRange(typeDict.Values.Cast<T>()
                         .Where(o => prop.GetValue(o) as int? == parent.ID));
@@ -429,7 +448,8 @@ public class MemoryRepository : IRepository
         var requestedType = typeof(T);
 
         // Fast path: Exact concrete type match
-        if (_objectsByType.TryGetValue(requestedType, out var typeDict))
+        var typeDict = GetTypeDictionary(requestedType);
+        if (typeDict != null)
         {
             return typeDict.Values.Cast<T>()
                 .Where(o => prop.GetValue(o) as int? == parent.ID)
@@ -445,7 +465,8 @@ public class MemoryRepository : IRepository
 
             foreach (var concreteType in concreteTypes)
             {
-                if (_objectsByType.TryGetValue(concreteType, out typeDict))
+                typeDict = GetTypeDictionary(concreteType);
+                if (typeDict != null)
                 {
                     results.AddRange(typeDict.Values.Cast<T>()
                         .Where(o => prop.GetValue(o) as int? == parent.ID));
@@ -571,7 +592,8 @@ public class MemoryRepository : IRepository
         var requestedType = typeof(T);
 
         // Fast path: Exact concrete type match - O(1)
-        if (_objectsByType.TryGetValue(requestedType, out var typeDict) && typeDict.ContainsKey(allegedParent))
+        var typeDict = GetTypeDictionary(requestedType);
+        if (typeDict != null && typeDict.ContainsKey(allegedParent))
             return true;
 
         // Medium path: Interface/base class - use precomputed hierarchy
@@ -581,8 +603,8 @@ public class MemoryRepository : IRepository
 
             foreach (var concreteType in concreteTypes)
             {
-                if (_objectsByType.TryGetValue(concreteType, out typeDict) &&
-                    typeDict.ContainsKey(allegedParent))
+                typeDict = GetTypeDictionary(concreteType);
+                if (typeDict != null && typeDict.ContainsKey(allegedParent))
                 {
                     return true;
                 }
@@ -597,14 +619,15 @@ public class MemoryRepository : IRepository
     public bool StillExists(Type objectType, int objectId)
     {
         // O(1) lookup using type-indexed dictionary
-        return _objectsByType.TryGetValue(objectType, out var typeDict) && typeDict.ContainsKey(objectId);
+        var typeDict = GetTypeDictionary(objectType);
+        return typeDict?.ContainsKey(objectId) ?? false;
     }
 
     public IMapsDirectlyToDatabaseTable GetObjectByID(Type objectType, int objectId)
     {
         // O(1) lookup using type-indexed dictionary
-        if (_objectsByType.TryGetValue(objectType, out var typeDict) &&
-            typeDict.TryGetValue(objectId, out var obj))
+        var typeDict = GetTypeDictionary(objectType);
+        if (typeDict != null && typeDict.TryGetValue(objectId, out var obj))
         {
             return obj;
         }
@@ -619,7 +642,8 @@ public class MemoryRepository : IRepository
         var hs = new HashSet<int>(ids);
 
         // Fast path: Exact concrete type match
-        if (_objectsByType.TryGetValue(requestedType, out var typeDict))
+        var typeDict = GetTypeDictionary(requestedType);
+        if (typeDict != null)
         {
             return typeDict.Values.Cast<T>()
                 .Where(o => hs.Contains(o.ID))
@@ -634,7 +658,8 @@ public class MemoryRepository : IRepository
 
             foreach (var concreteType in concreteTypes)
             {
-                if (_objectsByType.TryGetValue(concreteType, out typeDict))
+                typeDict = GetTypeDictionary(concreteType);
+                if (typeDict != null)
                 {
                     results.AddRange(typeDict.Values.Cast<T>()
                         .Where(o => hs.Contains(o.ID)));
@@ -650,7 +675,8 @@ public class MemoryRepository : IRepository
     public IEnumerable<IMapsDirectlyToDatabaseTable> GetAllObjectsInIDList(Type elementType, IEnumerable<int> ids)
     {
         // O(k) where k = count of requested IDs
-        if (!_objectsByType.TryGetValue(elementType, out var typeDict))
+        var typeDict = GetTypeDictionary(elementType);
+        if (typeDict == null)
             return Enumerable.Empty<IMapsDirectlyToDatabaseTable>();
 
         var hs = new HashSet<int>(ids);
@@ -683,32 +709,14 @@ public class MemoryRepository : IRepository
 
     public virtual void Clear()
     {
-        _objectsByType.Clear();
-        InvalidateTypeHierarchy();
+        // Clear all inner dictionaries but keep the structure
+        foreach (var typeDict in _objectsByType.Values)
+        {
+            typeDict.Clear();
+        }
     }
 
-    public Type[] GetCompatibleTypes()
-    {
-        // Cache the result - assembly types don't change during runtime
-        if (_compatibleTypesCache != null)
-            return _compatibleTypesCache;
-
-        _compatibleTypesCache = GetType().Assembly.GetTypes()
-            .Where(
-                t =>
-                    typeof(IMapsDirectlyToDatabaseTable).IsAssignableFrom(t)
-                    && !t.IsAbstract
-                    && !t.IsInterface
-
-                    //nothing called spontaneous
-                    && !t.Name.Contains("Spontaneous")
-
-                    //or with a spontaneous base class
-                    && (t.BaseType == null || !t.BaseType.Name.Contains("Spontaneous"))
-            ).ToArray();
-
-        return _compatibleTypesCache;
-    }
+    public Type[] GetCompatibleTypes() => _compatibleTypes;
 
 
     public IDisposable BeginNewTransaction() => new EmptyDisposeable();
