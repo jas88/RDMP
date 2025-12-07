@@ -830,7 +830,7 @@ CREATE TABLE [dbo].[LoadProgress] (
     [OriginDate] [datetime] NULL,
     [DataLoadProgress] [datetime] NULL,
     [LoadMetadata_ID] [int] NOT NULL,
-    [LoadPeriodicity] [varchar](10) NOT NULL DEFAULT (''),
+    [LoadPeriodicity] [varchar](10) NULL,
     [IsDisabled] [bit] NOT NULL DEFAULT ((0)),
     [DefaultNumberOfDaysToLoadEachTime] [int] NOT NULL DEFAULT ((5)),
     [AllowAutomation] [bit] NOT NULL DEFAULT ((0)),
