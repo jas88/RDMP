@@ -13,6 +13,10 @@ jobs:
   tests_windows_ui:
     name: Windows UI Tests
     runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     env:
       RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml
     steps:
@@ -24,6 +28,13 @@ jobs:
         with:
           cache: true
           cache-dependency-path: Directory.Packages.props
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          config-file: ./.github/configs/codeql.yml
+          queries: +security-and-quality
 
       - name: Populate Databases.yaml
         shell: bash
@@ -192,6 +203,40 @@ jobs:
             -c Release \
             --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:csharp"
+          upload: false
+          output: sarif-results
+
+      - name: Filter SARIF for generated files
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -**/*.Designer.cs
+            -**/*.g.cs
+            -**/*Generated.cs
+            -**/*.g.i.cs
+            -**/*.designer.cs
+            -**/obj/**
+            -**/bin/**
+          input: sarif-results/csharp.sarif
+          output: sarif-results/csharp.sarif
+
+      - name: Upload CodeQL Results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif-results/csharp.sarif
+          category: "/language:csharp"
+
+      - name: Run markdown link check
+        continue-on-error: true
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
 
       - name: Upload Windows UI coverage
         uses: coverallsapp/github-action@v2.3.7
@@ -382,17 +427,15 @@ jobs:
           fail-on-error: false
         continue-on-error: true
 
-  # Bundle job - depends on ALL test jobs
+  # Bundle job - only runs on tagged releases
   bundle:
     name: Bundle Build
     runs-on: ubuntu-latest
     needs: [tests_windows_ui, tests_linux_db]
-    # Only run bundle if ALL tests passed
-    if: success() && needs.tests_windows_ui.result == 'success' && needs.tests_linux_db.result == 'success'
+    if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       actions: read
       contents: write
-      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -409,59 +452,25 @@ jobs:
           packages: pixz p7zip-full
           version: 1.0
 
-      - name: Check test results
-        run: |
-          # Check if any test jobs failed
-          if [[ "${{ needs.tests_windows_ui.result }}" == "failure" || \
-                "${{ needs.tests_linux_db.result }}" == "failure" ]]; then
-            echo "⚠️ One or more test jobs failed. See above for details."
-            echo "Continuing with bundle build for debugging purposes..."
-          else
-            echo "✅ All test jobs passed!"
-          fi
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: csharp
-          config-file: ./.github/configs/codeql.yml
-          queries: +security-and-quality
-
       - name: Build and bundle
         id: version
         shell: bash
         run: ./.github/scripts/build-bundle.sh
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
         with:
-          category: "/language:csharp"
-          upload: false
-          output: sarif-results
+          name: dist
+          path: dist
 
-      - name: Filter SARIF for generated files
-        uses: advanced-security/filter-sarif@v1
-        with:
-          patterns: |
-            -**/*.Designer.cs
-            -**/*.g.cs
-            -**/*Generated.cs
-            -**/*.g.i.cs
-            -**/*.designer.cs
-            -**/obj/**
-            -**/bin/**
-          input: sarif-results/csharp.sarif
-          output: sarif-results/csharp.sarif
+      - name: Upload NuGet packages
+        run: dotnet nuget push dist/HIC.RDMP.Plugin*.nupkg -s https://api.nuget.org/v3/index.json --skip-duplicate -k ${{ secrets.NUGET_KEY }}
 
-      - name: Upload CodeQL Results
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2.9.0
         with:
-          sarif_file: sarif-results/csharp.sarif
-          category: "/language:csharp"
-
-      - name: Run markdown link check
-        continue-on-error: true
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          use-quiet-mode: 'yes'
-          use-verbose-mode: 'yes'
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
