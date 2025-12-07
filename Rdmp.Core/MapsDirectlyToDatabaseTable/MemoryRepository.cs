@@ -29,9 +29,10 @@ public class MemoryRepository : IRepository
 
     /// <summary>
     /// Type-indexed storage for O(1) lookups: Type -> (ID -> Object)
-    /// Pre-populated with all compatible types at construction, then frozen for optimal read performance.
+    /// Pre-populated with all compatible types at construction for optimal read performance.
+    /// Additional types (e.g., Spontaneous objects) can be added dynamically.
     /// </summary>
-    private readonly FrozenDictionary<Type, ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>> _objectsByType;
+    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>> _objectsByType;
 
     /// <summary>
     /// Precomputed type hierarchy: Interface/BaseClass -> ConcreteTypes[]
@@ -77,13 +78,11 @@ public class MemoryRepository : IRepository
         _compatibleTypes = BuildCompatibleTypes();
 
         // Pre-populate type storage with empty dictionaries for all compatible types
-        var typeStorage = new Dictionary<Type, ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>>(
-            _compatibleTypes.Length);
+        _objectsByType = new ConcurrentDictionary<Type, ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>>();
         foreach (var type in _compatibleTypes)
         {
-            typeStorage[type] = new ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>();
+            _objectsByType[type] = new ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>();
         }
-        _objectsByType = typeStorage.ToFrozenDictionary();
 
         // Build type hierarchy once at construction
         _typeHierarchy = BuildTypeHierarchy(_compatibleTypes);
@@ -151,7 +150,7 @@ public class MemoryRepository : IRepository
 
     /// <summary>
     /// Get the type-specific dictionary for a given type.
-    /// Returns null if type is not a compatible type.
+    /// Returns null if type is not known to this repository.
     /// </summary>
     protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetTypeDictionary(Type type)
     {
@@ -159,15 +158,13 @@ public class MemoryRepository : IRepository
     }
 
     /// <summary>
-    /// Get the type-specific dictionary for a compatible type.
-    /// Throws if the type is not compatible with this repository.
+    /// Get or create the type-specific dictionary for a given type.
+    /// Creates dictionary for types not in the pre-populated list (e.g., Spontaneous objects).
     /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown when type is not compatible.</exception>
     [NotNull]
-    protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetTypeDictionaryOrThrow(Type type)
+    protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetOrCreateTypeDictionary(Type type)
     {
-        return _objectsByType.GetValueOrDefault(type)
-            ?? throw new InvalidOperationException($"Type {type.Name} is not a compatible type for this repository");
+        return _objectsByType.GetOrAdd(type, _ => new ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable>());
     }
 
     /// <summary>
@@ -175,7 +172,7 @@ public class MemoryRepository : IRepository
     /// </summary>
     private bool AddToTypeIndex(IMapsDirectlyToDatabaseTable obj)
     {
-        return GetTypeDictionaryOrThrow(obj.GetType()).TryAdd(obj.ID, obj);
+        return GetOrCreateTypeDictionary(obj.GetType()).TryAdd(obj.ID, obj);
     }
 
     /// <summary>
@@ -486,7 +483,7 @@ public class MemoryRepository : IRepository
     {
         Saving?.Invoke(this, new SaveEventArgs(oTableWrapperObject));
 
-        var typeDict = GetTypeDictionaryOrThrow(oTableWrapperObject.GetType());
+        var typeDict = GetOrCreateTypeDictionary(oTableWrapperObject.GetType());
 
         // If saving a new reference to an existing object then we should update our tracked
         // objects to the latest reference since the old one is stale
