@@ -190,13 +190,9 @@ public class MasterDatabaseScriptExecutor
             switch (dbType)
             {
                 case DatabaseType.MicrosoftSQLServer:
-                    // SQL Server supports multi-row INSERT
-                    InsertBatchSqlServer(con, transaction, qualifiedTableName, patchMetadata);
-                    break;
-
                 case DatabaseType.MySql:
                 case DatabaseType.PostgreSql:
-                    // MySQL and PostgreSQL support multi-row INSERT
+                    // These databases support multi-row INSERT
                     InsertBatchMultiRow(con, transaction, qualifiedTableName, patchMetadata);
                     break;
 
@@ -218,59 +214,9 @@ public class MasterDatabaseScriptExecutor
         }
     }
 
-    private void InsertBatchSqlServer(IDbConnection con, IDbTransaction transaction, string tableName, List<Dictionary<string, object>> patchMetadata)
-    {
-        // Build parameterized multi-row INSERT for SQL Server
-        var cmd = con.CreateCommand();
-        cmd.Transaction = transaction;
-
-        var valuesClauses = new List<string>();
-        for (var i = 0; i < patchMetadata.Count; i++)
-        {
-            valuesClauses.Add($"(@script_name{i}, @text_of_script{i}, @text_hash{i}, @entry_date{i}, @modified_date{i}, @entered_by{i})");
-
-            var metadata = patchMetadata[i];
-            var param = cmd.CreateParameter();
-            param.ParameterName = $"@script_name{i}";
-            param.Value = metadata["script_name"];
-            cmd.Parameters.Add(param);
-
-            param = cmd.CreateParameter();
-            param.ParameterName = $"@text_of_script{i}";
-            param.Value = metadata["text_of_script"];
-            cmd.Parameters.Add(param);
-
-            param = cmd.CreateParameter();
-            param.ParameterName = $"@text_hash{i}";
-            param.Value = metadata["text_hash"];
-            cmd.Parameters.Add(param);
-
-            param = cmd.CreateParameter();
-            param.ParameterName = $"@entry_date{i}";
-            param.Value = metadata["entry_date"];
-            cmd.Parameters.Add(param);
-
-            param = cmd.CreateParameter();
-            param.ParameterName = $"@modified_date{i}";
-            param.Value = metadata["modified_date"];
-            cmd.Parameters.Add(param);
-
-            param = cmd.CreateParameter();
-            param.ParameterName = $"@entered_by{i}";
-            param.Value = metadata["entered_by"];
-            cmd.Parameters.Add(param);
-        }
-
-        cmd.CommandText = $@"INSERT INTO {tableName}
-            (script_name, text_of_script, text_hash, entry_date, modified_date, entered_by)
-            VALUES {string.Join(", ", valuesClauses)}";
-
-        cmd.ExecuteNonQuery();
-    }
-
     private void InsertBatchMultiRow(IDbConnection con, IDbTransaction transaction, string tableName, List<Dictionary<string, object>> patchMetadata)
     {
-        // Build parameterized multi-row INSERT for MySQL/PostgreSQL
+        // Build parameterized multi-row INSERT (works for SQL Server, MySQL, and PostgreSQL)
         var cmd = con.CreateCommand();
         cmd.Transaction = transaction;
 

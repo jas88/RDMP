@@ -37,7 +37,7 @@ public abstract partial class Patcher : IPatcher
 
     public string LegacyName { get; protected set; }
 
-    private Patch _cachedInitialPatch;
+    private readonly Dictionary<DatabaseType, Patch> _cachedInitialPatches = new();
     private SortedDictionary<string, Patch> _cachedPatches;
 
     protected Patcher(int tier, string resourceSubdirectory)
@@ -66,8 +66,10 @@ public abstract partial class Patcher : IPatcher
 
     public virtual Patch GetInitialCreateScriptContents(DiscoveredDatabase db)
     {
-        if (_cachedInitialPatch != null)
-            return _cachedInitialPatch;
+        var dbType = db.Server.DatabaseType;
+
+        if (_cachedInitialPatches.TryGetValue(dbType, out var cachedPatch))
+            return cachedPatch;
 
         var assembly = GetDbAssembly();
         var subdirectory = ResourceSubdirectory;
@@ -87,11 +89,12 @@ public abstract partial class Patcher : IPatcher
                 var sql = sr.ReadToEnd();
 
                     if (!sql.Contains(Patch.VersionKey))
-                        sql = GetHeader(db.Server.DatabaseType, InitialScriptName, new Version(1, 0, 0)) + sql;
+                        sql = GetHeader(dbType, InitialScriptName, new Version(1, 0, 0)) + sql;
 
 
-                    _cachedInitialPatch = new Patch(InitialScriptName, sql);
-                    return _cachedInitialPatch;
+                    var patch = new Patch(InitialScriptName, sql);
+                    _cachedInitialPatches[dbType] = patch;
+                    return patch;
                 }
             case 0:
                 throw new FileNotFoundException(
