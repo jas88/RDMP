@@ -1,4 +1,4 @@
-﻿--Version: 8.1.5
+--Version: 8.1.5
 --Description: Adds linking table to allow for multiple load metadatas per catalogue
 if not exists (select 1 from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='LoadMetadataCatalogueLinkage')
 BEGIN

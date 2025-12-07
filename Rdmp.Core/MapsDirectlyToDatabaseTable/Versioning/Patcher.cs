@@ -37,6 +37,9 @@ public abstract partial class Patcher : IPatcher
 
     public string LegacyName { get; protected set; }
 
+    private readonly Dictionary<DatabaseType, Patch> _cachedInitialPatches = new();
+    private SortedDictionary<string, Patch> _cachedPatches;
+
     protected Patcher(int tier, string resourceSubdirectory)
     {
         Tier = tier;
@@ -63,6 +66,11 @@ public abstract partial class Patcher : IPatcher
 
     public virtual Patch GetInitialCreateScriptContents(DiscoveredDatabase db)
     {
+        var dbType = db.Server.DatabaseType;
+
+        if (_cachedInitialPatches.TryGetValue(dbType, out var cachedPatch))
+            return cachedPatch;
+
         var assembly = GetDbAssembly();
         var subdirectory = ResourceSubdirectory;
 
@@ -81,10 +89,12 @@ public abstract partial class Patcher : IPatcher
                 var sql = sr.ReadToEnd();
 
                     if (!sql.Contains(Patch.VersionKey))
-                        sql = GetHeader(db.Server.DatabaseType, InitialScriptName, new Version(1, 0, 0)) + sql;
+                        sql = GetHeader(dbType, InitialScriptName, new Version(1, 0, 0)) + sql;
 
 
-                    return new Patch(InitialScriptName, sql);
+                    var patch = new Patch(InitialScriptName, sql);
+                    _cachedInitialPatches[dbType] = patch;
+                    return patch;
                 }
             case 0:
                 throw new FileNotFoundException(
@@ -98,6 +108,9 @@ public abstract partial class Patcher : IPatcher
     /// <inheritdoc/>
     public virtual SortedDictionary<string, Patch> GetAllPatchesInAssembly(DiscoveredDatabase db)
     {
+        if (_cachedPatches != null)
+            return _cachedPatches;
+
         var assembly = GetDbAssembly();
         var subdirectory = ResourceSubdirectory;
 
@@ -116,7 +129,8 @@ public abstract partial class Patcher : IPatcher
             files.Add(match.Groups[1].Value, new Patch(match.Groups[1].Value, fileContents));
         }
 
-        return files;
+        _cachedPatches = files;
+        return _cachedPatches;
     }
 
     [GeneratedRegex(".*\\.up\\.(.*\\.sql)")]

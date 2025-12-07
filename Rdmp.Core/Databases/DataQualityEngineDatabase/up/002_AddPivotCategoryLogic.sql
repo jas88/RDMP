@@ -1,4 +1,4 @@
-﻿--Version:1.2.0.0
+--Version:1.2.0.0
 --Description: Allows you to set a Pivot dimension on data quality engine reports 
 
 if not exists (select * from sys.columns where name = 'PivotCategory')

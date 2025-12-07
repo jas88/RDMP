@@ -1,4 +1,4 @@
-﻿--Version:2.7.0.1
+--Version:2.7.0.1
 --Description: Adds the type of extraction to the result so the Release can identify where to pick up stuff. Also renames the "Filename" column to "DestinationDescription"
 if not exists (select 1 from sys.all_columns where name ='DestinationType' and OBJECT_NAME(object_id) ='CumulativeExtractionResults')
 	alter table CumulativeExtractionResults add DestinationType varchar(500) null

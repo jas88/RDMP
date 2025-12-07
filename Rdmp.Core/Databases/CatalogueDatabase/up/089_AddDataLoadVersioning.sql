@@ -1,4 +1,4 @@
-﻿--Version: 8.4.3
+--Version: 8.4.3
 --Description: Add data load versioning
 
  if not exists (select 1 from sys.columns where name = 'RootLoadMetadata_ID' and OBJECT_NAME(object_id) = 'LoadMetadata')

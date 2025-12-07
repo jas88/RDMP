@@ -1,4 +1,4 @@
-﻿--Version:1.49.0.1
+--Version:1.49.0.1
 --Description: Adds a Name field onto ExtractionConfiguration, adds support for Dataset Packages which are collections of ExtractableDataSets e.g. CoreDatasets, Supplemental Datasets, Expensive Datasets etc
 if not exists (select 1 from sys.columns where name = 'Name' and OBJECT_NAME(object_id) = 'ExtractionConfiguration')
   begin

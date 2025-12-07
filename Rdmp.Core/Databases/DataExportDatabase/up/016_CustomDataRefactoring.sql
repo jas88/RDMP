@@ -1,4 +1,4 @@
-﻿--Version:2.8.0.1
+--Version:2.8.0.1
 --Description: Deprecates existing CustomData tables in favour of 'Project Catalogues'
 if exists (select 1 from sys.tables where name ='CohortCustomColumn')
 	drop table CohortCustomColumn

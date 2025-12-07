@@ -148,21 +148,29 @@ public abstract class TestsRequiringAnExtractionConfiguration : TestsRequiringAC
 
     protected void ExecuteRunner()
     {
-        var pipeline = SetupPipeline();
-
-        var runner = new ExtractionRunner(new ThrowImmediatelyActivator(RepositoryLocator), new ExtractionOptions
+        Pipeline pipeline = null;
+        try
         {
-            Command = CommandLineActivity.run, ExtractionConfiguration = _configuration.ID.ToString(),
-            ExtractGlobals = true, Pipeline = pipeline.ID.ToString()
-        });
+            pipeline = SetupPipeline();
 
-        var returnCode = runner.Run(
-            RepositoryLocator,
-            ThrowImmediatelyDataLoadEventListener.Quiet,
-            ThrowImmediatelyCheckNotifier.Quiet,
-            new GracefulCancellationToken());
+            var runner = new ExtractionRunner(new ThrowImmediatelyActivator(RepositoryLocator), new ExtractionOptions
+            {
+                Command = CommandLineActivity.run, ExtractionConfiguration = _configuration.ID.ToString(),
+                ExtractGlobals = true, Pipeline = pipeline.ID.ToString()
+            });
 
-        Assert.That(returnCode,Is.EqualTo(0), "Return code from runner was non zero");
+            var returnCode = runner.Run(
+                RepositoryLocator,
+                ThrowImmediatelyDataLoadEventListener.Quiet,
+                ThrowImmediatelyCheckNotifier.Quiet,
+                new GracefulCancellationToken());
+
+            Assert.That(returnCode, Is.EqualTo(0), "Return code from runner was non zero");
+        }
+        finally
+        {
+            pipeline?.DeleteInDatabase();
+        }
     }
 
     protected void Execute(out ExtractionPipelineUseCase pipelineUseCase,

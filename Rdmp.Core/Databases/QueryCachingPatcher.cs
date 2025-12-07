@@ -15,6 +15,8 @@ namespace Rdmp.Core.Databases;
 
 public sealed class QueryCachingPatcher : Patcher
 {
+    private SortedDictionary<string, Patch> _cachedEmptyPatches;
+
     public QueryCachingPatcher() : base(2, "Databases.QueryCachingDatabase")
     {
         LegacyName = "QueryCaching.Database";
@@ -44,12 +46,16 @@ public sealed class QueryCachingPatcher : Patcher
 
     public override SortedDictionary<string, Patch> GetAllPatchesInAssembly(DiscoveredDatabase db)
     {
+        if (_cachedEmptyPatches != null)
+            return _cachedEmptyPatches;
+
         var basePatches = base.GetAllPatchesInAssembly(db);
         if (basePatches.Count > 1)
             throw new NotImplementedException(
                 "Someone has added some patches, we need to think about how we handle those in MySql and Oracle! i.e. don't add them in '/QueryCachingDatabase/up' please");
 
         //this is empty because the only patch is already accounted for
-        return new SortedDictionary<string, Patch>();
+        _cachedEmptyPatches = new SortedDictionary<string, Patch>();
+        return _cachedEmptyPatches;
     }
 }

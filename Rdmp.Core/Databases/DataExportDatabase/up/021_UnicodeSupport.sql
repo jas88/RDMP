@@ -1,9 +1,18 @@
-﻿--Version:3.2.0
+--Version:3.2.0
 --Description: Changes all varchar(x) columns that involve user provided values into nvarchar(x)
 
 
-if exists (select 1 from sys.default_constraints where name = 'DF_ExtractionConfiguration_Separator')
-	ALTER TABLE [dbo].[ExtractionConfiguration] DROP CONSTRAINT [DF_ExtractionConfiguration_Separator]
+-- Drop existing default constraint on Separator column (handles auto-generated constraint names)
+DECLARE @constraint_name NVARCHAR(256)
+SELECT @constraint_name = dc.name
+FROM sys.default_constraints dc
+INNER JOIN sys.columns c ON dc.parent_column_id = c.column_id AND dc.parent_object_id = c.object_id
+WHERE c.name = 'Separator' AND OBJECT_NAME(c.object_id) = 'ExtractionConfiguration'
+
+IF @constraint_name IS NOT NULL
+BEGIN
+    EXEC('ALTER TABLE [dbo].[ExtractionConfiguration] DROP CONSTRAINT [' + @constraint_name + ']')
+END
 
 GO
 
@@ -69,5 +78,13 @@ alter table [ExtractableDataSetPackage] alter column [Creator] nvarchar(500)NOT 
 
 GO
 
-if not exists (select 1 from sys.default_constraints where name = 'DF_ExtractionConfiguration_Separator')
-	ALTER TABLE [dbo].[ExtractionConfiguration] ADD  CONSTRAINT [DF_ExtractionConfiguration_Separator]  DEFAULT (',') FOR [Separator]
+-- Add back default constraint with explicit name if not already present
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.default_constraints dc
+    INNER JOIN sys.columns c ON dc.parent_column_id = c.column_id AND dc.parent_object_id = c.object_id
+    WHERE c.name = 'Separator' AND OBJECT_NAME(c.object_id) = 'ExtractionConfiguration'
+)
+BEGIN
+    ALTER TABLE [dbo].[ExtractionConfiguration] ADD CONSTRAINT [DF_ExtractionConfiguration_Separator] DEFAULT (',') FOR [Separator]
+END

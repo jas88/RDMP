@@ -1,4 +1,4 @@
-﻿--Version:1.1.0.0
+--Version:1.1.0.0
 --Description:Adds support for customising DataFlows operations between databases e.g. (anonymisation, IDataFlowComponents).  This is different from ProcessTasks which occur either on specific databases (Adjust RAW / Adjust STAGING) or otherwise within the context of a data load.  Pipelines are reusable anywhere that data flows from A to B and can be transformed as a C# DataTable object in memory.  
 
 if not exists (select 1 from sys.tables where name = 'Pipeline')
@@ -7,7 +7,6 @@ begin
 CREATE TABLE [dbo].[Pipeline](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[Name] [varchar](500) NOT NULL,
-	[SoftwareVersion] [nvarchar](50) NOT NULL,
  CONSTRAINT [PK_Pipeline] PRIMARY KEY CLUSTERED 
 (
 	[ID] ASC
@@ -21,7 +20,6 @@ CREATE TABLE [dbo].[PipelineComponent](
 	[Pipeline_ID] [int] NOT NULL,
 	[Name] [varchar](500) NOT NULL,
 	[Class] [varchar](500) NOT NULL,
-	[SoftwareVersion] [nvarchar](50) NOT NULL,
  CONSTRAINT [PK_PipelineComponent] PRIMARY KEY CLUSTERED 
 (
 	[ID] ASC
@@ -35,7 +33,6 @@ CREATE TABLE [dbo].[PipelineComponentArgument](
 	[Value] [varchar](max) NULL,
 	[Type] [varchar](500) NOT NULL,
 	[Description] [varchar](1000) NULL,
-	[SoftwareVersion] [nvarchar](50) NOT NULL,
  CONSTRAINT [PK_PipelineComponentArgument] PRIMARY KEY CLUSTERED 
 (
 	[ID] ASC
@@ -58,9 +55,5 @@ REFERENCES [dbo].[PipelineComponent] ([ID])
 ON DELETE CASCADE
 
 ALTER TABLE [dbo].[PipelineComponentArgument] CHECK CONSTRAINT [FK_PipelineComponentArgument_PipelineComponent]
-
-ALTER TABLE [dbo].[Pipeline] ADD  CONSTRAINT [DF_Pipeline_SoftwareVersion]  DEFAULT ([dbo].[GetSoftwareVersion]()) FOR [SoftwareVersion]
-ALTER TABLE [dbo].[PipelineComponent] ADD  CONSTRAINT [DF_PipelineComponent_SoftwareVersion]  DEFAULT ([dbo].[GetSoftwareVersion]()) FOR [SoftwareVersion]
-ALTER TABLE [dbo].[PipelineComponentArgument] ADD  CONSTRAINT [DF_PipelineComponentArgument_SoftwareVersion]  DEFAULT ([dbo].[GetSoftwareVersion]()) FOR [SoftwareVersion]
 
 end

@@ -15,6 +15,8 @@ namespace Rdmp.Core.Databases;
 
 public sealed class LoggingDatabasePatcher : Patcher
 {
+    private SortedDictionary<string, Patch> _cachedEmptyPatches;
+
     public LoggingDatabasePatcher() : base(2, "Databases.LoggingDatabase")
     {
         LegacyName = "HIC.Logging.Database";
@@ -112,12 +114,16 @@ public sealed class LoggingDatabasePatcher : Patcher
 
     public override SortedDictionary<string, Patch> GetAllPatchesInAssembly(DiscoveredDatabase db)
     {
+        if (_cachedEmptyPatches != null)
+            return _cachedEmptyPatches;
+
         var basePatches = base.GetAllPatchesInAssembly(db);
         if (basePatches.Count > 3)
             throw new NotImplementedException(
                 "Someone has added some patches, we need to think about how we handle those in MySql and Oracle! i.e. don't add them in '/LoggingDatabase/up' please");
 
         //this is empty because the only patch is already accounted for
-        return new SortedDictionary<string, Patch>();
+        _cachedEmptyPatches = new SortedDictionary<string, Patch>();
+        return _cachedEmptyPatches;
     }
 }

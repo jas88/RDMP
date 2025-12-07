@@ -1,4 +1,4 @@
-﻿--Version:2.10.0.1
+--Version:2.10.0.1
 --Description: Fixes naming for all objects that reference another object in Data Export database
 
 --SupplementalExtractionResults

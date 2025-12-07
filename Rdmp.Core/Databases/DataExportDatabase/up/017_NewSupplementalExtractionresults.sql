@@ -1,4 +1,4 @@
-﻿--Version:2.9.0.1
+--Version:2.9.0.1
 --Description: New SupplementalExtractionResults child of CumulativeExtractionResult
 
 if not exists (select 1 from sys.tables where name = 'SupplementalExtractionResults')
@@ -25,7 +25,12 @@ begin
 end
 go
 
-if not exists (select 1 from sys.default_constraints where name = 'DF_SupplementalExtractionResults_DateOfExtraction')
+-- Add DEFAULT for DateOfExtraction if no default exists on this column
+IF NOT EXISTS (
+    SELECT 1 FROM sys.default_constraints dc
+    JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+    WHERE dc.parent_object_id = OBJECT_ID('dbo.SupplementalExtractionResults') AND c.name = 'DateOfExtraction'
+)
 	ALTER TABLE [dbo].[SupplementalExtractionResults] ADD  CONSTRAINT [DF_SupplementalExtractionResults_DateOfExtraction]  DEFAULT (getdate()) FOR [DateOfExtraction]
 GO
 

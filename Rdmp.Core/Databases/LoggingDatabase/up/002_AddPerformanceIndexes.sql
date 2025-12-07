@@ -1,4 +1,4 @@
-﻿--Version:2.12.0.1
+--Version:2.12.0.1
 --Description:Adds indexes in foreign key columns to allow for very large logging databases
 
 

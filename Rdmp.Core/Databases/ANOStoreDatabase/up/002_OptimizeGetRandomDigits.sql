@@ -1,13 +1,6 @@
 --Version:1.0.0.2
 --Description:Optimize GetRandomDigits function - remove WHILE loop and repeated GetNumeric() calls for 10x performance improvement
 
--- Create view if it doesn't exist (needed for NEWID() workaround in functions)
-IF NOT EXISTS (SELECT * FROM sys.views WHERE name = 'v_newID')
-BEGIN
-    EXEC('CREATE VIEW [dbo].[v_newID] AS SELECT NEWID() AS new_id')
-END
-GO
-
 DROP FUNCTION IF EXISTS [dbo].[GetRandomDigits]
 GO
 

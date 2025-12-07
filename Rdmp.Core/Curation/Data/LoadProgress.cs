@@ -26,7 +26,7 @@ public class LoadProgress : DatabaseEntity, ILoadProgress, ICheckable
     private bool _isDisabled;
     private string _name;
     private DateTime? _originDate;
-    private string _loadPeriodicity;
+    private string _loadPeriodicity = "";
     private DateTime? _dataLoadProgress;
     private int _loadMetadata_ID;
     private int _defaultNumberOfDaysToLoadEachTime;
