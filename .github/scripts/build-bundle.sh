@@ -6,12 +6,12 @@ RDMP_VERSION=$(perl -ne 'print "$1" if /AssemblyInformationalVersion\("([0-9a-z.
 echo "Building RDMP version: $RDMP_VERSION"
 echo "rdmpversion=$RDMP_VERSION" >> "$GITHUB_OUTPUT"
 
-# Bundle source code
+# Bundle source code as 7z solid archive for better compression
 echo "Bundling source code..."
 mkdir -p Tools/BundleUpSourceIntoZip/output
-rm -f Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.zip
-find . -type f \( -name '*.cs' -o -name '*.xml' \) | rev | sort -t'/' -k1,1 -u | rev > srcbits.txt
-7z a -mx=9 -mmt Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.zip @srcbits.txt
+rm -f Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.7z
+find . -type f \( -name '*.cs' -o -name '*.xml' \) ! -path './obj/*' ! -path '*/obj/*' | rev | sort -t'/' -k1,1 -u | rev > srcbits.txt
+7z a -t7z -m0=lzma2 -mx=9 -ms=on -mmt Tools/BundleUpSourceIntoZip/output/SourceCodeForSelfAwareness.7z @srcbits.txt
 
 # Package applications
 echo "Publishing applications..."
