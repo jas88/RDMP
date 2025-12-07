@@ -123,8 +123,7 @@ public class YamlRepository : MemoryDataExportRepository
                         obj.PropertyChanged += toCreate_PropertyChanged;
 
                         // Use type-indexed storage instead of Objects
-                        var typeDict = GetTypeDictionary(t);
-                        typeDict?.TryAdd(obj.ID, obj);
+                        GetTypeDictionaryOrThrow(t).TryAdd(obj.ID, obj);
                     }
                     catch (Exception ex)
                     {

@@ -159,14 +159,23 @@ public class MemoryRepository : IRepository
     }
 
     /// <summary>
+    /// Get the type-specific dictionary for a compatible type.
+    /// Throws if the type is not compatible with this repository.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when type is not compatible.</exception>
+    [NotNull]
+    protected ConcurrentDictionary<int, IMapsDirectlyToDatabaseTable> GetTypeDictionaryOrThrow(Type type)
+    {
+        return _objectsByType.GetValueOrDefault(type)
+            ?? throw new InvalidOperationException($"Type {type.Name} is not a compatible type for this repository");
+    }
+
+    /// <summary>
     /// Helper: Add an object to type-indexed storage
     /// </summary>
     private bool AddToTypeIndex(IMapsDirectlyToDatabaseTable obj)
     {
-        var typeDict = GetTypeDictionary(obj.GetType());
-        if (typeDict == null)
-            throw new InvalidOperationException($"Type {obj.GetType().Name} is not a compatible type for this repository");
-        return typeDict.TryAdd(obj.ID, obj);
+        return GetTypeDictionaryOrThrow(obj.GetType()).TryAdd(obj.ID, obj);
     }
 
     /// <summary>
@@ -477,9 +486,7 @@ public class MemoryRepository : IRepository
     {
         Saving?.Invoke(this, new SaveEventArgs(oTableWrapperObject));
 
-        var typeDict = GetTypeDictionary(oTableWrapperObject.GetType());
-        if (typeDict == null)
-            throw new InvalidOperationException($"Type {oTableWrapperObject.GetType().Name} is not a compatible type for this repository");
+        var typeDict = GetTypeDictionaryOrThrow(oTableWrapperObject.GetType());
 
         // If saving a new reference to an existing object then we should update our tracked
         // objects to the latest reference since the old one is stale
