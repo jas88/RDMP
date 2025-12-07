@@ -5,6 +5,8 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FAnsi.Discovery;
 using Microsoft.Data.SqlClient;
 using Rdmp.Core.CommandExecution;
@@ -34,16 +36,38 @@ public class PlatformDatabaseCreation
     {
         DiscoveredServerHelper.CreateDatabaseTimeoutInSeconds = options.CreateDatabaseTimeout;
 
-        Create(DefaultCatalogueDatabaseName, new CataloguePatcher(), options);
-        Create(DefaultDataExportDatabaseName, new DataExportPatcher(), options);
+        // Build list of databases to create
+        var databasesToCreate = new List<(string name, IPatcher patcher)>
+        {
+            (DefaultCatalogueDatabaseName, new CataloguePatcher()),
+            (DefaultDataExportDatabaseName, new DataExportPatcher()),
+            (DefaultDQEDatabaseName, new DataQualityEnginePatcher())
+        };
 
-        var dqe = Create(DefaultDQEDatabaseName, new DataQualityEnginePatcher(), options);
-
-        SqlConnectionStringBuilder logging = null;
         if (options.CreateLoggingServer)
         {
-            logging = Create(DefaultLoggingDatabaseName, new LoggingDatabasePatcher(), options);
+            databasesToCreate.Add((DefaultLoggingDatabaseName, new LoggingDatabasePatcher()));
         }
+
+        // Create all databases in parallel with controlled concurrency
+        // Limit to 4 concurrent operations to avoid overwhelming the database server
+        var connectionStrings = new Dictionary<string, SqlConnectionStringBuilder>();
+        var lockObj = new object();
+
+        Parallel.ForEach(databasesToCreate,
+            new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            db =>
+            {
+                var builder = Create(db.name, db.patcher, options);
+                lock (lockObj)
+                {
+                    connectionStrings[db.name] = builder;
+                }
+            });
+
+        // Extract connection strings for downstream use
+        var dqe = connectionStrings[DefaultDQEDatabaseName];
+        var logging = options.CreateLoggingServer ? connectionStrings[DefaultLoggingDatabaseName] : null;
 
         CatalogueRepository.SuppressHelpLoading = true;
 
@@ -64,18 +88,21 @@ public class PlatformDatabaseCreation
         }
     }
 
+    private static readonly object ConsoleLock = new();
+
     private static SqlConnectionStringBuilder Create(string databaseName, IPatcher patcher,
         PlatformDatabaseCreationOptions options)
     {
-        SqlConnection.ClearAllPools();
-
         var builder = options.GetBuilder(databaseName);
 
         var db = new DiscoveredServer(builder).ExpectDatabase(builder.InitialCatalog);
 
         if (options.DropDatabases && db.Exists())
         {
-            Console.WriteLine($"Dropping Database:{builder.InitialCatalog}");
+            lock (ConsoleLock)
+            {
+                Console.WriteLine($"Dropping Database:{builder.InitialCatalog}");
+            }
             db.Drop();
         }
 
@@ -84,7 +111,11 @@ public class PlatformDatabaseCreation
             Collation = options.Collation??(options.BinaryCollation? "Latin1_General_BIN2" : null)
         };
         executor.CreateAndPatchDatabase(patcher, new AcceptAllCheckNotifier());
-        Console.WriteLine($"Created {builder.InitialCatalog} on server {builder.DataSource}");
+
+        lock (ConsoleLock)
+        {
+            Console.WriteLine($"Created {builder.InitialCatalog} on server {builder.DataSource}");
+        }
 
         return builder;
     }

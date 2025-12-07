@@ -137,12 +137,7 @@ public class MasterDatabaseScriptExecutor
 
     private void RunSQL(KeyValuePair<string, Patch> kvp)
     {
-        using (var con = Database.Server.GetConnection())
-        {
-            con.Open();
-            UsefulStuff.ExecuteBatchNonQuery(kvp.Value.GetScriptBody(), con, null,
-                DiscoveredServerHelper.CreateDatabaseTimeoutInSeconds);
-        }
+        RunSQLOnly(kvp.Value);
 
         var now = DateTime.UtcNow;
         Database.ExpectTable(RoundhouseScriptsRunTable, RoundhouseSchemaName)
@@ -158,6 +153,169 @@ public class MasterDatabaseScriptExecutor
             });
 
         SetVersion(kvp.Key, kvp.Value.DatabaseVersionNumber.ToString());
+    }
+
+    /// <summary>
+    /// Executes the SQL script only without recording metadata.
+    /// Used when batching patch metadata updates.
+    /// </summary>
+    private void RunSQLOnly(Patch patch)
+    {
+        using var con = Database.Server.GetConnection();
+        con.Open();
+        UsefulStuff.ExecuteBatchNonQuery(patch.GetScriptBody(), con, null,
+            DiscoveredServerHelper.CreateDatabaseTimeoutInSeconds);
+    }
+
+    /// <summary>
+    /// Records multiple patch executions in a single batch operation.
+    /// Reduces database round-trips when applying multiple patches.
+    /// </summary>
+    private void RecordPatchesBatch(List<Dictionary<string, object>> patchMetadata)
+    {
+        if (patchMetadata.Count == 0) return;
+
+        var scriptsRunTable = Database.ExpectTable(RoundhouseScriptsRunTable, RoundhouseSchemaName);
+        var qualifiedTableName = scriptsRunTable.GetFullyQualifiedName();
+
+        using var con = Database.Server.GetConnection();
+        con.Open();
+        using var transaction = con.BeginTransaction();
+
+        try
+        {
+            // Build a batched INSERT statement based on database type
+            var dbType = Database.Server.DatabaseType;
+
+            switch (dbType)
+            {
+                case DatabaseType.MicrosoftSQLServer:
+                    // SQL Server supports multi-row INSERT
+                    InsertBatchSqlServer(con, transaction, qualifiedTableName, patchMetadata);
+                    break;
+
+                case DatabaseType.MySql:
+                case DatabaseType.PostgreSql:
+                    // MySQL and PostgreSQL support multi-row INSERT
+                    InsertBatchMultiRow(con, transaction, qualifiedTableName, patchMetadata);
+                    break;
+
+                default:
+                    // Fallback: Insert within a transaction (still better than autocommit per row)
+                    foreach (var metadata in patchMetadata)
+                    {
+                        scriptsRunTable.Insert(metadata);
+                    }
+                    break;
+            }
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    private void InsertBatchSqlServer(IDbConnection con, IDbTransaction transaction, string tableName, List<Dictionary<string, object>> patchMetadata)
+    {
+        // Build parameterized multi-row INSERT for SQL Server
+        var cmd = con.CreateCommand();
+        cmd.Transaction = transaction;
+
+        var valuesClauses = new List<string>();
+        for (var i = 0; i < patchMetadata.Count; i++)
+        {
+            valuesClauses.Add($"(@script_name{i}, @text_of_script{i}, @text_hash{i}, @entry_date{i}, @modified_date{i}, @entered_by{i})");
+
+            var metadata = patchMetadata[i];
+            var param = cmd.CreateParameter();
+            param.ParameterName = $"@script_name{i}";
+            param.Value = metadata["script_name"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@text_of_script{i}";
+            param.Value = metadata["text_of_script"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@text_hash{i}";
+            param.Value = metadata["text_hash"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@entry_date{i}";
+            param.Value = metadata["entry_date"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@modified_date{i}";
+            param.Value = metadata["modified_date"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@entered_by{i}";
+            param.Value = metadata["entered_by"];
+            cmd.Parameters.Add(param);
+        }
+
+        cmd.CommandText = $@"INSERT INTO {tableName}
+            (script_name, text_of_script, text_hash, entry_date, modified_date, entered_by)
+            VALUES {string.Join(", ", valuesClauses)}";
+
+        cmd.ExecuteNonQuery();
+    }
+
+    private void InsertBatchMultiRow(IDbConnection con, IDbTransaction transaction, string tableName, List<Dictionary<string, object>> patchMetadata)
+    {
+        // Build parameterized multi-row INSERT for MySQL/PostgreSQL
+        var cmd = con.CreateCommand();
+        cmd.Transaction = transaction;
+
+        var valuesClauses = new List<string>();
+        for (var i = 0; i < patchMetadata.Count; i++)
+        {
+            valuesClauses.Add($"(@script_name{i}, @text_of_script{i}, @text_hash{i}, @entry_date{i}, @modified_date{i}, @entered_by{i})");
+
+            var metadata = patchMetadata[i];
+            var param = cmd.CreateParameter();
+            param.ParameterName = $"@script_name{i}";
+            param.Value = metadata["script_name"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@text_of_script{i}";
+            param.Value = metadata["text_of_script"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@text_hash{i}";
+            param.Value = metadata["text_hash"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@entry_date{i}";
+            param.Value = metadata["entry_date"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@modified_date{i}";
+            param.Value = metadata["modified_date"];
+            cmd.Parameters.Add(param);
+
+            param = cmd.CreateParameter();
+            param.ParameterName = $"@entered_by{i}";
+            param.Value = metadata["entered_by"];
+            cmd.Parameters.Add(param);
+        }
+
+        cmd.CommandText = $@"INSERT INTO {tableName}
+            (script_name, text_of_script, text_hash, entry_date, modified_date, entered_by)
+            VALUES {string.Join(", ", valuesClauses)}";
+
+        cmd.ExecuteNonQuery();
     }
 
     private string CalculateHash(string input)
@@ -232,6 +390,10 @@ public class MasterDatabaseScriptExecutor
 
         try
         {
+            // Collect patch metadata to batch insert at the end
+            var patchMetadata = new List<Dictionary<string, object>>();
+            var now = DateTime.UtcNow;
+
             foreach (var patch in patches)
             {
                 var shouldRun = patchPreviewShouldIRunIt(patch.Value);
@@ -240,7 +402,19 @@ public class MasterDatabaseScriptExecutor
                 {
                     try
                     {
-                        RunSQL(patch);
+                        // Execute SQL only, defer metadata recording
+                        RunSQLOnly(patch.Value);
+
+                        // Collect metadata for batch insert
+                        patchMetadata.Add(new Dictionary<string, object>
+                        {
+                            { "script_name", patch.Key },
+                            { "text_of_script", patch.Value.EntireScript },
+                            { "text_hash", CalculateHash(patch.Value.EntireScript) },
+                            { "entry_date", now },
+                            { "modified_date", now },
+                            { "entered_by", Environment.UserName }
+                        });
                     }
                     catch (Exception e)
                     {
@@ -255,6 +429,12 @@ public class MasterDatabaseScriptExecutor
                 {
                     throw new Exception($"User decided not to execute patch {patch.Key} - aborting ");
                 }
+            }
+
+            // Batch insert all patch metadata records
+            if (patchMetadata.Count > 0)
+            {
+                RecordPatchesBatch(patchMetadata);
             }
 
             SetVersion("Patching", maxPatchVersion.ToString());
