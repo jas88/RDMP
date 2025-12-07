@@ -266,14 +266,27 @@ public class AtomicCommandFactory : CommandFactoryBase
     /// <returns>Enumerable of batch commands that can operate on all objects in the collection</returns>
     public IEnumerable<IAtomicCommand> CreateManyObjectCommands(ICollection many)
     {
-        var allDisableable = many.Cast<object>().All(o => o is IDisableable);
-        var allHasFolder = many.Cast<object>().All(o => o is IHasFolder);
-        var allTableInfo = many.Cast<object>().All(o => o is TableInfo);
-        var allCatalogueItem = many.Cast<object>().All(o => o is CatalogueItem);
-        var allDeleteable = many.Cast<object>().All(o => o is IDeleteable);
-        var allExtractionFilterParameterSet = many.Cast<object>().All(o => o is ExtractionFilterParameterSet);
-        var allDeprecated = many.Cast<object>().All(o => o is IMightBeDeprecated d && d.IsDeprecated);
-        var allUnDeprecated = many.Cast<object>().All(o => o is IMightBeDeprecated d && !d.IsDeprecated);
+        // Single-pass enumeration to check all type conditions at once
+        var allDisableable = true;
+        var allHasFolder = true;
+        var allTableInfo = true;
+        var allCatalogueItem = true;
+        var allDeleteable = true;
+        var allExtractionFilterParameterSet = true;
+        var allDeprecated = true;
+        var allUnDeprecated = true;
+
+        foreach (var o in many)
+        {
+            allDisableable = allDisableable && o is IDisableable;
+            allHasFolder = allHasFolder && o is IHasFolder;
+            allTableInfo = allTableInfo && o is TableInfo;
+            allCatalogueItem = allCatalogueItem && o is CatalogueItem;
+            allDeleteable = allDeleteable && o is IDeleteable;
+            allExtractionFilterParameterSet = allExtractionFilterParameterSet && o is ExtractionFilterParameterSet;
+            allDeprecated = allDeprecated && o is IMightBeDeprecated d && d.IsDeprecated;
+            allUnDeprecated = allUnDeprecated && o is IMightBeDeprecated d2 && !d2.IsDeprecated;
+        }
 
         if (allDisableable)
             yield return new ExecuteCommandDisableOrEnable(_activator, many.Cast<IDisableable>().ToArray());
