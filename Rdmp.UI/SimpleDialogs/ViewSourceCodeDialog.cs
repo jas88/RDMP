@@ -29,7 +29,7 @@ public partial class ViewSourceCodeDialog : Form
 
     private static readonly HashSet<FileInfo> SupplementalSourceZipFiles = new();
     private static readonly object oSupplementalSourceZipFilesLock = new();
-    private const string MainSourceCodeRepo = "SourceCodeForSelfAwareness.zip";
+    private const string MainSourceCodeRepo = "SourceCodeForSelfAwareness.7z";
 
     public static void AddSupplementalSourceZipFile(FileInfo f)
     {

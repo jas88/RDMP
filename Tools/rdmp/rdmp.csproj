@@ -23,7 +23,7 @@
 		<None Remove="NLog.config" />
 	</ItemGroup>
 	<ItemGroup>
-		<Content Include="..\BundleUpSourceIntoZip\output\SourceCodeForSelfAwareness.zip" Link="SourceCodeForSelfAwareness.zip">
+		<Content Include="..\BundleUpSourceIntoZip\output\SourceCodeForSelfAwareness.7z" Link="SourceCodeForSelfAwareness.7z">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Include="ColorSettings.yaml">
@@ -43,7 +43,6 @@
 		<ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
 		<ProjectReference Include="..\..\Plugins\Plugins\Plugins.csproj" />
 			<PackageReference Include="Terminal.Gui" />
-		<PackageReference Include="System.Threading.ThreadPool" />
 		<PackageReference Include="YamlDotNet" />
 	</ItemGroup>
 </Project>
