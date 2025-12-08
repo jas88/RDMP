@@ -235,7 +235,7 @@ if [ "$CHANGES_MADE" = true ]; then
     if [ -d .git ] && [ -n "$CI" ]; then
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add "$PROPS_FILES"
+        find . -name 'Directory.Build.props' -not -path './Directory.Build.props' -print0 | xargs -0 git add
         git commit -m "Update Directory.Build.props files for .NET SDK version"
         git push
         echo "ERROR: Directory.Build.props files were out of date and have been updated."
