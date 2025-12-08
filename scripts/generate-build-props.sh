@@ -35,6 +35,12 @@ rm -rf "$TEMP_DIR"
 # Extract major version (e.g., "10.0" -> "10")
 MAX_MAJOR=$(echo "$MAX_VERSION" | cut -d. -f1)
 
+# Validate that we got a valid version number
+if [ -z "$MAX_MAJOR" ] || ! [[ "$MAX_MAJOR" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: Failed to detect .NET SDK version. Got: '$MAX_VERSION'" >&2
+    exit 1
+fi
+
 echo "Detected .NET SDK maximum version: $MAX_VERSION (major: $MAX_MAJOR)"
 
 # Determine minimum supported major version based on SDK version
