@@ -384,7 +384,7 @@ jobs:
       - name: Test non-UI
         timeout-minutes: 45
         run: |
-          dotnet test linuxtests.slnf \
+          dotnet test --solution linuxtests.slnf \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             -- --coverage --coverage-output-format cobertura --coverage-output coverage/coverage.cobertura.xml
 
@@ -397,7 +397,7 @@ jobs:
       - name: Test Core (File System Mode)
         timeout-minutes: 45
         run: |
-          dotnet test linuxtests.slnf \
+          dotnet test --solution linuxtests.slnf \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             -- --coverage --coverage-output-format cobertura --coverage-output coverage/coverage-fs.cobertura.xml
 
