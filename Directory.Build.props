@@ -11,8 +11,7 @@
 	</PropertyGroup>
 
 	<!-- NUnit3TestAdapter 6.0+ with Microsoft Testing Platform -->
-	<!-- All test projects must use MTP when global.json specifies it -->
-	<!-- UI tests are excluded from Linux runs via linuxtests.slnf -->
+	<!-- All test projects use MTP; UI test projects set IsTestProject=false on non-Windows in their csproj -->
 	<PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
 		<EnableNUnitRunner>true</EnableNUnitRunner>
 		<OutputType>Exe</OutputType>

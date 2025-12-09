@@ -9,7 +9,8 @@
 		<NoWarn>$(NoWarn);NU1701;SYSLIB0011</NoWarn>
 		<GenerateResourceWarnOnBinaryFormatterUse>false</GenerateResourceWarnOnBinaryFormatterUse>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <IsTestProject Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'false'">true</IsTestProject>
+        <IsTestProject Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'false'">false</IsTestProject>
+        <EnableNUnitRunner Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'false'">false</EnableNUnitRunner>
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />

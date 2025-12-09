@@ -30,6 +30,9 @@ NUnit3TestAdapter 6.0.0 is a major release that:
 **Important**: When `global.json` specifies MTP as the test runner, ALL test projects must have MTP enabled - even Windows-only projects on Linux. Use solution filters (e.g., `linuxtests.slnf`) to control which tests actually run on each platform.
 
 ### 3. SDK Configuration (`global.json`)
+**Note**: We do NOT use `global.json` to set the test runner because it requires ALL test projects to use MTP with no exclusions. Windows-only test projects (UI tests) cannot run on Linux, so we rely on MSBuild properties in `Directory.Build.props` instead.
+
+If you have a single-platform project, you can optionally add:
 ```json
 {
   "test": {
