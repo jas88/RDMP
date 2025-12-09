@@ -464,10 +464,13 @@ public class CatalogueChildProvider : ICoreChildProvider
 
 		foreach (var o in _descendancyDictionary.Keys.OfType<IMapsDirectlyToDatabaseTable>())
 		{
-			if (!searchables.ContainsKey(o.ID))
-				searchables.Add(o.ID, new HashSet<IMapsDirectlyToDatabaseTable>());
+			if (!searchables.TryGetValue(o.ID, out var objectSet))
+			{
+				objectSet = new HashSet<IMapsDirectlyToDatabaseTable>();
+				searchables[o.ID] = objectSet;
+			}
 
-			searchables[o.ID].Add(o);
+			objectSet.Add(o);
 		}
 
 		ReportProgress("After building Searchables");
@@ -1532,12 +1535,11 @@ public class CatalogueChildProvider : ICoreChildProvider
 		{
 			var key = masquerader.MasqueradingAs();
 
-			if (!AllMasqueraders.ContainsKey(key))
-				AllMasqueraders.AddOrUpdate(key, new HashSet<IMasqueradeAs>(), (o, set) => set);
+			var masqueraderSet = AllMasqueraders.GetOrAdd(key, _ => new HashSet<IMasqueradeAs>());
 
-			lock (AllMasqueraders)
+			lock (masqueraderSet)
 			{
-				AllMasqueraders[key].Add(masquerader);
+				masqueraderSet.Add(masquerader);
 			}
 		}
 	}
@@ -1699,14 +1701,11 @@ public class CatalogueChildProvider : ICoreChildProvider
 								//record that
 								foreach (var pluginChild in pluginChildren)
 								{
-									//if the parent didn't have any children before
-									if (!_childDictionary.ContainsKey(o))
-										_childDictionary.AddOrUpdate(o, new HashSet<object>(),
-											(o1, set) => set); //it does now
-
+									//get or create the child collection for the parent
+									var childSet = _childDictionary.GetOrAdd(o, _ => new HashSet<object>());
 
 									//add us to the parent objects child collection
-									_childDictionary[o].Add(pluginChild);
+									childSet.Add(pluginChild);
 
 									//add to the child collection of the parent object kvp.Key
 									_descendancyDictionary.AddOrUpdate(pluginChild, newDescendancy,

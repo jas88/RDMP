@@ -30,11 +30,13 @@ public class AttributePropertyFinder<T> : IAttributePropertyFinder where T : Att
                 //if property has sql flag
                 if (property.GetCustomAttributes(typeof(T), true).Any())
                 {
-                    if (!_properties.ContainsKey(type))
-                        _properties.Add(type, new HashSet<PropertyInfo>());
+                    if (!_properties.TryGetValue(type, out var propertySet))
+                    {
+                        propertySet = new HashSet<PropertyInfo>();
+                        _properties[type] = propertySet;
+                    }
 
-                    if (!_properties[type].Contains(property))
-                        _properties[type].Add(property);
+                    propertySet.Add(property);
                 }
         }
     }
