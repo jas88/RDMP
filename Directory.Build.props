@@ -17,4 +17,7 @@
 		<OutputType>Exe</OutputType>
 		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
 	</PropertyGroup>
+	<ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
+		<PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+	</ItemGroup>
 </Project>
