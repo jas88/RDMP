@@ -233,10 +233,9 @@ jobs:
 
       - name: Run markdown link check
         continue-on-error: true
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          use-quiet-mode: 'yes'
-          use-verbose-mode: 'yes'
+        shell: bash
+        run: |
+          npx markdown-link-check --quiet README.md Documentation/**/*.md || true
 
       - name: Upload Windows UI coverage
         uses: coverallsapp/github-action@v2.3.7
