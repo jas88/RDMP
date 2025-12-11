@@ -236,7 +236,7 @@ public class ForwardEngineerANOCataloguePlanManager : ICheckable, IPickAnyConstr
         foreach (TableInfo tableInfo in TableInfos)
             foreach (var columnInfo in tableInfo.ColumnInfos)
                 if (!Plans.ContainsKey(columnInfo))
-                    Plans.Add(columnInfo, new ColumnInfoANOPlan(columnInfo));
+                    Plans[columnInfo] = new ColumnInfoANOPlan(columnInfo);
 
 
         //Remove unplanned columns

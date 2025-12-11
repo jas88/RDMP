@@ -203,10 +203,13 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
     public virtual void CreateLinkBetween(DataAccessCredentials credentials, ITableInfo tableInfo,
         DataAccessContext context)
     {
-        if (!CredentialsDictionary.ContainsKey(tableInfo))
-            CredentialsDictionary.Add(tableInfo, new Dictionary<DataAccessContext, DataAccessCredentials>());
+        if (!CredentialsDictionary.TryGetValue(tableInfo, out var contextMap))
+        {
+            contextMap = new Dictionary<DataAccessContext, DataAccessCredentials>();
+            CredentialsDictionary[tableInfo] = contextMap;
+        }
 
-        CredentialsDictionary[tableInfo].Add(context, credentials);
+        contextMap.Add(context, credentials);
 
         tableInfo.ClearAllInjections();
     }
@@ -332,10 +335,13 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
     public virtual void Add(CohortAggregateContainer parent, AggregateConfiguration child, int order)
     {
         //make sure we know about the container
-        if (!CohortContainerContents.ContainsKey(parent))
-            CohortContainerContents.Add(parent, new HashSet<CohortContainerContent>());
+        if (!CohortContainerContents.TryGetValue(parent, out var contents))
+        {
+            contents = new HashSet<CohortContainerContent>();
+            CohortContainerContents[parent] = contents;
+        }
 
-        CohortContainerContents[parent].Add(new CohortContainerContent(child, order));
+        contents.Add(new CohortContainerContent(child, order));
     }
 
     public virtual void Remove(CohortAggregateContainer parent, AggregateConfiguration child)
@@ -398,10 +404,13 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
 
     public virtual void Add(CohortAggregateContainer parent, CohortAggregateContainer child)
     {
-        if (!CohortContainerContents.ContainsKey(parent))
-            CohortContainerContents.Add(parent, new HashSet<CohortContainerContent>());
+        if (!CohortContainerContents.TryGetValue(parent, out var contents))
+        {
+            contents = new HashSet<CohortContainerContent>();
+            CohortContainerContents[parent] = contents;
+        }
 
-        CohortContainerContents[parent].Add(new CohortContainerContent(child, child.Order));
+        contents.Add(new CohortContainerContent(child, child.Order));
     }
 
     #endregion
@@ -462,10 +471,13 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
 
     public virtual void AddSubContainer(IContainer parent, IContainer child)
     {
-        if (!WhereSubContainers.ContainsKey(parent))
-            WhereSubContainers.Add(parent, new HashSet<IContainer>());
+        if (!WhereSubContainers.TryGetValue(parent, out var containers))
+        {
+            containers = new HashSet<IContainer>();
+            WhereSubContainers[parent] = containers;
+        }
 
-        WhereSubContainers[parent].Add(child);
+        containers.Add(child);
     }
 
     #endregion
@@ -476,18 +488,24 @@ public class MemoryCatalogueRepository : MemoryRepository, ICatalogueRepository,
 
     public virtual void Unlink(GovernancePeriod governancePeriod, ICatalogue catalogue)
     {
-        if (!GovernanceCoverage.ContainsKey(governancePeriod))
-            GovernanceCoverage.Add(governancePeriod, new HashSet<ICatalogue>());
+        if (!GovernanceCoverage.TryGetValue(governancePeriod, out var catalogues))
+        {
+            catalogues = new HashSet<ICatalogue>();
+            GovernanceCoverage[governancePeriod] = catalogues;
+        }
 
-        GovernanceCoverage[governancePeriod].Remove(catalogue);
+        catalogues.Remove(catalogue);
     }
 
     public virtual void Link(GovernancePeriod governancePeriod, ICatalogue catalogue)
     {
-        if (!GovernanceCoverage.ContainsKey(governancePeriod))
-            GovernanceCoverage.Add(governancePeriod, new HashSet<ICatalogue>());
+        if (!GovernanceCoverage.TryGetValue(governancePeriod, out var catalogues))
+        {
+            catalogues = new HashSet<ICatalogue>();
+            GovernanceCoverage[governancePeriod] = catalogues;
+        }
 
-        GovernanceCoverage[governancePeriod].Add(catalogue);
+        catalogues.Add(catalogue);
     }
 
     public Dictionary<int, HashSet<int>> GetAllGovernedCataloguesForAllGovernancePeriods()

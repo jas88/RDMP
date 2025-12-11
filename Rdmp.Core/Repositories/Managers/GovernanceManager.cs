@@ -53,10 +53,13 @@ internal class GovernanceManager : IGovernanceManager
             var gp = (int)r["GovernancePeriod_ID"];
             var cata = (int)r["Catalogue_ID"];
 
-            if (!toReturn.ContainsKey(gp))
-                toReturn.Add(gp, new HashSet<int>());
+            if (!toReturn.TryGetValue(gp, out var catalogueSet))
+            {
+                catalogueSet = new HashSet<int>();
+                toReturn[gp] = catalogueSet;
+            }
 
-            toReturn[gp].Add(cata);
+            catalogueSet.Add(cata);
         }
 
         return toReturn;
