@@ -48,9 +48,9 @@ public class ExecuteCommandSetContainerOperation : BasicCommandExecution
     {
         return _operation switch
         {
-            SetOperation.EXCEPT => iconProvider.GetImage(Image.Load<Rgba32>(CatalogueIcons.EXCEPT)),
-            SetOperation.INTERSECT => iconProvider.GetImage(Image.Load<Rgba32>(CatalogueIcons.INTERSECT)),
-            SetOperation.UNION => iconProvider.GetImage(Image.Load<Rgba32>(CatalogueIcons.UNION)),
+            SetOperation.EXCEPT => iconProvider.GetImage(CatalogueIcons.EXCEPT),
+            SetOperation.INTERSECT => iconProvider.GetImage(CatalogueIcons.INTERSECT),
+            SetOperation.UNION => iconProvider.GetImage(CatalogueIcons.UNION),
             _ => base.GetImage(iconProvider)
         };
     }

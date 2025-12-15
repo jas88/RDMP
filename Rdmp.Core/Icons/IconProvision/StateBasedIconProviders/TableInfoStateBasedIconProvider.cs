@@ -17,8 +17,8 @@ public class TableInfoStateBasedIconProvider : IObjectStateBasedIconProvider
 
     public TableInfoStateBasedIconProvider()
     {
-        _tableInfo = Image.Load<Rgba32>(CatalogueIcons.TableInfo);
-        _tableInfoTableValuedFunction = Image.Load<Rgba32>(CatalogueIcons.TableInfoTableValuedFunction);
+        _tableInfo = CatalogueIcons.TableInfo;
+        _tableInfoTableValuedFunction = CatalogueIcons.TableInfoTableValuedFunction;
     }
 
     public Image<Rgba32> GetImageIfSupportedObject(object o) => o is not TableInfo tableInfo ? null :

@@ -51,7 +51,7 @@ public sealed class ExecuteCommandClearQueryCache : BasicCommandExecution
     }
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        IconOverlayProvider.GetOverlayNoCache(Image.Load<Rgba32>(CatalogueIcons.ExternalDatabaseServer_Cache),
+        IconOverlayProvider.GetOverlayNoCache(CatalogueIcons.ExternalDatabaseServer_Cache,
             OverlayKind.Delete);
 
     public override void Execute()

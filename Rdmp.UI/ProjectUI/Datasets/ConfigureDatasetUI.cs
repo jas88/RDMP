@@ -75,7 +75,7 @@ public partial class ConfigureDatasetUI : ConfigureDatasetUI_Design, ILifetimeSu
         dropSink.CanDropBetween = true;
         AssociatedCollection = RDMPCollection.DataExport;
 
-        var tableInfoIcon = SixLabors.ImageSharp.Image.Load<Rgba32>(CatalogueIcons.TableInfo).ImageToBitmap();
+        var tableInfoIcon = CatalogueIcons.TableInfo.ImageToBitmap();
         olvJoinTableName.ImageGetter += o => tableInfoIcon;
         olvJoin.CheckStateGetter += ForceJoinCheckStateGetter;
         olvJoin.CheckStatePutter += ForceJoinCheckStatePutter;

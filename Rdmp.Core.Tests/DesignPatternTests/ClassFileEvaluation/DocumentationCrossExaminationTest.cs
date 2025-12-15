@@ -131,6 +131,7 @@ internal class DocumentationCrossExaminationTest
         "MyApplication",
         "MyResources",
         "MyClass1",
+        "FamFamFam",
         "FishFishFish",
         "CASCADEing",
         "MyAssembly",

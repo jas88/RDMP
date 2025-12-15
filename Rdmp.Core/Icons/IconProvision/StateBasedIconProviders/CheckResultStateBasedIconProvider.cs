@@ -19,9 +19,9 @@ public class CheckResultStateBasedIconProvider : IObjectStateBasedIconProvider
 
     public CheckResultStateBasedIconProvider()
     {
-        _exception = Image.Load<Rgba32>(CatalogueIcons.TinyRed);
-        _warning = Image.Load<Rgba32>(CatalogueIcons.TinyYellow);
-        _tick = Image.Load<Rgba32>(CatalogueIcons.TinyGreen);
+        _exception = CatalogueIcons.TinyRed;
+        _warning = CatalogueIcons.TinyYellow;
+        _tick = CatalogueIcons.TinyGreen;
     }
 
     public Image<Rgba32> GetImageIfSupportedObject(object o)

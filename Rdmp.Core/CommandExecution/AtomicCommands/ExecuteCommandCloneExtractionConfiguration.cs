@@ -72,7 +72,7 @@ public class ExecuteCommandCloneExtractionConfiguration : BasicCommandExecution
         "Creates an exact copy of the Extraction Configuration including the cohort selection, all selected datasets, parameters, filter containers, filters etc";
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        Image.Load<Rgba32>(CatalogueIcons.CloneExtractionConfiguration);
+        CatalogueIcons.CloneExtractionConfiguration;
 
     public override void Execute()
     {

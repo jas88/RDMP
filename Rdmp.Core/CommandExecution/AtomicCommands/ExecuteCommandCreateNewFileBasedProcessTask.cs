@@ -131,7 +131,7 @@ public class ExecuteCommandCreateNewFileBasedProcessTask : BasicCommandExecution
             ProcessTaskType.SQLFile => iconProvider.GetImage(RDMPConcept.SQL, OverlayKind.Add),
             ProcessTaskType.SQLBakFile => iconProvider.GetImage(RDMPConcept.SQL, OverlayKind.Add), //todo maybe better
             ProcessTaskType.Executable => IconOverlayProvider.GetOverlayNoCache(
-                Image.Load<Rgba32>(CatalogueIcons.Exe), OverlayKind.Add),
+                CatalogueIcons.Exe, OverlayKind.Add),
             _ => null
         };
     }

@@ -21,10 +21,10 @@ public class CohortIdentificationConfigurationStateBasedIconProvider : IObjectSt
 
     public CohortIdentificationConfigurationStateBasedIconProvider()
     {
-        _cohortIdentificationConfiguration = Image.Load<Rgba32>(CatalogueIcons.CohortIdentificationConfiguration);
+        _cohortIdentificationConfiguration = CatalogueIcons.CohortIdentificationConfiguration;
         _cohortIdentificationConfigurationVersion = IconOverlayProvider.GetOverlay(_cohortIdentificationConfiguration, OverlayKind.Version);
         _frozenCohortIdentificationConfiguration =
-            Image.Load<Rgba32>(CatalogueIcons.FrozenCohortIdentificationConfiguration);
+            CatalogueIcons.FrozenCohortIdentificationConfiguration;
         _frozenCohortIdentificationConfigurationVersion = IconOverlayProvider.GetOverlay(_frozenCohortIdentificationConfiguration, OverlayKind.Version);
 
     }

@@ -69,7 +69,7 @@ public class ExecuteCommandMakeCatalogueProjectSpecific : BasicCommandExecution,
     }
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        Image.Load<Rgba32>(CatalogueIcons.ProjectCatalogue);
+        CatalogueIcons.ProjectCatalogue;
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)
     {

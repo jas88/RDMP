@@ -32,20 +32,20 @@ public class DatabaseTypeIconProvider
 
     public DatabaseTypeIconProvider()
     {
-        _msBig = Image.Load<Rgba32>(DatabaseProviderIcons.Microsoft);
-        _msOverlay = Image.Load<Rgba32>(DatabaseProviderIcons.MicrosoftOverlay);
+        _msBig = DatabaseProviderIcons.Microsoft;
+        _msOverlay = DatabaseProviderIcons.MicrosoftOverlay;
 
-        _mysBig = Image.Load<Rgba32>(DatabaseProviderIcons.MySql);
-        _mysOverlay = Image.Load<Rgba32>(DatabaseProviderIcons.MySqlOverlay);
+        _mysBig = DatabaseProviderIcons.MySql;
+        _mysOverlay = DatabaseProviderIcons.MySqlOverlay;
 
-        _oraBig = Image.Load<Rgba32>(DatabaseProviderIcons.Oracle);
-        _oraOverlay = Image.Load<Rgba32>(DatabaseProviderIcons.OracleOverlay);
+        _oraBig = DatabaseProviderIcons.Oracle;
+        _oraOverlay = DatabaseProviderIcons.OracleOverlay;
 
-        _postgresBig = Image.Load<Rgba32>(DatabaseProviderIcons.PostgreSql);
-        _postgresOverlay = Image.Load<Rgba32>(DatabaseProviderIcons.PostgreSqlOverlay);
+        _postgresBig = DatabaseProviderIcons.PostgreSql;
+        _postgresOverlay = DatabaseProviderIcons.PostgreSqlOverlay;
 
-        _unknownBig = Image.Load<Rgba32>(DatabaseProviderIcons.Unknown);
-        _unknownOverlay = Image.Load<Rgba32>(DatabaseProviderIcons.UnknownOverlay);
+        _unknownBig = DatabaseProviderIcons.Unknown;
+        _unknownOverlay = DatabaseProviderIcons.UnknownOverlay;
     }
 
     public Image<Rgba32> GetOverlay(DatabaseType type)

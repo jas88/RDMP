@@ -26,7 +26,7 @@ internal class ExecuteCommandFreezeExtractionConfiguration : BasicCommandExecuti
     }
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        Image.Load<Rgba32>(CatalogueIcons.FrozenExtractionConfiguration);
+        CatalogueIcons.FrozenExtractionConfiguration;
 
     public override void Execute()
     {

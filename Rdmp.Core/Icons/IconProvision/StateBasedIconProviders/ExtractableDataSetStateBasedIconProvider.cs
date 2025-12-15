@@ -15,7 +15,7 @@ namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 internal sealed class ExtractableDataSetStateBasedIconProvider : IObjectStateBasedIconProvider
 {
     private readonly CatalogueStateBasedIconProvider _catalogueIconProvider;
-    private static readonly Image<Rgba32> _disabled = Image.Load<Rgba32>(CatalogueIcons.ExtractableDataSetDisabled);
+    private static readonly Image<Rgba32> _disabled = CatalogueIcons.ExtractableDataSetDisabled;
 
     public ExtractableDataSetStateBasedIconProvider(CatalogueStateBasedIconProvider catalogueIconProvider)
     {

@@ -23,7 +23,7 @@ public static class IconOverlayProvider
 
     private static readonly ConcurrentDictionary<Image<Rgba32>, Image<Rgba32>> GreyscaleCache = new();
 
-    private static readonly EnumImageCollection<OverlayKind> Images = new(Overlays.ResourceManager);
+    private static readonly EnumImageCollection<OverlayKind> Images = new("Rdmp.Core.Icons.Overlays.");
 
     public static Image<Rgba32> GetOverlay(Image<Rgba32> forImage, OverlayKind overlayKind) =>
         Cache.GetOrAdd((forImage, overlayKind), _ => GetOverlayNoCache(forImage, overlayKind));

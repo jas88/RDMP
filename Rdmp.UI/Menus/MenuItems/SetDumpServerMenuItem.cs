@@ -35,7 +35,7 @@ internal class SetDumpServerMenuItem : RDMPToolStripMenuItem
         Image = activator.CoreIconProvider.GetImage(RDMPConcept.ExternalDatabaseServer, OverlayKind.Add)
             .ImageToBitmap();
 
-        var img = SixLabors.ImageSharp.Image.Load<Rgba32>(CatalogueIcons.ExternalDatabaseServer_IdentifierDump);
+        var img = CatalogueIcons.ExternalDatabaseServer_IdentifierDump;
 
         var cataRepo = activator.RepositoryLocator.CatalogueRepository;
 

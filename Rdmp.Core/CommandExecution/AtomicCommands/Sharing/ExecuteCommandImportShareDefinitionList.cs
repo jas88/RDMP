@@ -85,5 +85,5 @@ public class ExecuteCommandImportShareDefinitionList : BasicCommandExecution, IA
     }
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        Image.Load<Rgba32>(FamFamFamIcons.page_white_get);
+        FamFamFamIcons.page_white_get;
 }

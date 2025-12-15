@@ -66,5 +66,5 @@ public class ExecuteCommandExpandAllNodes : BasicUICommandExecution, IAtomicComm
     }
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        Image.Load<Rgba32>(CatalogueIcons.ExpandAllNodes);
+        CatalogueIcons.ExpandAllNodes;
 }

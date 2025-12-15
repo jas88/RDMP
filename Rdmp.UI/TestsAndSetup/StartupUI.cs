@@ -57,7 +57,7 @@ public partial class StartupUI : Form, ICheckNotifier
 
         pbDisconnected.Image = CatalogueIcons.ExternalDatabaseServer.ImageToBitmap();
 
-        Icon = IconFactory.Instance.GetIcon(Image.Load<Rgba32>(CatalogueIcons.Main));
+        Icon = IconFactory.Instance.GetIcon(CatalogueIcons.Main);
     }
 
 

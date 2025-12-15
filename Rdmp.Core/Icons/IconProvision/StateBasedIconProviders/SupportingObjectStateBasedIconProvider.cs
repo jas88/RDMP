@@ -24,15 +24,15 @@ public class SupportingObjectStateBasedIconProvider : IObjectStateBasedIconProvi
 
     public SupportingObjectStateBasedIconProvider()
     {
-        _supportingDocument = Image.Load<Rgba32>(CatalogueIcons.SupportingDocument);
-        _supportingDocumentGlobal = Image.Load<Rgba32>(CatalogueIcons.SupportingDocumentGlobal);
-        _supportingDocumentExtractable = Image.Load<Rgba32>(CatalogueIcons.SupportingDocumentExtractable);
-        _supportingDocumentExtractableGlobal = Image.Load<Rgba32>(CatalogueIcons.SupportingDocumentExtractableGlobal);
+        _supportingDocument = CatalogueIcons.SupportingDocument;
+        _supportingDocumentGlobal = CatalogueIcons.SupportingDocumentGlobal;
+        _supportingDocumentExtractable = CatalogueIcons.SupportingDocumentExtractable;
+        _supportingDocumentExtractableGlobal = CatalogueIcons.SupportingDocumentExtractableGlobal;
 
-        _supportingSql = Image.Load<Rgba32>(CatalogueIcons.SupportingSQLTable);
-        _supportingSqlGlobal = Image.Load<Rgba32>(CatalogueIcons.SupportingSqlGlobal);
-        _supportingSqlExtractable = Image.Load<Rgba32>(CatalogueIcons.SupportingSqlExtractable);
-        _supportingSqlExtractableGlobal = Image.Load<Rgba32>(CatalogueIcons.SupportingSqlExtractableGlobal);
+        _supportingSql = CatalogueIcons.SupportingSQLTable;
+        _supportingSqlGlobal = CatalogueIcons.SupportingSqlGlobal;
+        _supportingSqlExtractable = CatalogueIcons.SupportingSqlExtractable;
+        _supportingSqlExtractableGlobal = CatalogueIcons.SupportingSqlExtractableGlobal;
     }
 
     public Image<Rgba32> GetImageIfSupportedObject(object o)

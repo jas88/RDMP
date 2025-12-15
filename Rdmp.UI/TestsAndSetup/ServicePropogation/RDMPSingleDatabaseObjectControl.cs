@@ -174,7 +174,7 @@ public abstract class RDMPSingleDatabaseObjectControl<T> : RDMPUserControl, IRDM
         CommonFunctionality.Add(_refresh);
 
         var viewParentTreeCmd = new ExecuteCommandViewParentTree(activator, databaseObject);
-        CommonFunctionality.AddToMenu(viewParentTreeCmd, AtomicCommandFactory.ViewParentTree, SixLabors.ImageSharp.Image.Load<Rgba32>(CatalogueIcons.CatalogueFolder));
+        CommonFunctionality.AddToMenu(viewParentTreeCmd, AtomicCommandFactory.ViewParentTree, CatalogueIcons.CatalogueFolder);
     }
 
     private void Refresh(object sender, EventArgs e)

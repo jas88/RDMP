@@ -28,7 +28,7 @@ internal class ExecuteCommandViewLoadDiagram : BasicUICommandExecution, IAtomicC
             SetImpossible("Load does not have any associated Catalogues (no tables are loaded by the load)");
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => Image.Load<Rgba32>(CatalogueIcons.LoadBubble);
+    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.LoadBubble;
 
     public override void Execute()
     {

@@ -18,9 +18,9 @@ public class PipelineComponentStateBasedIconProvider : IObjectStateBasedIconProv
 
     public PipelineComponentStateBasedIconProvider()
     {
-        _component = Image.Load<Rgba32>(CatalogueIcons.PipelineComponent);
-        _source = Image.Load<Rgba32>(CatalogueIcons.PipelineComponentSource);
-        _destination = Image.Load<Rgba32>(CatalogueIcons.PipelineComponentDestination);
+        _component = CatalogueIcons.PipelineComponent;
+        _source = CatalogueIcons.PipelineComponentSource;
+        _destination = CatalogueIcons.PipelineComponentDestination;
     }
 
     public Image<Rgba32> GetImageIfSupportedObject(object o)

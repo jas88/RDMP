@@ -346,7 +346,6 @@
 		<PackageReference Include="SixLabors.ImageSharp" />
 		<PackageReference Include="SixLabors.ImageSharp.Drawing" />
 		<PackageReference Include="Spectre.Console" />
-		<PackageReference Include="System.Resources.Extensions" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))" />
 		<PackageReference Include="SSH.NET" />
 		<PackageReference Include="Terminal.Gui" />
 		<PackageReference Include="YamlDotNet" />
@@ -365,21 +364,6 @@
 			<AutoGen>True</AutoGen>
 			<DependentUpon>GlobalStrings.resx</DependentUpon>
 		</Compile>
-		<Compile Update="Icons\IconProvision\ChecksAndProgressIcons.Designer.cs">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>ChecksAndProgressIcons.resx</DependentUpon>
-		</Compile>
-		<Compile Update="Icons\IconProvision\Images.Designer.cs">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>Images.resx</DependentUpon>
-		</Compile>
-		<Compile Update="ReusableLibraryCode\Icons\DatabaseProviderIcons.Designer.cs">
-			<DependentUpon>DatabaseProviderIcons.resx</DependentUpon>
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
-		</Compile>
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Update="GlobalStrings.resx">
@@ -389,22 +373,8 @@
 		<EmbeddedResource Update="GlobalStrings.zh-Hans.resx">
 			<Generator>PublicResXFileCodeGenerator</Generator>
 		</EmbeddedResource>
-		<EmbeddedResource Update="Icons\IconProvision\CatalogueIcons.resx">
-			<Generator></Generator>
-		</EmbeddedResource>
-		<EmbeddedResource Update="Icons\IconProvision\ChecksAndProgressIcons.resx">
-			<Generator>PublicResXFileCodeGenerator</Generator>
-			<LastGenOutput>ChecksAndProgressIcons.Designer.cs</LastGenOutput>
-		</EmbeddedResource>
-		<EmbeddedResource Update="Icons\IconProvision\Images.resx">
-			<SubType>Designer</SubType>
-			<Generator>PublicResXFileCodeGenerator</Generator>
-			<LastGenOutput>Images.Designer.cs</LastGenOutput>
-		</EmbeddedResource>
-		<EmbeddedResource Update="ReusableLibraryCode\Icons\DatabaseProviderIcons.resx">
-			<SubType>Designer</SubType>
-			<LastGenOutput>DatabaseProviderIcons.Designer.cs</LastGenOutput>
-			<Generator>PublicResXFileCodeGenerator</Generator>
-		</EmbeddedResource>
+		<!-- Embed all icon PNGs directly -->
+		<EmbeddedResource Include="Icons\**\*.png" />
+		<EmbeddedResource Include="ReusableLibraryCode\Icons\**\*.png" />
 	</ItemGroup>
 </Project>

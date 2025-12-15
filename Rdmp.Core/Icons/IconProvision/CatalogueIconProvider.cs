@@ -44,7 +44,7 @@ public class CatalogueIconProvider : ICoreIconProvider
         IIconProvider[] pluginIconProviders)
     {
         _pluginIconProviders = pluginIconProviders;
-        ImagesCollection = new EnumImageCollection<RDMPConcept>(CatalogueIcons.ResourceManager);
+        ImagesCollection = new EnumImageCollection<RDMPConcept>("Rdmp.Core.Icons.");
 
         StateBasedIconProviders.Add(CatalogueStateBasedIconProvider =
             new CatalogueStateBasedIconProvider(repositoryLocator.DataExportRepository));

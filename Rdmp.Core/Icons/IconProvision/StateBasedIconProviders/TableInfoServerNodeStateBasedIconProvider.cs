@@ -15,7 +15,7 @@ namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 public sealed class TableInfoServerNodeStateBasedIconProvider : IObjectStateBasedIconProvider
 {
     private static readonly DatabaseTypeIconProvider DatabaseTypeIconProvider = new();
-    private static readonly Image<Rgba32> ServerNode = Image.Load<Rgba32>(CatalogueIcons.TableInfoServerNode);
+    private static readonly Image<Rgba32> ServerNode = CatalogueIcons.TableInfoServerNode;
 
     public Image<Rgba32> GetImageIfSupportedObject(object o) =>
         o is not TableInfoServerNode node

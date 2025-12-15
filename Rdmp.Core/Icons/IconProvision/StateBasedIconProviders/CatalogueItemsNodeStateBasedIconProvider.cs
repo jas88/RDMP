@@ -14,7 +14,7 @@ namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 internal sealed class CatalogueItemsNodeStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private static readonly Image<Rgba32> Basic = Image.Load<Rgba32>(CatalogueIcons.CatalogueItemsNode);
+    private static readonly Image<Rgba32> Basic = CatalogueIcons.CatalogueItemsNode;
     private static readonly Image<Rgba32> Core = IconOverlayProvider.GetOverlay(Basic, OverlayKind.Extractable);
 
     private static readonly Image<Rgba32> Internal =
