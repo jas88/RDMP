@@ -332,7 +332,6 @@
 		<PackageReference Include="HIC.SynthEHR" />
 		<PackageReference Include="FAnsiSql.Legacy" />
 		<PackageReference Include="LibArchive.Net" />
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
