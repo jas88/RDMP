@@ -138,7 +138,6 @@ public static class CatalogueIcons
     public static readonly Image<Rgba32> Kill = EmbeddedIconHelper.Get($"{P}Kill");
     public static readonly Image<Rgba32> LoadBubble = EmbeddedIconHelper.Get($"{P}LoadBubble");
     public static readonly Image<Rgba32> Dataset = EmbeddedIconHelper.Get($"{P}Dataset");
-    public static readonly Image<Rgba32> Setting = EmbeddedIconHelper.Get($"{P}Setting");
     public static readonly Image<Rgba32> LoadMetadataCatalogueLinkage = EmbeddedIconHelper.Get($"{P}LoadMetadataCatalogueLinkage");
     public static readonly Image<Rgba32> LoadBubbleMounting = EmbeddedIconHelper.Get($"{P}LoadBubbleMounting");
     public static readonly Image<Rgba32> LoadDirectoryNode = EmbeddedIconHelper.Get($"{P}LoadDirectoryNode");
@@ -236,4 +235,18 @@ public static class CatalogueIcons
     public static readonly Image<Rgba32> InformationIcon = EmbeddedIconHelper.Get($"{P}InformationIcon");
     public static readonly Image<Rgba32> exclamation = EmbeddedIconHelper.Get($"{P}exclamation");
     public static readonly Image<Rgba32> exclamationEx = EmbeddedIconHelper.Get($"{P}exclamationEx");
+
+    // StandardRegex variants
+    public static readonly Image<Rgba32> StandardRegex1 = EmbeddedIconHelper.Get($"{P}StandardRegex1");
+    public static readonly Image<Rgba32> StandardRegex2 = EmbeddedIconHelper.Get($"{P}StandardRegex2");
+    public static readonly Image<Rgba32> StandardRegex3 = EmbeddedIconHelper.Get($"{P}StandardRegex3");
+    public static readonly Image<Rgba32> StandardRegex31 = EmbeddedIconHelper.Get($"{P}StandardRegex31");
+    public static readonly Image<Rgba32> StandardRegex311 = EmbeddedIconHelper.Get($"{P}StandardRegex311");
+
+    // Aliases (icons that map to other icons)
+    public static readonly Image<Rgba32> Setting = FamFamFamIcons.cog;
+    public static readonly Image<Rgba32> LoadMetadataVersionNode = CatalogueFolder;
+    public static readonly Image<Rgba32> RegexRedaction = StandardRegex3;
+    public static readonly Image<Rgba32> RegexRedactionConfiguration = StandardRegex311;
+    public static readonly Image<Rgba32> RegexRedactionKey = StandardRegex31;
 }

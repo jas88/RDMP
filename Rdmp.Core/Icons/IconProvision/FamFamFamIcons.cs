@@ -22,6 +22,7 @@ public static class FamFamFamIcons
     public static readonly Image<Rgba32> Back = EmbeddedIconHelper.Get($"{P}back");
     public static readonly Image<Rgba32> bin_closed = EmbeddedIconHelper.Get($"{P}bin_closed");
     public static readonly Image<Rgba32> cancel = EmbeddedIconHelper.Get($"{P}cancel");
+    public static readonly Image<Rgba32> cog = EmbeddedIconHelper.Get($"{P}cog");
     public static readonly Image<Rgba32> delete = EmbeddedIconHelper.Get($"{P}delete");
     public static readonly Image<Rgba32> delete_multi = EmbeddedIconHelper.Get($"{P}delete_multi");
     public static readonly Image<Rgba32> disk = EmbeddedIconHelper.Get($"{P}disk");

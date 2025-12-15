@@ -4,6 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Reflection;
@@ -23,17 +24,17 @@ public static class EmbeddedIconHelper
 
     static EmbeddedIconHelper()
     {
-        var dict = new Dictionary<string, Image<Rgba32>>();
+        var dict = new Dictionary<string, Image<Rgba32>>(StringComparer.OrdinalIgnoreCase);
         foreach (var name in Assembly.GetManifestResourceNames())
         {
-            if (!name.EndsWith(".png")) continue;
+            if (!name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) continue;
             using var stream = Assembly.GetManifestResourceStream(name);
             if (stream == null) continue;
             // Strip .png extension for the key
             var key = name[..^4];
             dict[key] = Image.Load<Rgba32>(stream);
         }
-        Cache = dict.ToFrozenDictionary();
+        Cache = dict.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
