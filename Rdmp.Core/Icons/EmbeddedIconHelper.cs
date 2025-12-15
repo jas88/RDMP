@@ -6,7 +6,7 @@
 
 using System;
 using System.Collections.Frozen;
-using System.Collections.Generic;
+using System.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -24,16 +24,13 @@ public static class EmbeddedIconHelper
     private static FrozenDictionary<string, Image<Rgba32>> BuildCache()
     {
         var assembly = typeof(EmbeddedIconHelper).Assembly;
-        var dict = new Dictionary<string, Image<Rgba32>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var name in assembly.GetManifestResourceNames())
-        {
-            if (!name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) continue;
-            using var stream = assembly.GetManifestResourceStream(name);
-            if (stream == null) continue;
-            // Strip .png extension for the key
-            var key = name[..^4];
-            dict[key] = Image.Load<Rgba32>(stream);
-        }
+        var dict = assembly.GetManifestResourceNames()
+            .Where(name => name.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(
+                name => name[..^4],
+                name => Image.Load<Rgba32>(assembly.GetManifestResourceStream(name)
+                    ?? throw new InvalidOperationException($"Failed to load embedded resource: {name}")),
+                StringComparer.OrdinalIgnoreCase);
 
         // Add aliases for icons that map to other resources (from original .resx files)
         dict[$"{P}Setting"] = dict[$"{P}famfamfam.cog"];
