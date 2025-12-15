@@ -6,9 +6,7 @@
 
 using System;
 using System.Collections.Frozen;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -22,26 +20,19 @@ public sealed class EnumImageCollection<T> where T : struct, Enum, IConvertible
     /// <summary>
     /// Creates an image collection by loading embedded PNG resources based on enum values.
     /// Images are loaded once and cached in a FrozenDictionary for efficient runtime access.
+    /// Uses case-insensitive lookup via EmbeddedIconHelper.
     /// </summary>
     /// <param name="resourcePrefix">The resource name prefix (e.g., "Rdmp.Core.Icons.").</param>
-    /// <param name="assembly">The assembly containing the embedded resources. If null, uses Rdmp.Core assembly.</param>
-    public EnumImageCollection(string resourcePrefix, Assembly assembly = null)
+    public EnumImageCollection(string resourcePrefix)
     {
-        assembly ??= typeof(EnumImageCollection<T>).Assembly;
+        // Use EmbeddedIconHelper for case-insensitive lookup (PNG files may have different case than enum values)
         var dict = Enum.GetValues<T>()
-            .ToDictionary(s => s, s => LoadFromEmbeddedResource(assembly, resourcePrefix, s.ToString()));
+            .ToDictionary(s => s, s => EmbeddedIconHelper.Get($"{resourcePrefix}{s}"));
         var missingImages = dict.Where(i => i.Value is null).Select(p => p.Key).ToList();
         if (missingImages.Count != 0)
             throw new IconProvisionException(
                 $"The following expected images were missing from embedded resources with prefix '{resourcePrefix}':{Environment.NewLine}{string.Join($",{Environment.NewLine}", missingImages)}");
         _images = dict.ToFrozenDictionary();
-    }
-
-    private static Image<Rgba32> LoadFromEmbeddedResource(Assembly assembly, string prefix, string name)
-    {
-        var resourceName = $"{prefix}{name}.png";
-        using var stream = assembly.GetManifestResourceStream(resourceName);
-        return stream == null ? null : Image.Load<Rgba32>(stream);
     }
 
     public Image<Rgba32> this[T index] => _images[index];
