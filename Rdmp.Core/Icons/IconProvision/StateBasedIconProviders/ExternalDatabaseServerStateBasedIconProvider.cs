@@ -25,18 +25,18 @@ public sealed class ExternalDatabaseServerStateBasedIconProvider : IObjectStateB
 
     public ExternalDatabaseServerStateBasedIconProvider()
     {
-        _default = Image.Load<Rgba32>(CatalogueIcons.ExternalDatabaseServer);
+        _default = CatalogueIcons.ExternalDatabaseServer;
 
         _assemblyToIconDictionary.Add(new DataQualityEnginePatcher().Name,
-            Image.Load<Rgba32>(CatalogueIcons.ExternalDatabaseServer_DQE));
+            CatalogueIcons.ExternalDatabaseServer_DQE);
         _assemblyToIconDictionary.Add(new ANOStorePatcher().Name,
-            Image.Load<Rgba32>(CatalogueIcons.ExternalDatabaseServer_ANO));
+            CatalogueIcons.ExternalDatabaseServer_ANO);
         _assemblyToIconDictionary.Add(new IdentifierDumpDatabasePatcher().Name,
-            Image.Load<Rgba32>(CatalogueIcons.ExternalDatabaseServer_IdentifierDump));
+            CatalogueIcons.ExternalDatabaseServer_IdentifierDump);
         _assemblyToIconDictionary.Add(new QueryCachingPatcher().Name,
-            Image.Load<Rgba32>(CatalogueIcons.ExternalDatabaseServer_Cache));
+            CatalogueIcons.ExternalDatabaseServer_Cache);
         _assemblyToIconDictionary.Add(new LoggingDatabasePatcher().Name,
-            Image.Load<Rgba32>(CatalogueIcons.ExternalDatabaseServer_Logging));
+            CatalogueIcons.ExternalDatabaseServer_Logging);
 
         _typeSpecificIconsProvider = new DatabaseTypeIconProvider();
     }

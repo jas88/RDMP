@@ -217,9 +217,9 @@ public partial class WideMessageBox : Form
     {
         pbIcon.Image = theme switch
         {
-            WideMessageBoxTheme.Exception => (Image)Images.ErrorIcon.ImageToBitmap(),
-            WideMessageBoxTheme.Warning => (Image)Images.WarningIcon.ImageToBitmap(),
-            WideMessageBoxTheme.Help => (Image)Images.InformationIcon.ImageToBitmap(),
+            WideMessageBoxTheme.Exception => (Image)CatalogueIcons.ErrorIcon.ImageToBitmap(),
+            WideMessageBoxTheme.Warning => (Image)CatalogueIcons.WarningIcon.ImageToBitmap(),
+            WideMessageBoxTheme.Help => (Image)CatalogueIcons.InformationIcon.ImageToBitmap(),
             _ => throw new ArgumentOutOfRangeException(nameof(theme))
         };
 

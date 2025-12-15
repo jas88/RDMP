@@ -39,5 +39,5 @@ public class ExecuteCommandFreezeCohortIdentificationConfiguration : BasicComman
     }
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        Image.Load<Rgba32>(CatalogueIcons.FrozenCohortIdentificationConfiguration);
+        CatalogueIcons.FrozenCohortIdentificationConfiguration;
 }

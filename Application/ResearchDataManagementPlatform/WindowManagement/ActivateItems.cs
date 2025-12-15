@@ -865,7 +865,7 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
         var panel = WindowFactory.Create(this, new SessionCollectionUI(), new SessionCollection(sessionName)
         {
             DatabaseObjects = initialObjects.ToList()
-        }, Image.Load<Rgba32>(CatalogueIcons.WindowLayout));
+        }, CatalogueIcons.WindowLayout);
         panel.Show(_mainDockPanel, DockState.DockLeft);
     }
 

@@ -16,13 +16,13 @@ namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 internal sealed class ExtractionInformationStateBasedIconProvider : IObjectStateBasedIconProvider
 {
     private static readonly Image<Rgba32> ExtractionInformationCore =
-        Image.Load<Rgba32>(CatalogueIcons.ExtractionInformation);
+        CatalogueIcons.ExtractionInformation;
 
     private static readonly Image<Rgba32> ExtractionInformationSupplemental =
-        Image.Load<Rgba32>(CatalogueIcons.ExtractionInformation_Supplemental);
+        CatalogueIcons.ExtractionInformation_Supplemental;
 
     private static readonly Image<Rgba32> ExtractionInformationSpecialApproval =
-        Image.Load<Rgba32>(CatalogueIcons.ExtractionInformation_SpecialApproval);
+        CatalogueIcons.ExtractionInformation_SpecialApproval;
 
     private static readonly Image<Rgba32> ExtractionInformationInternalOnly =
         IconOverlayProvider.GetOverlayNoCache(ExtractionInformationSpecialApproval, OverlayKind.Internal);
@@ -31,9 +31,9 @@ internal sealed class ExtractionInformationStateBasedIconProvider : IObjectState
         IconOverlayProvider.GetOverlayNoCache(ExtractionInformationCore, OverlayKind.Deprecated);
 
     private static readonly Image<Rgba32> ExtractionInformationProjectSpecific =
-        Image.Load<Rgba32>(CatalogueIcons.ExtractionInformation_ProjectSpecific);
+        CatalogueIcons.ExtractionInformation_ProjectSpecific;
 
-    private static readonly Image<Rgba32> NoIconAvailable = Image.Load<Rgba32>(CatalogueIcons.NoIconAvailable);
+    private static readonly Image<Rgba32> NoIconAvailable = CatalogueIcons.NoIconAvailable;
 
     private static readonly Image<Rgba32> ExtractionInformationNotExtractable = IconOverlayProvider.GetOverlayNoCache(ExtractionInformationCore, OverlayKind.Delete);
 

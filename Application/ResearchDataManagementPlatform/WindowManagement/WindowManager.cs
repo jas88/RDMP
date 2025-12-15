@@ -104,19 +104,19 @@ public class WindowManager
             case RDMPCollection.Catalogue:
                 collection = new CatalogueCollectionUI();
                 toReturn = Show(RDMPCollection.Catalogue, collection, "Catalogues",
-                    Image.Load<Rgba32>(CatalogueIcons.Catalogue));
+                    CatalogueIcons.Catalogue);
                 break;
 
             case RDMPCollection.DataLoad:
                 collection = new LoadMetadataCollectionUI();
                 toReturn = Show(RDMPCollection.DataLoad, collection, "Load Configurations",
-                    Image.Load<Rgba32>(CatalogueIcons.LoadMetadata));
+                    CatalogueIcons.LoadMetadata);
                 break;
 
             case RDMPCollection.Tables:
                 collection = new TableInfoCollectionUI();
                 toReturn = Show(RDMPCollection.Tables, collection, "Tables",
-                    Image.Load<Rgba32>(CatalogueIcons.TableInfo));
+                    CatalogueIcons.TableInfo);
                 break;
 
             case RDMPCollection.DataExport:
@@ -129,29 +129,29 @@ public class WindowManager
 
                 collection = new DataExportCollectionUI();
                 toReturn = Show(RDMPCollection.DataExport, collection, "Projects",
-                    Image.Load<Rgba32>(CatalogueIcons.Project));
+                    CatalogueIcons.Project);
                 break;
 
             case RDMPCollection.Cohort:
                 collection = new CohortIdentificationCollectionUI();
                 toReturn = Show(RDMPCollection.Cohort, collection, "Cohort Builder",
-                    Image.Load<Rgba32>(CatalogueIcons.CohortIdentificationConfiguration));
+                    CatalogueIcons.CohortIdentificationConfiguration);
                 break;
             case RDMPCollection.SavedCohorts:
                 collection = new SavedCohortsCollectionUI();
                 toReturn = Show(RDMPCollection.SavedCohorts, collection, "Saved Cohorts",
-                    Image.Load<Rgba32>(CatalogueIcons.AllCohortsNode));
+                    CatalogueIcons.AllCohortsNode);
                 break;
             case RDMPCollection.Favourites:
                 collection = new FavouritesCollectionUI();
                 toReturn = Show(RDMPCollection.Favourites, collection, "Favourites",
-                    Image.Load<Rgba32>(CatalogueIcons.Favourite));
+                    CatalogueIcons.Favourite);
                 break;
 
             case RDMPCollection.Configurations:
                 collection = new ConfigurationsCollectionUI();
                 toReturn = Show(RDMPCollection.Configurations, collection, "Configurations",
-                     Image.Load<Rgba32>(FamFamFamIcons.pencil_go));
+                     FamFamFamIcons.pencil_go);
                 break;
 
             default: throw new ArgumentOutOfRangeException(nameof(collectionToCreate));
@@ -300,7 +300,7 @@ public class WindowManager
             _home = new HomeUI(ActivateItems);
 
             _homeContent = _windowFactory.Create(ActivateItems, _home, "Home",
-                Image.Load<Rgba32>(FamFamFamIcons.application_home));
+                FamFamFamIcons.application_home);
             _homeContent.FormClosed += (s, e) => _home = null;
             _homeContent.Show(_mainDockPanel, DockState.Document);
         }

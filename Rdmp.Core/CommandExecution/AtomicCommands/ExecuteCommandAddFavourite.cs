@@ -59,6 +59,6 @@ public sealed class ExecuteCommandAddFavourite : BasicCommandExecution
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
         _databaseEntity != null && BasicActivator.FavouritesProvider.IsFavourite(_databaseEntity)
-            ? Image.Load<Rgba32>(CatalogueIcons.StarHollow)
+            ? CatalogueIcons.StarHollow
             : iconProvider.GetImage(RDMPConcept.Favourite, OverlayKind.Add);
 }

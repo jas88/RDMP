@@ -15,9 +15,9 @@ namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public sealed class AggregateConfigurationStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private static readonly Image<Rgba32> CohortAggregates = Image.Load<Rgba32>(CatalogueIcons.CohortAggregate);
-    private static readonly Image<Rgba32> Aggregates = Image.Load<Rgba32>(CatalogueIcons.AggregateGraph);
-    private static readonly Image<Rgba32> PatientIndexTable = Image.Load<Rgba32>(CatalogueIcons.PatientIndexTable);
+    private static readonly Image<Rgba32> CohortAggregates = CatalogueIcons.CohortAggregate;
+    private static readonly Image<Rgba32> Aggregates = CatalogueIcons.AggregateGraph;
+    private static readonly Image<Rgba32> PatientIndexTable = CatalogueIcons.PatientIndexTable;
 
     public Image<Rgba32> GetImageIfSupportedObject(object o)
     {

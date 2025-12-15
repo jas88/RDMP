@@ -40,7 +40,7 @@ public class ExecuteCommandPutIntoFolder : BasicCommandExecution
     }
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        OverrideIcon ?? Image.Load<Rgba32>(CatalogueIcons.CatalogueFolder);
+        OverrideIcon ?? CatalogueIcons.CatalogueFolder;
 
     public override void Execute()
     {

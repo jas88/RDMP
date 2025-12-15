@@ -200,7 +200,7 @@ public partial class ViewExtractionSqlUI : ViewExtractionSql_Design
         rbSupplemental.Image = CatalogueIcons.ExtractionInformation_Supplemental.ImageToBitmap();
         rbSpecialApproval.Image = CatalogueIcons.ExtractionInformation_SpecialApproval.ImageToBitmap();
         rbInternal.Image = activator.CoreIconProvider
-            .GetImage(SixLabors.ImageSharp.Image.Load<Rgba32>(CatalogueIcons.ExtractionInformation_SpecialApproval),
+            .GetImage(CatalogueIcons.ExtractionInformation_SpecialApproval,
                 OverlayKind.Internal).ImageToBitmap();
 
         CommonFunctionality.Add(rbCore);

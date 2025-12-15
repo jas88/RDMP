@@ -21,11 +21,11 @@ public class ExtractCommandStateBasedIconProvider : IObjectStateBasedIconProvide
 
     public ExtractCommandStateBasedIconProvider()
     {
-        _waiting = Image.Load<Rgba32>(CatalogueIcons.Waiting);
-        _warning = Image.Load<Rgba32>(CatalogueIcons.Warning);
-        _writing = Image.Load<Rgba32>(CatalogueIcons.Writing);
-        _failed = Image.Load<Rgba32>(CatalogueIcons.Failed);
-        _tick = Image.Load<Rgba32>(CatalogueIcons.Tick);
+        _waiting = CatalogueIcons.Waiting;
+        _warning = CatalogueIcons.Warning;
+        _writing = CatalogueIcons.Writing;
+        _failed = CatalogueIcons.Failed;
+        _tick = CatalogueIcons.Tick;
     }
 
     public Image<Rgba32> GetImageIfSupportedObject(object o)

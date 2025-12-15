@@ -15,8 +15,8 @@ namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public sealed class CatalogueItemStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private static readonly Image<Rgba32> BasicImage = Image.Load<Rgba32>(CatalogueIcons.CatalogueItem);
-    private static readonly Image<Rgba32> TransformImage = Image.Load<Rgba32>(CatalogueIcons.CatalogueItemTransform);
+    private static readonly Image<Rgba32> BasicImage = CatalogueIcons.CatalogueItem;
+    private static readonly Image<Rgba32> TransformImage = CatalogueIcons.CatalogueItemTransform;
 
     public Image<Rgba32> GetImageIfSupportedObject(object o)
     {

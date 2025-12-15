@@ -45,7 +45,7 @@ public class ExecuteCommandMakeCatalogueNotInternal : BasicCommandExecution, IAt
     }
 
     public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
-        Image.Load<Rgba32>(CatalogueIcons.Catalogue);
+        CatalogueIcons.Catalogue;
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)
     {
