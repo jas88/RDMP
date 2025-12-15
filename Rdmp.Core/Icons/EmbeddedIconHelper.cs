@@ -22,6 +22,8 @@ public static class EmbeddedIconHelper
     private static readonly Assembly Assembly = typeof(EmbeddedIconHelper).Assembly;
     private static readonly FrozenDictionary<string, Image<Rgba32>> Cache;
 
+    private const string P = "Rdmp.Core.Icons.";
+
     static EmbeddedIconHelper()
     {
         var dict = new Dictionary<string, Image<Rgba32>>(StringComparer.OrdinalIgnoreCase);
@@ -34,6 +36,14 @@ public static class EmbeddedIconHelper
             var key = name[..^4];
             dict[key] = Image.Load<Rgba32>(stream);
         }
+
+        // Add aliases for icons that map to other resources (from original .resx files)
+        dict[$"{P}Setting"] = dict[$"{P}famfamfam.cog"];
+        dict[$"{P}LoadMetadataVersionNode"] = dict[$"{P}CatalogueFolder"];
+        dict[$"{P}RegexRedaction"] = dict[$"{P}StandardRegex3"];
+        dict[$"{P}RegexRedactionConfiguration"] = dict[$"{P}StandardRegex311"];
+        dict[$"{P}RegexRedactionKey"] = dict[$"{P}StandardRegex31"];
+
         Cache = dict.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
 
