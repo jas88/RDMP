@@ -7,7 +7,6 @@
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Reflection;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -19,18 +18,17 @@ namespace Rdmp.Core.Icons;
 /// </summary>
 public static class EmbeddedIconHelper
 {
-    private static readonly Assembly Assembly = typeof(EmbeddedIconHelper).Assembly;
-    private static readonly FrozenDictionary<string, Image<Rgba32>> Cache;
-
     private const string P = "Rdmp.Core.Icons.";
+    private static readonly FrozenDictionary<string, Image<Rgba32>> Cache = BuildCache();
 
-    static EmbeddedIconHelper()
+    private static FrozenDictionary<string, Image<Rgba32>> BuildCache()
     {
+        var assembly = typeof(EmbeddedIconHelper).Assembly;
         var dict = new Dictionary<string, Image<Rgba32>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var name in Assembly.GetManifestResourceNames())
+        foreach (var name in assembly.GetManifestResourceNames())
         {
             if (!name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) continue;
-            using var stream = Assembly.GetManifestResourceStream(name);
+            using var stream = assembly.GetManifestResourceStream(name);
             if (stream == null) continue;
             // Strip .png extension for the key
             var key = name[..^4];
@@ -44,7 +42,7 @@ public static class EmbeddedIconHelper
         dict[$"{P}RegexRedactionConfiguration"] = dict[$"{P}StandardRegex311"];
         dict[$"{P}RegexRedactionKey"] = dict[$"{P}StandardRegex31"];
 
-        Cache = dict.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+        return dict.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
