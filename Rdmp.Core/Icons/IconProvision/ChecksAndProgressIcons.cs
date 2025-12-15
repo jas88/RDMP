@@ -16,10 +16,10 @@ public static class ChecksAndProgressIcons
 {
     private const string P = "Rdmp.Core.Icons.";
 
-    public static readonly Image<Rgba32> Fail = EmbeddedIconHelper.Get($"{P}Fail");
-    public static readonly Image<Rgba32> FailEx = EmbeddedIconHelper.Get($"{P}FailEx");
-    public static readonly Image<Rgba32> Information = EmbeddedIconHelper.Get($"{P}Information");
-    public static readonly Image<Rgba32> Tick = EmbeddedIconHelper.Get($"{P}Tick");
-    public static readonly Image<Rgba32> Warning = EmbeddedIconHelper.Get($"{P}Warning");
-    public static readonly Image<Rgba32> WarningEx = EmbeddedIconHelper.Get($"{P}WarningEx");
+    public static readonly Image<Rgba32> Fail = EmbeddedIconHelper.GetRequired($"{P}Fail");
+    public static readonly Image<Rgba32> FailEx = EmbeddedIconHelper.GetRequired($"{P}FailEx");
+    public static readonly Image<Rgba32> Information = EmbeddedIconHelper.GetRequired($"{P}Information");
+    public static readonly Image<Rgba32> Tick = EmbeddedIconHelper.GetRequired($"{P}Tick");
+    public static readonly Image<Rgba32> Warning = EmbeddedIconHelper.GetRequired($"{P}Warning");
+    public static readonly Image<Rgba32> WarningEx = EmbeddedIconHelper.GetRequired($"{P}WarningEx");
 }

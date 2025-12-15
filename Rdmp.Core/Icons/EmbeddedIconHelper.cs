@@ -49,7 +49,20 @@ public static class EmbeddedIconHelper
 
     /// <summary>
     /// Gets an icon by its full resource name (without .png extension).
+    /// Returns null if not found.
     /// </summary>
     public static Image<Rgba32> Get(string resourceName) =>
         Cache.TryGetValue(resourceName, out var img) ? img : null;
+
+    /// <summary>
+    /// Gets an icon by its full resource name (without .png extension).
+    /// Throws if not found - use for required icons in static initializers.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when the icon resource is not found.</exception>
+    public static Image<Rgba32> GetRequired(string resourceName) =>
+        Cache.TryGetValue(resourceName, out var img)
+            ? img
+            : throw new InvalidOperationException(
+                $"Required embedded icon not found: '{resourceName}'. " +
+                $"Ensure the PNG file exists and is embedded as a resource.");
 }

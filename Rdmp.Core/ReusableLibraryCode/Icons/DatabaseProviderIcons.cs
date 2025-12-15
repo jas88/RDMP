@@ -17,14 +17,14 @@ public static class DatabaseProviderIcons
 {
     private const string P = "Rdmp.Core.ReusableLibraryCode.Icons.DatabaseProviderIcons.";
 
-    public static readonly Image<Rgba32> Microsoft = EmbeddedIconHelper.Get($"{P}Microsoft");
-    public static readonly Image<Rgba32> MicrosoftOverlay = EmbeddedIconHelper.Get($"{P}MicrosoftOverlay");
-    public static readonly Image<Rgba32> MySql = EmbeddedIconHelper.Get($"{P}MySql");
-    public static readonly Image<Rgba32> MySqlOverlay = EmbeddedIconHelper.Get($"{P}MySqlOverlay");
-    public static readonly Image<Rgba32> Oracle = EmbeddedIconHelper.Get($"{P}Oracle");
-    public static readonly Image<Rgba32> OracleOverlay = EmbeddedIconHelper.Get($"{P}OracleOverlay");
-    public static readonly Image<Rgba32> PostgreSql = EmbeddedIconHelper.Get($"{P}PostgreSql");
-    public static readonly Image<Rgba32> PostgreSqlOverlay = EmbeddedIconHelper.Get($"{P}PostgreSqlOverlay");
-    public static readonly Image<Rgba32> Unknown = EmbeddedIconHelper.Get($"{P}Unknown");
-    public static readonly Image<Rgba32> UnknownOverlay = EmbeddedIconHelper.Get($"{P}UnknownOverlay");
+    public static readonly Image<Rgba32> Microsoft = EmbeddedIconHelper.GetRequired($"{P}Microsoft");
+    public static readonly Image<Rgba32> MicrosoftOverlay = EmbeddedIconHelper.GetRequired($"{P}MicrosoftOverlay");
+    public static readonly Image<Rgba32> MySql = EmbeddedIconHelper.GetRequired($"{P}MySql");
+    public static readonly Image<Rgba32> MySqlOverlay = EmbeddedIconHelper.GetRequired($"{P}MySqlOverlay");
+    public static readonly Image<Rgba32> Oracle = EmbeddedIconHelper.GetRequired($"{P}Oracle");
+    public static readonly Image<Rgba32> OracleOverlay = EmbeddedIconHelper.GetRequired($"{P}OracleOverlay");
+    public static readonly Image<Rgba32> PostgreSql = EmbeddedIconHelper.GetRequired($"{P}PostgreSql");
+    public static readonly Image<Rgba32> PostgreSqlOverlay = EmbeddedIconHelper.GetRequired($"{P}PostgreSqlOverlay");
+    public static readonly Image<Rgba32> Unknown = EmbeddedIconHelper.GetRequired($"{P}Unknown");
+    public static readonly Image<Rgba32> UnknownOverlay = EmbeddedIconHelper.GetRequired($"{P}UnknownOverlay");
 }
