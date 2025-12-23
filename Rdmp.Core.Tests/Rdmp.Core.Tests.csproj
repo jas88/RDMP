@@ -64,10 +64,6 @@
         <EmbeddedResource Include="DataLoad\Engine\Unit\TestFile\OddFormats.xls" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="coverlet.collector">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="AWSSDK.S3" />
         <PackageReference Include="NSubstitute" />
@@ -76,10 +72,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="NUnit3TestAdapter">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
+        <PackageReference Include="NUnit3TestAdapter" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
