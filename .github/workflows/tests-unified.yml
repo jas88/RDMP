@@ -178,13 +178,9 @@ jobs:
         shell: bash
         run: |
           dotnet test --filter "FullyQualifiedName~.UI. | FullyQualifiedName~BasicPathsTest" \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
             --no-build \
-            --verbosity minimal \
             -c Release \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            --results-directory coverage
 
       - name: Re-initialise RDMP (File System)
         shell: bash
@@ -196,13 +192,9 @@ jobs:
         shell: bash
         run: |
           dotnet test --filter "FullyQualifiedName~.UI. | FullyQualifiedName~BasicPathsTest" \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
             --no-build \
-            --verbosity minimal \
             -c Release \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            --results-directory coverage
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
@@ -390,12 +382,8 @@ jobs:
         timeout-minutes: 45
         run: |
           dotnet test linuxtests.slnf \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --verbosity minimal \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            --results-directory coverage
 
       - name: Switch to File System Mode
         run: |
@@ -407,12 +395,8 @@ jobs:
         timeout-minutes: 45
         run: |
           dotnet test linuxtests.slnf \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --verbosity minimal \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            --results-directory coverage
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
