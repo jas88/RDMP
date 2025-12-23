@@ -179,8 +179,7 @@ jobs:
         run: |
           dotnet test --filter "FullyQualifiedName~.UI. | FullyQualifiedName~BasicPathsTest" \
             --no-build \
-            -c Release \
-            --results-directory coverage
+            -c Release
 
       - name: Re-initialise RDMP (File System)
         shell: bash
@@ -193,8 +192,7 @@ jobs:
         run: |
           dotnet test --filter "FullyQualifiedName~.UI. | FullyQualifiedName~BasicPathsTest" \
             --no-build \
-            -c Release \
-            --results-directory coverage
+            -c Release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
@@ -382,8 +380,7 @@ jobs:
         timeout-minutes: 45
         run: |
           dotnet test linuxtests.slnf \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000"
 
       - name: Switch to File System Mode
         run: |
@@ -395,8 +392,7 @@ jobs:
         timeout-minutes: 45
         run: |
           dotnet test linuxtests.slnf \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000"
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
