@@ -21,7 +21,7 @@ namespace Rdmp.UI;
 /// but which should none the less be visible.
 /// </summary>
 [System.ComponentModel.DesignerCategory("")]
-public class ExceptionCounterUI : ToolStripButton, ICheckNotifier
+public sealed class ExceptionCounterUI : ToolStripButton, ICheckNotifier
 {
     private const float EmSize = 8f;
 
