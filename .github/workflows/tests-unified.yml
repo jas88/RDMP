@@ -379,8 +379,15 @@ jobs:
       - name: Test non-UI
         timeout-minutes: 45
         run: |
-          dotnet test linuxtests.slnf \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000"
+          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
+          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
+          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
 
       - name: Switch to File System Mode
         run: |
@@ -391,8 +398,15 @@ jobs:
       - name: Test Core (File System Mode)
         timeout-minutes: 45
         run: |
-          dotnet test linuxtests.slnf \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000"
+          dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
+          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
+          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
