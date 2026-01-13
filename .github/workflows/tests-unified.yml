@@ -109,7 +109,10 @@ jobs:
         run: |
           SqlLocalDB.exe create MSSQLLocalDB -s
           sqlcmd -l 180 -S '(localdb)\MSSQLLocalDB' -Q "SELECT @@VERSION;"
+          # Configure TestDatabases.txt for LocalDB (Windows Auth, no Username/Password)
           sed -i'' -e 's/localhost/\(localdb\)\\MSSQLLocalDB/' Tests.Common/TestDatabases.txt
+          sed -i'' -e 's/^Username:/#Username:/' Tests.Common/TestDatabases.txt
+          sed -i'' -e 's/^Password:/#Password:/' Tests.Common/TestDatabases.txt
 
       - name: Setup MySQL
         uses: shogo82148/actions-setup-mysql@v1
@@ -173,36 +176,28 @@ jobs:
           # Run all commands in a single invocation
           dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
 
+      - name: Copy TestDatabases.txt to UI test output
+        shell: bash
+        run: |
+          cp Tests.Common/TestDatabases.txt Rdmp.UI.Tests/bin/Release/net10.0-windows/
+
       - name: Test UI (Database Mode)
         timeout-minutes: 45
         shell: bash
         run: |
-          dotnet test --filter "FullyQualifiedName~.UI. | FullyQualifiedName~BasicPathsTest" \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --no-build \
-            --verbosity minimal \
-            -c Release \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          dotnet test --project Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
 
       - name: Re-initialise RDMP (File System)
         shell: bash
         run: |
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
+          cp Tests.Common/TestDatabases.txt Rdmp.UI.Tests/bin/Release/net10.0-windows/
 
       - name: Test UI (File System Mode)
         timeout-minutes: 30
         shell: bash
         run: |
-          dotnet test --filter "FullyQualifiedName~.UI. | FullyQualifiedName~BasicPathsTest" \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --no-build \
-            --verbosity minimal \
-            -c Release \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+          dotnet test --project Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
@@ -389,13 +384,15 @@ jobs:
       - name: Test non-UI
         timeout-minutes: 45
         run: |
-          dotnet test linuxtests.slnf \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --verbosity minimal \
+          dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            --no-build -c Release
+          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
+          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
 
       - name: Switch to File System Mode
         run: |
@@ -406,13 +403,15 @@ jobs:
       - name: Test Core (File System Mode)
         timeout-minutes: 45
         run: |
-          dotnet test linuxtests.slnf \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --verbosity minimal \
+          dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
             -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            --no-build -c Release
+          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
+          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --no-build -c Release
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
