@@ -41,6 +41,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.1" />
     <!-- HicPlugin and RdmpExtensions dependencies -->
     <PackageVersion Include="DotNetZip" Version="1.16.0" />
+    <PackageVersion Include="RestSharp" Version="112.1.0" />
     <PackageVersion Include="SharpCompress" Version="0.39.0" />
     <PackageVersion Include="System.Resources.Extensions" Version="9.0.3" />
     <PackageVersion Include="System.ServiceModel.Http" Version="8.1.1" />
