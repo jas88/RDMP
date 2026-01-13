@@ -109,7 +109,10 @@ jobs:
         run: |
           SqlLocalDB.exe create MSSQLLocalDB -s
           sqlcmd -l 180 -S '(localdb)\MSSQLLocalDB' -Q "SELECT @@VERSION;"
+          # Configure TestDatabases.txt for LocalDB (Windows Auth, no Username/Password)
           sed -i'' -e 's/localhost/\(localdb\)\\MSSQLLocalDB/' Tests.Common/TestDatabases.txt
+          sed -i'' -e 's/^Username:/#Username:/' Tests.Common/TestDatabases.txt
+          sed -i'' -e 's/^Password:/#Password:/' Tests.Common/TestDatabases.txt
 
       - name: Setup MySQL
         uses: shogo82148/actions-setup-mysql@v1
