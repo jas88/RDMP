@@ -39,5 +39,12 @@
     <PackageVersion Include="DicomTypeTranslation" Version="5.0.1" />
     <PackageVersion Include="fo-dicom" Version="5.2.5" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.1" />
+    <!-- HicPlugin and RdmpExtensions dependencies -->
+    <PackageVersion Include="DotNetZip" Version="1.16.0" />
+    <PackageVersion Include="SharpCompress" Version="0.39.0" />
+    <PackageVersion Include="System.Resources.Extensions" Version="9.0.3" />
+    <PackageVersion Include="System.ServiceModel.Http" Version="8.1.1" />
+    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.1" />
+    <PackageVersion Include="NunitXml.TestLogger" Version="4.0.254" />
   </ItemGroup>
 </Project>

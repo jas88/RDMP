@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyTitle>JIRATicketing</AssemblyTitle>
+    <Company>Hewlett-Packard Company</Company>
+    <Product>JIRATicketing</Product>
+    <Copyright>Copyright © Hewlett-Packard Company 2015</Copyright>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="RestSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Rdmp.Core\Rdmp.Core.csproj" />
+  </ItemGroup>
+  <Import Project="..\InterfaceToJira\InterfaceToJira.projitems" Label="Shared" />
+</Project>
