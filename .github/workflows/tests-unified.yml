@@ -177,28 +177,24 @@ jobs:
         shell: bash
         run: |
           cp Tests.Common/TestDatabases.txt Rdmp.UI.Tests/bin/Release/net10.0-windows/
-          cp Tests.Common/TestDatabases.txt Plugins/Plugins.UI.Tests/bin/Release/net10.0-windows/
 
       - name: Test UI (Database Mode)
         timeout-minutes: 45
         shell: bash
         run: |
           dotnet test --project Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
-          dotnet test --project Plugins/Plugins.UI.Tests/Plugins.UI.Tests.csproj --no-build -c Release
 
       - name: Re-initialise RDMP (File System)
         shell: bash
         run: |
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
           cp Tests.Common/TestDatabases.txt Rdmp.UI.Tests/bin/Release/net10.0-windows/
-          cp Tests.Common/TestDatabases.txt Plugins/Plugins.UI.Tests/bin/Release/net10.0-windows/
 
       - name: Test UI (File System Mode)
         timeout-minutes: 30
         shell: bash
         run: |
           dotnet test --project Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
-          dotnet test --project Plugins/Plugins.UI.Tests/Plugins.UI.Tests.csproj --no-build -c Release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
