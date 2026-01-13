@@ -173,6 +173,12 @@ jobs:
           # Run all commands in a single invocation
           dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
 
+      - name: Copy TestDatabases.txt to UI test output
+        shell: bash
+        run: |
+          cp Tests.Common/TestDatabases.txt Rdmp.UI.Tests/bin/Release/net10.0-windows/
+          cp Tests.Common/TestDatabases.txt Plugins/Plugins.UI.Tests/bin/Release/net10.0-windows/
+
       - name: Test UI (Database Mode)
         timeout-minutes: 45
         shell: bash
@@ -184,6 +190,8 @@ jobs:
         shell: bash
         run: |
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
+          cp Tests.Common/TestDatabases.txt Rdmp.UI.Tests/bin/Release/net10.0-windows/
+          cp Tests.Common/TestDatabases.txt Plugins/Plugins.UI.Tests/bin/Release/net10.0-windows/
 
       - name: Test UI (File System Mode)
         timeout-minutes: 30
