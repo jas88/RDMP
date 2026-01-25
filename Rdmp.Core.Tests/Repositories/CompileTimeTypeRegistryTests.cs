@@ -33,6 +33,9 @@ internal class CompileTimeTypeRegistryTests
     {
         // Clear any cached state to ensure test isolation
         FlushCache();
+        // Register test types with MEF so they can be found and have correct type identity
+        MEF.AddTypeToCatalogForTesting(typeof(TestConstructorClass));
+        MEF.AddTypeToCatalogForTesting(typeof(ITestInterface));
     }
 
     [TearDown]

@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Xml.Serialization;
 using NUnit.Framework;
 using Rdmp.Core.Validation;
 using Rdmp.Core.Validation.Constraints.Primary;
@@ -44,6 +45,7 @@ public class PluginValidationSerializationTest
     }
 }
 
+[XmlType(Namespace = "urn:rdmp-test:fish-constraint")]
 public class FishConstraint : PluginPrimaryConstraint
 {
     public override void RenameColumn(string originalName, string newName)

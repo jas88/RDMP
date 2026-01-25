@@ -30,6 +30,9 @@ internal class MEFOptimizedTests : DatabaseTests
     {
         _catalogueRepository = CatalogueRepository;
         _repositoryLocator = RepositoryLocator;
+        // Register test types with MEF so they can be found and have correct type identity
+        MEF.AddTypeToCatalogForTesting(typeof(TestIntegrationClass));
+        MEF.AddTypeToCatalogForTesting(typeof(ITestIntegrationInterface));
     }
 
     [Test]
