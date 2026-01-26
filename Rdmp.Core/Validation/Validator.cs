@@ -248,9 +248,12 @@ public class Validator
         lock (_oLockExtraTypes)
         {
             _extraTypes ??= RefreshExtraTypes();
-            if (!_extraTypes.Any(t => t.FullName == constraintType.FullName))
-                _extraTypes.Add(constraintType);
+            // Remove any existing type with same FullName (may be from different assembly load context)
+            // and add the exact type instance provided - this ensures type identity matches at serialization
+            _extraTypes.RemoveAll(t => t.FullName == constraintType.FullName);
+            _extraTypes.Add(constraintType);
             _serializer = null; // Reset serializer so it picks up the new type
+            ItemValidator.ResetSerializer(); // Also reset ItemValidator's serializer
         }
     }
 
