@@ -212,6 +212,8 @@ public class Validator
     {
         lock (_oLockExtraTypes)
         {
+            // Deduplicate by FullName to handle assemblies loaded in multiple AssemblyLoadContexts
+            // (common in test scenarios with MTP where same assembly may be loaded twice)
             return AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(
                 //type is
                 type =>
@@ -225,7 +227,7 @@ public class Validator
                     !type.IsInterface
                     &&
                     type.IsClass
-            ).ToList();
+            ).GroupBy(t => t.FullName).Select(g => g.First()).ToList();
         }
     }
 
