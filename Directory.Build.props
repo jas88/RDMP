@@ -11,10 +11,9 @@
 	</PropertyGroup>
 
 	<!-- Microsoft Testing Platform support for test projects (NUnit3TestAdapter 6.0+) -->
-	<!-- TEMPORARILY DISABLED to diagnose test hangs -->
 	<PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
-		<!-- <EnableNUnitRunner>true</EnableNUnitRunner> -->
-		<!-- <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport> -->
-		<!-- <OutputType>Exe</OutputType> -->
+		<EnableNUnitRunner>true</EnableNUnitRunner>
+		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 </Project>

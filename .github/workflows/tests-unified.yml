@@ -390,9 +390,9 @@ jobs:
         run: |
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
           # Individual tests have 60s timeout via [Timeout] attribute in test base classes
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --logger "console;verbosity=detailed"
-          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --logger "console;verbosity=detailed"
-          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --logger "console;verbosity=detailed"
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed
+          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed
+          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed
 
       - name: Switch to File System Mode
         run: |
@@ -409,19 +409,9 @@ jobs:
         run: |
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
           # Individual tests have 60s timeout via [Timeout] attribute in test base classes
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --logger "console;verbosity=detailed"
-          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --logger "console;verbosity=detailed"
-          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --logger "console;verbosity=detailed"
-
-      - name: Upload hang dumps
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hang-dumps
-          path: |
-            **/TestResults/**/*.dmp
-            **/TestResults/**/*.diag
-          if-no-files-found: ignore
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed
+          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed
+          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
