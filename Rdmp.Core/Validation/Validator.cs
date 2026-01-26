@@ -248,7 +248,7 @@ public class Validator
         lock (_oLockExtraTypes)
         {
             _extraTypes ??= RefreshExtraTypes();
-            if (!_extraTypes.Contains(constraintType))
+            if (!_extraTypes.Any(t => t.FullName == constraintType.FullName))
                 _extraTypes.Add(constraintType);
             _serializer = null; // Reset serializer so it picks up the new type
         }
