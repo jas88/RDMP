@@ -45,10 +45,22 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         {
             RegionEndpoint = RegionEndpoint.USEast1, // MinIO default
             ServiceURL = $"http://{Endpoint}",
-            ForcePathStyle = true // Required for MinIO compatibility
+            ForcePathStyle = true, // Required for MinIO compatibility
+            Timeout = TimeSpan.FromSeconds(5), // Don't hang forever if MinIO isn't running
+            MaxErrorRetry = 0 // Fail fast
         };
 
         _s3Client = new AmazonS3Client(Username, Password, config);
+
+        // Check if MinIO is actually available - skip tests if not
+        try
+        {
+            _s3Client.ListBucketsAsync().Wait(TimeSpan.FromSeconds(5));
+        }
+        catch
+        {
+            Assert.Ignore("MinIO is not available at " + Endpoint);
+        }
     }
 
     private void DoExtraction()

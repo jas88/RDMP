@@ -32,9 +32,6 @@ public static class MEF
     // Lookaside cache for runtime-loaded assemblies not in CompiledTypeRegistry
     private static readonly ConcurrentDictionary<string, Type> _lookasideTypes = new(StringComparer.OrdinalIgnoreCase);
 
-    // Test override types - these take precedence over primary/lookaside to ensure type identity in tests
-    private static readonly ConcurrentDictionary<string, Type> _testOverrideTypes = new(StringComparer.OrdinalIgnoreCase);
-
     // Cache for type hierarchy queries (GetTypes<T>)
     private static readonly ConcurrentDictionary<Type, Type[]> TypeCache = new();
 
@@ -271,10 +268,12 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
-        // Test overrides take precedence to ensure type identity in test scenarios
-        if (_testOverrideTypes.TryGetValue(typeName, out var type))
+        // Check lookaside first - these are runtime-loaded types including test types
+        // Checking lookaside first ensures types registered via AddTypeToCatalogForTesting
+        // take precedence, preserving type identity for IsAssignableFrom checks
+        if (_lookasideTypes.TryGetValue(typeName, out var type))
             return type;
-        if (_testOverrideTypes.TryGetValue(Tail(typeName), out type))
+        if (_lookasideTypes.TryGetValue(Tail(typeName), out type))
             return type;
 
         // Fast path: Check primary dictionary (FrozenDictionary from CompiledTypeRegistry)
@@ -284,14 +283,6 @@ public static class MEF
 
         // Try short name in primary
         if (primaryDict.TryGetValue(Tail(typeName), out type))
-            return type;
-
-        // Slower path: Check lookaside for runtime-loaded assemblies
-        if (_lookasideTypes.TryGetValue(typeName, out type))
-            return type;
-
-        // Try short name in lookaside
-        if (_lookasideTypes.TryGetValue(Tail(typeName), out type))
             return type;
 
         // Fallback: Use Type.GetType() for types in currently loaded assemblies not in our cache
@@ -379,9 +370,9 @@ public static class MEF
     {
         return TypeCache.GetOrAdd(type, target =>
         {
-            // Combine primary and lookaside types
-            var allTypes = _primaryTypes.Value.Values
-                .Concat(_lookasideTypes.Values)
+            // Combine lookaside and primary types (lookaside first for test type priority)
+            var allTypes = _lookasideTypes.Values
+                .Concat(_primaryTypes.Value.Values)
                 .Distinct();
 
             return allTypes
@@ -533,9 +524,13 @@ public static class MEF
     {
         ArgumentNullException.ThrowIfNull(p0);
 
-        // Add to test override dictionary - these take precedence over primary/lookaside
-        // to ensure the exact Type instance is returned, preserving type identity for IsAssignableFrom checks
-        _testOverrideTypes[p0.FullName!] = p0;
-        _testOverrideTypes[Tail(p0.FullName!)] = p0;
+        // Force-add to lookaside, overwriting any existing entry
+        // This ensures the exact Type instance passed by tests is used,
+        // preserving type identity for IsAssignableFrom checks
+        _lookasideTypes[p0.FullName!] = p0;
+        _lookasideTypes[Tail(p0.FullName!)] = p0;
+
+        // Clear type hierarchy cache so GetTypes<T>() includes the new type
+        TypeCache.Clear();
     }
 }

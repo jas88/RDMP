@@ -239,6 +239,21 @@ public class Validator
         }
     }
 
+    /// <summary>
+    /// Registers an additional constraint type for testing. Clears the serializer cache
+    /// so the new type will be recognized during XML serialization.
+    /// </summary>
+    public static void AddConstraintTypeForTesting(Type constraintType)
+    {
+        lock (_oLockExtraTypes)
+        {
+            _extraTypes ??= RefreshExtraTypes();
+            if (!_extraTypes.Contains(constraintType))
+                _extraTypes.Add(constraintType);
+            _serializer = null; // Reset serializer so it picks up the new type
+        }
+    }
+
 
     /// <summary>
     /// This Factory method returns a new RegularExpression instance.
