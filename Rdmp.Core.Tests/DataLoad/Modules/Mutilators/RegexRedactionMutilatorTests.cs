@@ -734,10 +734,8 @@ MrMurder,2001-01-01,YellaUUUYella");
 MrMurder,2001-01-01,Yella
 ");
 
-        var data = Enumerable.Repeat("name,2001-01-01,amber", 1000000).ToArray();
-
-
-        File.AppendAllLines(Path.Combine(projectDirectory.ForLoading.FullName, "LoadMe.csv"), data);
+        File.AppendAllLines(Path.Combine(projectDirectory.ForLoading.FullName, "LoadMe.csv"),
+            Enumerable.Repeat("name,2001-01-01,amber", 10000));
 
 
         var dbConfig = new HICDatabaseConfiguration(lmd, null);

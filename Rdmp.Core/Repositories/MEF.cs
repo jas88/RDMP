@@ -32,6 +32,9 @@ public static class MEF
     // Lookaside cache for runtime-loaded assemblies not in CompiledTypeRegistry
     private static readonly ConcurrentDictionary<string, Type> _lookasideTypes = new(StringComparer.OrdinalIgnoreCase);
 
+    // Test override types - these take precedence over primary/lookaside to ensure type identity in tests
+    private static readonly ConcurrentDictionary<string, Type> _testOverrideTypes = new(StringComparer.OrdinalIgnoreCase);
+
     // Cache for type hierarchy queries (GetTypes<T>)
     private static readonly ConcurrentDictionary<Type, Type[]> TypeCache = new();
 
@@ -268,9 +271,15 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
+        // Test overrides take precedence to ensure type identity in test scenarios
+        if (_testOverrideTypes.TryGetValue(typeName, out var type))
+            return type;
+        if (_testOverrideTypes.TryGetValue(Tail(typeName), out type))
+            return type;
+
         // Fast path: Check primary dictionary (FrozenDictionary from CompiledTypeRegistry)
         var primaryDict = _primaryTypes.Value;
-        if (primaryDict.TryGetValue(typeName, out var type))
+        if (primaryDict.TryGetValue(typeName, out type))
             return type;
 
         // Try short name in primary
@@ -524,25 +533,9 @@ public static class MEF
     {
         ArgumentNullException.ThrowIfNull(p0);
 
-        // Check if type exists in either dictionary (by value, not just key)
-        var inPrimary = _primaryTypes.Value.ContainsKey(p0.FullName) ||
-                       _primaryTypes.Value.Values.Contains(p0);
-        var inLookaside = _lookasideTypes.ContainsKey(p0.FullName) ||
-                         _lookasideTypes.Values.Contains(p0);
-
-        // If type is not found, add it to lookaside for testing scenarios
-        if (!inPrimary && !inLookaside)
-        {
-            // Add the type to lookaside cache for MEF discovery
-            // This handles test classes, inner classes, and dynamically loaded types
-            foreach (var alias in new[]
-                     {
-                     Tail(p0.FullName), p0.FullName, Tail(p0.FullName).ToUpperInvariant(),
-                     p0.FullName?.ToUpperInvariant()
-                 }.Where(static x => x is not null).Distinct())
-            {
-                _lookasideTypes.TryAdd(alias, p0);
-            }
-        }
+        // Add to test override dictionary - these take precedence over primary/lookaside
+        // to ensure the exact Type instance is returned, preserving type identity for IsAssignableFrom checks
+        _testOverrideTypes[p0.FullName!] = p0;
+        _testOverrideTypes[Tail(p0.FullName!)] = p0;
     }
 }
