@@ -56,6 +56,7 @@ namespace Tests.Common;
 [TestFixture]
 [NonParallelizable]
 [Category("Database")]
+[CancelAfter(60000)] // 60 second timeout per test to identify hanging tests
 public abstract partial class DatabaseTests
 {
     protected readonly IRDMPPlatformRepositoryServiceLocator RepositoryLocator;
