@@ -449,6 +449,8 @@ public abstract partial class DatabaseTests
     [SetUp]
     protected virtual void SetUp()
     {
+        Console.WriteLine($"[TEST START] {TestContext.CurrentContext.Test.FullName}");
+        Console.Out.Flush();
     }
 
     [TearDown]

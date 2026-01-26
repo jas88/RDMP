@@ -107,6 +107,8 @@ public abstract class UnitTests
     [SetUp]
     protected virtual void SetUp()
     {
+        Console.WriteLine($"[TEST START] {TestContext.CurrentContext.Test.FullName}");
+        Console.Out.Flush();
     }
 
     /// <summary>
