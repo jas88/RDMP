@@ -4,6 +4,12 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 using System.Runtime.InteropServices;
+using NUnit.Framework;
+
+// Default timeout of 60 seconds per test to catch hanging tests
+#pragma warning disable CS0618 // Timeout is deprecated but CancelAfter doesn't support assembly level
+[assembly: Timeout(60000)]
+#pragma warning restore CS0618
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
