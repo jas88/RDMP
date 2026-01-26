@@ -13,6 +13,7 @@ using Rdmp.Core.MapsDirectlyToDatabaseTable;
 
 namespace Rdmp.Core.Tests.MapsDirectlyToDatabaseTable;
 
+[CancelAfter(60000)] // 60 second timeout per test
 public class PropertyAccessorCacheTests
 {
     private class TestEntity
