@@ -389,7 +389,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v normal --logger "console;verbosity=detailed" || echo "Test run timed out or failed with exit code $?"
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v normal --output Detailed || echo "Test run timed out or failed with exit code $?"
           dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release
           dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release
 
@@ -407,7 +407,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v normal --logger "console;verbosity=detailed" || echo "Test run timed out or failed with exit code $?"
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v normal --output Detailed || echo "Test run timed out or failed with exit code $?"
           dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release
           dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release
 
