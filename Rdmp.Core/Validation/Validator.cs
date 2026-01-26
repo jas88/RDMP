@@ -240,14 +240,15 @@ public class Validator
     }
 
     /// <summary>
-    /// Registers an additional constraint type for testing. Clears the serializer cache
-    /// so the new type will be recognized during XML serialization.
+    /// Registers an additional constraint type for testing. Forces a complete refresh of
+    /// the type list and serializer caches to ensure the exact type instance is used.
     /// </summary>
     public static void AddConstraintTypeForTesting(Type constraintType)
     {
         lock (_oLockExtraTypes)
         {
-            _extraTypes ??= RefreshExtraTypes();
+            // Force complete refresh to pick up types from current assembly load context
+            _extraTypes = RefreshExtraTypes();
             // Remove any existing type with same FullName (may be from different assembly load context)
             // and add the exact type instance provided - this ensures type identity matches at serialization
             _extraTypes.RemoveAll(t => t.FullName == constraintType.FullName);
