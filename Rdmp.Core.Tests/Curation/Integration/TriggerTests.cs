@@ -198,19 +198,19 @@ public class TriggerTests : DatabaseTests
             { "hic_dataLoadRunID", 7 }
         });
 
-        Thread.Sleep(1000);
+        Thread.Sleep(200);
         RunSQL("UPDATE {0} SET bubbles=1", _table.GetFullyQualifiedName());
 
-        Thread.Sleep(1000);
+        Thread.Sleep(200);
         RunSQL("UPDATE {0} SET bubbles=2", _table.GetFullyQualifiedName());
 
-        Thread.Sleep(1000);
+        Thread.Sleep(200);
         RunSQL("UPDATE {0} SET bubbles=3", _table.GetFullyQualifiedName());
 
-        Thread.Sleep(1000);
+        Thread.Sleep(200);
         RunSQL("UPDATE {0} SET bubbles=4", _table.GetFullyQualifiedName());
 
-        Thread.Sleep(1000);
+        Thread.Sleep(200);
 
         Assert.Multiple(() =>
         {

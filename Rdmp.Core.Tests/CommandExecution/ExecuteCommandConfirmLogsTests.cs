@@ -123,7 +123,7 @@ internal class ExecuteCommandConfirmLogsTests : DatabaseTests
         // we mark it as completed successfully - this is a good, happy log entry
         logEntry.CloseAndMarkComplete();
 
-        Thread.Sleep(5000);
+        Thread.Sleep(2000);
 
         // but we want this to have finished in the last second
         var cmd = new ExecuteCommandConfirmLogs(new ThrowImmediatelyActivator(RepositoryLocator), lmd, "00:00:01");

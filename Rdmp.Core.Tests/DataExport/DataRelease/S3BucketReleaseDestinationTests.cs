@@ -76,7 +76,7 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
             BucketName = name,
             UseClientRegion = true
         };
-        _s3Client.PutBucketAsync(request).Wait();
+        _s3Client.PutBucketAsync(request).Wait(TimeSpan.FromSeconds(30));
     }
 
     private static void DeleteBucket(string name)
@@ -85,7 +85,7 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         {
             BucketName = name
         };
-        _s3Client.DeleteBucketAsync(request).Wait();
+        _s3Client.DeleteBucketAsync(request).Wait(TimeSpan.FromSeconds(30));
     }
 
     private static void DeleteBucketAndContents(string name)
@@ -99,7 +99,7 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
                 BucketName = name,
                 Key = obj.Key
             };
-            _s3Client.DeleteObjectAsync(request).Wait();
+            _s3Client.DeleteObjectAsync(request).Wait(TimeSpan.FromSeconds(30));
         }
 
         // Now delete the empty bucket
@@ -112,7 +112,9 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         {
             BucketName = bucketName
         };
-        var response = _s3Client.ListObjectsV2Async(request).Result;
+        var task = _s3Client.ListObjectsV2Async(request);
+        task.Wait(TimeSpan.FromSeconds(30));
+        var response = task.Result;
 
         // Filter out directory markers and empty objects to match MinIO client behavior
         return response.S3Objects
