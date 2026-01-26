@@ -185,7 +185,7 @@ jobs:
         timeout-minutes: 45
         shell: bash
         run: |
-          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
+          dotnet test --project Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
 
       - name: Re-initialise RDMP (File System)
         shell: bash
@@ -197,7 +197,7 @@ jobs:
         timeout-minutes: 30
         shell: bash
         run: |
-          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
+          dotnet test --project Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
@@ -390,9 +390,9 @@ jobs:
         run: |
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
           # Individual tests have 60s timeout via [Timeout] attribute in test base classes
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed
-          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed
-          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed
+          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed
+          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed
 
       - name: Switch to File System Mode
         run: |
@@ -409,9 +409,9 @@ jobs:
         run: |
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
           # Individual tests have 60s timeout via [Timeout] attribute in test base classes
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed
-          dotnet test Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed
-          dotnet test RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed
+          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed
+          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
