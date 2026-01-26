@@ -389,7 +389,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed
+          # Use --hangdump to capture diagnostic info if tests hang (30m timeout before dump)
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed --hangdump --hangdump-timeout 2m
           dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed
           dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed
 
@@ -407,9 +408,20 @@ jobs:
           AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed
+          # Use --hangdump to capture diagnostic info if tests hang (30m timeout before dump)
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed --hangdump --hangdump-timeout 2m
           dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed
           dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed
+
+      - name: Upload hang dumps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hang-dumps
+          path: |
+            **/TestResults/**/*.dmp
+            **/TestResults/**/*.diag
+          if-no-files-found: ignore
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
