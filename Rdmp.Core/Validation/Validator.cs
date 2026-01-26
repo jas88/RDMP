@@ -227,7 +227,7 @@ public class Validator
                     !type.IsInterface
                     &&
                     type.IsClass
-            ).GroupBy(t => t.FullName).Select(g => g.First()).ToList();
+            ).DistinctBy(t => t.FullName).ToList();
         }
     }
 

@@ -4,11 +4,6 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 using System.Runtime.InteropServices;
-using NUnit.Framework;
-
-// Disable parallel test execution to prevent type loading conflicts with MTP
-// (XmlSerializer and MEF see duplicate types when assembly loaded in parallel contexts)
-[assembly: NonParallelizable]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
