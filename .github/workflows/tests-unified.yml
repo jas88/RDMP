@@ -391,9 +391,9 @@ jobs:
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
           # Individual tests have 60s timeout via [CancelAfter] attribute in test base classes
           # MTP --timeout provides global test execution timeout as backup
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed --timeout 35m --diagnostic --diagnostic-synchronous-write -- NUnit.NumberOfTestWorkers=1
-          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed --timeout 10m -- NUnit.NumberOfTestWorkers=1
-          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed --timeout 10m -- NUnit.NumberOfTestWorkers=1
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release --output Detailed --timeout 35m --diagnostic --diagnostic-synchronous-write
+          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release --output Detailed --timeout 10m
+          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release --output Detailed --timeout 10m
 
       - name: Switch to File System Mode
         run: |
@@ -411,9 +411,9 @@ jobs:
           # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
           # Individual tests have 60s timeout via [CancelAfter] attribute in test base classes
           # MTP --timeout provides global test execution timeout as backup
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release -v diag --output Detailed --timeout 35m --diagnostic --diagnostic-synchronous-write -- NUnit.NumberOfTestWorkers=1
-          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release -v diag --output Detailed --timeout 10m -- NUnit.NumberOfTestWorkers=1
-          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release -v diag --output Detailed --timeout 10m -- NUnit.NumberOfTestWorkers=1
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release --output Detailed --timeout 35m --diagnostic --diagnostic-synchronous-write
+          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release --output Detailed --timeout 10m
+          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release --output Detailed --timeout 10m
 
       - name: Upload MTP diagnostic logs
         if: always()
