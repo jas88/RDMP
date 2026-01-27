@@ -383,12 +383,15 @@ jobs:
 
       - name: Test non-UI
         timeout-minutes: 45
+        env:
+          AWS_ENDPOINT_URL: http://127.0.0.1:9000
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
           dotnet test linuxtests.slnf \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --verbosity minimal \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
@@ -400,19 +403,22 @@ jobs:
 
       - name: Test Core (File System Mode)
         timeout-minutes: 45
+        env:
+          AWS_ENDPOINT_URL: http://127.0.0.1:9000
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
           dotnet test linuxtests.slnf \
             --nologo \
             --collect:"XPlat Code Coverage" \
             --verbosity minimal \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
             --results-directory coverage \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Upload coverage
         uses: coverallsapp/github-action@v2.3.7
         with:
-          github-token: ${{ secrets.github_token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           files: ./coverage/**
           flag-name: linux-core
           parallel-finished: true
