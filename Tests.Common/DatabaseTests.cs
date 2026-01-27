@@ -450,6 +450,8 @@ public abstract partial class DatabaseTests
     [SetUp]
     protected virtual void SetUp()
     {
+        // Check cancellation token at start of setup (for [CancelAfter] to work)
+        TestContext.CurrentContext.CancellationToken.ThrowIfCancellationRequested();
         Console.WriteLine($"[TEST START] {TestContext.CurrentContext.Test.FullName}");
         Console.Out.Flush();
     }
@@ -457,6 +459,8 @@ public abstract partial class DatabaseTests
     [TearDown]
     protected void TearDown()
     {
+        // Check cancellation token at start of teardown (for [CancelAfter] to work)
+        TestContext.CurrentContext.CancellationToken.ThrowIfCancellationRequested();
         foreach (var discoveredDatabase in forCleanup)
             try
             {
