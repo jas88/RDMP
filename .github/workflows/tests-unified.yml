@@ -382,51 +382,15 @@ jobs:
           echo $MINIO_PID > /tmp/minio.pid
 
       - name: Test non-UI
-        timeout-minutes: 60
-        env:
-          AWS_ENDPOINT_URL: "http://127.0.0.1:9000"
-          AWS_ACCESS_KEY_ID: minioadmin
-          AWS_SECRET_ACCESS_KEY: minioadmin
+        timeout-minutes: 45
         run: |
-          # Run tests with MTP --timeout to limit runtime (cooperative, requests cancellation)
-          # HangDump monitors inactivity and force-kills hung tests
-          # Workaround: MTP/NUnit hang on shutdown is a known issue (nunit/nunit3-vs-adapter#1282)
-          # We parse output to verify tests passed, then allow timeout to kill the hanging process
-
-          run_tests() {
-            local project=$1
-            local log_file=$(mktemp)
-
-            # Run with timeout that triggers after expected completion time
-            # Tests take ~45min sequential, allow 50min then force kill
-            timeout --signal=SIGTERM --kill-after=30s 50m \
-              dotnet test --project "$project" --no-build -c Release --output Detailed \
-              --hangdump --hangdump-timeout 2m 2>&1 | tee "$log_file"
-            local exit_code=${PIPESTATUS[0]}
-
-            # Check if tests actually passed (look for success indicators)
-            if grep -q "Test run summary: Passed" "$log_file" || \
-               grep -qE "\[\+[0-9]+/x0/" "$log_file"; then
-              echo "Tests passed (exit code $exit_code may be from MTP shutdown hang)"
-              rm -f "$log_file"
-              return 0
-            fi
-
-            # Check if failed due to actual test failures
-            if grep -qE "\[.*x[1-9]" "$log_file" || grep -q "Test run summary: Failed" "$log_file"; then
-              echo "Tests failed"
-              rm -f "$log_file"
-              return 1
-            fi
-
-            # Unknown state - propagate exit code
-            rm -f "$log_file"
-            return $exit_code
-          }
-
-          run_tests Rdmp.Core.Tests/Rdmp.Core.Tests.csproj
-          run_tests Plugins/Plugins.Tests/Plugins.Tests.csproj
-          run_tests RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj
+          dotnet test linuxtests.slnf \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --verbosity minimal \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Switch to File System Mode
         run: |
@@ -435,49 +399,24 @@ jobs:
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
 
       - name: Test Core (File System Mode)
-        timeout-minutes: 60
-        env:
-          AWS_ENDPOINT_URL: "http://127.0.0.1:9000"
-          AWS_ACCESS_KEY_ID: minioadmin
-          AWS_SECRET_ACCESS_KEY: minioadmin
+        timeout-minutes: 45
         run: |
-          # Reuse test runner function from previous step
-          run_tests() {
-            local project=$1
-            local log_file=$(mktemp)
-
-            timeout --signal=SIGTERM --kill-after=30s 50m \
-              dotnet test --project "$project" --no-build -c Release --output Detailed \
-              --hangdump --hangdump-timeout 2m 2>&1 | tee "$log_file"
-            local exit_code=${PIPESTATUS[0]}
-
-            if grep -q "Test run summary: Passed" "$log_file" || \
-               grep -qE "\[\+[0-9]+/x0/" "$log_file"; then
-              echo "Tests passed (exit code $exit_code may be from MTP shutdown hang)"
-              rm -f "$log_file"
-              return 0
-            fi
-
-            if grep -qE "\[.*x[1-9]" "$log_file" || grep -q "Test run summary: Failed" "$log_file"; then
-              echo "Tests failed"
-              rm -f "$log_file"
-              return 1
-            fi
-
-            rm -f "$log_file"
-            return $exit_code
-          }
-
-          run_tests Rdmp.Core.Tests/Rdmp.Core.Tests.csproj
-          run_tests Plugins/Plugins.Tests/Plugins.Tests.csproj
-          run_tests RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj
+          dotnet test linuxtests.slnf \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --verbosity minimal \
+            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
+            --results-directory coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: coverallsapp/github-action@v2.3.7
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/**/coverage.info
-          fail_ci_if_error: false
+          github-token: ${{ secrets.github_token }}
+          files: ./coverage/**
+          flag-name: linux-core
+          parallel-finished: true
+          fail-on-error: false
         continue-on-error: true
 
   # Bundle job - only runs on tagged releases
