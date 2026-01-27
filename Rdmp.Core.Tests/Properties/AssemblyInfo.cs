@@ -6,11 +6,6 @@
 using System.Runtime.InteropServices;
 using NUnit.Framework;
 
-// Default timeout of 60 seconds per test to catch hanging tests
-#pragma warning disable CS0618 // Timeout is deprecated but CancelAfter doesn't support assembly level
-[assembly: Timeout(60000)]
-#pragma warning restore CS0618
-
 // Disable parallel test execution to work around MTP/NUnit hang on shutdown
 // See: https://github.com/nunit/nunit3-vs-adapter/issues/1282
 [assembly: NonParallelizable]
