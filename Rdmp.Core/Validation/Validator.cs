@@ -255,8 +255,19 @@ public class Validator
         // Only scan assemblies accessible from the current context
         return GetAccessibleAssemblies().SelectMany(a =>
         {
-            try { return a.GetTypes(); }
-            catch { return Array.Empty<Type>(); }
+            try
+            {
+                return a.GetTypes();
+            }
+            catch (System.Reflection.ReflectionTypeLoadException ex)
+            {
+                // Return the types that did load successfully (filtering out nulls)
+                return ex.Types.Where(t => t != null);
+            }
+            catch
+            {
+                return Array.Empty<Type>();
+            }
         }).Where(
             type =>
                 type != null &&

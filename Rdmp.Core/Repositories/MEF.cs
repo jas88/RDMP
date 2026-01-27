@@ -212,30 +212,20 @@ public static class MEF
             }
 
             assembliesProcessed++;
-            try
+            foreach (var type in GetTypesSafely(assembly))
             {
-                foreach (var type in assembly.GetTypes())
-                {
-                    foreach (var alias in new[]
-                             {
-                             Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
-                             type.FullName?.ToUpperInvariant()
-                         }.Where(static x => x is not null).Distinct())
-                        if (!typeByName.TryAdd(alias, type) &&
-                            type.FullName?.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase) == true)
-                        {
-                            // Simple hack so Rdmp.Core types like ColumnInfo take precedence over others like System.Data.Select+ColumnInfo
-                            typeByName.Remove(alias);
-                            typeByName.Add(alias, type);
-                        }
-                }
-            }
-            catch (Exception e)
-            {
-                lock (badAssemblies)
-                {
-                    badAssemblies.TryAdd(assembly.FullName, e);
-                }
+                foreach (var alias in new[]
+                         {
+                         Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
+                         type.FullName?.ToUpperInvariant()
+                     }.Where(static x => x is not null).Distinct())
+                    if (!typeByName.TryAdd(alias, type) &&
+                        type.FullName?.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        // Simple hack so Rdmp.Core types like ColumnInfo take precedence over others like System.Data.Select+ColumnInfo
+                        typeByName.Remove(alias);
+                        typeByName.Add(alias, type);
+                    }
             }
         }
 
@@ -264,38 +254,28 @@ public static class MEF
         if (assemblyName?.StartsWith("CommandLine", StringComparison.Ordinal) == true)
             return;
 
-        try
+        foreach (var type in GetTypesSafely(assembly))
         {
-            foreach (var type in assembly.GetTypes())
-            {
-                // Only add if not in primary dictionary
-                var primaryDict = _primaryTypes?.Value;
-                if (primaryDict != null && primaryDict.ContainsKey(type.FullName))
-                    continue; // Already in primary, skip
+            // Only add if not in primary dictionary
+            var primaryDict = _primaryTypes?.Value;
+            if (primaryDict != null && primaryDict.ContainsKey(type.FullName))
+                continue; // Already in primary, skip
 
-                foreach (var alias in new[]
-                         {
-                         Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
-                         type.FullName?.ToUpperInvariant()
-                     }.Where(static x => x is not null).Distinct())
-                {
-                    // Use AddOrUpdate to handle Rdmp.Core precedence
-                    if (type.FullName?.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase) == true)
-                    {
-                        cache.LookasideTypes[alias] = type; // Rdmp.Core takes precedence
-                    }
-                    else
-                    {
-                        cache.LookasideTypes.TryAdd(alias, type);
-                    }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            lock (badAssemblies)
+            foreach (var alias in new[]
+                     {
+                     Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
+                     type.FullName?.ToUpperInvariant()
+                 }.Where(static x => x is not null).Distinct())
             {
-                badAssemblies.TryAdd(assemblyName, e);
+                // Use AddOrUpdate to handle Rdmp.Core precedence
+                if (type.FullName?.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    cache.LookasideTypes[alias] = type; // Rdmp.Core takes precedence
+                }
+                else
+                {
+                    cache.LookasideTypes.TryAdd(alias, type);
+                }
             }
         }
 
@@ -307,6 +287,31 @@ public static class MEF
     {
         var off = full.LastIndexOf(".", StringComparison.Ordinal) + 1;
         return off == 0 ? full : full[off..];
+    }
+
+    /// <summary>
+    /// Gets types from an assembly safely, handling ReflectionTypeLoadException to preserve
+    /// partially loaded types rather than discarding everything.
+    /// </summary>
+    private static IEnumerable<Type> GetTypesSafely(System.Reflection.Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (System.Reflection.ReflectionTypeLoadException ex)
+        {
+            // Return the types that did load successfully (filtering out nulls)
+            return ex.Types.Where(t => t != null);
+        }
+        catch (Exception e)
+        {
+            lock (badAssemblies)
+            {
+                badAssemblies.TryAdd(assembly.FullName, e);
+            }
+            return Array.Empty<Type>();
+        }
     }
 
 
