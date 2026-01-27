@@ -580,22 +580,4 @@ public static class MEF
         return instance;
     }
 
-    /// <summary>
-    /// Registers a type for testing. This method is deprecated - the context-aware caching
-    /// should handle type identity automatically. Kept for backward compatibility.
-    /// </summary>
-    [Obsolete("Context-aware caching should handle type identity automatically. This method may be removed in a future version.")]
-    public static void AddTypeToCatalogForTesting(Type p0)
-    {
-        ArgumentNullException.ThrowIfNull(p0);
-
-        var cache = GetCurrentCache();
-
-        // Add to current context's lookaside
-        cache.LookasideTypes[p0.FullName!] = p0;
-        cache.LookasideTypes[Tail(p0.FullName!)] = p0;
-
-        // Clear type hierarchy cache so GetTypes<T>() includes the new type
-        cache.TypeHierarchyCache.Clear();
-    }
 }

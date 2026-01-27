@@ -190,16 +190,6 @@ public class ItemValidator
     }
 
     /// <summary>
-    /// Resets the cached XmlSerializer so it will be recreated with updated types.
-    /// Called by Validator.AddConstraintTypeForTesting when new types are registered.
-    /// </summary>
-    internal static void ResetSerializer()
-    {
-        var cache = GetCurrentCache();
-        cache.Serializer = null;
-    }
-
-    /// <summary>
     /// Persist the current ItemValidator instance to a string containing XML.
     /// </summary>
     /// <returns>a String</returns>

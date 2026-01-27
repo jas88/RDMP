@@ -280,23 +280,6 @@ public class Validator
         }
     }
 
-    /// <summary>
-    /// Registers an additional constraint type for testing. This method is deprecated -
-    /// the context-aware caching should handle type identity automatically.
-    /// </summary>
-    [Obsolete("Context-aware caching should handle type identity automatically. This method may be removed in a future version.")]
-    public static void AddConstraintTypeForTesting(Type constraintType)
-    {
-        var cache = GetCurrentCache();
-        lock (cache.Lock)
-        {
-            cache.ExtraTypes = RefreshExtraTypes();
-            cache.ExtraTypes.RemoveAll(t => t.FullName == constraintType.FullName);
-            cache.ExtraTypes.Add(constraintType);
-            cache.Serializer = null;
-            ItemValidator.ResetSerializer();
-        }
-    }
 
 
     /// <summary>
