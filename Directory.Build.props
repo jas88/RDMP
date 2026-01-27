@@ -16,4 +16,10 @@
 		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
+
+	<!-- MTP preview with HangDump - force-kills hung tests/MTP hangs -->
+	<ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+		<PackageReference Include="Microsoft.Testing.Platform.MSBuild" />
+		<PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
+	</ItemGroup>
 </Project>

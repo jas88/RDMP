@@ -388,12 +388,12 @@ jobs:
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
-          # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
-          # Individual tests have 60s timeout via [CancelAfter] attribute in test base classes
-          # MTP --timeout provides global test execution timeout as backup
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release --output Detailed --timeout 35m
-          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release --output Detailed --timeout 10m
-          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release --output Detailed --timeout 10m
+          # HangDump monitors for inactivity and force-kills if no test completes within timeout
+          # This handles both hung tests AND MTP infrastructure hangs after test completion
+          # Shell timeout is backup in case HangDump fails
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release --output Detailed --hangdump --hangdump-timeout 2m
+          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release --output Detailed --hangdump --hangdump-timeout 2m
+          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release --output Detailed --hangdump --hangdump-timeout 2m
 
       - name: Switch to File System Mode
         run: |
@@ -408,12 +408,12 @@ jobs:
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
-          # Use timeout to kill after 44 minutes, giving time for cleanup before GitHub's 45-minute timeout
-          # Individual tests have 60s timeout via [CancelAfter] attribute in test base classes
-          # MTP --timeout provides global test execution timeout as backup
-          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release --output Detailed --timeout 35m
-          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release --output Detailed --timeout 10m
-          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release --output Detailed --timeout 10m
+          # HangDump monitors for inactivity and force-kills if no test completes within timeout
+          # This handles both hung tests AND MTP infrastructure hangs after test completion
+          # Shell timeout is backup in case HangDump fails
+          timeout --signal=SIGTERM --kill-after=30s 44m dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --no-build -c Release --output Detailed --hangdump --hangdump-timeout 2m
+          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj --no-build -c Release --output Detailed --hangdump --hangdump-timeout 2m
+          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj --no-build -c Release --output Detailed --hangdump --hangdump-timeout 2m
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
