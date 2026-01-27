@@ -10,6 +10,8 @@ using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -163,8 +165,49 @@ public class Validator
         return ValidateAgainstDictionary();
     }
 
-    //This is static because creating new ones with the Type[] causes memory leaks in unmanaged memory   https://blogs.msdn.microsoft.com/tess/2006/02/15/net-memory-leak-xmlserializing-your-way-to-a-memory-leak/
-    private static XmlSerializer _serializer;
+    // Per-context caches for XmlSerializer and extra types
+    // Using ConditionalWeakTable ensures automatic cleanup when AssemblyLoadContext is unloaded
+    // This is static because creating new XmlSerializers with Type[] causes memory leaks:
+    // https://blogs.msdn.microsoft.com/tess/2006/02/15/net-memory-leak-xmlserializing-your-way-to-a-memory-leak/
+    private static readonly ConditionalWeakTable<AssemblyLoadContext, ContextCache> _contextCaches = new();
+    private static ContextCache _defaultContextCache;
+
+    private sealed class ContextCache
+    {
+        public XmlSerializer Serializer { get; set; }
+        public List<Type> ExtraTypes { get; set; }
+        public readonly object Lock = new();
+    }
+
+    private static AssemblyLoadContext CurrentContext =>
+        AssemblyLoadContext.CurrentContextualReflectionContext ?? AssemblyLoadContext.Default;
+
+    private static ContextCache GetCurrentCache()
+    {
+        var context = AssemblyLoadContext.CurrentContextualReflectionContext;
+        if (context == null)
+        {
+            _defaultContextCache ??= new ContextCache();
+            return _defaultContextCache;
+        }
+        return _contextCaches.GetOrCreateValue(context);
+    }
+
+    /// <summary>
+    /// Gets assemblies accessible from the current context (current + default)
+    /// </summary>
+    private static IEnumerable<System.Reflection.Assembly> GetAccessibleAssemblies()
+    {
+        var current = CurrentContext;
+        var defaultCtx = AssemblyLoadContext.Default;
+
+        return AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a =>
+            {
+                var ctx = AssemblyLoadContext.GetLoadContext(a);
+                return ctx == current || ctx == defaultCtx;
+            });
+    }
 
     /// <summary>
     /// Instantiate a Validator from a (previously saved) XML string.
@@ -176,15 +219,18 @@ public class Validator
         if (string.IsNullOrWhiteSpace(xml))
             return null;
 
-        InitializeSerializer();
-
+        var serializer = GetSerializer();
         var rdr = XmlReader.Create(new StringReader(xml));
-        return (Validator)_serializer.Deserialize(rdr);
+        return (Validator)serializer.Deserialize(rdr);
     }
 
-    private static void InitializeSerializer()
+    private static XmlSerializer GetSerializer()
     {
-        _serializer ??= new XmlSerializer(typeof(Validator), GetExtraTypes().ToArray());
+        var cache = GetCurrentCache();
+        lock (cache.Lock)
+        {
+            return cache.Serializer ??= new XmlSerializer(typeof(Validator), GetExtraTypes().ToArray());
+        }
     }
 
     /// <summary>
@@ -194,67 +240,61 @@ public class Validator
     public string SaveToXml(bool indent = true)
     {
         var sb = new StringBuilder();
-
-        InitializeSerializer();
+        var serializer = GetSerializer();
 
         using (var sw = XmlWriter.Create(sb, new XmlWriterSettings { Indent = indent }))
         {
-            _serializer.Serialize(sw, this);
+            serializer.Serialize(sw, this);
         }
 
         return sb.ToString();
     }
 
-    private static readonly object _oLockExtraTypes = new();
-    private static List<Type> _extraTypes;
-
     private static List<Type> RefreshExtraTypes()
     {
-        lock (_oLockExtraTypes)
+        // Only scan assemblies accessible from the current context
+        return GetAccessibleAssemblies().SelectMany(a =>
         {
-            // Deduplicate by FullName to handle assemblies loaded in multiple AssemblyLoadContexts
-            // (common in test scenarios with MTP where same assembly may be loaded twice)
-            return AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).Where(
-                //type is
-                type =>
-                    type != null &&
-                    //of the correct Type
-                    (typeof(IConstraint).IsAssignableFrom(type) ||
-                     typeof(PredictionRule).IsAssignableFrom(type)) //Constraint or prediction
-                    &&
-                    !type.IsAbstract
-                    &&
-                    !type.IsInterface
-                    &&
-                    type.IsClass
-            ).DistinctBy(t => t.FullName).ToList();
-        }
+            try { return a.GetTypes(); }
+            catch { return Array.Empty<Type>(); }
+        }).Where(
+            type =>
+                type != null &&
+                (typeof(IConstraint).IsAssignableFrom(type) ||
+                 typeof(PredictionRule).IsAssignableFrom(type))
+                &&
+                !type.IsAbstract
+                &&
+                !type.IsInterface
+                &&
+                type.IsClass
+        ).DistinctBy(t => t.FullName).ToList();
     }
 
     public static List<Type> GetExtraTypes()
     {
-        lock (_oLockExtraTypes)
+        var cache = GetCurrentCache();
+        lock (cache.Lock)
         {
-            return _extraTypes ??= RefreshExtraTypes();
+            return cache.ExtraTypes ??= RefreshExtraTypes();
         }
     }
 
     /// <summary>
-    /// Registers an additional constraint type for testing. Forces a complete refresh of
-    /// the type list and serializer caches to ensure the exact type instance is used.
+    /// Registers an additional constraint type for testing. This method is deprecated -
+    /// the context-aware caching should handle type identity automatically.
     /// </summary>
+    [Obsolete("Context-aware caching should handle type identity automatically. This method may be removed in a future version.")]
     public static void AddConstraintTypeForTesting(Type constraintType)
     {
-        lock (_oLockExtraTypes)
+        var cache = GetCurrentCache();
+        lock (cache.Lock)
         {
-            // Force complete refresh to pick up types from current assembly load context
-            _extraTypes = RefreshExtraTypes();
-            // Remove any existing type with same FullName (may be from different assembly load context)
-            // and add the exact type instance provided - this ensures type identity matches at serialization
-            _extraTypes.RemoveAll(t => t.FullName == constraintType.FullName);
-            _extraTypes.Add(constraintType);
-            _serializer = null; // Reset serializer so it picks up the new type
-            ItemValidator.ResetSerializer(); // Also reset ItemValidator's serializer
+            cache.ExtraTypes = RefreshExtraTypes();
+            cache.ExtraTypes.RemoveAll(t => t.FullName == constraintType.FullName);
+            cache.ExtraTypes.Add(constraintType);
+            cache.Serializer = null;
+            ItemValidator.ResetSerializer();
         }
     }
 

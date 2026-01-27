@@ -23,9 +23,6 @@ public class EndToEndDLECacheTest : TestsRequiringADle
     [Test]
     public void RunEndToEndDLECacheTest()
     {
-        MEF.AddTypeToCatalogForTesting(typeof(TestDataWriter));
-        MEF.AddTypeToCatalogForTesting(typeof(TestDataInventor));
-
         const int timeoutInMilliseconds = 120000;
 
         var lmd = TestLoadMetadata;

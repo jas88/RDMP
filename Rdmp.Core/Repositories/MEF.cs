@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using System.Threading;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Repositories.Construction;
@@ -20,78 +22,128 @@ namespace Rdmp.Core.Repositories;
 /// <summary>
 /// Provides support for downloading Plugins out of the Catalogue Database, identifying Exports and building the
 /// <see cref="SafeDirectoryCatalog"/>.  It also includes methods for creating instances of the exported Types.
-/// 
+///
 /// <para>The class name MEF is a misnomer because historically we used the Managed Extensibility Framework (but now we
 /// just grab everything with reflection)</para>
+///
+/// <para>This class is AssemblyLoadContext-aware: each context gets its own type cache containing only types
+/// accessible from that context (the context itself + the default context). This ensures correct type identity
+/// in test scenarios where assemblies may be loaded in multiple contexts.</para>
 /// </summary>
 public static class MEF
 {
     // Primary type source: CompiledTypeRegistry (FrozenDictionary) if available, otherwise reflection-based
-    private static Lazy<IReadOnlyDictionary<string, Type>> _primaryTypes = null;
+    // This is shared across all contexts since it's built from the default context's assemblies
+    private static Lazy<IReadOnlyDictionary<string, Type>> _primaryTypes;
 
-    // Lookaside cache for runtime-loaded assemblies not in CompiledTypeRegistry
-    private static readonly ConcurrentDictionary<string, Type> _lookasideTypes = new(StringComparer.OrdinalIgnoreCase);
+    // Per-context caches - automatically cleaned up when context is unloaded
+    private static readonly ConditionalWeakTable<AssemblyLoadContext, ContextCache> _contextCaches = new();
 
-    // Cache for type hierarchy queries (GetTypes<T>)
-    private static readonly ConcurrentDictionary<Type, Type[]> TypeCache = new();
+    // Cache for the default context (used when CurrentContextualReflectionContext is null)
+    private static ContextCache _defaultContextCache;
 
     private static readonly Dictionary<string, Exception> badAssemblies = new();
 
-    // Track assemblies already processed to avoid duplicate work
-    private static readonly HashSet<string> _processedAssemblies = new();
+    /// <summary>
+    /// Per-AssemblyLoadContext cache for types and type hierarchies
+    /// </summary>
+    private sealed class ContextCache
+    {
+        public ConcurrentDictionary<string, Type> LookasideTypes { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public ConcurrentDictionary<Type, Type[]> TypeHierarchyCache { get; } = new();
+        public HashSet<string> ProcessedAssemblies { get; } = new();
+    }
 
     static MEF()
     {
-        AppDomain.CurrentDomain.AssemblyLoad += Flush;
-        Flush(null, null);
+        AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoad;
+        Initialize();
     }
 
-    private static void Flush(object _1, AssemblyLoadEventArgs ale)
+    private static void Initialize()
     {
-        // On initialization, create primary type source
-        if (ale is null)
-        {
-            if (_primaryTypes is null)
-            {
+        _primaryTypes ??= new Lazy<IReadOnlyDictionary<string, Type>>(PopulatePrimary,
+            LazyThreadSafetyMode.ExecutionAndPublication);
+        _defaultContextCache ??= new ContextCache();
 #if DEBUG
-                Console.WriteLine("MEF: Initializing primary type source");
+        Console.WriteLine("MEF: Initialized with context-aware caching");
 #endif
-                _primaryTypes = new Lazy<IReadOnlyDictionary<string, Type>>(PopulatePrimary,
-                    LazyThreadSafetyMode.ExecutionAndPublication);
-            }
-            return;
-        }
-
-        // On assembly load, add to lookaside only
-        var loadedAssembly = ale.LoadedAssembly;
-        if (loadedAssembly != null)
-        {
-            AddAssemblyToLookaside(loadedAssembly);
-        }
-
-        // Clear type hierarchy cache as new types may affect inheritance queries
-        TypeCache.Clear();
     }
 
     /// <summary>
-    /// Forces a refresh of the MEF type cache. Use this after dynamically loading assemblies
-    /// that need to be discovered. This is primarily for testing scenarios where assemblies
-    /// are loaded via typeof() after MEF has already been initialized.
+    /// Gets the current AssemblyLoadContext, or Default if not in a custom context
+    /// </summary>
+    private static AssemblyLoadContext CurrentContext =>
+        AssemblyLoadContext.CurrentContextualReflectionContext ?? AssemblyLoadContext.Default;
+
+    /// <summary>
+    /// Gets the cache for the current context
+    /// </summary>
+    private static ContextCache GetCurrentCache()
+    {
+        var context = AssemblyLoadContext.CurrentContextualReflectionContext;
+        if (context == null)
+            return _defaultContextCache;
+
+        return _contextCaches.GetOrCreateValue(context);
+    }
+
+    /// <summary>
+    /// Gets assemblies accessible from the current context (current + default)
+    /// </summary>
+    private static IEnumerable<System.Reflection.Assembly> GetAccessibleAssemblies()
+    {
+        var current = CurrentContext;
+        var defaultCtx = AssemblyLoadContext.Default;
+
+        return AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a =>
+            {
+                var ctx = AssemblyLoadContext.GetLoadContext(a);
+                return ctx == current || ctx == defaultCtx;
+            });
+    }
+
+    private static void OnAssemblyLoad(object _1, AssemblyLoadEventArgs ale)
+    {
+        var loadedAssembly = ale?.LoadedAssembly;
+        if (loadedAssembly == null)
+            return;
+
+        // Determine which context the assembly was loaded into
+        var assemblyContext = AssemblyLoadContext.GetLoadContext(loadedAssembly);
+
+        // Add to the appropriate context's cache
+        if (assemblyContext == AssemblyLoadContext.Default)
+        {
+            AddAssemblyToCache(loadedAssembly, _defaultContextCache);
+        }
+        else if (assemblyContext != null)
+        {
+            var cache = _contextCaches.GetOrCreateValue(assemblyContext);
+            AddAssemblyToCache(loadedAssembly, cache);
+        }
+    }
+
+    /// <summary>
+    /// Forces a refresh of the MEF type cache for the current context.
+    /// Use this after dynamically loading assemblies that need to be discovered.
     /// </summary>
     public static void RefreshTypes()
     {
-        // Clear lookaside and re-scan all assemblies
-        _lookasideTypes.Clear();
-        lock (_processedAssemblies)
+        var cache = GetCurrentCache();
+
+        cache.LookasideTypes.Clear();
+        cache.TypeHierarchyCache.Clear();
+        lock (cache.ProcessedAssemblies)
         {
-            _processedAssemblies.Clear();
+            cache.ProcessedAssemblies.Clear();
         }
 
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        foreach (var assembly in GetAccessibleAssemblies())
         {
-            AddAssemblyToLookaside(assembly);
+            AddAssemblyToCache(assembly, cache);
         }
-        TypeCache.Clear();
     }
 
     private static IReadOnlyDictionary<string, Type> PopulatePrimary()
@@ -196,15 +248,15 @@ public static class MEF
     }
 
     /// <summary>
-    /// Add types from a runtime-loaded assembly to the lookaside cache if not already in primary
+    /// Add types from a runtime-loaded assembly to the specified context cache
     /// </summary>
-    private static void AddAssemblyToLookaside(System.Reflection.Assembly assembly)
+    private static void AddAssemblyToCache(System.Reflection.Assembly assembly, ContextCache cache)
     {
-        // Skip if already processed
+        // Skip if already processed in this cache
         var assemblyName = assembly.FullName;
-        lock (_processedAssemblies)
+        lock (cache.ProcessedAssemblies)
         {
-            if (!_processedAssemblies.Add(assemblyName))
+            if (!cache.ProcessedAssemblies.Add(assemblyName))
                 return; // Already processed
         }
 
@@ -230,11 +282,11 @@ public static class MEF
                     // Use AddOrUpdate to handle Rdmp.Core precedence
                     if (type.FullName?.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase) == true)
                     {
-                        _lookasideTypes[alias] = type; // Rdmp.Core takes precedence
+                        cache.LookasideTypes[alias] = type; // Rdmp.Core takes precedence
                     }
                     else
                     {
-                        _lookasideTypes.TryAdd(alias, type);
+                        cache.LookasideTypes.TryAdd(alias, type);
                     }
                 }
             }
@@ -246,6 +298,9 @@ public static class MEF
                 badAssemblies.TryAdd(assemblyName, e);
             }
         }
+
+        // Clear type hierarchy cache as new types may affect inheritance queries
+        cache.TypeHierarchyCache.Clear();
     }
 
     private static string Tail(string full)
@@ -260,7 +315,7 @@ public static class MEF
     /// if the Type is not found.
     ///
     /// <para>This method supports both fully qualified Type names and Name only (although this is slower).  Answers
-    /// are cached.</para>
+    /// are cached per AssemblyLoadContext.</para>
     /// </summary>
     /// <param name="typeName"></param>
     /// <returns></returns>
@@ -268,12 +323,12 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
-        // Check lookaside first - these are runtime-loaded types including test types
-        // Checking lookaside first ensures types registered via AddTypeToCatalogForTesting
-        // take precedence, preserving type identity for IsAssignableFrom checks
-        if (_lookasideTypes.TryGetValue(typeName, out var type))
+        var cache = GetCurrentCache();
+
+        // Check context-specific lookaside first - these are runtime-loaded types
+        if (cache.LookasideTypes.TryGetValue(typeName, out var type))
             return type;
-        if (_lookasideTypes.TryGetValue(Tail(typeName), out type))
+        if (cache.LookasideTypes.TryGetValue(Tail(typeName), out type))
             return type;
 
         // Fast path: Check primary dictionary (FrozenDictionary from CompiledTypeRegistry)
@@ -291,20 +346,20 @@ public static class MEF
         if (type != null)
         {
             // Add to lookaside for future lookups
-            _lookasideTypes.TryAdd(typeName, type);
-            _lookasideTypes.TryAdd(Tail(typeName), type);
+            cache.LookasideTypes.TryAdd(typeName, type);
+            cache.LookasideTypes.TryAdd(Tail(typeName), type);
             return type;
         }
 
-        // Still not found - scan all loaded assemblies as last resort
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        // Still not found - scan accessible assemblies only (current context + default)
+        foreach (var assembly in GetAccessibleAssemblies())
         {
             type = assembly.GetType(typeName);
             if (type != null)
             {
                 // Add to lookaside for future lookups
-                _lookasideTypes.TryAdd(typeName, type);
-                _lookasideTypes.TryAdd(Tail(typeName), type);
+                cache.LookasideTypes.TryAdd(typeName, type);
+                cache.LookasideTypes.TryAdd(Tail(typeName), type);
                 return type;
             }
         }
@@ -332,10 +387,10 @@ public static class MEF
     }
 
     /// <summary>
-    /// 
+    ///
     /// <para>Turns the legit C# name:
     /// DataLoadEngine.DataFlowPipeline.IDataFlowSource`1[[System.Data.DataTable, System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]</para>
-    /// 
+    ///
     /// <para>Into a proper C# code:
     /// IDataFlowSource&lt;DataTable&gt;</para>
     /// </summary>
@@ -362,16 +417,18 @@ public static class MEF
 
     /// <summary>
     /// Returns MEF exported Types which inherit or implement <paramref name="type"/>.  E.g. pass IAttacher to see
-    /// all exported implementers
+    /// all exported implementers. Results are cached per AssemblyLoadContext.
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
     private static IEnumerable<Type> GetTypes(Type type)
     {
-        return TypeCache.GetOrAdd(type, target =>
+        var cache = GetCurrentCache();
+
+        return cache.TypeHierarchyCache.GetOrAdd(type, target =>
         {
-            // Combine lookaside and primary types (lookaside first for test type priority)
-            var allTypes = _lookasideTypes.Values
+            // Combine lookaside and primary types (lookaside first for context-specific types)
+            var allTypes = cache.LookasideTypes.Values
                 .Concat(_primaryTypes.Value.Values)
                 .Distinct();
 
@@ -482,10 +539,11 @@ public static class MEF
     /// <returns></returns>
     public static IEnumerable<Type> GetGenericTypes(Type genericType, Type typeOfT)
     {
+        var cache = GetCurrentCache();
         var target = genericType.MakeGenericType(typeOfT);
 
-        // Combine primary and lookaside types
-        var allTypes = _primaryTypes.Value.Values.Concat(_lookasideTypes.Values).Distinct();
+        // Combine primary and context-specific lookaside types
+        var allTypes = _primaryTypes.Value.Values.Concat(cache.LookasideTypes.Values).Distinct();
 
         return allTypes
             .Where(t => !t.IsAbstract && !t.IsGenericType && target.IsAssignableFrom(t))
@@ -494,9 +552,11 @@ public static class MEF
 
     public static IEnumerable<Type> GetAllTypes()
     {
-        // Combine primary and lookaside types
+        var cache = GetCurrentCache();
+
+        // Combine primary and context-specific lookaside types
         return _primaryTypes.Value.Values
-            .Concat(_lookasideTypes.Values)
+            .Concat(cache.LookasideTypes.Values)
             .Distinct();
     }
 
@@ -520,17 +580,22 @@ public static class MEF
         return instance;
     }
 
+    /// <summary>
+    /// Registers a type for testing. This method is deprecated - the context-aware caching
+    /// should handle type identity automatically. Kept for backward compatibility.
+    /// </summary>
+    [Obsolete("Context-aware caching should handle type identity automatically. This method may be removed in a future version.")]
     public static void AddTypeToCatalogForTesting(Type p0)
     {
         ArgumentNullException.ThrowIfNull(p0);
 
-        // Force-add to lookaside, overwriting any existing entry
-        // This ensures the exact Type instance passed by tests is used,
-        // preserving type identity for IsAssignableFrom checks
-        _lookasideTypes[p0.FullName!] = p0;
-        _lookasideTypes[Tail(p0.FullName!)] = p0;
+        var cache = GetCurrentCache();
+
+        // Add to current context's lookaside
+        cache.LookasideTypes[p0.FullName!] = p0;
+        cache.LookasideTypes[Tail(p0.FullName!)] = p0;
 
         // Clear type hierarchy cache so GetTypes<T>() includes the new type
-        TypeCache.Clear();
+        cache.TypeHierarchyCache.Clear();
     }
 }

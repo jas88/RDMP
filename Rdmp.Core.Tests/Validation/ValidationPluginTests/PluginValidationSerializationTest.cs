@@ -17,9 +17,6 @@ public class PluginValidationSerializationTest
     [Test]
     public void TestSerialization()
     {
-        // Register the custom constraint type so XmlSerializer knows about it
-        Validator.AddConstraintTypeForTesting(typeof(FishConstraint));
-
         var v = new Validator();
         var iv = new ItemValidator("fish")
         {

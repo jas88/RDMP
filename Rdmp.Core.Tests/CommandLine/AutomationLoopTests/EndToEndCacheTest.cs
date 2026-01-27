@@ -42,9 +42,6 @@ public class EndToEndCacheTest : DatabaseTests
     {
         base.SetUp();
 
-        MEF.AddTypeToCatalogForTesting(typeof(TestDataWriter));
-        MEF.AddTypeToCatalogForTesting(typeof(TestDataInventor));
-
         _lmd = new LoadMetadata(CatalogueRepository, "Ive got a lovely bunch o' coconuts");
         _LoadDirectory =
             LoadDirectory.CreateDirectoryStructure(new DirectoryInfo(TestContext.CurrentContext.TestDirectory),
@@ -79,9 +76,6 @@ public class EndToEndCacheTest : DatabaseTests
     [Test]
     public void FireItUpManually()
     {
-        MEF.AddTypeToCatalogForTesting(typeof(TestDataWriter));
-        MEF.AddTypeToCatalogForTesting(typeof(TestDataInventor));
-
         var cachingHost = new CachingHost(CatalogueRepository)
         {
             CacheProgress = _cp

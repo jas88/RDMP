@@ -54,7 +54,6 @@ internal class PluginProcessTaskUITests : UITests
     [UITimeout(20000)]
     public void PluginProcessTaskUI_InvalidParameter_Date()
     {
-        MEF.AddTypeToCatalogForTesting(typeof(OmgDates));
         var pt = WhenIHaveA<ProcessTask>();
         pt.Path = typeof(OmgDates).FullName;
         var arg = pt.CreateArgumentsForClassIfNotExists<OmgDates>().Single();

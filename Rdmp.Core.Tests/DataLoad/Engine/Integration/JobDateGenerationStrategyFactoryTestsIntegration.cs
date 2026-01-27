@@ -38,9 +38,6 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
     {
         base.SetUp();
 
-        MEF.AddTypeToCatalogForTesting(typeof(TestDataWriter));
-        MEF.AddTypeToCatalogForTesting(typeof(TestDataInventor));
-
         _lmd = new LoadMetadata(CatalogueRepository, "JobDateGenerationStrategyFactoryTestsIntegration");
         _lp = new LoadProgress(CatalogueRepository, _lmd)
         {
