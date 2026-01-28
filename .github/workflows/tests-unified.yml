@@ -416,13 +416,11 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Upload coverage
-        uses: coverallsapp/github-action@v2.3.7
+        uses: codecov/codecov-action@v5
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          files: ./coverage/**
-          flag-name: linux-core
-          parallel-finished: true
-          fail-on-error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/**/coverage.info
+          fail_ci_if_error: false
         continue-on-error: true
 
   # Bundle job - only runs on tagged releases
