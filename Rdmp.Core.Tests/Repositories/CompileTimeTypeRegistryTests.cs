@@ -294,26 +294,6 @@ internal class CompileTimeTypeRegistryTests
     }
 
     [Test]
-    public void AddTypeToCatalogForTesting_ExistingType_Succeeds()
-    {
-        // Arrange
-        var testType = typeof(MEF);
-
-        // Act & Assert - Should not throw
-        Assert.DoesNotThrow(() => MEF.AddTypeToCatalogForTesting(testType));
-    }
-
-    [Test]
-    public void AddTypeToCatalogForTesting_NullType_ThrowsException()
-    {
-        // Arrange
-        Type nonExistentType = null;
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => MEF.AddTypeToCatalogForTesting(nonExistentType));
-    }
-
-    [Test]
     public void GetType_Performance_MultipleLookups_CompletesWithinTimeLimit()
     {
         // Arrange

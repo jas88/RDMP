@@ -45,10 +45,24 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         {
             RegionEndpoint = RegionEndpoint.USEast1, // MinIO default
             ServiceURL = $"http://{Endpoint}",
-            ForcePathStyle = true // Required for MinIO compatibility
+            ForcePathStyle = true, // Required for MinIO compatibility
+            Timeout = TimeSpan.FromSeconds(5), // Don't hang forever if MinIO isn't running
+            MaxErrorRetry = 0 // Fail fast
         };
 
         _s3Client = new AmazonS3Client(Username, Password, config);
+
+        // Check if MinIO is actually available - skip tests if not
+        try
+        {
+            var task = _s3Client.ListBucketsAsync();
+            if (!task.Wait(TimeSpan.FromSeconds(5)))
+                Assert.Ignore("MinIO is not available at " + Endpoint + " (connection timed out)");
+        }
+        catch
+        {
+            Assert.Ignore("MinIO is not available at " + Endpoint);
+        }
     }
 
     private void DoExtraction()
@@ -64,7 +78,9 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
             BucketName = name,
             UseClientRegion = true
         };
-        _s3Client.PutBucketAsync(request).Wait();
+        var task = _s3Client.PutBucketAsync(request);
+        if (!task.Wait(TimeSpan.FromSeconds(30)))
+            throw new TimeoutException($"MakeBucket '{name}' timed out after 30 seconds");
     }
 
     private static void DeleteBucket(string name)
@@ -73,7 +89,9 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         {
             BucketName = name
         };
-        _s3Client.DeleteBucketAsync(request).Wait();
+        var task = _s3Client.DeleteBucketAsync(request);
+        if (!task.Wait(TimeSpan.FromSeconds(30)))
+            throw new TimeoutException($"DeleteBucket '{name}' timed out after 30 seconds");
     }
 
     private static void DeleteBucketAndContents(string name)
@@ -87,7 +105,9 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
                 BucketName = name,
                 Key = obj.Key
             };
-            _s3Client.DeleteObjectAsync(request).Wait();
+            var task = _s3Client.DeleteObjectAsync(request);
+            if (!task.Wait(TimeSpan.FromSeconds(30)))
+                throw new TimeoutException($"DeleteObject '{obj.Key}' in bucket '{name}' timed out after 30 seconds");
         }
 
         // Now delete the empty bucket
@@ -100,7 +120,10 @@ public sealed class S3BucketReleaseDestinationTests : TestsRequiringAnExtraction
         {
             BucketName = bucketName
         };
-        var response = _s3Client.ListObjectsV2Async(request).Result;
+        var task = _s3Client.ListObjectsV2Async(request);
+        if (!task.Wait(TimeSpan.FromSeconds(30)))
+            throw new TimeoutException($"GetObjects for bucket '{bucketName}' timed out after 30 seconds");
+        var response = task.Result;
 
         // Filter out directory markers and empty objects to match MinIO client behavior
         return response.S3Objects

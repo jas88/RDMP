@@ -185,7 +185,7 @@ jobs:
         timeout-minutes: 45
         shell: bash
         run: |
-          dotnet test --project Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
+          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
 
       - name: Re-initialise RDMP (File System)
         shell: bash
@@ -197,7 +197,7 @@ jobs:
         timeout-minutes: 30
         shell: bash
         run: |
-          dotnet test --project Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
+          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
@@ -383,16 +383,17 @@ jobs:
 
       - name: Test non-UI
         timeout-minutes: 45
+        env:
+          AWS_ENDPOINT_URL: http://127.0.0.1:9000
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
-          dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --no-build -c Release
-          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --no-build -c Release
-          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --no-build -c Release
+          dotnet test linuxtests.slnf \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --verbosity minimal \
+            --results-directory coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Switch to File System Mode
         run: |
@@ -402,16 +403,17 @@ jobs:
 
       - name: Test Core (File System Mode)
         timeout-minutes: 45
+        env:
+          AWS_ENDPOINT_URL: http://127.0.0.1:9000
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
         run: |
-          dotnet test --project Rdmp.Core.Tests/Rdmp.Core.Tests.csproj \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --no-build -c Release
-          dotnet test --project Plugins/Plugins.Tests/Plugins.Tests.csproj \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --no-build -c Release
-          dotnet test --project RdmpDicom/Rdmp.Dicom.Tests/Rdmp.Dicom.Tests.csproj \
-            -e AWS_ENDPOINT_URL="http://127.0.0.1:9000" \
-            --no-build -c Release
+          dotnet test linuxtests.slnf \
+            --nologo \
+            --collect:"XPlat Code Coverage" \
+            --verbosity minimal \
+            --results-directory coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5

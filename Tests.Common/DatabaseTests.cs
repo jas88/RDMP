@@ -56,6 +56,7 @@ namespace Tests.Common;
 [TestFixture]
 [NonParallelizable]
 [Category("Database")]
+[CancelAfter(60000)] // 60 second timeout per test to identify hanging tests
 public abstract partial class DatabaseTests
 {
     protected readonly IRDMPPlatformRepositoryServiceLocator RepositoryLocator;
@@ -449,11 +450,17 @@ public abstract partial class DatabaseTests
     [SetUp]
     protected virtual void SetUp()
     {
+        // Check cancellation token at start of setup (for [CancelAfter] to work)
+        TestContext.CurrentContext.CancellationToken.ThrowIfCancellationRequested();
+        Console.WriteLine($"[TEST START] {TestContext.CurrentContext.Test.FullName}");
+        Console.Out.Flush();
     }
 
     [TearDown]
     protected void TearDown()
     {
+        // Check cancellation token at start of teardown (for [CancelAfter] to work)
+        TestContext.CurrentContext.CancellationToken.ThrowIfCancellationRequested();
         foreach (var discoveredDatabase in forCleanup)
             try
             {

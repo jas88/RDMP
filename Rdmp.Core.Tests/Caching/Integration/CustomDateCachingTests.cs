@@ -35,9 +35,6 @@ public class CustomDateCachingTests : DatabaseTests
     [TestCase(true)]
     public void FetchMultipleDays_Success(bool singleDay)
     {
-        MEF.AddTypeToCatalogForTesting(typeof(TestCacheSource));
-        MEF.AddTypeToCatalogForTesting(typeof(TestCacheDestination));
-
         // Create a pipeline that will record the cache chunks
         var sourceComponent = Substitute.For<IPipelineComponent>();
         sourceComponent.Class.Returns("CachingEngineTests.Integration.TestCacheSource");

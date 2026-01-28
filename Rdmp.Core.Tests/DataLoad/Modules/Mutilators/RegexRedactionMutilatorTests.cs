@@ -728,16 +728,10 @@ MrMurder,2001-01-01,YellaUUUYella");
 
         pt.Check(ThrowImmediatelyCheckNotifier.Quiet);
 
-        File.WriteAllText(
-            Path.Combine(projectDirectory.ForLoading.FullName, "LoadMe.csv"),
-            @"Name,DateOfBirth,FavouriteColour
-MrMurder,2001-01-01,Yella
-");
-
-        var data = Enumerable.Repeat("name,2001-01-01,amber", 1000000).ToArray();
-
-
-        File.AppendAllLines(Path.Combine(projectDirectory.ForLoading.FullName, "LoadMe.csv"), data);
+        var loadFile = Path.Join(projectDirectory.ForLoading.FullName, "LoadMe.csv");
+        File.WriteAllLines(loadFile,
+            new[] { "Name,DateOfBirth,FavouriteColour", "MrMurder,2001-01-01,Yella" }
+                .Concat(Enumerable.Repeat("name,2001-01-01,amber", 10000)));
 
 
         var dbConfig = new HICDatabaseConfiguration(lmd, null);

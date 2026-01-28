@@ -50,6 +50,8 @@ namespace Tests.Common;
 /// Base class for all tests that want to create objects only in memory (and not in database like <see cref="DatabaseTests"/>)
 /// </summary>
 [Category("Unit")]
+[NonParallelizable] // Disable parallel execution to identify deadlocks
+[CancelAfter(60000)] // 60 second timeout per test to identify hanging tests
 public abstract class UnitTests
 {
     protected MemoryDataExportRepository Repository = new();
@@ -107,6 +109,10 @@ public abstract class UnitTests
     [SetUp]
     protected virtual void SetUp()
     {
+        // Check cancellation token at start of setup (for [CancelAfter] to work)
+        TestContext.CurrentContext.CancellationToken.ThrowIfCancellationRequested();
+        Console.WriteLine($"[TEST START] {TestContext.CurrentContext.Test.FullName}");
+        Console.Out.Flush();
     }
 
     /// <summary>

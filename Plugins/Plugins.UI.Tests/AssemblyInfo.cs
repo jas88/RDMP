@@ -8,3 +8,7 @@ using NUnit.Framework;
 
 // UI tests are Windows-only since RDMP UI is a Windows desktop application
 [assembly: Platform("Win")]
+
+// Disable parallel test execution to work around MTP/NUnit hang on shutdown
+// See: https://github.com/nunit/nunit3-vs-adapter/issues/1282
+[assembly: NonParallelizable]

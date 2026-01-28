@@ -6,6 +6,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -166,8 +168,26 @@ public class ItemValidator
 
     #endregion
 
-    //This is static because creating new ones with the Type[] causes memory leaks in unmanaged memory   https://blogs.msdn.microsoft.com/tess/2006/02/15/net-memory-leak-xmlserializing-your-way-to-a-memory-leak/
-    private static XmlSerializer _serializer;
+    // Per-context cache for XmlSerializer to avoid memory leaks while maintaining context isolation
+    // https://blogs.msdn.microsoft.com/tess/2006/02/15/net-memory-leak-xmlserializing-your-way-to-a-memory-leak/
+    private static readonly ConditionalWeakTable<AssemblyLoadContext, SerializerCache> _contextCaches = new();
+    private static SerializerCache _defaultCache;
+
+    private sealed class SerializerCache
+    {
+        public XmlSerializer Serializer { get; set; }
+    }
+
+    private static SerializerCache GetCurrentCache()
+    {
+        var context = AssemblyLoadContext.CurrentContextualReflectionContext;
+        if (context == null)
+        {
+            _defaultCache ??= new SerializerCache();
+            return _defaultCache;
+        }
+        return _contextCaches.GetOrCreateValue(context);
+    }
 
     /// <summary>
     /// Persist the current ItemValidator instance to a string containing XML.
@@ -175,13 +195,14 @@ public class ItemValidator
     /// <returns>a String</returns>
     public string SaveToXml(bool indent = true)
     {
-        _serializer ??= new XmlSerializer(typeof(ItemValidator), Validator.GetExtraTypes().ToArray());
+        var cache = GetCurrentCache();
+        cache.Serializer ??= new XmlSerializer(typeof(ItemValidator), Validator.GetExtraTypes().ToArray());
 
         var sb = new StringBuilder();
 
         using (var sw = XmlWriter.Create(sb, new XmlWriterSettings { Indent = indent }))
         {
-            _serializer.Serialize(sw, this);
+            cache.Serializer.Serialize(sw, this);
         }
 
         return sb.ToString();

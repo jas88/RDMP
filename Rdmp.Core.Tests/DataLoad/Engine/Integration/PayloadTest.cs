@@ -43,8 +43,6 @@ public class PayloadTest : DatabaseTests
                 .RootPath.FullName;
         lmd.SaveToDatabase();
 
-        MEF.AddTypeToCatalogForTesting(typeof(PayloadTest.TestPayloadAttacher));
-
         b.catalogue.LoggingDataTask = "TestPayloadInjection";
         b.catalogue.SaveToDatabase();
         lmd.LinkToCatalogue(b.catalogue);
