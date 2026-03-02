@@ -463,7 +463,7 @@ jobs:
         run: dotnet nuget push dist/HIC.RDMP.Plugin*.nupkg -s https://api.nuget.org/v3/index.json --skip-duplicate -k ${{ secrets.NUGET_KEY }}
 
       - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@2.11.3
+        uses: svenstaro/upload-release-action@2.11.4
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: dist/*
