@@ -130,14 +130,14 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
         var toReturn = new DataTable();
         toReturn.BeginLoadData();
 
-        var rowEnumerator = worksheet.GetRowEnumerator();
+        var rowEnumerator = worksheet.GetEnumerator();
         var nColumns = -1;
 
         var nonBlankColumns = new Dictionary<int, DataColumn>();
 
         while (rowEnumerator.MoveNext())
         {
-            var row = (IRow)rowEnumerator.Current;
+            var row = rowEnumerator.Current;
             if (rowOffset - 1 > row.RowNum) continue;// .RowNumber is 0 indexed
 
             //if all the cells in the current row are blank skip it (eliminates top of file whitespace)
@@ -246,21 +246,16 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
     /// <param name="cell">The cell whose value you want to retrieve</param>
     /// <param name="treatAs">Leave blank, used in recursion for dealing with Formula cells</param>
     /// <returns></returns>
-    private object GetCellValue([CanBeNull] ICell cell, CellType treatAs = CellType.Unknown)
+    private object GetCellValue([CanBeNull] ICell cell, CellType? treatAs = null)
     {
         if (cell == null)
             return null;
 
-        treatAs = treatAs switch
-        {
-            CellType.Formula => throw new Exception("Cannot treat the cell contents as a Formula"),
-            CellType.Unknown => cell.CellType,
-            _ => treatAs
-        };
+        treatAs ??= cell.CellType;
 
         switch (treatAs)
         {
-            case CellType.Unknown:
+            default:
                 return cell.ToString();
             case CellType.Numeric:
 
@@ -297,8 +292,6 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
                 return cell.BooleanCellValue;
             case CellType.Error:
                 return null;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(treatAs));
         }
     }
 
