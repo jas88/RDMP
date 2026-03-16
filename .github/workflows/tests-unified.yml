@@ -232,13 +232,6 @@ jobs:
         run: |
           npx markdown-link-check --quiet README.md Documentation/**/*.md || true
 
-      - name: Upload Windows UI coverage
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/**/coverage.info
-          fail_ci_if_error: false
-        continue-on-error: true
 
   # Linux Database Tests
   tests_linux_db:
@@ -419,7 +412,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/**/coverage.info
+          directory: ./coverage
           fail_ci_if_error: false
         continue-on-error: true
 
