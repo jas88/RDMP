@@ -11,7 +11,7 @@
 	</PropertyGroup>
 
 	<!-- Coverlet for test projects -->
-	<ItemGroup Condition="$(MSBuildProjectName.Contains('Test'))">
+	<ItemGroup Condition="'$(IsTestProject)' == 'true'">
 		<PackageReference Include="coverlet.collector" PrivateAssets="All" />
 	</ItemGroup>
 </Project>
