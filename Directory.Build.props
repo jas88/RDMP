@@ -9,4 +9,9 @@
 		<NoWarn>NU1902;NU1903;NU1904;1701;1702;CS1591;NU1701;CA1416;NUnit1032;NUnit1034</NoWarn>
 		<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
 	</PropertyGroup>
+
+	<!-- Coverlet for test projects -->
+	<ItemGroup Condition="'$(IsTestProject)' == 'true'">
+		<PackageReference Include="coverlet.collector" PrivateAssets="All" />
+	</ItemGroup>
 </Project>

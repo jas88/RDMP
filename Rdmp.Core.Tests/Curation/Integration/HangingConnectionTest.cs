@@ -28,6 +28,7 @@ public class HangingConnectionTest : DatabaseTests
             DiscoveredServerICanCreateRandomDatabasesAndTablesOn.ExpectDatabase(testDbName).Drop();
 
         DiscoveredServerICanCreateRandomDatabasesAndTablesOn.CreateDatabase(testDbName);
+        SqlConnection.ClearAllPools();
         Thread.Sleep(500);
 
         ThrowIfDatabaseLock();
