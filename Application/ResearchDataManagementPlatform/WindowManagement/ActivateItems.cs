@@ -1064,7 +1064,10 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
                 if (!output.IsDisposed)
                     output.Invoke(() => { if (!output.IsDisposed) output.AppendText(e.Data + Environment.NewLine); });
             }
-            catch (ObjectDisposedException) { }
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+            {
+                // Expected during window close: control disposed or handle lost between check and Invoke
+            }
         };
         process.ErrorDataReceived += (_, e) =>
         {
@@ -1074,13 +1077,17 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
                 if (!output.IsDisposed)
                     output.Invoke(() => { if (!output.IsDisposed) output.AppendText(e.Data + Environment.NewLine); });
             }
-            catch (ObjectDisposedException) { }
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+            {
+                // Expected during window close: control disposed or handle lost between check and Invoke
+            }
         };
 
         output.Disposed += (_, _) =>
         {
-            try { if (!process.HasExited) process.Kill(); } catch { }
-            process.Dispose();
+            try { if (!process.HasExited) process.Kill(); }
+            catch (InvalidOperationException) { /* Process already exited between check and Kill */ }
+            finally { process.Dispose(); }
         };
 
         process.BeginOutputReadLine();
