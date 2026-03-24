@@ -1046,9 +1046,52 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
             return;
         }
 
-        var ctrl = new ConsoleControl.ConsoleControl();
-        ShowWindow(ctrl, true);
-        ctrl.StartProcess(startInfo);
+        var output = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, Font = new System.Drawing.Font("Consolas", 9f) };
+        ShowWindow(output, true);
+
+        startInfo.RedirectStandardOutput = true;
+        startInfo.RedirectStandardError = true;
+        startInfo.UseShellExecute = false;
+        startInfo.CreateNoWindow = true;
+        var process = Process.Start(startInfo);
+        if (process == null) return;
+
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data == null) return;
+            try
+            {
+                if (!output.IsDisposed)
+                    output.Invoke(() => { if (!output.IsDisposed) output.AppendText(e.Data + Environment.NewLine); });
+            }
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+            {
+                // Expected during window close: control disposed or handle lost between check and Invoke
+            }
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data == null) return;
+            try
+            {
+                if (!output.IsDisposed)
+                    output.Invoke(() => { if (!output.IsDisposed) output.AppendText(e.Data + Environment.NewLine); });
+            }
+            catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+            {
+                // Expected during window close: control disposed or handle lost between check and Invoke
+            }
+        };
+
+        output.Disposed += (_, _) =>
+        {
+            try { if (!process.HasExited) process.Kill(); }
+            catch (InvalidOperationException) { /* Process already exited between check and Kill */ }
+            finally { process.Dispose(); }
+        };
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
     }
 
     public override void ShowData(DataTable table)
