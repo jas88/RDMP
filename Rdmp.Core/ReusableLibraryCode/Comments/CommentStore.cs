@@ -36,6 +36,7 @@ public class CommentStore : IEnumerable<KeyValuePair<string, string>>
         "QuickGraph.xml",
         "Renci.SshNet.xml",
         "ScintillaNET.xml",
+        "Scintilla5.NET.xml",
         "nunit.framework.xml"
     };
 
