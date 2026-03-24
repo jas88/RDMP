@@ -200,17 +200,15 @@ EOF
     fi
 }
 
-# Generate props for library projects (multi-target)
-generate_library_props "Rdmp.Core"
-generate_library_props "Tests.Common"
+# All projects now target only the latest .NET version (no multi-targeting)
+generate_single_target_props "Rdmp.Core"
+generate_single_target_props "Tests.Common"
 
-# Generate props for Windows library projects (multi-target with -windows)
-generate_windows_library_props "Rdmp.UI"
-generate_windows_library_props "Plugins/Plugins.UI"
+generate_single_target_windows_props "Rdmp.UI"
+generate_single_target_windows_props "Plugins/Plugins.UI"
 
-# RdmpDicom library projects (multi-target now that DicomTypeTranslation 5.0.1 supports net8/9/10)
-generate_library_props "RdmpDicom/Rdmp.Dicom"
-generate_windows_library_props "RdmpDicom/Rdmp.Dicom.UI"
+generate_single_target_props "RdmpDicom/Rdmp.Dicom"
+generate_single_target_windows_props "RdmpDicom/Rdmp.Dicom.UI"
 
 # Generate props for test projects (single target latest)
 generate_single_target_props "Rdmp.Core.Tests"
