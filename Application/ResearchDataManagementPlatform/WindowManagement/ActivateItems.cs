@@ -1056,23 +1056,35 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
         var process = Process.Start(startInfo);
         if (process == null) return;
 
-        async Task ReadStreamAsync(System.IO.StreamReader reader)
+        process.OutputDataReceived += (_, e) =>
         {
-            var buffer = new char[1024];
-            int charsRead;
-            while ((charsRead = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            if (e.Data == null) return;
+            try
             {
-                var text = new string(buffer, 0, charsRead);
-                if (output.IsDisposed) return;
-                if (output.InvokeRequired)
-                    output.Invoke(() => output.AppendText(text));
-                else
-                    output.AppendText(text);
+                if (!output.IsDisposed)
+                    output.Invoke(() => { if (!output.IsDisposed) output.AppendText(e.Data + Environment.NewLine); });
             }
-        }
+            catch (ObjectDisposedException) { }
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data == null) return;
+            try
+            {
+                if (!output.IsDisposed)
+                    output.Invoke(() => { if (!output.IsDisposed) output.AppendText(e.Data + Environment.NewLine); });
+            }
+            catch (ObjectDisposedException) { }
+        };
 
-        _ = ReadStreamAsync(process.StandardOutput);
-        _ = ReadStreamAsync(process.StandardError);
+        output.Disposed += (_, _) =>
+        {
+            try { if (!process.HasExited) process.Kill(); } catch { }
+            process.Dispose();
+        };
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
     }
 
     public override void ShowData(DataTable table)

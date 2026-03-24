@@ -16,6 +16,9 @@
   "ignorePatterns": [
     {
       "pattern": "^https://github.com/HicServices/RDMP/compare/"
+    },
+    {
+      "pattern": "^https://www.codeproject.com/"
     }
   ]
 }
