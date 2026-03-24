@@ -3,6 +3,10 @@
 # based on .NET SDK version. All projects target only the latest .NET version.
 # If any files differ from what's in git, commit and push, then exit with error.
 #
+# The target framework is determined by the installed SDK (via NETCoreAppMaximumVersion).
+# To upgrade (e.g. net10→net11), update global.json to the new SDK version and re-run
+# this script — it will regenerate the props files automatically.
+#
 # RDMP project structure:
 # - All projects target only the latest .NET version (single target)
 # - Windows projects use -windows TFM suffix
