@@ -24,20 +24,6 @@ public class CommentStore : IEnumerable<KeyValuePair<string, string>>
 {
     private readonly Dictionary<string, string> _dictionary = new(StringComparer.CurrentCultureIgnoreCase);
 
-    private string[] _ignoreHelpFor =
-    {
-        "CsvHelper.xml",
-        "Google.Protobuf.xml",
-        "MySql.Data.xml",
-        "Newtonsoft.Json.xml",
-        "NLog.xml",
-        "NuDoq.xml",
-        "ObjectListView.xml",
-        "QuickGraph.xml",
-        "Renci.SshNet.xml",
-        "ScintillaNET.xml",
-        "nunit.framework.xml"
-    };
 
     public virtual void ReadComments(params string[] locations)
     {
