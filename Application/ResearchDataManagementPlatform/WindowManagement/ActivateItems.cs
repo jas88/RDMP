@@ -1046,9 +1046,33 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
             return;
         }
 
-        var ctrl = new ConsoleControl.ConsoleControl();
-        ShowWindow(ctrl, true);
-        ctrl.StartProcess(startInfo);
+        var output = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, Font = new System.Drawing.Font("Consolas", 9f) };
+        ShowWindow(output, true);
+
+        startInfo.RedirectStandardOutput = true;
+        startInfo.RedirectStandardError = true;
+        startInfo.UseShellExecute = false;
+        startInfo.CreateNoWindow = true;
+        var process = Process.Start(startInfo);
+        if (process == null) return;
+
+        async Task ReadStreamAsync(System.IO.StreamReader reader)
+        {
+            var buffer = new char[1024];
+            int charsRead;
+            while ((charsRead = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                var text = new string(buffer, 0, charsRead);
+                if (output.IsDisposed) return;
+                if (output.InvokeRequired)
+                    output.Invoke(() => output.AppendText(text));
+                else
+                    output.AppendText(text);
+            }
+        }
+
+        _ = ReadStreamAsync(process.StandardOutput);
+        _ = ReadStreamAsync(process.StandardError);
     }
 
     public override void ShowData(DataTable table)
