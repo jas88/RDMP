@@ -1,11 +1,15 @@
 #!/bin/bash
 # Generate directory-specific Directory.Build.props files with dynamic target framework values
-# based on .NET SDK version. If any files differ from what's in git, commit and push, then exit with error.
+# based on .NET SDK version. All projects target only the latest .NET version.
+# If any files differ from what's in git, commit and push, then exit with error.
+#
+# The target framework is determined by the installed SDK (via NETCoreAppMaximumVersion).
+# To upgrade (e.g. net10→net11), update global.json to the new SDK version and re-run
+# this script — it will regenerate the props files automatically.
 #
 # RDMP project structure:
-# - Libraries (multi-target): Rdmp.Core, Tests.Common, RdmpDicom/Rdmp.Dicom
-# - Windows Libraries (multi-target -windows): Rdmp.UI, Plugins/Plugins.UI, RdmpDicom/Rdmp.Dicom.UI
-# - Tests/Tools/Apps (single target latest): Everything else
+# - All projects target only the latest .NET version (single target)
+# - Windows projects use -windows TFM suffix
 # - Special: Rdmp.Core.Generators stays netstandard2.0 (Roslyn requirement)
 
 set -e
@@ -42,107 +46,12 @@ if [ -z "$MAX_MAJOR" ] || ! [[ "$MAX_MAJOR" =~ ^[0-9]+$ ]]; then
 fi
 
 echo "Detected .NET SDK maximum version: $MAX_VERSION (major: $MAX_MAJOR)"
-
-# Determine minimum supported major version based on SDK version
-# .NET 8 LTS until Nov 2026, .NET 10 LTS until Nov 2028
-# We support: current LTS (8) through current SDK version
-if [ "$MAX_MAJOR" -eq 8 ] || [ "$MAX_MAJOR" -eq 9 ] || [ "$MAX_MAJOR" -eq 10 ]; then
-    MIN_MAJOR=8
-elif [ "$MAX_MAJOR" -eq 11 ] || [ "$MAX_MAJOR" -eq 12 ]; then
-    MIN_MAJOR=10
-elif [ "$MAX_MAJOR" -eq 13 ]; then
-    MIN_MAJOR=11
-else
-    # Fallback for unknown versions
-    MIN_MAJOR=$MAX_MAJOR
-fi
-
-# Build list of supported frameworks for libraries
-LIB_FRAMEWORKS=""
-for v in $(seq $MIN_MAJOR $MAX_MAJOR); do
-    if [ -n "$LIB_FRAMEWORKS" ]; then
-        LIB_FRAMEWORKS="${LIB_FRAMEWORKS};net${v}.0"
-    else
-        LIB_FRAMEWORKS="net${v}.0"
-    fi
-done
-
-# Build list of supported frameworks for Windows libraries
-WIN_FRAMEWORKS=""
-for v in $(seq $MIN_MAJOR $MAX_MAJOR); do
-    if [ -n "$WIN_FRAMEWORKS" ]; then
-        WIN_FRAMEWORKS="${WIN_FRAMEWORKS};net${v}.0-windows"
-    else
-        WIN_FRAMEWORKS="net${v}.0-windows"
-    fi
-done
-
-echo "Target frameworks for libraries: $LIB_FRAMEWORKS"
-echo "Target frameworks for Windows libraries: $WIN_FRAMEWORKS"
-echo "Target framework for tests/tools/apps: net${MAX_MAJOR}.0"
+echo "Target framework: net${MAX_MAJOR}.0"
 
 CHANGES_MADE=false
 PROPS_FILES=""
 
-# Function to generate library props file (multi-target)
-generate_library_props() {
-    local TARGET_DIR="$1"
-    local TARGET_FILE="$TARGET_DIR/Directory.Build.props"
-    local TEMP_FILE=$(mktemp)
-
-    cat > "$TEMP_FILE" << EOF
-<Project>
-  <!-- Import parent props -->
-  <Import Project="\$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '\$(MSBuildThisFileDirectory)../'))" />
-
-  <!-- Library projects multi-target all non-EOL .NET versions -->
-  <!-- Auto-generated based on SDK version by scripts/generate-build-props.sh -->
-  <PropertyGroup>
-    <TargetFrameworks>$LIB_FRAMEWORKS</TargetFrameworks>
-  </PropertyGroup>
-</Project>
-EOF
-
-    if ! diff -q "$TARGET_FILE" "$TEMP_FILE" > /dev/null 2>&1; then
-        echo "$TARGET_FILE needs updating for current .NET SDK version"
-        mv "$TEMP_FILE" "$TARGET_FILE"
-        CHANGES_MADE=true
-        PROPS_FILES="$PROPS_FILES $TARGET_FILE"
-    else
-        rm -f "$TEMP_FILE"
-    fi
-}
-
-# Function to generate Windows library props file (multi-target with -windows)
-generate_windows_library_props() {
-    local TARGET_DIR="$1"
-    local TARGET_FILE="$TARGET_DIR/Directory.Build.props"
-    local TEMP_FILE=$(mktemp)
-
-    cat > "$TEMP_FILE" << EOF
-<Project>
-  <!-- Import parent props -->
-  <Import Project="\$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '\$(MSBuildThisFileDirectory)../'))" />
-
-  <!-- Windows library projects multi-target all non-EOL .NET versions with -windows suffix -->
-  <!-- Auto-generated based on SDK version by scripts/generate-build-props.sh -->
-  <PropertyGroup>
-    <TargetFrameworks>$WIN_FRAMEWORKS</TargetFrameworks>
-  </PropertyGroup>
-</Project>
-EOF
-
-    if ! diff -q "$TARGET_FILE" "$TEMP_FILE" > /dev/null 2>&1; then
-        echo "$TARGET_FILE needs updating for current .NET SDK version"
-        mv "$TEMP_FILE" "$TARGET_FILE"
-        CHANGES_MADE=true
-        PROPS_FILES="$PROPS_FILES $TARGET_FILE"
-    else
-        rm -f "$TEMP_FILE"
-    fi
-}
-
-# Function to generate single-target props file for tests/tools/apps
+# Function to generate single-target props file
 generate_single_target_props() {
     local TARGET_DIR="$1"
     local TARGET_FILE="$TARGET_DIR/Directory.Build.props"
@@ -171,7 +80,7 @@ EOF
     fi
 }
 
-# Function to generate single-target Windows props file for tests/apps
+# Function to generate single-target Windows props file
 generate_single_target_windows_props() {
     local TARGET_DIR="$1"
     local TARGET_FILE="$TARGET_DIR/Directory.Build.props"
@@ -200,33 +109,29 @@ EOF
     fi
 }
 
-# Generate props for library projects (multi-target)
-generate_library_props "Rdmp.Core"
-generate_library_props "Tests.Common"
+# All projects target only the latest .NET version
+generate_single_target_props "Rdmp.Core"
+generate_single_target_props "Tests.Common"
+generate_single_target_props "RdmpDicom/Rdmp.Dicom"
 
-# Generate props for Windows library projects (multi-target with -windows)
-generate_windows_library_props "Rdmp.UI"
-generate_windows_library_props "Plugins/Plugins.UI"
+generate_single_target_windows_props "Rdmp.UI"
+generate_single_target_windows_props "Plugins/Plugins.UI"
+generate_single_target_windows_props "RdmpDicom/Rdmp.Dicom.UI"
 
-# RdmpDicom library projects (multi-target now that DicomTypeTranslation 5.0.1 supports net8/9/10)
-generate_library_props "RdmpDicom/Rdmp.Dicom"
-generate_windows_library_props "RdmpDicom/Rdmp.Dicom.UI"
-
-# Generate props for test projects (single target latest)
+# Test projects
 generate_single_target_props "Rdmp.Core.Tests"
 generate_single_target_props "RdmpDicom/Rdmp.Dicom.Tests"
 
-# Generate props for Windows test projects (single target latest with -windows)
 generate_single_target_windows_props "Rdmp.UI.Tests"
 generate_single_target_windows_props "Plugins/Plugins.UI.Tests"
 
-# Generate props for tool projects (single target latest)
+# Tools
 generate_single_target_props "Tools/rdmp"
 
-# Generate props for Windows application (single target latest with -windows)
+# Windows application
 generate_single_target_windows_props "Application/ResearchDataManagementPlatform"
 
-# Generate props for metadata/placeholder projects (single target latest)
+# Metadata/placeholder projects
 generate_single_target_props "Plugins/Plugins"
 generate_single_target_props "Plugins/Plugins.Tests"
 

@@ -2,9 +2,9 @@
   <!-- Import parent props -->
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Windows library projects multi-target all non-EOL .NET versions with -windows suffix -->
+  <!-- Windows application/test projects target only the latest .NET version -->
   <!-- Auto-generated based on SDK version by scripts/generate-build-props.sh -->
   <PropertyGroup>
-    <TargetFrameworks>net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+    <TargetFramework>net10.0-windows</TargetFramework>
   </PropertyGroup>
 </Project>
