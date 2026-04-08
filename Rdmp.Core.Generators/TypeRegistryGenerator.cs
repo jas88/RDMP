@@ -147,8 +147,12 @@ public class TypeRegistryGenerator : IIncrementalGenerator
 
     private static string GenerateTypeRegistry(List<TypeInfo> types)
     {
-        // Deduplicate types by full name (can happen when multiple assemblies expose the same type)
-        var deduped = types.GroupBy(t => t.FullName).Select(g => g.First()).ToList();
+        // Deduplicate types by qualified name (can happen when multiple assemblies expose the same type).
+        // Normalize by stripping global:: so dedup matches the dictionary key space.
+        var deduped = types
+            .GroupBy(t => t.FullName.Replace("global::", ""))
+            .Select(g => g.First())
+            .ToList();
 
         var sb = new StringBuilder();
 
@@ -177,14 +181,14 @@ public class TypeRegistryGenerator : IIncrementalGenerator
         sb.AppendLine("        var dict = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);");
         sb.AppendLine();
 
-        // Group types by short name to handle duplicates
-        var grouped = deduped.GroupBy(t => t.ShortName);
-
-        foreach (var group in grouped)
+        // Group types by short name to handle duplicates.
+        // Materialize each group into a list to avoid repeated enumeration.
+        foreach (var group in deduped.GroupBy(t => t.ShortName))
         {
-            if (group.Count() == 1)
+            var members = group.ToList();
+            if (members.Count == 1)
             {
-                var type = group.First();
+                var type = members[0];
                 sb.AppendLine($"        // {type.FullName}");
                 // Add all lookup variants
                 AddTypeLookup(sb, type.ShortName, type.FullName);
@@ -193,7 +197,7 @@ public class TypeRegistryGenerator : IIncrementalGenerator
             else
             {
                 // Multiple types with same short name - only store full names
-                foreach (var type in group)
+                foreach (var type in members)
                 {
                     sb.AppendLine($"        // {type.FullName} (short name conflict)");
                     AddTypeLookup(sb, type.FullName, type.FullName);
@@ -223,11 +227,10 @@ public class TypeRegistryGenerator : IIncrementalGenerator
 
     private static void AddTypeLookup(StringBuilder sb, string key, string typeFullName)
     {
-        // Escape quotes in key
-        var escapedKey = key.Replace("\"", "\\\"");
-        // Remove global:: prefix for the key lookup, but keep it for typeof()
-        var lookupKey = key.Replace("global::", "");
-        sb.AppendLine($"        dict.TryAdd(\"{escapedKey}\", typeof({typeFullName}));");
+        // Remove global:: prefix for the dictionary key so Type.FullName lookups hit the fast path,
+        // but keep global:: in the typeof() expression to avoid namespace conflicts
+        var lookupKey = key.Replace("global::", "").Replace("\"", "\\\"");
+        sb.AppendLine($"        dict.TryAdd(\"{lookupKey}\", typeof({typeFullName}));");
     }
 
     private static string GenerateInterfaceIndices(List<TypeInfo> types)
