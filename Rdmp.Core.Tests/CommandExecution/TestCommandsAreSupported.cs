@@ -43,6 +43,7 @@ public class TestCommandsAreSupported : UnitTests
     public static IEnumerable<Type> GetAllCommandTypes()
     {
         return MEF.GetTypes<IAtomicCommand>()
+            .Where(t => !t.IsGenericTypeDefinition)
             .Where(t => !KnownIncompatibleCommands.Contains(t))
             .OrderBy(t => t.FullName);
     }
