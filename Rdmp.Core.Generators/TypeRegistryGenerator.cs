@@ -71,7 +71,7 @@ public class TypeRegistryGenerator : IIncrementalGenerator
             name.StartsWith("coverlet") ||
             name.StartsWith("NSubstitute") ||
             name == "CommandLine" ||
-            name == "Spectre.Console.Ansi")
+            name.StartsWith("Spectre."))
             return;
 
         CollectTypesFromNamespace(assembly.GlobalNamespace, types, includeInternal);
