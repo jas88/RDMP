@@ -37,6 +37,6 @@
     <PackageVersion Include="coverlet.collector" Version="8.0.1" />
     <PackageVersion Include="DicomTypeTranslation" Version="5.0.1" />
     <PackageVersion Include="fo-dicom" Version="5.2.6" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.6" />
   </ItemGroup>
 </Project>
