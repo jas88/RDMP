@@ -26,7 +26,7 @@
     <PackageVersion Include="Autoupdater.NET.Official" Version="1.9.2" />
     <PackageVersion Include="DockPanelSuite.ThemeVS2015" Version="3.1.1" />
     <PackageVersion Include="WeCantSpell.Hunspell" Version="6.0.0" />
-    <PackageVersion Include="NUnit" Version="4.5.1" />
+    <PackageVersion Include="NUnit" Version="4.6.0" />
     <PackageVersion Include="ObjectListView.Repack.NET6Plus" Version="2.9.5" />
     <PackageVersion Include="Scintilla5.NET" Version="6.1.2" />
     <PackageVersion Include="HIC.System.Windows.Forms.DataVisualization" Version="1.0.1" />
