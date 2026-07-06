@@ -274,7 +274,7 @@ jobs:
           sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/ubuntu/22.04/mssql-server-2022 jammy main"
 
       - name: Install database packages
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.1
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.3
         with:
           packages: libeatmydata1 apt-transport-https curl mysql-server libmysqlclient-dev mssql-tools mssql-server alien libaio1
           version: 1.0
@@ -454,7 +454,7 @@ jobs:
           cache-dependency-path: Directory.Packages.props
 
       - name: Cache apt packages
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.1
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.3
         with:
           packages: pixz p7zip-full
           version: 1.0
