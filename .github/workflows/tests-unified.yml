@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: Directory.Packages.props
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v4.37.4
         with:
           languages: csharp
           config-file: ./.github/configs/codeql.yml
@@ -200,7 +200,7 @@ jobs:
           dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v4.37.4
         with:
           category: "/language:csharp"
           upload: false
@@ -221,7 +221,7 @@ jobs:
           output: sarif-results/csharp.sarif
 
       - name: Upload CodeQL Results
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.4
         with:
           sarif_file: sarif-results/csharp.sarif
           category: "/language:csharp"
