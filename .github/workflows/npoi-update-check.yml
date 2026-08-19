@@ -1,0 +1,65 @@
+name: NPOI update check
+
+# Weekly check that the externals/npoi submodule is pinned at the latest
+# upstream release; opens a bump PR when a newer release exists.
+#
+# Note: PRs created with the default GITHUB_TOKEN do not trigger CI workflows
+# (on: pull_request/push). Close and reopen the PR to run CI, or switch this
+# workflow to a PAT/GitHub App token if automatic CI runs are needed.
+
+on:
+  schedule:
+    - cron: '30 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Check latest NPOI release and open bump PR if newer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest_tag=$(gh release view --repo nissl-lab/npoi --json tagName --jq .tagName)
+          echo "Latest NPOI release tag: $latest_tag"
+          git -C externals/npoi fetch --quiet --tags origin
+          latest_sha=$(git -C externals/npoi rev-parse "${latest_tag}^{commit}")
+          current_sha=$(git -C externals/npoi rev-parse HEAD)
+          echo "Pinned: $current_sha  Latest release: $latest_sha"
+          if [ "$current_sha" = "$latest_sha" ]; then
+            echo "NPOI submodule already at latest release ($latest_tag)"
+            exit 0
+          fi
+          branch="npoi-update/$latest_tag"
+          open_prs=$(gh pr list --head "$branch" --state open --json number --jq 'length')
+          if [ "$open_prs" != "0" ]; then
+            echo "PR for $latest_tag already open"
+            exit 0
+          fi
+          if git ls-remote --exit-code origin "refs/heads/$branch" >/dev/null 2>&1; then
+            echo "Branch $branch already exists (possibly a closed PR); skipping"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git -C externals/npoi checkout --quiet "$latest_sha"
+          git add externals/npoi
+          git commit -m "Bump NPOI submodule to $latest_tag"
+          git push origin "$branch"
+          body="Bumps the externals/npoi submodule to NPOI release [$latest_tag](https://github.com/nissl-lab/npoi/releases/tag/$latest_tag) (commit $latest_sha)."
+          body="$body"$'\n\n'"Before merging, diff the upstream project files (externals/npoi/*/NPOI.*.csproj and Directory.Packages.props) against the wrapper projects in externals/NPOI.* and update the wrappers if sources, resources, exclusions or dependencies changed."
+          gh pr create \
+            --title "Bump NPOI submodule to $latest_tag" \
+            --body "$body" \
+            --base main --head "$branch"
