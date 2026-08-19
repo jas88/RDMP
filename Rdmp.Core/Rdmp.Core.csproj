@@ -354,6 +354,7 @@
 		     NuGet binary requires OSMF EULA acceptance which we avoid -->
 		<ProjectReference Include="..\externals\NPOI.Core\NPOI.Core.csproj" />
 		<ProjectReference Include="..\externals\NPOI.OOXML\NPOI.OOXML.csproj" />
+		<ProjectReference Include="..\externals\NPOI.OpenXmlFormats\NPOI.OpenXmlFormats.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Include="Curation\KeywordHelp.txt">
