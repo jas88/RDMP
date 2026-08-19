@@ -20,9 +20,6 @@ namespace Rdmp.Core.Tests.DesignPatternTests;
 
 public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
 {
-    private const string SolutionName = "DataManagementPlatform.sln";
-    private readonly List<string> _csFilesFound = new();
-
     public static readonly HashSet<string> IgnoreList = new()
     {
         "Program.cs",
@@ -92,104 +89,6 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         }
     }
 
-    private void FindUnreferencedProjectsRecursively(Dictionary<VisualStudioProjectReference, List<string>> projects,
-        DirectoryInfo dir)
-    {
-        var projFiles = dir.EnumerateFiles("*.csproj");
-
-        foreach (var projFile in projFiles)
-        {
-            if (projFile.Directory.FullName.Contains("CodeTutorials"))
-                continue;
-
-            var key = projects.Keys.SingleOrDefault(p => (p.Name + ".csproj").Equals(projFile.Name));
-            if (key == null)
-                Error($"FAIL:Unreferenced csproj file spotted :{projFile.FullName}");
-            else
-                projects[key].Add(projFile.FullName);
-        }
-
-        foreach (var subdir in dir.EnumerateDirectories())
-        {
-            // Skip vendored third party source (e.g. the Apache-2.0 NPOI submodule); its csproj
-            // files are not part of the RDMP solution and are exempt from repository hygiene rules
-            if (VendoredCode.IsVendoredDirectory(subdir))
-                continue;
-
-            FindUnreferencedProjectsRecursively(projects, subdir);
-        }
-    }
-
-    private void ProcessFolderRecursive(IEnumerable<VisualStudioSolutionFolder> folders,
-        DirectoryInfo currentPhysicalDirectory)
-    {
-        //Process root folders
-        foreach (var solutionFolder in folders)
-        {
-            // Vendored third party source (externals solution folder) is exempt from hygiene rules
-            if (solutionFolder.Name.Equals(VendoredCode.ExternalsDirectoryName, StringComparison.Ordinal))
-                continue;
-
-            var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
-                .SingleOrDefault(d => d.Name.Equals(solutionFolder.Name));
-
-            if (physicalSolutionFolder == null)
-            {
-                Error(
-                    $"FAIL: Solution Folder exists called {solutionFolder.Name} but there is no corresponding physical folder in {currentPhysicalDirectory.FullName}");
-                continue;
-            }
-
-            foreach (var p in solutionFolder.ChildrenProjects)
-                FindProjectInFolder(p, physicalSolutionFolder);
-
-            if (solutionFolder.ChildrenFolders.Any())
-                ProcessFolderRecursive(solutionFolder.ChildrenFolders, physicalSolutionFolder);
-        }
-    }
-
-    private void FindProjectInFolder(VisualStudioProjectReference p, DirectoryInfo physicalSolutionFolder)
-    {
-        var physicalProjectFolder =
-            physicalSolutionFolder.EnumerateDirectories().SingleOrDefault(f => f.Name.Equals(p.Name));
-
-        if (physicalProjectFolder == null)
-        {
-            Error($"FAIL: Physical folder {p.Name} does not exist in directory {physicalSolutionFolder.FullName}");
-        }
-        else
-        {
-            var csProjFile = physicalProjectFolder.EnumerateFiles("*.csproj").SingleOrDefault(f => f.Name.Equals(
-                $"{p.Name}.csproj"));
-            if (csProjFile == null)
-            {
-                Error(
-                    $"FAIL: .csproj file {p.Name}.csproj was not found in folder {physicalProjectFolder.FullName}");
-            }
-            else
-            {
-                var tidy = new CsProjFileTidy(csProjFile);
-
-                foreach (var str in tidy.UntidyMessages)
-                    Error(str);
-
-                foreach (var found in tidy.csFilesFound
-                             .Where(found => _csFilesFound.Any(otherFile =>
-                                 Path.GetFileName(otherFile).Equals(Path.GetFileName(found)))).Where(found =>
-                                 !IgnoreList.Contains(Path.GetFileName(found))))
-                    Error($"Found 2+ files called {Path.GetFileName(found)}");
-
-                _csFilesFound.AddRange(tidy.csFilesFound);
-            }
-        }
-    }
-
-    private readonly List<string> _errors = new();
-
-    private void Error(string s)
-    {
-        _errors.Add(s);
-    }
 }
 
 public class CopyrightHeaderEvaluator
