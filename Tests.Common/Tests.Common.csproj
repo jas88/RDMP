@@ -39,6 +39,5 @@
         <PackageReference Include="NSubstitute" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="NUnit" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" />
     </ItemGroup>
 </Project>

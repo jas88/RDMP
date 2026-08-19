@@ -12,8 +12,6 @@ using Rdmp.Core.ReusableLibraryCode.Comments;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.Processing;
 using Tests.Common;
 using Color = SixLabors.ImageSharp.Color;
 
@@ -29,8 +27,7 @@ internal class DocumentationReportDatabaseEntitiesTests : UnitTests
 
                 var reporter = new DocumentationReportDatabaseEntities();
 
-                Image img = new Image<Rgba32>(19, 19);
-                img.Mutate(x => x.Fill(Color.DarkMagenta));
+                Image img = new Image<Rgba32>(19, 19, Color.DarkMagenta.ToPixel<Rgba32>());
 
                 var iconProvider = Substitute.For<IIconProvider>();
                 iconProvider.GetImage(Arg.Any<object>(), Arg.Any<OverlayKind>()).Returns(img);
