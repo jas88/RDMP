@@ -341,7 +341,6 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Newtonsoft.Json" />
-		<PackageReference Include="NPOI" />
 		<PackageReference Include="NLog" />
 		<PackageReference Include="SixLabors.ImageSharp" />
 		<PackageReference Include="SixLabors.ImageSharp.Drawing" />
@@ -349,6 +348,12 @@
 		<PackageReference Include="SSH.NET" />
 		<PackageReference Include="Terminal.Gui" />
 		<PackageReference Include="YamlDotNet" />
+	</ItemGroup>
+	<ItemGroup>
+		<!-- NPOI built from source (Apache-2.0) via git submodule; the official
+		     NuGet binary requires OSMF EULA acceptance which we avoid -->
+		<ProjectReference Include="..\externals\NPOI.Core\NPOI.Core.csproj" />
+		<ProjectReference Include="..\externals\NPOI.OOXML\NPOI.OOXML.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Include="Curation\KeywordHelp.txt">

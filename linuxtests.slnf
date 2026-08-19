@@ -10,7 +10,11 @@
       "RdmpDicom\\Rdmp.Dicom\\Rdmp.Dicom.csproj",
       "RdmpDicom\\Rdmp.Dicom.Tests\\Rdmp.Dicom.Tests.csproj",
       "Tests.Common\\Tests.Common.csproj",
-      "Rdmp.Core.Generators\\Rdmp.Core.Generators.csproj"
+      "Rdmp.Core.Generators\\Rdmp.Core.Generators.csproj",
+      "externals\\NPOI.Core\\NPOI.Core.csproj",
+      "externals\\NPOI.OpenXml4Net\\NPOI.OpenXml4Net.csproj",
+      "externals\\NPOI.OpenXmlFormats\\NPOI.OpenXmlFormats.csproj",
+      "externals\\NPOI.OOXML\\NPOI.OOXML.csproj"
     ]
   }
 }

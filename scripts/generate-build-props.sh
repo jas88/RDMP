@@ -113,6 +113,7 @@ EOF
 generate_single_target_props "Rdmp.Core"
 generate_single_target_props "Tests.Common"
 generate_single_target_props "RdmpDicom/Rdmp.Dicom"
+generate_single_target_props "externals"
 
 generate_single_target_windows_props "Rdmp.UI"
 generate_single_target_windows_props "Plugins/Plugins.UI"

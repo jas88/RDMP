@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Builds NPOI.OpenXml4Net from the externals/npoi submodule sources.
+       Mirrors externals/npoi/openxml4Net/NPOI.OpenXml4Net.Core.csproj. -->
+
+  <PropertyGroup>
+    <Version>2.8.0</Version>
+    <IsPackable>false</IsPackable>
+    <NpoiSrc>$(MSBuildThisFileDirectory)..\npoi\</NpoiSrc>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(NpoiSrc)npoi.snk</AssemblyOriginatorKeyFile>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AnalysisLevel>none</AnalysisLevel>
+    <NoWarn>$(NoWarn);CS0108;CS0114;CS0162;CS0168;CS0169;CS0414;CS0419;CS0612;CS0618;CS0628;CS0649;CS0659;CS1570;CS1572;CS1573;CS1574;CS1584;CS1587;CS1591;CS1734;SYSLIB0021;SYSLIB0051;NU1900</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(NpoiSrc)openxml4Net\**\*.cs" Exclude="$(NpoiSrc)openxml4Net\obj\**;$(NpoiSrc)openxml4Net\bin\**" />
+    <Compile Include="$(NpoiSrc)main\Polyfills.cs" Link="Polyfills.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NPOI.Core\NPOI.Core.csproj" />
+  </ItemGroup>
+
+</Project>
