@@ -355,7 +355,15 @@ internal class DocumentationCrossExaminationTest
     public DocumentationCrossExaminationTest(DirectoryInfo slndir)
     {
         _slndir = slndir;
-        _mdFiles = Directory.GetFiles(slndir.FullName, "*.md", SearchOption.AllDirectories);
+        // Skip vendored/third-party content (git submodules), which is not RDMP documentation
+        var vendored = new[]
+        {
+            $"{Path.DirectorySeparatorChar}externals{Path.DirectorySeparatorChar}npoi{Path.DirectorySeparatorChar}",
+            $"{Path.DirectorySeparatorChar}build-standards{Path.DirectorySeparatorChar}"
+        };
+        _mdFiles = Directory.GetFiles(slndir.FullName, "*.md", SearchOption.AllDirectories)
+            .Where(f => !vendored.Any(f.Contains))
+            .ToArray();
     }
 
     public void FindProblems(List<string> csFilesFound)

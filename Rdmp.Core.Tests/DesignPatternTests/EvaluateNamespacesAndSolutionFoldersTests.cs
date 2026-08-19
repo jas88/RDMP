@@ -110,7 +110,14 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         }
 
         foreach (var subdir in dir.EnumerateDirectories())
+        {
+            // Skip vendored third party source (e.g. the Apache-2.0 NPOI submodule); its csproj
+            // files are not part of the RDMP solution and are exempt from repository hygiene rules
+            if (VendoredCode.IsVendoredDirectory(subdir))
+                continue;
+
             FindUnreferencedProjectsRecursively(projects, subdir);
+        }
     }
 
     private void ProcessFolderRecursive(IEnumerable<VisualStudioSolutionFolder> folders,
@@ -119,6 +126,10 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         //Process root folders
         foreach (var solutionFolder in folders)
         {
+            // Vendored third party source (externals solution folder) is exempt from hygiene rules
+            if (solutionFolder.Name.Equals(VendoredCode.ExternalsDirectoryName, StringComparison.Ordinal))
+                continue;
+
             var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
                 .SingleOrDefault(d => d.Name.Equals(solutionFolder.Name));
 
