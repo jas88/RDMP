@@ -6,7 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-	<NoWarn>1701;1702;CS1591;NU1701</NoWarn>
+	<NoWarn>$(NoWarn);1701;1702;CS1591;NU1701</NoWarn>
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <PublishSingleFile>true</PublishSingleFile>

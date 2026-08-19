@@ -15,7 +15,7 @@
         <copyright>Copyright 2018-2019</copyright>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <NoWarn>1701;1702;CS1591</NoWarn>
+        <NoWarn>$(NoWarn);1701;1702;CS1591</NoWarn>
         <DebugType>embedded</DebugType>
         <DebugSymbols>true</DebugSymbols>
         <IsPackable>true</IsPackable>
