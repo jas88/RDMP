@@ -93,13 +93,23 @@ internal sealed partial class DicomPackageListIsCorrectTests
     }
 
     /// <summary>
+    /// Path fragment of the vendored NPOI submodule, whose own csproj files are not part of the RDMP build
+    /// (RDMP compiles its sources via the wrapper projects in externals/NPOI.*)
+    /// </summary>
+    private static readonly string VendoredNpoiPath =
+        $"{Path.DirectorySeparatorChar}externals{Path.DirectorySeparatorChar}npoi{Path.DirectorySeparatorChar}";
+
+    /// <summary>
     /// Returns all csproj files in the repository, except those containing the string 'tests'
+    /// and those belonging to the vendored NPOI submodule
     /// </summary>
     /// <param name="root"></param>
     /// <returns></returns>
     private static IEnumerable<string> GetCsprojFiles(DirectoryInfo root)
     {
-        return root.EnumerateFiles("*.csproj", EnumerationOptions).Select(f => f.FullName).Where(f => !f.Contains("tests", StringComparison.InvariantCultureIgnoreCase));
+        return root.EnumerateFiles("*.csproj", EnumerationOptions).Select(f => f.FullName)
+            .Where(f => !f.Contains("tests", StringComparison.InvariantCultureIgnoreCase) &&
+                        !f.Contains(VendoredNpoiPath, StringComparison.InvariantCultureIgnoreCase));
     }
 
     /// <summary>

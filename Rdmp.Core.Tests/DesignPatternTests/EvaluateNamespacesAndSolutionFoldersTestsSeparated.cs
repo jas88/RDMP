@@ -283,6 +283,10 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
 
     private void ValidateSolutionFolderRecursive(VisualStudioSolutionFolder folder, DirectoryInfo currentPhysicalDirectory)
     {
+        // Vendored third party source (externals solution folder) is exempt from hygiene rules
+        if (folder.Name.Equals(VendoredCode.ExternalsDirectoryName, StringComparison.Ordinal))
+            return;
+
         var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
             .SingleOrDefault(d => d.Name.Equals(folder.Name));
 
@@ -301,7 +305,11 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
 
     private void ValidateAllProjectsExist(VisualStudioSolutionFile sln, DirectoryInfo solutionDir)
     {
-        var foundProjects = sln.Projects.ToDictionary(project => project, project => new List<string>());
+        // Projects under externals/ (our thin wrapper csprojs around vendored NPOI source) are
+        // excluded because FindUnreferencedProjectsRecursively does not descend into externals/
+        var foundProjects = sln.Projects
+            .Where(project => !VendoredCode.IsExternalsProject(project.Path))
+            .ToDictionary(project => project, project => new List<string>());
         FindUnreferencedProjectsRecursively(foundProjects, solutionDir);
 
         foreach (var kvp in foundProjects)
@@ -315,7 +323,10 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
 
     private void ValidateNoDuplicateProjects(VisualStudioSolutionFile sln, DirectoryInfo solutionDir)
     {
-        var foundProjects = sln.Projects.ToDictionary(project => project, project => new List<string>());
+        // See ValidateAllProjectsExist for why externals/ projects are excluded
+        var foundProjects = sln.Projects
+            .Where(project => !VendoredCode.IsExternalsProject(project.Path))
+            .ToDictionary(project => project, project => new List<string>());
         FindUnreferencedProjectsRecursively(foundProjects, solutionDir);
 
         foreach (var kvp in foundProjects)
@@ -345,7 +356,14 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
         }
 
         foreach (var subdir in dir.EnumerateDirectories())
+        {
+            // Skip vendored third party source (e.g. the Apache-2.0 NPOI submodule); its csproj
+            // files are not part of the RDMP solution and are exempt from repository hygiene rules
+            if (VendoredCode.IsVendoredDirectory(subdir))
+                continue;
+
             FindUnreferencedProjectsRecursively(projects, subdir);
+        }
     }
 
     private void ProcessFolderRecursive(IEnumerable<VisualStudioSolutionFolder> folders,
@@ -354,6 +372,10 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
         //Process root folders
         foreach (var solutionFolder in folders)
         {
+            // Vendored third party source (externals solution folder) is exempt from hygiene rules
+            if (solutionFolder.Name.Equals(VendoredCode.ExternalsDirectoryName, StringComparison.Ordinal))
+                continue;
+
             var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
                 .SingleOrDefault(d => d.Name.Equals(solutionFolder.Name));
 

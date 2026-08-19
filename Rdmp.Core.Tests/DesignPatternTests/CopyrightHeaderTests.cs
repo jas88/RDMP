@@ -104,9 +104,11 @@ public class CopyrightHeaderTests
 
         foreach (var file in solutionDir.EnumerateFiles("*.cs", SearchOption.AllDirectories))
         {
-            // Skip obj/bin directories
+            // Skip obj/bin directories and vendored third party source (e.g. the Apache-2.0
+            // NPOI submodule under externals/); RDMP copyright headers do not apply there
             if (file.FullName.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") ||
-                file.FullName.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
+                file.FullName.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") ||
+                VendoredCode.IsVendored(file.FullName))
                 continue;
 
             csFiles.Add(file.FullName);

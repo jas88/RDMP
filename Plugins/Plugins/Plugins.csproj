@@ -23,6 +23,9 @@
   <ItemGroup>
     <!-- Core RDMP reference -->
     <ProjectReference Include="..\..\Rdmp.Core\Rdmp.Core.csproj" />
+    <!-- NPOI built from source (Apache-2.0) via git submodule -->
+    <ProjectReference Include="..\..\externals\NPOI.Core\NPOI.Core.csproj" />
+    <ProjectReference Include="..\..\externals\NPOI.OOXML\NPOI.OOXML.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,7 +33,6 @@
     <PackageReference Include="NLog" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="YamlDotNet" />
-    <PackageReference Include="NPOI" />
   </ItemGroup>
 
 </Project>

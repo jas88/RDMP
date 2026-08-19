@@ -355,7 +355,12 @@ internal class DocumentationCrossExaminationTest
     public DocumentationCrossExaminationTest(DirectoryInfo slndir)
     {
         _slndir = slndir;
-        _mdFiles = Directory.GetFiles(slndir.FullName, "*.md", SearchOption.AllDirectories);
+
+        // Skip vendored third party content (e.g. the Apache-2.0 NPOI submodule under externals/);
+        // RDMP documentation rules such as Glossary linking do not apply there
+        _mdFiles = Directory.GetFiles(slndir.FullName, "*.md", SearchOption.AllDirectories)
+            .Where(static f => !VendoredCode.IsVendored(f))
+            .ToArray();
     }
 
     public void FindProblems(List<string> csFilesFound)

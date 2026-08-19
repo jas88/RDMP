@@ -113,6 +113,7 @@ EOF
 generate_single_target_props "Rdmp.Core"
 generate_single_target_props "Tests.Common"
 generate_single_target_props "RdmpDicom/Rdmp.Dicom"
+generate_single_target_props "externals"
 
 generate_single_target_windows_props "Rdmp.UI"
 generate_single_target_windows_props "Plugins/Plugins.UI"
@@ -140,7 +141,7 @@ if [ "$CHANGES_MADE" = true ]; then
     if [ -d .git ] && [ -n "$CI" ]; then
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        find . -name 'Directory.Build.props' -not -path './Directory.Build.props' -print0 | xargs -0 git add
+        find . -name 'Directory.Build.props' -not -path './Directory.Build.props' -not -path './externals/npoi/*' -not -path './build-standards/*' -print0 | xargs -0 git add
         git commit -m "Update Directory.Build.props files for .NET SDK version"
         git push
         echo "ERROR: Directory.Build.props files were out of date and have been updated."
