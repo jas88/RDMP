@@ -344,7 +344,6 @@
 		<PackageReference Include="NPOI" />
 		<PackageReference Include="NLog" />
 		<PackageReference Include="SixLabors.ImageSharp" />
-		<PackageReference Include="SixLabors.ImageSharp.Drawing" />
 		<PackageReference Include="Spectre.Console" />
 		<PackageReference Include="SSH.NET" />
 		<PackageReference Include="Terminal.Gui" />
