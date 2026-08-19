@@ -2,6 +2,14 @@ name: Tests
 
 on:
   push:
+    # main: post-merge validation; dependabot/**: full-permission runs (secrets +
+    # security-events) since dependabot pull_request events get a read-only token;
+    # v* tags: release bundle builds
+    branches: [main, 'dependabot/**']
+    tags: ['v*']
+  # Human PRs build the merge preview with main, catching semantic conflicts
+  # (e.g. #262+#265) that head-only builds miss
+  pull_request:
 
 env:
   DOTNET_NOLOGO: 1
@@ -12,6 +20,8 @@ jobs:
   # Windows UI Tests - Both Database and File System modes on single VM
   tests_windows_ui:
     name: Windows UI Tests
+    # Dependabot PRs are validated by the push run on their branch instead
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
     runs-on: windows-latest
     permissions:
       actions: read
@@ -238,6 +248,8 @@ jobs:
   # Linux Database Tests
   tests_linux_db:
     name: Linux Database Tests
+    # Dependabot PRs are validated by the push run on their branch instead
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
     runs-on: ubuntu-22.04
     env:
       # RDMP_KEY_LOCATION not set - will use built-in fallback key
