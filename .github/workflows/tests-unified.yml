@@ -229,7 +229,7 @@ jobs:
             -**/*.designer.cs
             -**/obj/**
             -**/bin/**
-            -externals/**
+            -**/externals/**
           input: sarif-results/csharp.sarif
           output: sarif-results/csharp.sarif
 
