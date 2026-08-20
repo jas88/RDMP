@@ -23,6 +23,11 @@ updates:
     # nissl-lab/npoi's own pin; revisit when an npoi-update-check PR moves it.
     - dependency-name: "ExtendedNumerics.BigDecimal"
       versions: [">=3000.0.0"]
+    # Terminal.Gui 2.x is a ground-up API redesign (231 unique compile errors
+    # across the 29-file console GUI); v1.19.0 is the latest v1 and has no known
+    # advisories. Migration to v2 is a dedicated effort - see tracking issue.
+    - dependency-name: "Terminal.Gui"
+      update-types: ["version-update:semver-major"]
 - package-ecosystem: "dotnet-sdk"
   directory: "/"
   schedule:
