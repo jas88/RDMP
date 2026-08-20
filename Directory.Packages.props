@@ -18,7 +18,7 @@
     <!-- Dependencies of NPOI, built from source in externals/ (see externals/npoi submodule) -->
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.7.0" />
     <PackageVersion Include="Enums.NET" Version="5.0.0" />
-    <PackageVersion Include="ExtendedNumerics.BigDecimal" Version="2025.1001.2.129" />
+    <PackageVersion Include="ExtendedNumerics.BigDecimal" Version="2025.1005.0.264" />
     <PackageVersion Include="MathNet.Numerics.Signed" Version="5.0.0" />
     <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageVersion Include="SharpZipLib" Version="1.4.2" />
