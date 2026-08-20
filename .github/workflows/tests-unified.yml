@@ -31,7 +31,7 @@ jobs:
       RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
 
@@ -258,7 +258,7 @@ jobs:
       MSSQL_PID: "developer"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
 
@@ -443,7 +443,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
 
