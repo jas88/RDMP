@@ -17,6 +17,12 @@ updates:
     aws-sdk:
       patterns:
         - "AWSSDK.*"
+  ignore:
+    # Vendored NPOI (externals/npoi) targets the 2025.x BigDecimal API; 3000+ is a
+    # rewrite (SignifigantDigits renamed, default Precision 5000 -> 100). Follow
+    # nissl-lab/npoi's own pin; revisit when an npoi-update-check PR moves it.
+    - dependency-name: "ExtendedNumerics.BigDecimal"
+      versions: [">=3000.0.0"]
 - package-ecosystem: "dotnet-sdk"
   directory: "/"
   schedule:
