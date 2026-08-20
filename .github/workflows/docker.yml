@@ -22,7 +22,7 @@ jobs:
           cache: true
           cache-dependency-path: Directory.Packages.props
       - name: Log in to the GitHub Container registry
-        uses: redhat-actions/podman-login@v1
+        uses: redhat-actions/podman-login@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
