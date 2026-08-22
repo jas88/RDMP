@@ -25,7 +25,7 @@
     <PackageVersion Include="SkiaSharp" Version="3.119.2" />
     <PackageVersion Include="ZString" Version="2.6.0" />
     <PackageVersion Include="NLog" Version="6.2.0" />
-    <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageVersion Include="SixLabors.ImageSharp" Version="4.1.1" />
     <PackageVersion Include="Spectre.Console" Version="0.57.2" />
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />
     <PackageVersion Include="Terminal.Gui" Version="1.19.0" />
