@@ -5,7 +5,7 @@
     <PackageVersion Include="AWSSDK.SSO" Version="4.0.100.22" />
     <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.100.21" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
-    <PackageVersion Include="ExcelNumberFormat" Version="1.1.0" />
+    <PackageVersion Include="ExcelNumberFormat" Version="1.2.0" />
     <PackageVersion Include="FluentFTP" Version="55.1.0" />
     <PackageVersion Include="HIC.SynthEHR" Version="2.0.1" />
     <PackageVersion Include="SynthDicom" Version="1.0.0" />
