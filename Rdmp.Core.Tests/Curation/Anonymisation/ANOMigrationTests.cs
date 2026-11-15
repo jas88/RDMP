@@ -113,7 +113,6 @@ INSERT [ANOMigration] ([AdmissionDate], [DischargeDate], [Condition1], [Conditio
 
 
     [Test]
-    [Order(1)]
     public void PKsAreCorrect()
     {
         Assert.Multiple(() =>
@@ -125,7 +124,7 @@ INSERT [ANOMigration] ([AdmissionDate], [DischargeDate], [Condition1], [Conditio
     }
 
     [Test]
-    [Order(2)]
+    [DependsOnTest(nameof(PKsAreCorrect), AllowFailure = true)]
     public void ConvertPrimaryKeyColumn()
     {
         //The table we created above should have a column called Condition2 in it, we will migrate this data to ANO land
@@ -141,7 +140,7 @@ INSERT [ANOMigration] ([AdmissionDate], [DischargeDate], [Condition1], [Conditio
 
 
     [Test]
-    [Order(3)]
+    [DependsOnTest(nameof(ConvertPrimaryKeyColumn), AllowFailure = true)]
     [TestCase("Condition2")]
     [TestCase("Condition3")]
     [TestCase("Condition4")]
