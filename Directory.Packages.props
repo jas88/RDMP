@@ -9,7 +9,6 @@
     <PackageVersion Include="FluentFTP" Version="55.1.0" />
     <PackageVersion Include="HIC.SynthEHR" Version="2.0.1" />
     <PackageVersion Include="SynthDicom" Version="1.0.0" />
-    <!-- FAnsiSql.Legacy 3.6.3 (fixes thread-safety in QuerySyntaxHelper.GetParameter) -->
     <PackageVersion Include="FAnsiSql.Legacy" Version="3.7.0" />
     <PackageVersion Include="LibArchive.Net" Version="0.3.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.12.0" />
@@ -47,7 +46,5 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="11.0.0" />
     <!-- Pin transitive dependency to fix GHSA-37gx-xxp4-5rgx and later advisories (GHSA-23rf-6693-g89p etc) -->
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="11.0.0" />
-    <!-- Pin transitive dependency (via FAnsiSql.Sqlite) to pull SQLitePCLRaw >= 2.1.12, fixing GHSA-2m69-gcr7-jv3q -->
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.11" />
   </ItemGroup>
 </Project>
