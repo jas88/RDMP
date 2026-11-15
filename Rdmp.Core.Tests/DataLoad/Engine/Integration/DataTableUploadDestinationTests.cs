@@ -1142,7 +1142,7 @@ ALTER TABLE DroppedColumnsTable add color varchar(1)
 
         var dt2 = db.ExpectTable("ff").GetDataTable();
 
-        Assert.That((decimal)dt2.Rows[0][0], Is.EqualTo((decimal)-0.0000410235746055587));
+        Assert.That((decimal)dt2.Rows[0][0], Is.EqualTo(-0.0000410235746055587m));
     }
 
     private class AdjustColumnDelegater : IDatabaseColumnRequestAdjuster
