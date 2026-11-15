@@ -15,7 +15,6 @@ using FellowOakDicom;
 using Rdmp.Dicom.PACS;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using LibArchive.Net;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Rdmp.Dicom.Extraction.FoDicomBased;
 
@@ -133,7 +132,7 @@ public partial class AmbiguousFilePath
     /// <returns></returns>
     public IEnumerable<ValueTuple<string, DicomFile>> GetDataset(int retryCount = 0, int retryDelay = 100, IDataLoadEventListener listener = null)
     {
-        while (!_fullPaths.IsNullOrEmpty())
+        while (_fullPaths.Count > 0)
         {
             var entry = _fullPaths.First();
             if (!IsZipReference(entry.Key))
