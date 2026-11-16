@@ -151,6 +151,18 @@ internal class CompileTimeTypeRegistryTests
                     $"A missing Type ending '{type.Name}' was resolved to a DocumentFormat.OpenXml Type");
             }
 
+            // A Type whose short name nothing else has can still be found by its full name.  Finding it that way
+            // must not make the short name resolvable afterwards.
+            var withoutNamesake = openXmlTypes.Where(static t => MEF.GetType(t.Name) == null).ToArray();
+            Assert.That(withoutNamesake, Does.Contain(typeof(DocumentFormat.OpenXml.Wordprocessing.Name)));
+
+            foreach (var type in withoutNamesake)
+            {
+                Assert.That(MEF.GetType(type.FullName), Is.EqualTo(type));
+                Assert.That(MEF.GetType(type.Name), Is.Null,
+                    $"'{type.Name}' became resolvable by short name after a full name lookup");
+            }
+
             Assert.That(
                 MEF.GetAllTypes().Where(static t =>
                     t.Assembly.FullName?.StartsWith("DocumentFormat.OpenXml", StringComparison.Ordinal) == true),
