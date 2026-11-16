@@ -58,11 +58,9 @@ public partial class ForwardEngineerANOCatalogueUI : ForwardEngineerANOCatalogue
 
         olvMigrationPlan.AspectGetter += MigrationPlanAspectGetter;
 
-        olvPickedANOTable.HeaderImageKey = "ANOTable";
         olvPickedANOTable.AspectGetter += PickedANOTableAspectGetter;
         olvPickedANOTable.ImageGetter += PickedANOTable_ImageGetter;
 
-        olvDilution.HeaderImageKey = "PreLoadDiscardedColumn";
         olvDilution.AspectGetter += DilutionAspectGetter;
         olvDilution.ImageGetter += Dilution_ImageGetter;
 
