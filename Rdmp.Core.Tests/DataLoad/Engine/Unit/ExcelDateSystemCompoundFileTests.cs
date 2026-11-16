@@ -56,7 +56,7 @@ public class ExcelDateSystemCompoundFileTests
             resource.CopyTo(file);
 
         file.Position = 0;
-        var counter = new ReadCountingStream(file);
+        using var counter = new ReadCountingStream(file, true);
 
         Assert.Multiple(() =>
         {
@@ -76,7 +76,8 @@ public class ExcelDateSystemCompoundFileTests
     [Test]
     public void BuiltWorkbook_IsReadableByExcelDataReader()
     {
-        using var reader = ExcelReaderFactory.CreateReader(new MemoryStream(CompoundFile(Workbook(600, 1))));
+        using var stream = new MemoryStream(CompoundFile(Workbook(600, 1)));
+        using var reader = ExcelReaderFactory.CreateReader(stream);
 
         Assert.That(reader.ResultsCount, Is.Zero, "The workbook should be found and have no worksheets");
     }
@@ -90,7 +91,7 @@ public class ExcelDateSystemCompoundFileTests
         int offset, [Values] bool date1904)
     {
         var workbook = Workbook(offset, (ushort)(date1904 ? 1 : 0));
-        var counter = new ReadCountingStream(new MemoryStream(CompoundFile(workbook)));
+        using var counter = new ReadCountingStream(new MemoryStream(CompoundFile(workbook)));
 
         Assert.Multiple(() =>
         {
@@ -107,7 +108,7 @@ public class ExcelDateSystemCompoundFileTests
     {
         var file = CompoundFile(Workbook(2558, 1), reverseSectors: true);
 
-        Assert.That(ExcelDateSystem.IsDate1904(new MemoryStream(file)), Is.True);
+        Assert.That(IsDate1904(file), Is.True);
     }
 
     [Test]
@@ -115,7 +116,7 @@ public class ExcelDateSystemCompoundFileTests
     {
         var file = CompoundFile(Workbook(600, 1), "Book");
 
-        Assert.That(ExcelDateSystem.IsDate1904(new MemoryStream(file)), Is.True);
+        Assert.That(IsDate1904(file), Is.True);
     }
 
     /// <summary>
@@ -126,7 +127,7 @@ public class ExcelDateSystemCompoundFileTests
     {
         var workbook = Record(BofRecord, Bof).Concat(Record(EofRecord)).Concat(Record(DateModeRecord, 1, 0)).ToArray();
 
-        Assert.That(ExcelDateSystem.IsDate1904(new MemoryStream(CompoundFile(workbook))), Is.False);
+        Assert.That(IsDate1904(CompoundFile(workbook)), Is.False);
     }
 
     /// <summary>
@@ -140,13 +141,19 @@ public class ExcelDateSystemCompoundFileTests
         var workbook = Enumerable.Repeat(Record(UnknownRecord), dataSectors * SectorSize / 4).SelectMany(r => r).ToArray();
         var file = CompoundFile(workbook, declaredSize: 64 << 20, editFat: fat => fat[2 + dataSectors - 1] = 2);
 
-        var counter = new ReadCountingStream(new MemoryStream(file));
+        using var counter = new ReadCountingStream(new MemoryStream(file));
 
         Assert.Multiple(() =>
         {
             Assert.That(ExcelDateSystem.IsDate1904(counter), Is.False);
             Assert.That(counter.BytesRead, Is.LessThan(10 * file.Length));
         });
+    }
+
+    private static bool IsDate1904(byte[] file)
+    {
+        using var stream = new MemoryStream(file);
+        return ExcelDateSystem.IsDate1904(stream);
     }
 
     #region Building workbooks
@@ -259,10 +266,12 @@ public class ExcelDateSystemCompoundFileTests
     private sealed class ReadCountingStream : Stream
     {
         private readonly Stream _inner;
+        private readonly bool _leaveOpen;
 
-        public ReadCountingStream(Stream inner)
+        public ReadCountingStream(Stream inner, bool leaveOpen = false)
         {
             _inner = inner;
+            _leaveOpen = leaveOpen;
         }
 
         public long BytesRead { get; private set; }
@@ -294,5 +303,13 @@ public class ExcelDateSystemCompoundFileTests
         public override void SetLength(long value) => throw new NotSupportedException();
 
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && !_leaveOpen)
+                _inner.Dispose();
+
+            base.Dispose(disposing);
+        }
     }
 }
