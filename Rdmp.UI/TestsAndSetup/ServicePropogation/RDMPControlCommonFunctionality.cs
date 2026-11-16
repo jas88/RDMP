@@ -18,8 +18,7 @@ using Rdmp.UI.CommandExecution.AtomicCommands.UIFactory;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.Menus;
 using ScintillaNET;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 using Color = System.Drawing.Color;
 using HelpIcon = Rdmp.UI.SimpleControls.HelpIcon;
 using Point = System.Drawing.Point;
@@ -116,7 +115,7 @@ public class RDMPControlCommonFunctionality
     /// <param name="overrideCommandName"></param>
     /// <param name="overrideImage"></param>
     /// <param name="underMenu">If the command should appear under a submenu dropdown then this should be the name of that root button</param>
-    public void Add(IAtomicCommand cmd, string overrideCommandName = null, Image<Rgba32> overrideImage = null,
+    public void Add(IAtomicCommand cmd, string overrideCommandName = null, RdmpIcon overrideImage = null,
         string underMenu = null)
     {
         var p = _hostControl.GetTopmostRDMPUserControl();
@@ -355,7 +354,7 @@ public class RDMPControlCommonFunctionality
     /// <param name="overrideCommandName"></param>
     /// <param name="overrideImage"></param>
     /// <param name="underMenu"></param>
-    public void AddToMenu(IAtomicCommand cmd, string overrideCommandName = null, Image<Rgba32> overrideImage = null,
+    public void AddToMenu(IAtomicCommand cmd, string overrideCommandName = null, RdmpIcon overrideImage = null,
         string underMenu = null)
     {
         var p = _hostControl.GetTopmostRDMPUserControl();

@@ -19,8 +19,7 @@ using Rdmp.Core.DataLoad.Engine.Pipeline.Destinations;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands.CatalogueCreationCommands;
 
@@ -173,7 +172,7 @@ public class ExecuteCommandCreateNewCatalogueByImportingFile : CatalogueCreation
         Emphasise(cata);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         ProjectSpecific != null
             ? iconProvider.GetImage(RDMPConcept.ProjectCatalogue, OverlayKind.Add)
             : iconProvider.GetImage(RDMPConcept.Catalogue, OverlayKind.Add);

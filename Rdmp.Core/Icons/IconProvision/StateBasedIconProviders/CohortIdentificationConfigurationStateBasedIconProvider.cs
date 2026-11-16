@@ -7,17 +7,15 @@
 using Rdmp.Core.Curation.Data.Cohort;
 using Rdmp.Core.Icons.IconOverlays;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public class CohortIdentificationConfigurationStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private readonly Image<Rgba32> _cohortIdentificationConfiguration;
-    private readonly Image<Rgba32> _cohortIdentificationConfigurationVersion;
-    private readonly Image<Rgba32> _frozenCohortIdentificationConfiguration;
-    private readonly Image<Rgba32> _frozenCohortIdentificationConfigurationVersion;
+    private readonly RdmpIcon _cohortIdentificationConfiguration;
+    private readonly RdmpIcon _cohortIdentificationConfigurationVersion;
+    private readonly RdmpIcon _frozenCohortIdentificationConfiguration;
+    private readonly RdmpIcon _frozenCohortIdentificationConfigurationVersion;
 
     public CohortIdentificationConfigurationStateBasedIconProvider()
     {
@@ -29,7 +27,7 @@ public class CohortIdentificationConfigurationStateBasedIconProvider : IObjectSt
 
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o) =>
+    public RdmpIcon GetImageIfSupportedObject(object o) =>
         o is not CohortIdentificationConfiguration cic
             ? null
             : cic.Frozen

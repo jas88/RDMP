@@ -12,8 +12,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.DataRelease;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -31,7 +30,7 @@ public class ExecuteCommandRelease : BasicUICommandExecution, IAtomicCommandWith
     public override string GetCommandHelp() =>
         "Gather all the extracted files into one releasable package and freeze the extraction configuration";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.Release);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.Release);
 
     /// <summary>
     /// Sets the thing being released, valid targets are <see cref="Project"/>, <see cref="ExtractionConfiguration"/> and <see cref="ISelectedDataSets"/>.

@@ -5,12 +5,14 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System.IO;
+using System.Linq;
+using NPOI.XWPF.UserModel;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
+using Rdmp.Core.Icons;
+using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Reports;
 using Rdmp.Core.ReusableLibraryCode.Progress;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Tests.Common;
 
 namespace Rdmp.Core.Tests.Reports;
@@ -24,24 +26,12 @@ internal class MetadataReportTests : UnitTests
         var reporter = new MetadataReport(Repository, new MetadataReportArgs(new[] { cata }));
         cata.Description = "The Quick Brown Fox Was Quicker Than The slow tortoise";
 
-        //setup delegate for returning images
-        var bmp = new Image<Rgba32>(200, 200);
-
-        // paint a 50x50 black square at (10,10) so the image is non-uniform
-        var black = Color.Black.ToPixel<Rgba32>();
-        bmp.ProcessPixelRows(accessor =>
-        {
-            for (var y = 10; y < 60; y++)
-            {
-                var row = accessor.GetRowSpan(y);
-                for (var x = 10; x < 60; x++)
-                    row[x] = black;
-            }
-        });
+        //setup delegate for returning images (any non-uniform PNG will do, so use one of the embedded icons)
+        var png = EmbeddedIconHelper.GetPngBytes(CatalogueIcons.Catalogue);
 
         reporter.RequestCatalogueImages += s =>
         {
-            return new BitmapWithDescription[] { new(bmp, "MyPicture", "Something interesting about it") };
+            return new BitmapWithDescription[] { new(png, "MyPicture", "Something interesting about it") };
         };
 
         var file = reporter.GenerateWordFile(ThrowImmediatelyDataLoadEventListener.Quiet, false);
@@ -54,6 +44,11 @@ internal class MetadataReportTests : UnitTests
             //refreshes the file stream status
             Assert.That(new FileInfo(file.FullName).Length, Is.GreaterThan(0));
         });
+
+        // the PNG should have been embedded unchanged
+        using var stream = File.OpenRead(file.FullName);
+        using var doc = new XWPFDocument(stream);
+        Assert.That(doc.AllPictures.Select(static p => p.Data), Has.One.EqualTo(png));
     }
 
     [Test]

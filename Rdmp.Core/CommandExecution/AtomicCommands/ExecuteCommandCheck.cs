@@ -7,8 +7,7 @@
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -33,5 +32,5 @@ public sealed class ExecuteCommandCheck : BasicCommandExecution
         _checkable.Check(_notifier);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.TinyYellow;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => CatalogueIcons.TinyYellow;
 }

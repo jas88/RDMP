@@ -255,7 +255,8 @@ public partial class RDMPTopMenuStripUI : RDMPUserControl
         report.GenerateReport(Activator.RepositoryLocator.CatalogueRepository.CommentStore,
             new PopupChecksUI("Generating class summaries", false),
             Activator.CoreIconProvider,
-            true);
+            true,
+            ImageTools.ToPngBytes);
     }
 
     private void showHelpToolStripMenuItem_Click(object sender, EventArgs e)

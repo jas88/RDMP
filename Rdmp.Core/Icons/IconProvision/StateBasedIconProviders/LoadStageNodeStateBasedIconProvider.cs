@@ -9,8 +9,6 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.DataLoad;
 using Rdmp.Core.Curation.Data.DataLoad.Extensions;
 using Rdmp.Core.Providers.Nodes.LoadMetadataNodes;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
@@ -23,7 +21,7 @@ public class LoadStageNodeStateBasedIconProvider : IObjectStateBasedIconProvider
         _iconProvider = iconProvider;
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         return o switch
         {
@@ -34,7 +32,7 @@ public class LoadStageNodeStateBasedIconProvider : IObjectStateBasedIconProvider
         };
     }
 
-    private Image<Rgba32> GetImageForStage(LoadStage loadStage)
+    private RdmpIcon GetImageForStage(LoadStage loadStage)
     {
         return loadStage switch
         {

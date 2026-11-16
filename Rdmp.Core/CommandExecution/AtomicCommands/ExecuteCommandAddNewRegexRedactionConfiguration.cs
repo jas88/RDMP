@@ -11,8 +11,7 @@
 
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
+using Rdmp.Core.Icons;
 using Rdmp.Core.Curation.DataHelper.RegexRedaction;
 using System.Text.RegularExpressions;
 using Rdmp.Core.Curation.Data;
@@ -46,6 +45,6 @@ public class ExecuteCommandAddNewRegexRedactionConfiguration : BasicCommandExecu
         _activator.Publish(config);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
       iconProvider.GetImage(RDMPConcept.RegexRedaction, OverlayKind.Add);
 }

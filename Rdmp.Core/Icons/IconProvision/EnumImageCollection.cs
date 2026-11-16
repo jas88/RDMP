@@ -7,15 +7,12 @@
 using System;
 using System.Collections.Frozen;
 using System.Linq;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 
 namespace Rdmp.Core.Icons.IconProvision;
 
 public sealed class EnumImageCollection<T> where T : struct, Enum, IConvertible
 {
-    private readonly FrozenDictionary<T, Image<Rgba32>> _images;
+    private readonly FrozenDictionary<T, RdmpIcon> _images;
 
     /// <summary>
     /// Creates an image collection by loading embedded PNG resources based on enum values.
@@ -35,12 +32,8 @@ public sealed class EnumImageCollection<T> where T : struct, Enum, IConvertible
         _images = dict.ToFrozenDictionary();
     }
 
-    public Image<Rgba32> this[T index] => _images[index];
+    public RdmpIcon this[T index] => _images[index];
 
-    public FrozenDictionary<string, Image<Rgba32>> ToStringDictionary(int newSizeInPixels = -1)
-    {
-        return _images.ToFrozenDictionary(
-            k => k.Key.ToString(),
-            v => newSizeInPixels == -1 ? v.Value : v.Value.Clone(x => x.Resize(newSizeInPixels, newSizeInPixels)));
-    }
+    public FrozenDictionary<string, RdmpIcon> ToStringDictionary() =>
+        _images.ToFrozenDictionary(static k => k.Key.ToString(), static v => v.Value);
 }

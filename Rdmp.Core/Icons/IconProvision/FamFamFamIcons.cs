@@ -4,8 +4,6 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision;
 
@@ -16,38 +14,38 @@ public static class FamFamFamIcons
 {
     private const string P = "Rdmp.Core.Icons.famfamfam.";
 
-    public static readonly Image<Rgba32> add = EmbeddedIconHelper.GetRequired($"{P}add");
-    public static readonly Image<Rgba32> application_home = EmbeddedIconHelper.GetRequired($"{P}application_home");
-    public static readonly Image<Rgba32> arrow_refresh = EmbeddedIconHelper.GetRequired($"{P}arrow_refresh");
-    public static readonly Image<Rgba32> Back = EmbeddedIconHelper.GetRequired($"{P}back");
-    public static readonly Image<Rgba32> bin_closed = EmbeddedIconHelper.GetRequired($"{P}bin_closed");
-    public static readonly Image<Rgba32> cancel = EmbeddedIconHelper.GetRequired($"{P}cancel");
-    public static readonly Image<Rgba32> cog = EmbeddedIconHelper.GetRequired($"{P}cog");
-    public static readonly Image<Rgba32> delete = EmbeddedIconHelper.GetRequired($"{P}delete");
-    public static readonly Image<Rgba32> delete_multi = EmbeddedIconHelper.GetRequired($"{P}delete_multi");
-    public static readonly Image<Rgba32> disk = EmbeddedIconHelper.GetRequired($"{P}disk");
-    public static readonly Image<Rgba32> flag_red = EmbeddedIconHelper.GetRequired($"{P}flag_red");
-    public static readonly Image<Rgba32> Forward = EmbeddedIconHelper.GetRequired($"{P}forward");
-    public static readonly Image<Rgba32> GreenFace = EmbeddedIconHelper.GetRequired($"{P}GreenFace");
-    public static readonly Image<Rgba32> help = EmbeddedIconHelper.GetRequired($"{P}help");
-    public static readonly Image<Rgba32> link = EmbeddedIconHelper.GetRequired($"{P}link");
-    public static readonly Image<Rgba32> link_break = EmbeddedIconHelper.GetRequired($"{P}link_break");
-    public static readonly Image<Rgba32> lock_break = EmbeddedIconHelper.GetRequired($"{P}lock_break");
-    public static readonly Image<Rgba32> magnifier = EmbeddedIconHelper.GetRequired($"{P}magnifier");
-    public static readonly Image<Rgba32> page_white_get = EmbeddedIconHelper.GetRequired($"{P}page_white_get");
-    public static readonly Image<Rgba32> page_white_put = EmbeddedIconHelper.GetRequired($"{P}page_white_put");
-    public static readonly Image<Rgba32> page_white_word = EmbeddedIconHelper.GetRequired($"{P}page_white_word");
-    public static readonly Image<Rgba32> pencil_go = EmbeddedIconHelper.GetRequired($"{P}pencil_go");
-    public static readonly Image<Rgba32> phone = EmbeddedIconHelper.GetRequired($"{P}phone");
-    public static readonly Image<Rgba32> picture_save = EmbeddedIconHelper.GetRequired($"{P}picture_save");
-    public static readonly Image<Rgba32> RedFace = EmbeddedIconHelper.GetRequired($"{P}RedFace");
-    public static readonly Image<Rgba32> Redo = EmbeddedIconHelper.GetRequired($"{P}Redo");
-    public static readonly Image<Rgba32> stop = EmbeddedIconHelper.GetRequired($"{P}stop");
-    public static readonly Image<Rgba32> text_align_left = EmbeddedIconHelper.GetRequired($"{P}text_align_left");
-    public static readonly Image<Rgba32> text_list_bullets = EmbeddedIconHelper.GetRequired($"{P}text_list_bullets");
-    public static readonly Image<Rgba32> tick = EmbeddedIconHelper.GetRequired($"{P}Tick");
-    public static readonly Image<Rgba32> time = EmbeddedIconHelper.GetRequired($"{P}time");
-    public static readonly Image<Rgba32> Undo = EmbeddedIconHelper.GetRequired($"{P}Undo");
-    public static readonly Image<Rgba32> wand = EmbeddedIconHelper.GetRequired($"{P}wand");
-    public static readonly Image<Rgba32> YellowFace = EmbeddedIconHelper.GetRequired($"{P}YellowFace");
+    public static readonly RdmpIcon add = EmbeddedIconHelper.GetRequired($"{P}add");
+    public static readonly RdmpIcon application_home = EmbeddedIconHelper.GetRequired($"{P}application_home");
+    public static readonly RdmpIcon arrow_refresh = EmbeddedIconHelper.GetRequired($"{P}arrow_refresh");
+    public static readonly RdmpIcon Back = EmbeddedIconHelper.GetRequired($"{P}back");
+    public static readonly RdmpIcon bin_closed = EmbeddedIconHelper.GetRequired($"{P}bin_closed");
+    public static readonly RdmpIcon cancel = EmbeddedIconHelper.GetRequired($"{P}cancel");
+    public static readonly RdmpIcon cog = EmbeddedIconHelper.GetRequired($"{P}cog");
+    public static readonly RdmpIcon delete = EmbeddedIconHelper.GetRequired($"{P}delete");
+    public static readonly RdmpIcon delete_multi = EmbeddedIconHelper.GetRequired($"{P}delete_multi");
+    public static readonly RdmpIcon disk = EmbeddedIconHelper.GetRequired($"{P}disk");
+    public static readonly RdmpIcon flag_red = EmbeddedIconHelper.GetRequired($"{P}flag_red");
+    public static readonly RdmpIcon Forward = EmbeddedIconHelper.GetRequired($"{P}forward");
+    public static readonly RdmpIcon GreenFace = EmbeddedIconHelper.GetRequired($"{P}GreenFace");
+    public static readonly RdmpIcon help = EmbeddedIconHelper.GetRequired($"{P}help");
+    public static readonly RdmpIcon link = EmbeddedIconHelper.GetRequired($"{P}link");
+    public static readonly RdmpIcon link_break = EmbeddedIconHelper.GetRequired($"{P}link_break");
+    public static readonly RdmpIcon lock_break = EmbeddedIconHelper.GetRequired($"{P}lock_break");
+    public static readonly RdmpIcon magnifier = EmbeddedIconHelper.GetRequired($"{P}magnifier");
+    public static readonly RdmpIcon page_white_get = EmbeddedIconHelper.GetRequired($"{P}page_white_get");
+    public static readonly RdmpIcon page_white_put = EmbeddedIconHelper.GetRequired($"{P}page_white_put");
+    public static readonly RdmpIcon page_white_word = EmbeddedIconHelper.GetRequired($"{P}page_white_word");
+    public static readonly RdmpIcon pencil_go = EmbeddedIconHelper.GetRequired($"{P}pencil_go");
+    public static readonly RdmpIcon phone = EmbeddedIconHelper.GetRequired($"{P}phone");
+    public static readonly RdmpIcon picture_save = EmbeddedIconHelper.GetRequired($"{P}picture_save");
+    public static readonly RdmpIcon RedFace = EmbeddedIconHelper.GetRequired($"{P}RedFace");
+    public static readonly RdmpIcon Redo = EmbeddedIconHelper.GetRequired($"{P}Redo");
+    public static readonly RdmpIcon stop = EmbeddedIconHelper.GetRequired($"{P}stop");
+    public static readonly RdmpIcon text_align_left = EmbeddedIconHelper.GetRequired($"{P}text_align_left");
+    public static readonly RdmpIcon text_list_bullets = EmbeddedIconHelper.GetRequired($"{P}text_list_bullets");
+    public static readonly RdmpIcon tick = EmbeddedIconHelper.GetRequired($"{P}Tick");
+    public static readonly RdmpIcon time = EmbeddedIconHelper.GetRequired($"{P}time");
+    public static readonly RdmpIcon Undo = EmbeddedIconHelper.GetRequired($"{P}Undo");
+    public static readonly RdmpIcon wand = EmbeddedIconHelper.GetRequired($"{P}wand");
+    public static readonly RdmpIcon YellowFace = EmbeddedIconHelper.GetRequired($"{P}YellowFace");
 }

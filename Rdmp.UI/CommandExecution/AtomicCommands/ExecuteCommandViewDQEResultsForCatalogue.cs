@@ -13,8 +13,7 @@ using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.CatalogueSummary;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -36,7 +35,7 @@ public class ExecuteCommandViewDQEResultsForCatalogue : BasicUICommandExecution,
     public override string GetCommandHelp() =>
         "View the results of all data quality engine runs that have ever been run on the dataset";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.DQE;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => CatalogueIcons.DQE;
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)
     {

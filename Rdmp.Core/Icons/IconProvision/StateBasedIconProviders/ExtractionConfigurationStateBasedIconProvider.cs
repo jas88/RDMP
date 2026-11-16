@@ -5,15 +5,13 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using Rdmp.Core.DataExport.Data;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public class ExtractionConfigurationStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private readonly Image<Rgba32> _normal;
-    private readonly Image<Rgba32> _frozen;
+    private readonly RdmpIcon _normal;
+    private readonly RdmpIcon _frozen;
 
     public ExtractionConfigurationStateBasedIconProvider(DataExportIconProvider iconProvider)
     {
@@ -21,7 +19,7 @@ public class ExtractionConfigurationStateBasedIconProvider : IObjectStateBasedIc
         _frozen = CatalogueIcons.FrozenExtractionConfiguration;
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         if (o is not ExtractionConfiguration ec)
             return null;

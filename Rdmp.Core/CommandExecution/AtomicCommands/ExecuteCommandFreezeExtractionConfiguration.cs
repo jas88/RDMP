@@ -7,8 +7,7 @@
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -25,7 +24,7 @@ internal class ExecuteCommandFreezeExtractionConfiguration : BasicCommandExecuti
             SetImpossible("ExtractionConfiguration is already released)");
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         CatalogueIcons.FrozenExtractionConfiguration;
 
     public override void Execute()

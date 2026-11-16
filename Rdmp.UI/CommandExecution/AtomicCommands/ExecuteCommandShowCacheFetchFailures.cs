@@ -11,8 +11,7 @@ using Rdmp.Core.Curation.Data.Cache;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.SimpleDialogs;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
@@ -52,5 +51,5 @@ public class ExecuteCommandShowCacheFetchFailures : BasicUICommandExecution, IAt
         Activator.ShowWindow(ui, true);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(_cacheProgress);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(_cacheProgress);
 }

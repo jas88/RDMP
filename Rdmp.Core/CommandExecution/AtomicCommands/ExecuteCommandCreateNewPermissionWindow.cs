@@ -8,8 +8,7 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Cache;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
@@ -22,7 +21,7 @@ public class ExecuteCommandCreateNewPermissionWindow : BasicCommandExecution, IA
     {
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.PermissionWindow, OverlayKind.Add);
 
     public override string GetCommandHelp() => "Creates a new time window restriction on when loads can occur";
