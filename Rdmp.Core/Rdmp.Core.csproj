@@ -327,6 +327,7 @@
 		<PackageReference Include="AWSSDK.SSO" />
 		<PackageReference Include="AWSSDK.SSOOIDC" />
 		<PackageReference Include="CommandLineParser" />
+		<PackageReference Include="ExcelDataReader" />
 		<PackageReference Include="ExcelNumberFormat" />
 		<PackageReference Include="FluentFTP" />
 		<PackageReference Include="SynthEHR.Core" />

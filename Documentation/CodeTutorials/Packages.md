@@ -23,6 +23,7 @@
 | SkiaSharp | [GitHub](https://github.com/mono/SkiaSharp) | [MIT](https://opensource.org/licenses/MIT) | Graphics/font metrics, compile-time dependency of NPOI | |
 | System.Security.Cryptography.Xml | [GitHub](https://github.com/dotnet/runtime) | [MIT](https://opensource.org/licenses/MIT) | XML digital signatures, dependency of NPOI.OOXML | |
 | ZString | [GitHub](https://github.com/Cysharp/ZString) | [MIT](https://opensource.org/licenses/MIT) | Zero-allocation string building, dependency of NPOI | |
+| ExcelDataReader | [GitHub](https://github.com/ExcelDataReader/ExcelDataReader) | [MIT](https://opensource.org/licenses/MIT) | Reads Microsoft Excel workbooks (.xls, .xlsx, .xlsb) for data loading | |
 | ExcelNumberFormat | [GitHub](https://github.com/andersnm/ExcelNumberFormat) |[MIT](https://opensource.org/licenses/MIT)  | Handles translating number formats from Excel formats into usable values | |
 | LibArchive.Net | [GitHub](https://github.com/jas88/libarchive.net) | [BSD](https://opensource.org/license/bsd-2-clause/) | Access archive formats without the LZMA bugs of SharpCompress | |
 | [NLog](https://nlog-project.org/) | [GitHub](https://github.com/NLog/NLog) | [BSD 3-Clause](https://github.com/NLog/NLog/blob/dev/LICENSE.txt) | Flexible user configurable logging | |
@@ -46,6 +47,6 @@
 | DicomTypeTranslation | [GitHub](https://github.com/jas88/DicomTypeTranslation) | [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html) | Extension library for FoDicom supporting database storage of DICOM imaging datasets | |
 | Microsoft.CodeAnalysis.Analyzers | [GitHub](https://github.com/dotnet/roslyn-analyzers) | [MIT](https://opensource.org/licenses/MIT) | Code analyzers for source generators | Build-time only |
 | Microsoft.CodeAnalysis.CSharp | [GitHub](https://github.com/dotnet/roslyn) | [MIT](https://opensource.org/licenses/MIT) | C# compiler and code analysis APIs for source generators | Build-time only |
-NPOI ([GitHub](https://github.com/nissl-lab/npoi), [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)), which enables reading/writing Microsoft Excel files, is no longer consumed as a NuGet package: it is compiled from source out of the `externals/npoi` git submodule via the wrapper projects in `externals/NPOI.*`, avoiding the OSMF EULA acceptance requirement attached to the official NuGet binaries. The packages listed above from BouncyCastle.Cryptography through ZString are its dependencies.
+NPOI ([GitHub](https://github.com/nissl-lab/npoi), [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)), which is used to write Microsoft Word documents, is no longer consumed as a NuGet package: it is compiled from source out of the `externals/npoi` git submodule via the wrapper projects in `externals/NPOI.*`, avoiding the OSMF EULA acceptance requirement attached to the official NuGet binaries. The packages listed above from BouncyCastle.Cryptography through ZString are its dependencies.
 
 [DBMS]: ./Glossary.md#DBMS

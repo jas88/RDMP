@@ -14,7 +14,7 @@ Microsoft Excel Workbooks (xls and xlsx) are file formats in which one or more W
 - Cells can contain formulas
 
 ## Implementation
-Excel files are read using the [NPOI](https://github.com/tonyqus/npoi) library.  Support for number formats is added by the [ExcelNumberFormat](#https://github.com/andersnm/ExcelNumberFormat) library.
+Excel files are read using the [ExcelDataReader](https://github.com/ExcelDataReader/ExcelDataReader) library.  Support for number formats is added by the [ExcelNumberFormat](https://github.com/andersnm/ExcelNumberFormat) library.  Formulas are not evaluated, the result cached in the file when it was last saved by Excel is used.  Error cells (e.g. `#DIV/0!`) are treated as blank.
 
 Data read from the file is converted to a string (textual) representation and then treated exactly like other untyped inputs (See [Type Determination](https://github.com/HicServices/FAnsiSql/blob/master/Documentation/TypeTranslation.md))
 
@@ -45,5 +45,6 @@ In Excel all Date/Time fields are stored only as a number.  You can see this num
 Tests confirming the above behaviour are included in the following tests:
 
 - [ExcelTests.cs](./../../Rdmp.Core.Tests/DataLoad/Engine/Unit/ExcelTests.cs)
+- [ExcelSourceCellHandlingTests.cs](./../../Rdmp.Core.Tests/DataLoad/Engine/Unit/ExcelSourceCellHandlingTests.cs)
 - [ExcelConversionTest](./../../Rdmp.Core.Tests/DataLoad/Engine/Integration/ExcelConversionTest.cs)
 

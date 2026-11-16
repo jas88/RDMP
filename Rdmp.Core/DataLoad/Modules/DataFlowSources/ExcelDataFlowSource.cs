@@ -1,4 +1,4 @@
-// Copyright (c) The University of Dundee 2018-2024
+// Copyright (c) The University of Dundee 2018-2026
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -7,22 +7,16 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using ExcelNumberFormat;
+using ExcelDataReader;
 using FAnsi.Discovery;
-using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.DataFlowPipeline.Requirements;
 using Rdmp.Core.DataLoad.Modules.Exceptions;
-using Rdmp.Core.ReusableLibraryCode.Annotations;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 
@@ -30,7 +24,7 @@ namespace Rdmp.Core.DataLoad.Modules.DataFlowSources;
 
 /// <summary>
 /// Pipeline component for reading from Microsoft Excel files.  Reads only from a single worksheet (by default the first one in the workbook).  Data read
-/// is returned as a DataTable all read at once in one big batch.  This component requires Microsoft Office to be installed since it uses Interop.
+/// is returned as a DataTable all read at once in one big batch.  Both .xls and .xlsx are supported (via ExcelDataReader, Microsoft Office is not required).
 /// </summary>
 public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRequirement<FlatFileToLoad>
 {
@@ -69,35 +63,31 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
 
     private DataTable GetAllData(IDataLoadEventListener listener, GracefulCancellationToken cancellationToken, int rowOffset = 0, int columnOffset = 0, string[] replacementHeadersSplit = null)
     {
-        var sw = new Stopwatch();
-        sw.Start();
         if (_fileToLoad == null)
             throw new Exception("_fileToLoad has not been set yet, possibly component has not been Initialized yet");
 
         if (!IsAcceptableFileExtension())
             throw new Exception($"FileToLoad ({_fileToLoad.File.FullName}) extension was not XLS or XLSX, dubious");
 
-        using var fs = new FileStream(_fileToLoad.File.FullName, FileMode.Open);
-        IWorkbook wb = _fileToLoad.File.Extension == ".xls" ? new HSSFWorkbook(fs) : new XSSFWorkbook(fs);
+        using var reader = ExcelCellReader.Open(_fileToLoad.File);
 
-        DataTable toReturn = null;
+        //if the user hasn't picked one, use the first
+        if (!string.IsNullOrWhiteSpace(WorkSheetName) && !MoveToWorksheet(reader, WorkSheetName))
+            throw new FlatFileLoadException(
+                $"The Excel sheet '{WorkSheetName}' was not found in workbook '{_fileToLoad.File.Name}'");
+
+        var sheetName = reader.Name;
+        var toReturn = GetAllData(reader, listener, rowOffset, columnOffset, replacementHeadersSplit);
 
         try
         {
-            var worksheet =
-                //if the user hasn't picked one, use the first
-                (string.IsNullOrWhiteSpace(WorkSheetName) ? wb.GetSheetAt(0) : wb.GetSheet(WorkSheetName)) ??
-                throw new FlatFileLoadException(
-                    $"The Excel sheet '{WorkSheetName}' was not found in workbook '{_fileToLoad.File.Name}'");
-            toReturn = GetAllData(worksheet, listener, rowOffset, columnOffset, replacementHeadersSplit);
-
             //set the table name the file name
             toReturn.TableName =
                 QuerySyntaxHelper.MakeHeaderNameSensible(Path.GetFileNameWithoutExtension(_fileToLoad.File.Name));
 
             if (toReturn.Columns.Count == 0)
                 throw new FlatFileLoadException(
-                    $"The Excel sheet '{worksheet.SheetName}' in workbook '{_fileToLoad.File.Name}' is empty");
+                    $"The Excel sheet '{sheetName}' in workbook '{_fileToLoad.File.Name}' is empty");
 
             //if the user wants a column in the DataTable storing the filename loaded add it
             if (!string.IsNullOrWhiteSpace(AddFilenameColumnNamed))
@@ -109,80 +99,93 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
         }
         finally
         {
-            wb.Close();
-            toReturn?.EndLoadData();
+            toReturn.EndLoadData();
         }
 
         return toReturn;
     }
 
     /// <summary>
-    /// Returns all data held in the current <paramref name="worksheet"/>.  The first row of data becomes the headers.  Throws away fully blank columns/rows.
+    /// Advances <paramref name="reader"/> to the worksheet called <paramref name="worksheetName"/> (case insensitive).
+    /// Returns false if there is no such worksheet.
     /// </summary>
-    /// <param name="worksheet"></param>
+    private static bool MoveToWorksheet(IExcelDataReader reader, string worksheetName)
+    {
+        do
+        {
+            if (string.Equals(reader.Name, worksheetName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        } while (reader.NextResult());
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns all data held in the current worksheet of <paramref name="reader"/> (it is not advanced to the next worksheet).
+    /// The first row of data becomes the headers.  Throws away fully blank columns/rows.
+    /// </summary>
+    /// <param name="reader">Workbook reader positioned at the worksheet to read</param>
     /// <param name="listener"></param>
-    /// <param name="rowOffset"></param>
-    /// <param name="columnOffset"></param>
+    /// <param name="rowOffset">1 based row number of the first row which may contain the headers (rows above it are ignored)</param>
+    /// <param name="columnOffset">0 based index of the first column which may contain a header</param>
     /// <param name="replacementHeadersSplit"></param>
     /// <returns></returns>
-    public DataTable GetAllData(ISheet worksheet, IDataLoadEventListener listener, int rowOffset = 0, int columnOffset = 0, string[] replacementHeadersSplit = null)
+    public DataTable GetAllData(IExcelDataReader reader, IDataLoadEventListener listener, int rowOffset = 0, int columnOffset = 0, string[] replacementHeadersSplit = null)
     {
         var toReturn = new DataTable();
         toReturn.BeginLoadData();
 
-        var rowEnumerator = worksheet.GetEnumerator();
         var nColumns = -1;
+        var rowIndex = -1; // 0 indexed, ExcelDataReader returns every row including physically absent ones
 
         var nonBlankColumns = new Dictionary<int, DataColumn>();
 
-        while (rowEnumerator.MoveNext())
+        while (reader.Read())
         {
-            var row = rowEnumerator.Current;
-            if (rowOffset - 1 > row.RowNum) continue;// .RowNumber is 0 indexed
+            rowIndex++;
+            if (rowOffset - 1 > rowIndex) continue;
+
+            var cells = GetCells(reader);
 
             //if all the cells in the current row are blank skip it (eliminates top of file whitespace)
-            if (row.Cells.All(c => string.IsNullOrWhiteSpace(c.ToString())))
+            if (cells.All(c => !ExcelCellReader.HasContent(c.RawValue)))
                 continue;
 
             //first row (that has any data in it) - makes headers
             if (nColumns == -1)
             {
-                nColumns = row.Cells.Count;
+                nColumns = cells.Count;
                 listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Information,
-                    $"Excel sheet {worksheet.SheetName} contains {nColumns}"));
+                    $"Excel sheet {reader.Name} contains {nColumns}"));
 
+                var replacing = replacementHeadersSplit is not null && replacementHeadersSplit.Any();
 
-                if (replacementHeadersSplit is not null && replacementHeadersSplit.Any() && replacementHeadersSplit.Length != nColumns)
+                if (replacing && replacementHeadersSplit.Length != nColumns)
                     listener.OnNotify(this,
                         new NotifyEventArgs(ProgressEventType.Error,
                             $"ForceReplacementHeaders was set but it had {replacementHeadersSplit.Length} column header names while the file had {nColumns} (there must be the same number of replacement headers as headers in the excel file)"));
 
-                string[] originalHeaders = new string[nColumns];
+                var originalHeaders = new string[nColumns];
                 for (var i = 0; i < nColumns; i++)
                 {
-                    //if the cell header is blank
-                    var cell = row.Cells[i];
-                    if (cell.ColumnIndex < columnOffset) continue;
-                    string h;
-                    try
-                    {
-                        h = cell.StringCellValue;
-                    }
-                    catch (Exception)
-                    {
-                        h = cell.NumericCellValue.ToString();
-                    }
-                    if (replacementHeadersSplit is not null && replacementHeadersSplit.Any() && replacementHeadersSplit.Length == nColumns)
+                    var (columnIndex, rawValue) = cells[i];
+                    if (columnIndex < columnOffset) continue;
+
+                    var h = ExcelCellReader.GetHeaderText(rawValue);
+                    if (replacing && replacementHeadersSplit.Length == nColumns)
                     {
                         originalHeaders[i] = h;
                         h = replacementHeadersSplit[i];
                     }
+
+                    //if the cell header is blank
                     if (string.IsNullOrWhiteSpace(h))
                         continue;
 
-                    nonBlankColumns.Add(cell.ColumnIndex, toReturn.Columns.Add(h));
+                    nonBlankColumns.Add(columnIndex, toReturn.Columns.Add(h));
                 }
-                if (replacementHeadersSplit is not null && replacementHeadersSplit.Any())
+
+                if (replacing)
                     listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Information,
                     $"Force headers will make the following header changes:{GenerateASCIIArtOfSubstitutions(originalHeaders, replacementHeadersSplit)}"));
 
@@ -194,16 +197,16 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
 
             var gotAtLeastOneGoodValue = false;
 
-            foreach (var cell in row.Cells)
+            foreach (var (columnIndex, _) in cells)
             {
-                var value = GetCellValue(cell);
+                var value = ExcelCellReader.GetCellValue(reader, columnIndex);
 
                 //if the cell is blank skip it
                 if (IsNull(value))
                     continue;
 
                 //were we expecting this to be blank?
-                if (!nonBlankColumns.TryGetValue(cell.ColumnIndex, out var column))
+                if (!nonBlankColumns.TryGetValue(columnIndex, out var column))
                 {
                     listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
                         $"Discarded the following data (that was found in unnamed columns):{value}"));
@@ -220,6 +223,22 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
         }
 
         return toReturn;
+    }
+
+    /// <summary>
+    /// Returns the cells of the current row which have a value (empty cells and error cells are omitted), in column order.
+    /// </summary>
+    private static List<(int ColumnIndex, object RawValue)> GetCells(IExcelDataReader reader)
+    {
+        var cells = new List<(int, object)>();
+        for (var i = 0; i < reader.FieldCount; i++)
+        {
+            var raw = reader.GetValue(i);
+            if (raw != null)
+                cells.Add((i, raw));
+        }
+
+        return cells;
     }
 
     private static string GenerateASCIIArtOfSubstitutions(string[] headers,
@@ -240,106 +259,6 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
         return sb.ToString();
     }
 
-    /// <summary>
-    /// Returns the C# value that best represents the contents of the cell.
-    /// </summary>
-    /// <param name="cell">The cell whose value you want to retrieve</param>
-    /// <param name="treatAs">Leave blank, used in recursion for dealing with Formula cells</param>
-    /// <returns></returns>
-    private object GetCellValue([CanBeNull] ICell cell, CellType? treatAs = null)
-    {
-        if (cell == null)
-            return null;
-
-        treatAs ??= cell.CellType;
-
-        switch (treatAs)
-        {
-            default:
-                return cell.ToString();
-            case CellType.Numeric:
-
-                //some numerics are actually dates/times
-                if (cell.CellStyle.DataFormat == 0) return cell.NumericCellValue;
-
-                var format = cell.CellStyle.GetDataFormatString();
-
-                if (IsDateWithoutTime(format))
-                    return cell.DateCellValue.HasValue ? cell.DateCellValue.Value.ToString("yyyy-MM-dd") : null;
-
-                if (IsDateWithTime(format))
-                    return cell.DateCellValue.HasValue ? cell.DateCellValue.Value.ToString("yyyy-MM-dd HH:mm:ss") : null;
-
-                if (IsTimeWithoutDate(format))
-                    return cell.DateCellValue.HasValue ? cell.DateCellValue.Value.ToString("HH:mm:ss") : null;
-
-                return new NumberFormat(format).Format(
-                    IsDateFormat(format) ? cell.DateCellValue : cell.NumericCellValue, CultureInfo.InvariantCulture);
-
-            case CellType.String:
-
-                //if it is blank or 'null' then leave it null
-                return string.IsNullOrWhiteSpace(cell.StringCellValue) ||
-                       cell.StringCellValue.Trim().Equals("NULL", StringComparison.CurrentCultureIgnoreCase)
-                    ? null
-                    : cell.StringCellValue;
-
-            case CellType.Formula:
-                return GetCellValue(cell, cell.CachedFormulaResultType);
-            case CellType.Blank:
-                return null;
-            case CellType.Boolean:
-                return cell.BooleanCellValue;
-            case CellType.Error:
-                return null;
-        }
-    }
-
-    private static bool IsDateWithTime(string formatString) => formatString.Contains('h') && formatString.Contains('y');
-
-    private static bool IsDateWithoutTime(string formatString) =>
-        formatString.Contains('y') && !formatString.Contains('h');
-
-    private static bool IsTimeWithoutDate(string formatString) =>
-        !formatString.Contains('y') && formatString.Contains('h');
-
-    private static bool IsDateFormat(string formatString) => !string.IsNullOrWhiteSpace(formatString) &&
-                                                             (formatString.Contains('/') ||
-                                                              formatString.Contains('\\') ||
-                                                              formatString.Contains(':'));
-
-    /*
-
-    private string IntToExcelColumnLetter(int colNumberStartingAtOne)
-    {
-        int dividend = colNumberStartingAtOne;
-        string columnName = String.Empty;
-        int modulo;
-
-        while (dividend > 0)
-        {
-            modulo = (dividend - 1) % 26;
-            columnName = Convert.ToChar(65 + modulo) + columnName;
-            dividend = (int)((dividend - modulo) / 26);
-        }
-
-        return columnName;
-    }
-
-    private object MakeTimeRelatedDecision(double value, Range cells, string type, dynamic cell,int row, int col)
-    {
-        if (type.Contains("/") || type.Contains("\\") || type.Contains(":"))
-        {
-            if (cell != null)
-                return cell.Text;
-
-            return cells[row, col].Text;
-        }
-
-        //timeRelatedDescisions
-        return value;
-    }
-    */
     private string[] acceptedFileExtensions =
     {
         ".xlsx",

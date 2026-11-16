@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: Foreign Key visibility race condition in DB with AUTO_UPDATE_STATISTICS_ASYNC enabled
 - Replace HIC.SynthEHR 2.0.1 with SynthEHR.Core 3.0.2 (jas88 fork); seeded test data differs from 2.x for the same seed
 - Reference CsvHelper 33.0.1 directly (previously only a transitive dependency of HIC.SynthEHR)
+- Read Excel files (ExcelDataFlowSource, ExcelAttacher, ExcelToCSVFilesConverter) with ExcelDataReader instead of NPOI. Rows containing only error cells are now ignored rather than failing the load
 
 
 ## [9.0.1] - 2025-07-31

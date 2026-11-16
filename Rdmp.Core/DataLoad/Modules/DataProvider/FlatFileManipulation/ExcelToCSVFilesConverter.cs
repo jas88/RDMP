@@ -1,4 +1,4 @@
-// Copyright (c) The University of Dundee 2018-2019
+// Copyright (c) The University of Dundee 2018-2026
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -9,9 +9,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using FAnsi.Discovery;
 using FAnsi.Implementations.MicrosoftSQL;
-using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
 using Rdmp.Core.Curation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataFlowPipeline;
@@ -27,7 +24,7 @@ namespace Rdmp.Core.DataLoad.Modules.DataProvider.FlatFileManipulation;
 
 /// <summary>
 /// DLE component which converts Microsoft Excel Workbooks into CSV files.  Workbooks can have multiple worksheets in which case 1 csv will be created for
-/// each worksheet.  Supports both .xls and .xlsx by using NPOI (i.e. not Interop).
+/// each worksheet.  Supports both .xls and .xlsx by using ExcelDataReader (i.e. not Interop).
 /// </summary>
 public class ExcelToCSVFilesConverter : IPluginDataProvider
 {
@@ -78,57 +75,45 @@ public class ExcelToCSVFilesConverter : IPluginDataProvider
 
     private void ProcessFile(FileInfo fileInfo, IDataLoadJob job)
     {
-        using var fs = new FileStream(fileInfo.FullName, FileMode.Open);
-        IWorkbook wb;
-        if (fileInfo.Extension == ".xls")
-            wb = new HSSFWorkbook(fs);
-        else
-            wb = new XSSFWorkbook(fs);
+        using var reader = ExcelCellReader.Open(fileInfo);
 
-        try
+        var source = new ExcelDataFlowSource();
+        source.PreInitialize(new FlatFileToLoad(fileInfo), job);
+
+        do
         {
-            var source = new ExcelDataFlowSource();
-            source.PreInitialize(new FlatFileToLoad(fileInfo), job);
+            var sheetName = reader.Name;
 
-            for (var i = 0; i < wb.NumberOfSheets; i++)
+            if (IsWorksheetNameMatch(sheetName))
             {
-                var sheet = wb.GetSheetAt(i);
+                job.OnNotify(this,
+                    new NotifyEventArgs(ProgressEventType.Information,
+                        $"Started processing worksheet:{sheetName}"));
 
-                if (IsWorksheetNameMatch(sheet.SheetName))
-                {
-                    job.OnNotify(this,
-                        new NotifyEventArgs(ProgressEventType.Information,
-                            $"Started processing worksheet:{sheet.SheetName}"));
+                var newName = PrefixWithWorkbookName
+                    ? $"{Path.GetFileNameWithoutExtension(fileInfo.FullName)}_{sheetName}"
+                    : sheetName;
 
-                    var newName = PrefixWithWorkbookName
-                        ? $"{Path.GetFileNameWithoutExtension(fileInfo.FullName)}_{sheet.SheetName}"
-                        : sheet.SheetName;
+                //make it sensible
+                newName =
+                    $"{MicrosoftQuerySyntaxHelper.Instance.GetSensibleEntityNameFromString(newName)}.csv";
 
-                    //make it sensible
-                    newName =
-                        $"{MicrosoftQuerySyntaxHelper.Instance.GetSensibleEntityNameFromString(newName)}.csv";
+                var savePath = Path.Combine(job.LoadDirectory.ForLoading.FullName, newName);
+                var dt = source.GetAllData(reader, job);
+                dt.EndLoadData();
+                using var saveStream = new StreamWriter(savePath, false, Encoding.UTF8, 1 << 20);
+                dt.SaveAsCsv(saveStream);
 
-                    var savePath = Path.Combine(job.LoadDirectory.ForLoading.FullName, newName);
-                    var dt = source.GetAllData(sheet, job);
-                    dt.EndLoadData();
-                    using var saveStream = new StreamWriter(savePath, false, Encoding.UTF8, 1 << 20);
-                    dt.SaveAsCsv(saveStream);
-
-                    job.OnNotify(this,
-                        new NotifyEventArgs(ProgressEventType.Information, $"Saved worksheet as {newName}"));
-                }
-                else
-                {
-                    job.OnNotify(this,
-                        new NotifyEventArgs(ProgressEventType.Information,
-                            $"Ignoring worksheet:{sheet.SheetName}"));
-                }
+                job.OnNotify(this,
+                    new NotifyEventArgs(ProgressEventType.Information, $"Saved worksheet as {newName}"));
             }
-        }
-        finally
-        {
-            wb.Close();
-        }
+            else
+            {
+                job.OnNotify(this,
+                    new NotifyEventArgs(ProgressEventType.Information,
+                        $"Ignoring worksheet:{sheetName}"));
+            }
+        } while (reader.NextResult());
     }
 
     private bool IsWorksheetNameMatch(string name) => WorksheetPattern?.IsMatch(name) != false;
