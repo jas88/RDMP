@@ -95,20 +95,21 @@ public static class ImageTools
                         DrawOverlay(bmp, op.OverlayIcon);
                         break;
                     case RdmpIconOperationKind.Greyscale:
-                        var grey = ToGreyscale(bmp);
-                        bmp.Dispose();
-                        bmp = grey;
+                        var previous = bmp;
+                        bmp = ToGreyscale(previous);
+                        previous.Dispose();
                         break;
                     default:
                         throw new NotSupportedException($"Unknown icon operation {op.Kind}");
                 }
 
-            return bmp;
+            var result = bmp;
+            bmp = null;
+            return result;
         }
-        catch
+        finally
         {
-            bmp.Dispose();
-            throw;
+            bmp?.Dispose();
         }
     }
 

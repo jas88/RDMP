@@ -100,11 +100,13 @@ internal class CatalogueIconProviderTests : UITests
     {
         var bmp = icon.ImageToBitmap();
         for (var y = 0; y < bmp.Height; y++)
-        for (var x = 0; x < bmp.Width; x++)
         {
-            var pixel = bmp.GetPixel(x, y);
-            if (pixel.A != 0 && (pixel.R != pixel.G || pixel.G != pixel.B))
-                return false;
+            for (var x = 0; x < bmp.Width; x++)
+            {
+                var pixel = bmp.GetPixel(x, y);
+                if (pixel.A != 0 && (pixel.R != pixel.G || pixel.G != pixel.B))
+                    return false;
+            }
         }
 
         return true;

@@ -52,7 +52,8 @@ internal class ImageToolsTests
 
         Assert.That(a, Is.Not.SameAs(b));
         Assert.That(a.ImageToBitmap(), Is.SameAs(b.ImageToBitmap()));
-        Assert.That(((RdmpIcon)null).ImageToBitmap(), Is.Null);
+        RdmpIcon noIcon = null;
+        Assert.That(noIcon.ImageToBitmap(), Is.Null);
     }
 
     [Test]
@@ -69,20 +70,22 @@ internal class ImageToolsTests
 
         var opaqueOverlayPixels = 0;
         for (var y = 0; y < Math.Min(result.Height, overlayPixels.Height); y++)
-        for (var x = 0; x < Math.Min(result.Width, overlayPixels.Width); x++)
         {
-            var o = overlayPixels.GetPixel(x, y);
-            var r = result.GetPixel(x, y);
+            for (var x = 0; x < Math.Min(result.Width, overlayPixels.Width); x++)
+            {
+                var o = overlayPixels.GetPixel(x, y);
+                var r = result.GetPixel(x, y);
 
-            if (o.A == 255)
-            {
-                opaqueOverlayPixels++;
-                Assert.That(r.ToArgb(), Is.EqualTo(o.ToArgb()), $"Opaque overlay pixel ({x},{y}) should replace base");
-            }
-            else if (o.A == 0)
-            {
-                Assert.That(r.ToArgb(), Is.EqualTo(basePixels.GetPixel(x, y).ToArgb()),
-                    $"Transparent overlay pixel ({x},{y}) should leave base unchanged");
+                if (o.A == 255)
+                {
+                    opaqueOverlayPixels++;
+                    Assert.That(r.ToArgb(), Is.EqualTo(o.ToArgb()), $"Opaque overlay pixel ({x},{y}) should replace base");
+                }
+                else if (o.A == 0)
+                {
+                    Assert.That(r.ToArgb(), Is.EqualTo(basePixels.GetPixel(x, y).ToArgb()),
+                        $"Transparent overlay pixel ({x},{y}) should leave base unchanged");
+                }
             }
         }
 
@@ -101,21 +104,23 @@ internal class ImageToolsTests
 
         var colouredPixels = 0;
         for (var y = 0; y < grey.Height; y++)
-        for (var x = 0; x < grey.Width; x++)
         {
-            var g = grey.GetPixel(x, y);
-            var o = original.GetPixel(x, y);
+            for (var x = 0; x < grey.Width; x++)
+            {
+                var g = grey.GetPixel(x, y);
+                var o = original.GetPixel(x, y);
 
-            Assert.That(g.A, Is.EqualTo(o.A), $"Alpha must be preserved at ({x},{y})");
-            if (g.A == 0) continue;
+                Assert.That(g.A, Is.EqualTo(o.A), $"Alpha must be preserved at ({x},{y})");
+                if (g.A == 0) continue;
 
-            Assert.That(g.R, Is.EqualTo(g.G), $"Pixel ({x},{y}) is not grey");
-            Assert.That(g.G, Is.EqualTo(g.B), $"Pixel ({x},{y}) is not grey");
+                Assert.That(g.R, Is.EqualTo(g.G), $"Pixel ({x},{y}) is not grey");
+                Assert.That(g.G, Is.EqualTo(g.B), $"Pixel ({x},{y}) is not grey");
 
-            if (o.R != o.G || o.G != o.B) colouredPixels++;
+                if (o.R != o.G || o.G != o.B) colouredPixels++;
 
-            var expected = 0.2126 * o.R + 0.7152 * o.G + 0.0722 * o.B;
-            Assert.That(g.R, Is.EqualTo(expected).Within(2), $"Luminance at ({x},{y})");
+                var expected = 0.2126 * o.R + 0.7152 * o.G + 0.0722 * o.B;
+                Assert.That(g.R, Is.EqualTo(expected).Within(2), $"Luminance at ({x},{y})");
+            }
         }
 
         Assert.That(colouredPixels, Is.GreaterThan(0), "Test icon should have some colour to convert");
@@ -165,11 +170,13 @@ internal class ImageToolsTests
     private static bool HasColour(Bitmap bmp)
     {
         for (var y = 0; y < bmp.Height; y++)
-        for (var x = 0; x < bmp.Width; x++)
         {
-            var p = bmp.GetPixel(x, y);
-            if (p.A != 0 && (p.R != p.G || p.G != p.B))
-                return true;
+            for (var x = 0; x < bmp.Width; x++)
+            {
+                var p = bmp.GetPixel(x, y);
+                if (p.A != 0 && (p.R != p.G || p.G != p.B))
+                    return true;
+            }
         }
 
         return false;
