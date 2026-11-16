@@ -33,8 +33,11 @@ public class ExcelDateSystemAndFormatTests
     [SetUp]
     public void CreateDirectory()
     {
-        _dir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory,
-            nameof(ExcelDateSystemAndFormatTests), TestContext.CurrentContext.Test.Name.Replace('"', '_')));
+        // The test ID is unique to each test case and, unlike the test name (which includes the test case arguments
+        // e.g. number formats such as "# ?/?"), never contains directory separators or characters that are not allowed
+        // in file names
+        _dir = new DirectoryInfo(Path.Join(TestContext.CurrentContext.TestDirectory,
+            nameof(ExcelDateSystemAndFormatTests), TestContext.CurrentContext.Test.ID));
         if (_dir.Exists)
             _dir.Delete(true);
         _dir.Create();
@@ -44,7 +47,7 @@ public class ExcelDateSystemAndFormatTests
     public void DeleteDirectory() => _dir.Delete(true);
 
     private FileInfo Save(MinimalXlsxBuilder builder, string name = "Book.xlsx") =>
-        builder.Save(Path.Combine(_dir.FullName, name));
+        builder.Save(Path.Join(_dir.FullName, name));
 
     private FileInfo Spray(string resourceFile) =>
         UsefulStuff.SprayFile(typeof(ExcelTests).Assembly, $"{typeof(ExcelTests).Namespace}.TestFile.{resourceFile}",

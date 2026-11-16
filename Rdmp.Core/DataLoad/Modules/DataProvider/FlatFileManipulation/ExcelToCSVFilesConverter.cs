@@ -95,11 +95,12 @@ public class ExcelToCSVFilesConverter : IPluginDataProvider
                     ? $"{Path.GetFileNameWithoutExtension(fileInfo.FullName)}_{sheetName}"
                     : sheetName;
 
-                //make it sensible
+                //make it sensible.  Worksheet names are not trusted (a crafted workbook can contain path characters) but
+                //only letters, digits and underscores survive this so the result is always a plain file name
                 newName =
                     $"{MicrosoftQuerySyntaxHelper.Instance.GetSensibleEntityNameFromString(newName)}.csv";
 
-                var savePath = Path.Combine(job.LoadDirectory.ForLoading.FullName, newName);
+                var savePath = Path.Join(job.LoadDirectory.ForLoading.FullName, newName);
                 var dt = source.GetAllData(workbook, job);
                 dt.EndLoadData();
                 using var saveStream = new StreamWriter(savePath, false, Encoding.UTF8, 1 << 20);

@@ -37,8 +37,10 @@ public class ExcelSourceCellHandlingTests
     [SetUp]
     public void CreateDirectory()
     {
-        _dir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.TestDirectory,
-            nameof(ExcelSourceCellHandlingTests), TestContext.CurrentContext.Test.Name.Replace('"', '_')));
+        // The test ID is unique to each test case and, unlike the test name (which includes the test case arguments),
+        // never contains directory separators or characters that are not allowed in file names
+        _dir = new DirectoryInfo(Path.Join(TestContext.CurrentContext.TestDirectory,
+            nameof(ExcelSourceCellHandlingTests), TestContext.CurrentContext.Test.ID));
         if (_dir.Exists)
             _dir.Delete(true);
         _dir.Create();
@@ -48,7 +50,7 @@ public class ExcelSourceCellHandlingTests
     public void DeleteDirectory() => _dir.Delete(true);
 
     private FileInfo Save(MinimalXlsxBuilder builder, string name = "Book.xlsx") =>
-        builder.Save(Path.Combine(_dir.FullName, name));
+        builder.Save(Path.Join(_dir.FullName, name));
 
     private static DataTable Read(FileInfo file, IDataLoadEventListener listener = null, string sheet = null,
         int rowOffset = 0, int columnOffset = 0, string[] replacementHeaders = null)
@@ -375,10 +377,53 @@ public class ExcelSourceCellHandlingTests
         {
             Assert.That(_dir.GetFiles("*.csv").Select(f => f.Name).Order(),
                 Is.EqualTo(new[] { "Multi_Data1.csv", "Multi_Data2.csv" }));
-            Assert.That(Contents(new FileInfo(Path.Combine(_dir.FullName, "Multi_Data1.csv"))),
+            Assert.That(Contents(new FileInfo(Path.Join(_dir.FullName, "Multi_Data1.csv"))),
                 Is.EqualTo("a,b\n1,2001-01-01"));
-            Assert.That(Contents(new FileInfo(Path.Combine(_dir.FullName, "Multi_Data2.csv"))),
+            Assert.That(Contents(new FileInfo(Path.Join(_dir.FullName, "Multi_Data2.csv"))),
                 Is.EqualTo("c\ny"));
+        });
+    }
+
+    /// <summary>
+    /// The CSV file name comes from the worksheet name, which is controlled by whoever produced the workbook.  Excel does
+    /// not allow path characters in worksheet names but a workbook is only a zip of XML so a crafted file can contain them.
+    /// </summary>
+    [TestCase(true)]
+    [TestCase(false)]
+    public void ToCsvConverter_WorksheetNamesCannotEscapeLoadDirectory(bool prefixWithWorkbookName)
+    {
+        var sheetNames = new[]
+        {
+            "../../Parent", "/RootedUnix", @"C:\RootedWindows", @"\\server\share\Unc", "sub/directory", "..", "Normal"
+        };
+
+        // nested so that a file written to a parent directory is still inside the directory this test owns
+        var forLoading = _dir.CreateSubdirectory("Project").CreateSubdirectory("Data").CreateSubdirectory("ForLoading");
+
+        var builder = new MinimalXlsxBuilder();
+        foreach (var sheetName in sheetNames)
+            builder.Sheet(sheetName).Text("A1", "header").Text("A2", "value");
+        builder.Save(Path.Join(forLoading.FullName, "Book.xlsx"));
+
+        var converter = new ExcelToCSVFilesConverter
+        {
+            ExcelFilePattern = "Book.xlsx",
+            PrefixWithWorkbookName = prefixWithWorkbookName
+        };
+
+        var loadDirectory = Substitute.For<ILoadDirectory>();
+        loadDirectory.ForLoading.Returns(forLoading);
+
+        converter.Fetch(new ThrowImmediatelyDataLoadJob { LoadDirectory = loadDirectory },
+            new GracefulCancellationToken());
+
+        var written = _dir.GetFiles("*", SearchOption.AllDirectories).Where(f => f.Name != "Book.xlsx").ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(written, Has.Length.EqualTo(sheetNames.Length), "Expected one CSV file per worksheet");
+            Assert.That(written.Select(f => f.DirectoryName), Is.All.EqualTo(forLoading.FullName));
+            Assert.That(written.Select(f => f.Name), Is.All.Match(@"^[A-Za-z0-9_]*\.csv$"));
         });
     }
 
@@ -401,7 +446,7 @@ public class ExcelSourceCellHandlingTests
         converter.Fetch(new ThrowImmediatelyDataLoadJob { LoadDirectory = loadDirectory },
             new GracefulCancellationToken());
 
-        var lines = File.ReadAllLines(Path.Combine(_dir.FullName, "MySheet.csv"));
+        var lines = File.ReadAllLines(Path.Join(_dir.FullName, "MySheet.csv"));
         Assert.Multiple(() =>
         {
             Assert.That(lines[0], Is.EqualTo("Name,Category,Age,Wage,Invisibre"));

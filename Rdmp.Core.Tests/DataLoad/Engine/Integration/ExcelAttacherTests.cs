@@ -71,7 +71,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("B2", "some value")
             .Text("A3", "2222222222")
             .Text("B3", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
@@ -109,7 +109,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("C2", "some value")
             .Text("B3", "2222222222")
             .Text("C3", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
@@ -147,7 +147,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("C3", "some value")
             .Text("B4", "2222222222")
             .Text("C4", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
@@ -185,7 +185,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("C3", "some value")
             .Text("B4", "2222222222")
             .Text("C4", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
@@ -225,7 +225,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("C3", "some value")
             .Text("B4", "2222222222")
             .Text("C4", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
@@ -267,7 +267,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("B3", "junk_data")
             .Text("C3", "2222222222")
             .Text("D3", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
@@ -310,7 +310,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("B3", "junk_data")
             .Text("C3", "2222222222")
             .Text("D3", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
@@ -356,7 +356,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("B4", "junk_data")
             .Text("C4", "2222222222")
             .Text("D4", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
@@ -402,7 +402,7 @@ public class ExcelAttacherTests : DatabaseTests
             .Text("B4", "junk_data")
             .Text("C4", "2222222222")
             .Text("D4", "some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
         builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
