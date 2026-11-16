@@ -24,12 +24,13 @@ public static partial class AutoCommentsEvaluator
     public static void FindProblems(List<string> csFilesFound)
     {
         var suggestedNewFileContents = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+        var sbSuggestedText = new StringBuilder();
 
         foreach (var f in csFilesFound.Where(static f => !f.Contains(".Designer.cs")))
         {
             var changes = false;
 
-            var sbSuggestedText = new StringBuilder();
+            sbSuggestedText.Clear();
 
             var text = File.ReadAllLines(f);
             var areInSummary = false;
