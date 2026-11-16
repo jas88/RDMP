@@ -9,7 +9,9 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
+using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Settings;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
@@ -19,10 +21,21 @@ class ExecuteCommandSendExtractionResolutionTeamsNotification: BasicCommandExecu
 
     private readonly ExtractionConfiguration _ec;
     private readonly bool _success;
-    private static readonly HttpClient client = new HttpClient();
-    private readonly string url = UserSettings.ExtractionWebhookUrl;
+    // A webhook that does not answer must not hold up the end of an extraction for long
+    private static readonly HttpClient SharedClient = new() { Timeout = TimeSpan.FromSeconds(30) };
+
+    /// <summary>
+    /// What the notification is sent with (replaced in tests)
+    /// </summary>
+    internal HttpMessageInvoker Client { get; init; } = SharedClient;
+
+    /// <summary>
+    /// Where the notification is sent, by default <see cref="UserSettings.ExtractionWebhookUrl"/>
+    /// </summary>
+    internal string Url { get; init; } = UserSettings.ExtractionWebhookUrl;
+
     private readonly string template = "{  \"type\":\"AdaptiveCard\",  \"attachments\":[      {        \"contentType\":\"application/vnd.microsoft.card.adaptive\",        \"contentUrl\":null,        \"content\":{  \"type\": \"AdaptiveCard\",    \"$schema\": \"https://adaptivecards.io/schemas/adaptive-card.json\",    \"version\": \"1.5\",    \"body\": [        {            \"type\": \"Table\",            \"columns\": [                {                    \"width\": 1                },                {                    \"width\": 7                }            ],            \"rows\": [                {                    \"type\": \"TableRow\",                    \"cells\": [                        {                            \"type\": \"TableCell\",                            \"items\": [                                {                                    \"type\": \"Image\",                                    \"url\": \"\",                                    \"size\": \"Small\",                                    \"width\": \"40px\"                                }                            ]                        },                        {                            \"type\": \"TableCell\",                            \"verticalContentAlignment\": \"Center\",                            \"items\": [                                {                                    \"type\": \"TextBlock\",                                    \"text\": \"\",                                    \"wrap\": true,                                    \"maxLines\": 3                                }                            ],                            \"targetWidth\": \"Wide\",                            \"bleed\": true                        },                        {                            \"type\": \"TableCell\",                            \"isVisible\": false                        }                    ]                }            ]        },        {            \"type\": \"TextBlock\",            \"text\": \"<at></at>\"        }    ],    \"msteams\": {                \"entities\": [                    {                    \"type\": \"mention\",                    \"text\": \"<at></at>\",                    \"mentioned\": {                        \"id\": \"\",                        \"name\": \"\"                    }                    }                ]            }        }       }  ]}";
-    public ExecuteCommandSendExtractionResolutionTeamsNotification(IBasicActivateItems activator, ExtractionConfiguration ec, bool success) {
+    public ExecuteCommandSendExtractionResolutionTeamsNotification(IBasicActivateItems activator, ExtractionConfiguration ec, bool success) : base(activator) {
         _ec = ec;
         _success = success;
     }
@@ -31,18 +44,40 @@ class ExecuteCommandSendExtractionResolutionTeamsNotification: BasicCommandExecu
     {
         base.Execute();
 
-        // the notification is sent in the background and Execute does not wait for it
-        _ = PostAsync(GetContent());
+        var json = GetContent();
+
+        try
+        {
+            // Wait for the request to finish.  The caller is usually about to exit (the command line returns as soon
+            // as the extraction is over), which would cut off a request left running in the background.
+            PostAsync(json).GetAwaiter().GetResult();
+        }
+        catch (Exception e) when (IsSendFailure(e) && BasicActivator?.GlobalErrorCheckNotifier != null)
+        {
+            // The extraction has already finished, so failing to announce it is reported rather than thrown
+            BasicActivator.GlobalErrorCheckNotifier.OnCheckPerformed(new CheckEventArgs(
+                $"Could not send the Teams notification for extraction '{_ec.Name}'", CheckResult.Warning, e));
+        }
     }
 
     /// <summary>
-    /// Posts <paramref name="json"/> to the webhook.  The request content must stay alive until the request has
-    /// completed, so it is disposed here rather than by <see cref="Execute"/>.
+    /// True for the ways sending can fail: no connection or an error response, a timeout, or a webhook url that
+    /// cannot be used
+    /// </summary>
+    private static bool IsSendFailure(Exception e) =>
+        e is HttpRequestException or OperationCanceledException or InvalidOperationException or UriFormatException;
+
+    /// <summary>
+    /// Posts <paramref name="json"/> to the webhook and throws if it is not accepted.  The request (and so its
+    /// content) stays alive until the response has arrived.
     /// </summary>
     private async Task PostAsync(string json)
     {
-        using var content = new StringContent(json, Encoding.UTF8, "application/json");
-        using var response = await client.PostAsync(url, content).ConfigureAwait(false);
+        using var request = new HttpRequestMessage(HttpMethod.Post, Url);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var response = await Client.SendAsync(request, CancellationToken.None).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
     }
 
     private string GetContent()
