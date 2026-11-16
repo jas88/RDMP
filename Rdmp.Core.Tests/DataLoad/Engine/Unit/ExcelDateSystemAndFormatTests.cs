@@ -274,6 +274,25 @@ public class ExcelDateSystemAndFormatTests
     // without an hour a year-less date is rendered as Excel displays it, without a day an hour is only a time
     [TestCase("d-mmm", 1000.5, "26-Sep")]
     [TestCase("mmm h:mm", 1000.5, "12:00:00")]
+    // tokens are recognised in either case
+    [TestCase("DD/MM/YYYY", 1000, "1902-09-26")]
+    [TestCase("DD.MM.YYYY HH:MM", 1000.25, "1902-09-26 06:00:00")]
+    [TestCase("YYYY", 1000, "1902-09-26")]
+    [TestCase("H:MM", 1000.25, "06:00:00")]
+    // a backslash, slash or colon does not make a number format a date (\u00A3 is the pound sign)
+    [TestCase("\"\u00A3\"#,##0.00;\\-\"\u00A3\"#,##0.00", 11, "\u00A311.00")]
+    [TestCase("\"\u00A3\"#,##0.00;\\-\"\u00A3\"#,##0.00", -1234.5, "-\u00A31,234.50")]
+    [TestCase("#,##0.00\\ \"kg\"", 1234.5, "1,234.50 kg")]
+    [TestCase("#,##0.00\\ \"kg\"", -1234.5, "-1,234.50 kg")]
+    [TestCase("0.0 \"m/s\"", 12.5, "12.5 m/s")]
+    [TestCase("0\\:00", 1234, "12:34")]
+    // nor does text containing a y or an h
+    [TestCase("0 \"days\"", 12, "12 days")]
+    [TestCase("0.0 \"kWh\"", 12.5, "12.5 kWh")]
+    [TestCase("[$Ksh-441] #,##0", 1200, "Ksh 1,200")]
+    // year-less dates are rendered as Excel displays the number: day 0 of January and no 29th of February 1900
+    [TestCase("d/m", 0.5, "0/1")]
+    [TestCase("d-mmm", 60, "28-Feb")]
     // quoted and escaped letters are text not date/time tokens
     [TestCase("0 \"d h\"", 1000.25, "1000 d h")]
     [TestCase("0\\d\\h", 1000.25, "1000dh")]

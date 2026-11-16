@@ -322,6 +322,53 @@ public class ExcelTests
         Assert.That(ex?.Message, Is.EqualTo("File extension bob.csv has an invalid extension:.csv (this class only accepts:.xlsx,.xls)"));
     }
 
+    /// <summary>
+    /// The workbook is only read so it does not have to be writable
+    /// </summary>
+    [Test]
+    public void ReadOnlyFile_CanBeLoaded()
+    {
+        var file = _fileLocations[TestFile].CopyTo(
+            Path.Join(TestContext.CurrentContext.TestDirectory, "ReadOnlyBook1.xlsx"), true);
+        file.IsReadOnly = true;
+        try
+        {
+            var source = new ExcelDataFlowSource();
+            source.PreInitialize(new FlatFileToLoad(file), ThrowImmediatelyDataLoadEventListener.Quiet);
+            var dt = source.GetChunk(ThrowImmediatelyDataLoadEventListener.Quiet, new GracefulCancellationToken());
+
+            Assert.That(dt.Rows, Has.Count.EqualTo(5));
+        }
+        finally
+        {
+            file.IsReadOnly = false;
+            file.Delete();
+        }
+    }
+
+    /// <summary>
+    /// Whether a workbook is .xls or .xlsx is determined from its contents, the file extension only has to be one of them
+    /// </summary>
+    [TestCase(OddFormatsFile, "XlsCalledXlsx.xlsx", "MySheet", "Frank")]
+    [TestCase(OddFormatsFile, "UpperCaseExtension.XLS", "MySheet", "Frank")]
+    [TestCase(TestFile, "XlsxCalledXls.xls", null, "Bob")]
+    public void WorkbookFormat_IsDetectedFromContent(string workbook, string savedAs, string sheet, string firstValue)
+    {
+        var file = _fileLocations[workbook].CopyTo(Path.Join(TestContext.CurrentContext.TestDirectory, savedAs), true);
+        try
+        {
+            var source = new ExcelDataFlowSource { WorkSheetName = sheet };
+            source.PreInitialize(new FlatFileToLoad(file), ThrowImmediatelyDataLoadEventListener.Quiet);
+            var dt = source.GetChunk(ThrowImmediatelyDataLoadEventListener.Quiet, new GracefulCancellationToken());
+
+            Assert.That(dt.Rows[0][0], Is.EqualTo(firstValue));
+        }
+        finally
+        {
+            file.Delete();
+        }
+    }
+
     [TestCase(true)]
     [TestCase(false)]
     public void TestToCSVConverter(bool prefixWithWorkbookName)

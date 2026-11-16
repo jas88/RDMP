@@ -204,10 +204,16 @@ public class ExcelSourceCellHandlingTests
         Assert.That(Headers(Read(file)), Is.EqualTo(new[] { "1", "2.5", "36892" }));
     }
 
+    /// <summary>
+    /// A row with nothing but error cells and formulas whose result is an error or empty is blank, so it is not the
+    /// header row.  The NPOI implementation took it to be and the load failed.
+    /// </summary>
     [Test]
     public void ErrorOnlyRow_IsTreatedAsBlank()
     {
-        var file = Save(new MinimalXlsxBuilder().Error("A1", "#REF!").Text("A2", "H").Text("A3", "v"));
+        var file = Save(new MinimalXlsxBuilder()
+            .Error("A1", "#REF!").ErrorFormula("B1", "1/0", "#DIV/0!").TextFormula("C1", "\"\"", "")
+            .Text("A2", "H").Text("A3", "v"));
 
         var dt = Read(file);
 
@@ -215,6 +221,29 @@ public class ExcelSourceCellHandlingTests
         {
             Assert.That(Headers(dt), Is.EqualTo(new[] { "H" }));
             Assert.That(Row(dt, 0), Is.EqualTo(new object[] { "v" }));
+        });
+    }
+
+    /// <summary>
+    /// An error cell among the headers is an empty cell, so its column has no header and is ignored, and a boolean is a
+    /// header.  Either made the load fail in the NPOI implementation.
+    /// </summary>
+    [Test]
+    public void HeaderRow_ErrorCellIsBlankAndBooleanIsText()
+    {
+        var file = Save(new MinimalXlsxBuilder()
+            .Text("A1", "Name").Error("B1", "#REF!").Bool("C1", true).Text("D1", "Age")
+            .Text("A2", "Frank").Text("B2", "lost").Text("C2", "yes").Number("D2", 30));
+
+        var listener = new ToMemoryDataLoadEventListener(false);
+        var dt = Read(file, listener);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(Headers(dt), Is.EqualTo(new[] { "Name", "True", "Age" }));
+            Assert.That(Row(dt, 0), Is.EqualTo(new object[] { "Frank", "yes", "30" }));
+            Assert.That(Messages(listener, ProgressEventType.Warning), Is.EqualTo(new[]
+                { "Discarded the following data (that was found in unnamed columns):lost" }));
         });
     }
 
