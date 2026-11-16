@@ -40,6 +40,10 @@ In Excel all Date/Time fields are stored only as a number.  You can see this num
 | Date Only Format | If the Cell Formatting includes a date component (y) but no time component (h) it will be translated into a date only format e.g. "2015-09-18" |E8|
 | Time Only Format | If the Cell Formatting includes a time component (h) but no date component (y) it will be translated into a time only format e.g. "15:09:00" |F8|
 
+Only genuine date/time tokens count: quoted text (e.g. `"hrs"`), backslash escaped characters and bracketed sections such as colours, locales and conditions (e.g. `[Red]`, `[$-409]`) are ignored, except for elapsed time (e.g. `[h]`).  A format containing `/` but no date/time tokens is a fraction (e.g. `# ?/?`) and is loaded as the raw number, just like "General".  Other date/time formats (e.g. `d-mmm`) are rendered as Excel would display them.
+
+Workbooks using the 1904 date system (serial number 0 is 1904-01-01) are supported for both .xls and .xlsx.
+
 ## Tests
 
 Tests confirming the above behaviour are included in the following tests:

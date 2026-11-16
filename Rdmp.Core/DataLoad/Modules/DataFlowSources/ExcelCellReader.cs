@@ -8,22 +8,25 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using ExcelDataReader;
 using ExcelNumberFormat;
 
 namespace Rdmp.Core.DataLoad.Modules.DataFlowSources;
 
 /// <summary>
-/// Opens Excel workbooks (.xls, .xlsx, .xlsb) with ExcelDataReader and translates cell values into the representation RDMP
-/// loads: strings for text, raw numbers for 'General' numeric cells and unambiguous date/time strings (or the Excel rendering)
-/// for cells with a number format.  Formulas are never evaluated, the cached result stored in the file is used.
+/// Translates ExcelDataReader cell values into the representation RDMP loads: strings for text, raw numbers for 'General'
+/// (and fraction) formatted numeric cells, unambiguous date/time strings for date/time formats and the Excel rendering for
+/// any other number format.  Formulas are never evaluated, the cached result stored in the file is used.
 /// </summary>
-public static class ExcelCellReader
+public static partial class ExcelCellReader
 {
+    private static readonly DateTime Epoch1900 = new(1900, 1, 1);
+    private static readonly DateTime Epoch1904 = new(1904, 1, 1);
+
     /// <summary>
-    /// The first day which Excel (1900 date system) and DateTime.FromOADate agree on.  Before this Excel believes that
+    /// The first day which Excel (1900 date system) and OLE Automation dates agree on.  Before this Excel believes that
     /// 1900-02-29 exists so serial numbers are offset by one day.
     /// </summary>
     private static readonly DateTime FirstUnambiguousExcelDate = new(1900, 3, 1);
@@ -51,28 +54,21 @@ public static class ExcelCellReader
 
     private static readonly ConcurrentDictionary<string, NumberFormat> NumberFormats = new();
 
-    static ExcelCellReader()
-    {
-        // Legacy .xls files store text in Windows code pages which .NET (Core) does not provide by default
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-    }
+    private static readonly ConcurrentDictionary<string, FormatKind> FormatKinds = new();
 
-    /// <summary>
-    /// Opens the workbook for reading, the format (xls/xlsx/xlsb) is detected from the file contents.  The returned reader
-    /// owns the underlying file handle and is positioned at the first worksheet.
-    /// </summary>
-    public static IExcelDataReader Open(FileInfo file)
+    private enum FormatKind
     {
-        var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        try
-        {
-            return ExcelReaderFactory.CreateReader(stream);
-        }
-        catch
-        {
-            stream.Dispose();
-            throw;
-        }
+        /// <summary>Not a date/time format (e.g. "0.00", "0%")</summary>
+        Number,
+
+        /// <summary>A fraction e.g. "# ?/?", the value is loaded as the raw number</summary>
+        Fraction,
+        DateOnly,
+        DateAndTime,
+        TimeOnly,
+
+        /// <summary>A date/time format with neither a year nor an hour component e.g. "d-mmm" or "mm:ss"</summary>
+        OtherDateTime
     }
 
     /// <summary>
@@ -84,11 +80,11 @@ public static class ExcelCellReader
     /// <summary>
     /// Returns the text of a header cell: strings as is, numbers (including date formatted numbers) as the raw number.
     /// </summary>
-    public static string GetHeaderText(object rawValue) => rawValue switch
+    public static string GetHeaderText(object rawValue, bool isDate1904) => rawValue switch
     {
         null => null,
         string s => s,
-        DateTime dt => ToExcelSerial(dt).ToString(CultureInfo.CurrentCulture),
+        DateTime dt => ToExcelSerial(dt, isDate1904).ToString(CultureInfo.CurrentCulture),
         bool b => b.ToString(),
         _ => Convert.ToDouble(rawValue, CultureInfo.InvariantCulture).ToString(CultureInfo.CurrentCulture)
     };
@@ -97,7 +93,10 @@ public static class ExcelCellReader
     /// Returns the C# value that best represents the contents of cell <paramref name="column"/> of the current row
     /// of <paramref name="reader"/> or null if it is blank, an error or the text "NULL".
     /// </summary>
-    public static object GetCellValue(IExcelDataReader reader, int column)
+    /// <param name="reader"></param>
+    /// <param name="column"></param>
+    /// <param name="isDate1904">True if the workbook uses the 1904 date system</param>
+    public static object GetCellValue(IExcelDataReader reader, int column, bool isDate1904)
     {
         var raw = reader.GetValue(column);
 
@@ -113,73 +112,151 @@ public static class ExcelCellReader
             case bool b:
                 return b;
             case DateTime dt:
-                return FormatNumber(ToExcelSerial(dt), dt, reader.GetNumberFormatIndex(column),
-                    reader.GetNumberFormatString(column));
+                // ExcelDataReader has already applied the workbook's date system
+                return FormatNumber(ToExcelSerial(dt, isDate1904), dt, reader, column, isDate1904);
             case TimeSpan ts:
-                return FormatNumber(ts.TotalDays, ToDateTime(ts.TotalDays), reader.GetNumberFormatIndex(column),
-                    reader.GetNumberFormatString(column));
+                return FormatNumber(ts.TotalDays, ToDateTime(ts.TotalDays, isDate1904), reader, column, isDate1904);
             default:
                 var number = Convert.ToDouble(raw, CultureInfo.InvariantCulture);
-                return FormatNumber(number, ToDateTime(number), reader.GetNumberFormatIndex(column),
-                    reader.GetNumberFormatString(column));
+                return FormatNumber(number, ToDateTime(number, isDate1904), reader, column, isDate1904);
         }
     }
 
     /// <summary>
-    /// Translates a numeric cell.  'General' formatted cells give the raw number, date/time formats give an unambiguous
-    /// date and/or time string and any other format gives the value as Excel would display it.
+    /// Translates a numeric cell.  'General' and fraction formatted cells give the raw number, date/time formats give an
+    /// unambiguous date and/or time string and any other format gives the value as Excel would display it.
     /// </summary>
-    private static object FormatNumber(double number, DateTime? date, int formatIndex, string formatString)
+    private static object FormatNumber(double number, DateTime? date, IExcelDataReader reader, int column,
+        bool isDate1904)
     {
+        var formatIndex = reader.GetNumberFormatIndex(column);
         if (formatIndex == 0)
             return number;
 
-        var format = BuiltinFormats.TryGetValue(formatIndex, out var builtin) ? builtin : formatString ?? "General";
+        var format = BuiltinFormats.TryGetValue(formatIndex, out var builtin)
+            ? builtin
+            : reader.GetNumberFormatString(column) ?? "General";
 
-        if (IsDateWithoutTime(format))
-            return date?.ToString("yyyy-MM-dd");
-
-        if (IsDateWithTime(format))
-            return date?.ToString("yyyy-MM-dd HH:mm:ss");
-
-        if (IsTimeWithoutDate(format))
-            return date?.ToString("HH:mm:ss");
-
-        object toFormat = IsDateFormat(format) ? date : number;
-        return NumberFormats.GetOrAdd(format, static f => new NumberFormat(f))
-            .Format(toFormat, CultureInfo.InvariantCulture);
+        switch (FormatKinds.GetOrAdd(format, Classify))
+        {
+            case FormatKind.Fraction:
+                return number;
+            case FormatKind.DateOnly:
+                return date?.ToString("yyyy-MM-dd");
+            case FormatKind.DateAndTime:
+                return date?.ToString("yyyy-MM-dd HH:mm:ss");
+            case FormatKind.TimeOnly:
+                return date?.ToString("HH:mm:ss");
+            default:
+                // Other date/time formats (e.g. "d-mmm", "[mm]:ss") are rendered from the serial number so that
+                // ExcelNumberFormat applies the workbook's date system and elapsed time formats show the full duration
+                return Render(format, number, isDate1904);
+        }
     }
 
-    private static bool IsDateWithTime(string formatString) => formatString.Contains('h') && formatString.Contains('y');
-
-    private static bool IsDateWithoutTime(string formatString) =>
-        formatString.Contains('y') && !formatString.Contains('h');
-
-    private static bool IsTimeWithoutDate(string formatString) =>
-        !formatString.Contains('y') && formatString.Contains('h');
-
-    private static bool IsDateFormat(string formatString) => !string.IsNullOrWhiteSpace(formatString) &&
-                                                             (formatString.Contains('/') ||
-                                                              formatString.Contains('\\') ||
-                                                              formatString.Contains(':'));
+    private static string Render(string format, double value, bool isDate1904) =>
+        NumberFormats.GetOrAdd(format, static f => new NumberFormat(f))
+            .Format(value, CultureInfo.InvariantCulture, isDate1904);
 
     /// <summary>
-    /// Converts an Excel (1900 date system) serial number to a date, allowing for Excel treating 1900 as a leap year.
-    /// Returns null for negative values which Excel cannot display as dates.
+    /// Classifies an Excel number format.  Literal text (quoted strings, backslash escapes, padding/fill characters) and
+    /// bracketed sections such as colours, conditions and locales are ignored so that only genuine date/time tokens
+    /// (d, m, y, h, s and elapsed time e.g. [h]) count.  A format containing '/' which has no date/time tokens is a fraction.
     /// </summary>
-    private static DateTime? ToDateTime(double serial)
+    private static FormatKind Classify(string format)
     {
-        if (serial < 0 || serial >= 2958466) // 2958466 is 10000-01-01, beyond DateTime.MaxValue
+        var tokens = StripLiterals(format).ToLowerInvariant();
+
+        var hasYear = tokens.Contains('y');
+        var hasHour = tokens.Contains('h');
+
+        if (hasYear && hasHour)
+            return FormatKind.DateAndTime;
+        if (hasYear)
+            return FormatKind.DateOnly;
+        if (hasHour)
+            return FormatKind.TimeOnly;
+        if (tokens.IndexOfAny(new[] { 'd', 'm', 's' }) >= 0)
+            return FormatKind.OtherDateTime;
+
+        return tokens.Contains('/') ? FormatKind.Fraction : FormatKind.Number;
+    }
+
+    private static string StripLiterals(string format)
+    {
+        // "General" is a keyword not a date/time pattern
+        var withoutKeywords = GeneralKeyword().Replace(format, "");
+        var sb = new StringBuilder(withoutKeywords.Length);
+
+        for (var i = 0; i < withoutKeywords.Length; i++)
+        {
+            var c = withoutKeywords[i];
+            switch (c)
+            {
+                case '"':
+                    var close = withoutKeywords.IndexOf('"', i + 1);
+                    i = close < 0 ? withoutKeywords.Length : close;
+                    break;
+                case '\\':
+                case '_':
+                case '*':
+                    i++; // skip the escaped / padding / fill character
+                    break;
+                case '[':
+                    var end = withoutKeywords.IndexOf(']', i + 1);
+                    if (end < 0)
+                    {
+                        i = withoutKeywords.Length;
+                        break;
+                    }
+
+                    var inner = withoutKeywords.Substring(i + 1, end - i - 1);
+                    if (ElapsedTime().IsMatch(inner))
+                        sb.Append(inner); // [h], [mm], [ss] elapsed time
+                    i = end;
+                    break;
+                default:
+                    sb.Append(c);
+                    break;
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    [GeneratedRegex("General", RegexOptions.IgnoreCase)]
+    private static partial Regex GeneralKeyword();
+
+    [GeneratedRegex("^(h+|m+|s+)$", RegexOptions.IgnoreCase)]
+    private static partial Regex ElapsedTime();
+
+    /// <summary>
+    /// Converts an Excel serial number to a date in the given date system, allowing for Excel treating 1900 as a leap
+    /// year (as NPOI did).  Returns null for values which Excel cannot display as dates.
+    /// </summary>
+    private static DateTime? ToDateTime(double serial, bool isDate1904)
+    {
+        if (serial < 0 || serial >= 2_900_000) // comfortably within DateTime range for both systems
             return null;
 
-        return DateTime.FromOADate(serial < 60 ? serial + 1 : serial);
+        var wholeDays = (int)Math.Floor(serial);
+        var milliseconds = (int)((serial - wholeDays) * 86_400_000 + 0.5);
+
+        if (isDate1904)
+            return Epoch1904.AddDays(wholeDays).AddMilliseconds(milliseconds);
+
+        var dayAdjust = wholeDays < 61 ? 0 : -1; // Excel thinks 1900-02-29 exists
+        return Epoch1900.AddDays(wholeDays + dayAdjust - 1).AddMilliseconds(milliseconds);
     }
 
     /// <summary>
-    /// Inverse of the reader's date conversion: returns the Excel (1900 date system) serial number for a date.
+    /// Inverse of the reader's date conversion: returns the Excel serial number for a date in the given date system.
     /// </summary>
-    private static double ToExcelSerial(DateTime date)
+    private static double ToExcelSerial(DateTime date, bool isDate1904)
     {
+        if (isDate1904)
+            return (date - Epoch1904).TotalDays;
+
         var oa = date.ToOADate();
         return date < FirstUnambiguousExcelDate ? oa - 1 : oa;
     }

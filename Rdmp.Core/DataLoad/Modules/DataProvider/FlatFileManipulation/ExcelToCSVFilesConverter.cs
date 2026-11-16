@@ -75,7 +75,8 @@ public class ExcelToCSVFilesConverter : IPluginDataProvider
 
     private void ProcessFile(FileInfo fileInfo, IDataLoadJob job)
     {
-        using var reader = ExcelCellReader.Open(fileInfo);
+        using var workbook = ExcelWorkbook.Open(fileInfo);
+        var reader = workbook.Reader;
 
         var source = new ExcelDataFlowSource();
         source.PreInitialize(new FlatFileToLoad(fileInfo), job);
@@ -99,7 +100,7 @@ public class ExcelToCSVFilesConverter : IPluginDataProvider
                     $"{MicrosoftQuerySyntaxHelper.Instance.GetSensibleEntityNameFromString(newName)}.csv";
 
                 var savePath = Path.Combine(job.LoadDirectory.ForLoading.FullName, newName);
-                var dt = source.GetAllData(reader, job);
+                var dt = source.GetAllData(workbook, job);
                 dt.EndLoadData();
                 using var saveStream = new StreamWriter(savePath, false, Encoding.UTF8, 1 << 20);
                 dt.SaveAsCsv(saveStream);

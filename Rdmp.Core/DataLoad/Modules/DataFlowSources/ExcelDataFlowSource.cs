@@ -69,15 +69,15 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
         if (!IsAcceptableFileExtension())
             throw new Exception($"FileToLoad ({_fileToLoad.File.FullName}) extension was not XLS or XLSX, dubious");
 
-        using var reader = ExcelCellReader.Open(_fileToLoad.File);
+        using var workbook = ExcelWorkbook.Open(_fileToLoad.File);
 
         //if the user hasn't picked one, use the first
-        if (!string.IsNullOrWhiteSpace(WorkSheetName) && !MoveToWorksheet(reader, WorkSheetName))
+        if (!string.IsNullOrWhiteSpace(WorkSheetName) && !MoveToWorksheet(workbook.Reader, WorkSheetName))
             throw new FlatFileLoadException(
                 $"The Excel sheet '{WorkSheetName}' was not found in workbook '{_fileToLoad.File.Name}'");
 
-        var sheetName = reader.Name;
-        var toReturn = GetAllData(reader, listener, rowOffset, columnOffset, replacementHeadersSplit);
+        var sheetName = workbook.Reader.Name;
+        var toReturn = GetAllData(workbook, listener, rowOffset, columnOffset, replacementHeadersSplit);
 
         try
         {
@@ -121,17 +121,18 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
     }
 
     /// <summary>
-    /// Returns all data held in the current worksheet of <paramref name="reader"/> (it is not advanced to the next worksheet).
+    /// Returns all data held in the current worksheet of <paramref name="workbook"/> (it is not advanced to the next worksheet).
     /// The first row of data becomes the headers.  Throws away fully blank columns/rows.
     /// </summary>
-    /// <param name="reader">Workbook reader positioned at the worksheet to read</param>
+    /// <param name="workbook">Workbook whose reader is positioned at the worksheet to read</param>
     /// <param name="listener"></param>
     /// <param name="rowOffset">1 based row number of the first row which may contain the headers (rows above it are ignored)</param>
     /// <param name="columnOffset">0 based index of the first column which may contain a header</param>
     /// <param name="replacementHeadersSplit"></param>
     /// <returns></returns>
-    public DataTable GetAllData(IExcelDataReader reader, IDataLoadEventListener listener, int rowOffset = 0, int columnOffset = 0, string[] replacementHeadersSplit = null)
+    public DataTable GetAllData(ExcelWorkbook workbook, IDataLoadEventListener listener, int rowOffset = 0, int columnOffset = 0, string[] replacementHeadersSplit = null)
     {
+        var reader = workbook.Reader;
         var toReturn = new DataTable();
         toReturn.BeginLoadData();
 
@@ -171,7 +172,7 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
                     var (columnIndex, rawValue) = cells[i];
                     if (columnIndex < columnOffset) continue;
 
-                    var h = ExcelCellReader.GetHeaderText(rawValue);
+                    var h = ExcelCellReader.GetHeaderText(rawValue, workbook.IsDate1904);
                     if (replacing && replacementHeadersSplit.Length == nColumns)
                     {
                         originalHeaders[i] = h;
@@ -199,7 +200,7 @@ public class ExcelDataFlowSource : IPluginDataFlowSource<DataTable>, IPipelineRe
 
             foreach (var (columnIndex, _) in cells)
             {
-                var value = ExcelCellReader.GetCellValue(reader, columnIndex);
+                var value = workbook.GetCellValue(columnIndex);
 
                 //if the cell is blank skip it
                 if (IsNull(value))

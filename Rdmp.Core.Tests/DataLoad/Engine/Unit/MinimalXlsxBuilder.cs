@@ -41,7 +41,15 @@ public sealed class MinimalXlsxBuilder
     private readonly Dictionary<string, int> _customFormats = new();
 
     private readonly List<(string Name, List<string> CellXml)> _sheets = new();
+    private bool _date1904;
     private readonly List<string> _sharedStrings = new();
+
+    /// <summary>Makes the workbook use the 1904 date system (serial 0 is 1904-01-01)</summary>
+    public MinimalXlsxBuilder Date1904()
+    {
+        _date1904 = true;
+        return this;
+    }
 
     /// <summary>Starts a new worksheet; subsequent cells are added to it</summary>
     public MinimalXlsxBuilder Sheet(string name)
@@ -147,7 +155,10 @@ public sealed class MinimalXlsxBuilder
     private string Workbook()
     {
         var sb = new StringBuilder(
-            "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><sheets>");
+            "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">");
+        if (_date1904)
+            sb.Append("<workbookPr date1904=\"1\"/>");
+        sb.Append("<sheets>");
         for (var i = 0; i < _sheets.Count; i++)
             sb.Append($"<sheet name=\"{Escape(_sheets[i].Name)}\" sheetId=\"{i + 1}\" r:id=\"rId{i + 1}\"/>");
         return sb.Append("</sheets></workbook>").ToString();

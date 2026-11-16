@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replace HIC.SynthEHR 2.0.1 with SynthEHR.Core 3.0.2 (jas88 fork); seeded test data differs from 2.x for the same seed
 - Reference CsvHelper 33.0.1 directly (previously only a transitive dependency of HIC.SynthEHR)
 - Read Excel files (ExcelDataFlowSource, ExcelAttacher, ExcelToCSVFilesConverter) with ExcelDataReader instead of NPOI. Rows containing only error cells are now ignored rather than failing the load
+- Excel number formats: fraction formats (e.g. `# ?/?`) are no longer treated as dates and load as the raw number; quoted/escaped literal text and bracketed sections (colours, locales, conditions) in a format no longer make it a date/time format (e.g. `0.0 "hrs"` loads as `1000.3 hrs` rather than a time); elapsed time formats such as `[mm]:ss` show the full duration
+- Excel workbooks using the 1904 date system now have it applied to dates in all number formats (.xls and .xlsx)
 
 
 ## [9.0.1] - 2025-07-31
