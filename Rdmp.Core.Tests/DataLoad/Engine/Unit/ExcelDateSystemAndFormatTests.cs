@@ -257,14 +257,49 @@ public class ExcelDateSystemAndFormatTests
         Assert.That(dt.Rows[0][0], Is.EqualTo(expected));
     }
 
-    [TestCase("[h]:mm:ss")]
-    [TestCase("[hh]:mm")]
-    public void NumberFormats_NegativeElapsedHoursAreNull(string format)
+    /// <summary>
+    /// Excel cannot display a negative number as a date or time (it shows ####) so it is loaded as null, whether it would
+    /// have been converted by ExcelDataReader or (the "General ..." format) by RDMP.
+    /// </summary>
+    [TestCase("yyyy-mm-dd", -1, false)]
+    [TestCase("yyyy-mm-dd", -0.25, false)]
+    [TestCase("yyyy-mm-dd", -1, true)]
+    [TestCase("yyyy-mm-dd hh:mm", -1.25, false)]
+    [TestCase("h:mm:ss", -0.5, false)]
+    [TestCase("m/d h:mm", -1.5, false)]
+    [TestCase("d-mmm", -5, false)]
+    [TestCase("mm:ss", -0.5, false)]
+    [TestCase("General yyyy-mm-dd", -1, false)]
+    [TestCase("General yyyy-mm-dd", -1, true)]
+    [TestCase("[h]:mm:ss", -0.5, false)]
+    [TestCase("[hh]:mm", -0.5, false)]
+    public void NumberFormats_NegativeDatesAndTimesAreNull(string format, double value, bool date1904)
     {
-        var dt = Read(Save(new MinimalXlsxBuilder().Text("A1", "Elapsed").Text("B1", "Other")
-            .NumberWithCustomFormat("A2", -0.5, format).Text("B2", "x")));
+        var builder = new MinimalXlsxBuilder();
+        if (date1904)
+            builder.Date1904();
 
-        Assert.That(Row(dt, 0), Is.EqualTo(new object[] { null, "x" }));
+        var dt = Read(Save(builder.Text("A1", "Negative").Text("B1", "Zero").Text("C1", "Other")
+            .NumberWithCustomFormat("A2", value, format).NumberWithCustomFormat("B2", 0, format).Text("C2", "x")));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(dt.Rows[0][0], Is.EqualTo(DBNull.Value));
+            Assert.That(dt.Rows[0][1], Is.Not.EqualTo(DBNull.Value), "Zero is the first moment of the date system");
+            Assert.That(dt.Rows[0][2], Is.EqualTo("x"));
+        });
+    }
+
+    /// <summary>
+    /// A negative duration in elapsed minutes or seconds is rendered as ExcelNumberFormat displays it
+    /// </summary>
+    [Test]
+    public void NumberFormats_NegativeElapsedMinutesAreRendered()
+    {
+        var dt = Read(Save(new MinimalXlsxBuilder().Text("A1", "Value")
+            .NumberWithCustomFormat("A2", -0.5, "[mm]:ss")));
+
+        Assert.That(dt.Rows[0][0], Is.EqualTo("-720:00"));
     }
 
     /// <summary>

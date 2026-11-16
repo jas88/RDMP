@@ -24,8 +24,11 @@ public static partial class ExcelCellReader
 {
     private const long MillisecondsPerDay = 86_400_000;
 
-    private static readonly DateTime Epoch1900 = new(1900, 1, 1);
-    private static readonly DateTime Epoch1904 = new(1904, 1, 1);
+    /// <summary>The date of serial number 0 in the 1900 date system</summary>
+    private static readonly DateTime SerialZero1900 = new(1899, 12, 31);
+
+    /// <summary>The date of serial number 0 in the 1904 date system</summary>
+    private static readonly DateTime SerialZero1904 = new(1904, 1, 1);
 
     /// <summary>
     /// The first day which Excel (1900 date system) and OLE Automation dates agree on.  Before this Excel believes that
@@ -119,8 +122,11 @@ public static partial class ExcelCellReader
             case bool b:
                 return b;
             case DateTime dt:
-                // ExcelDataReader has already applied the workbook's date system
-                return FormatNumber(ToExcelSerial(dt, isDate1904), dt, reader, column, isDate1904);
+                // ExcelDataReader has already applied the workbook's date system.  A date before the start of that
+                // system comes from a negative number, which Excel cannot display as a date or time
+                return dt < (isDate1904 ? SerialZero1904 : SerialZero1900)
+                    ? null
+                    : FormatNumber(ToExcelSerial(dt, isDate1904), dt, reader, column, isDate1904);
             case TimeSpan ts:
                 return FormatNumber(ts.TotalDays, ToDateTime(ts.TotalDays, isDate1904), reader, column, isDate1904);
             default:
@@ -291,10 +297,10 @@ public static partial class ExcelCellReader
         var (wholeDays, milliseconds) = SplitSerial(serial);
 
         if (isDate1904)
-            return Epoch1904.AddDays(wholeDays).AddMilliseconds(milliseconds);
+            return SerialZero1904.AddDays(wholeDays).AddMilliseconds(milliseconds);
 
         var dayAdjust = wholeDays < 60 ? 0 : -1; // Excel thinks 1900-02-29 (serial 60) exists
-        return Epoch1900.AddDays(wholeDays + dayAdjust - 1).AddMilliseconds(milliseconds);
+        return SerialZero1900.AddDays(wholeDays + dayAdjust).AddMilliseconds(milliseconds);
     }
 
     /// <summary>
@@ -313,7 +319,7 @@ public static partial class ExcelCellReader
     private static double ToExcelSerial(DateTime date, bool isDate1904)
     {
         if (isDate1904)
-            return (date - Epoch1904).TotalDays;
+            return (date - SerialZero1904).TotalDays;
 
         var oa = date.ToOADate();
         return date < FirstUnambiguousExcelDate ? oa - 1 : oa;
