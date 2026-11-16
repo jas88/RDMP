@@ -61,7 +61,11 @@ public abstract partial class DatabaseTests
     protected readonly IRDMPPlatformRepositoryServiceLocator RepositoryLocator;
     public static TestDatabasesSettings TestDatabaseSettings;
     private static bool HaveTriedCreatingTestDatabases;
-    private static bool? _testServerExists;
+
+    // Probed once per process, and only when a file system repository stands in for the platform databases
+    private static readonly Lazy<bool> TestServerExists = new(static () => new DiscoveredServer(
+        TestDatabaseSettings.ServerName, null, DatabaseType.MicrosoftSQLServer, TestDatabaseSettings.Username,
+        TestDatabaseSettings.Password).Exists());
 
     private const string TestServerMissingMessage =
         "Test database server does not exist.  You must install SQL Server LocalDb or Sql Server Express to run DatabaseTests. Or update TestDatabases.txt to point to your existing server.";
@@ -172,15 +176,11 @@ public abstract partial class DatabaseTests
 
             if (!cataRepo.DiscoveredServer.Exists()) DealWithMissingTestDatabases(opts, cataRepo);
         }
-        else
+        else if (!TestServerExists.Value)
         {
             // A file system repository only replaces the Catalogue and DataExport databases. Everything else is
             // still on the test server, and without it Startup fails whichever fixture happens to run first.
-            _testServerExists ??= new DiscoveredServer(TestDatabaseSettings.ServerName, null,
-                DatabaseType.MicrosoftSQLServer, TestDatabaseSettings.Username, TestDatabaseSettings.Password).Exists();
-
-            if (_testServerExists == false)
-                Assert.Inconclusive(TestServerMissingMessage);
+            Assert.Inconclusive(TestServerMissingMessage);
         }
 
 
