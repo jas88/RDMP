@@ -129,6 +129,36 @@ internal class CompileTimeTypeRegistryTests
     }
 
     [Test]
+    public void GetType_ShortNameOfOpenXmlSdkType_IsNotResolved()
+    {
+        // typeof makes sure both OpenXml SDK assemblies are loaded, so have been offered to the lookup caches
+        var openXmlTypes = new[]
+        {
+            typeof(DocumentFormat.OpenXml.Wordprocessing.Name),
+            typeof(DocumentFormat.OpenXml.Wordprocessing.Body),
+            typeof(DocumentFormat.OpenXml.Wordprocessing.Paragraph),
+            typeof(DocumentFormat.OpenXml.Wordprocessing.Table),
+            typeof(DocumentFormat.OpenXml.OpenXmlElement)
+        };
+
+        Assert.Multiple(() =>
+        {
+            foreach (var type in openXmlTypes)
+            {
+                Assert.That(MEF.GetType(type.Name)?.Assembly, Is.Not.EqualTo(type.Assembly),
+                    $"'{type.Name}' was resolved to a DocumentFormat.OpenXml Type");
+                Assert.That(MEF.GetType($"Not.A.Real.Namespace.{type.Name}")?.Assembly, Is.Not.EqualTo(type.Assembly),
+                    $"A missing Type ending '{type.Name}' was resolved to a DocumentFormat.OpenXml Type");
+            }
+
+            Assert.That(
+                MEF.GetAllTypes().Where(static t =>
+                    t.Assembly.FullName?.StartsWith("DocumentFormat.OpenXml", StringComparison.Ordinal) == true),
+                Is.Empty, "DocumentFormat.OpenXml Types should not be in the Type lookup caches");
+        });
+    }
+
+    [Test]
     public void GetType_NullOrEmptyInput_ThrowsArgumentException()
     {
         // Act & Assert

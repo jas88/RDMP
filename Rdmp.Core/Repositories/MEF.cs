@@ -45,6 +45,14 @@ public static class MEF
     private static readonly Dictionary<string, Exception> badAssemblies = new();
 
     /// <summary>
+    /// Name prefixes of assemblies whose Types are left out of the Type lookup caches.  DocumentFormat.OpenXml is
+    /// excluded because it contains thousands of classes with generic names (e.g. Name, Body, Table) which would
+    /// otherwise be returned when an unrelated Type is looked up by its short name.  Types in these assemblies can
+    /// still be found by their full name.  Keep in step with the list in TypeRegistryGenerator.
+    /// </summary>
+    private static readonly string[] AssembliesExcludedFromTypeLookup = { "CommandLine", "DocumentFormat.OpenXml" };
+
+    /// <summary>
     /// Per-AssemblyLoadContext cache for types and type hierarchies
     /// </summary>
     private sealed class ContextCache
@@ -204,8 +212,7 @@ public static class MEF
 
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            // Skip CommandLine assembly
-            if (assembly.FullName?.StartsWith("CommandLine", StringComparison.Ordinal) == true)
+            if (IsExcludedFromTypeLookup(assembly))
             {
                 assembliesSkipped++;
                 continue;
@@ -250,8 +257,7 @@ public static class MEF
                 return; // Already processed
         }
 
-        // Skip CommandLine and other noise assemblies
-        if (assemblyName?.StartsWith("CommandLine", StringComparison.Ordinal) == true)
+        if (IsExcludedFromTypeLookup(assembly))
             return;
 
         foreach (var type in GetTypesSafely(assembly))
@@ -281,6 +287,18 @@ public static class MEF
 
         // Clear type hierarchy cache as new types may affect inheritance queries
         cache.TypeHierarchyCache.Clear();
+    }
+
+    /// <summary>
+    /// True if the Types in <paramref name="assembly"/> are left out of the Type lookup caches (see
+    /// <see cref="AssembliesExcludedFromTypeLookup"/>)
+    /// </summary>
+    private static bool IsExcludedFromTypeLookup(System.Reflection.Assembly assembly)
+    {
+        var name = assembly.FullName;
+
+        return name != null && Array.Exists(AssembliesExcludedFromTypeLookup,
+            prefix => name.StartsWith(prefix, StringComparison.Ordinal));
     }
 
     private static string Tail(string full)

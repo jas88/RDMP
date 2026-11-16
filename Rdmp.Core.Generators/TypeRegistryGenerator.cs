@@ -61,9 +61,12 @@ public class TypeRegistryGenerator : IIncrementalGenerator
 
     private static void CollectTypes(IAssemblySymbol assembly, List<TypeInfo> types, string currentAssemblyName, bool includeInternal)
     {
-        // Skip certain assemblies to reduce size
+        // Skip certain assemblies to reduce size.  DocumentFormat.OpenXml is also skipped because its thousands of
+        // element classes have generic names (Name, Body, Table...) which must not be found by short name lookups
+        // (keep in step with MEF.AssembliesExcludedFromTypeLookup)
         var name = assembly.Name;
         if (name.StartsWith("System.") ||
+            name.StartsWith("DocumentFormat.OpenXml") ||
             name.StartsWith("Microsoft.") ||
             name.StartsWith("netstandard") ||
             name.StartsWith("mscorlib") ||
