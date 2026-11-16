@@ -1,4 +1,4 @@
-﻿// Copyright (c) The University of Dundee 2018-2019
+// Copyright (c) The University of Dundee 2018-2026
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -8,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.VisualStudioSolutionFileProcessing;
@@ -18,8 +16,17 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DesignPatternTests;
 
-public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
+/// <summary>
+/// Repository hygiene checks driven by DataManagementPlatform.sln.  The solution is walked once per fixture (in
+/// <see cref="WalkSolution"/>) collecting every .cs file belonging to a solution project, and each test then evaluates
+/// one rule against that shared result.  None of these tests require a database.
+/// </summary>
+[TestFixture]
+public class EvaluateNamespacesAndSolutionFoldersTests
 {
+    /// <summary>
+    /// File names which may legitimately appear in more than one project
+    /// </summary>
     public static readonly HashSet<string> IgnoreList = new()
     {
         "Program.cs",
@@ -36,252 +43,251 @@ public class EvaluateNamespacesAndSolutionFoldersTests : DatabaseTests
         "ExecutableProcessTaskTests.cs"
     };
 
+    private DirectoryInfo _solutionDir;
+    private VisualStudioSolutionFile _sln;
+
+    /// <summary>
+    /// Every .cs file found in a solution project, in discovery order (see <see cref="FindProjectInFolder"/> for de-duplication)
+    /// </summary>
+    private readonly List<string> _csFilesFound = new();
+
+    /// <summary>
+    /// Problems with solution folders or projects not matching the physical directory layout
+    /// </summary>
+    private readonly List<string> _structureErrors = new();
+
+    /// <summary>
+    /// Problems with the content of csproj files
+    /// </summary>
+    private readonly List<string> _projectFileErrors = new();
+
+    /// <summary>
+    /// Problems with class names and namespaces not matching the file name and folder
+    /// </summary>
+    private readonly List<string> _classNamingErrors = new();
+
+    [OneTimeSetUp]
+    public void WalkSolution()
+    {
+        // Ensure all loaded assemblies' types are discoverable for the checks which use reflection
+        MEF.RefreshTypes();
+
+        _solutionDir = RepositoryLayout.FindRoot();
+        _sln = new VisualStudioSolutionFile(_solutionDir,
+            new FileInfo(Path.Join(_solutionDir.FullName, RepositoryLayout.SolutionFileName)));
+
+        ProcessFolderRecursive(_sln.RootFolders, _solutionDir);
+
+        foreach (var rootLevelProject in _sln.RootProjects)
+            FindProjectInFolder(rootLevelProject, _solutionDir);
+    }
+
+    /// <summary>
+    /// Solution folders and projects have matching physical folders, every csproj on disk is in the solution and no csproj
+    /// appears in two places
+    /// </summary>
     [Test]
-    public void EvaluateNamespacesAndSolutionFolders()
+    public void EvaluateSolutionStructure()
     {
-        // This test now runs all separated tests to maintain compatibility with existing test runners
-        // Each test is run individually so failures can be traced to specific validation areas
-
-        var allTests = new[]
-        {
-            "EvaluateSolutionStructure",
-            "EvaluateProjectFileStructure",
-            "EvaluateClassNamingAndNamespaces",
-            "EvaluateDuplicateFiles",
-            "EvaluateInterfaceDeclarations",
-            "EvaluateClassDocumentation",
-            "EvaluateDocumentationCrossExamination",
-            "EvaluateRelationshipProperties",
-            "EvaluateExplicitDatabaseNames",
-            "EvaluateAutoComments",
-            "EvaluateCopyrightHeaders"
-        };
-
-        var testRunner = new EvaluateNamespacesAndSolutionFoldersTestsSeparated();
-        var failedTests = new List<string>();
-
-        foreach (var testName in allTests)
-        {
-            try
-            {
-                var testMethod = testRunner.GetType().GetMethod(testName);
-                Assert.That(testMethod, Is.Not.Null, $"Test method {testName} not found");
-
-                testMethod.Invoke(testRunner, null);
-            }
-            catch (Exception ex)
-            {
-                var message = $"✗ {testName} failed: {ex.Message}";
-                failedTests.Add(message);
-
-                // Also add inner exception details if available
-                if (ex.InnerException != null)
-                {
-                    failedTests.Add($"  Inner: {ex.InnerException.Message}");
-                }
-            }
-        }
-
-        if (failedTests.Any())
-        {
-            var failureMessage = $"The following tests failed:{Environment.NewLine}{string.Join(Environment.NewLine, failedTests)}";
-            Assert.Fail(failureMessage);
-        }
+        var errors = new List<string>(_structureErrors);
+        ValidateProjectsOnDisk(errors);
+        Assert.That(errors, Is.Empty, "Solution structure validation failed");
     }
 
-}
+    /// <summary>
+    /// csproj files are tidy (e.g. do not use CopyToOutputDirectory Always)
+    /// </summary>
+    [Test]
+    public void EvaluateProjectFileStructure() =>
+        Assert.That(_projectFileErrors, Is.Empty, "Project file structure validation failed");
 
-public class CopyrightHeaderEvaluator
-{
-    public static void FindProblems(List<string> csFilesFound)
+    /// <summary>
+    /// Each .cs file has a single namespace matching its folder and its public class matches the file name
+    /// </summary>
+    [Test]
+    public void EvaluateClassNamingAndNamespaces() =>
+        Assert.That(_classNamingErrors, Is.Empty, "Class naming and namespace validation failed");
+
+    /// <summary>
+    /// Sanity check that the solution walk did not collect any file twice
+    /// </summary>
+    [Test]
+    public void EvaluateDuplicateFiles()
     {
-        var suggestedNewFileContents = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-        var copyrightIssues = new Dictionary<string, (string actual, string expected)>(StringComparer.CurrentCultureIgnoreCase);
+        var duplicatePaths = _csFilesFound.GroupBy(f => f)
+            .Where(g => g.Count() > 1 && !IgnoreList.Contains(Path.GetFileName(g.Key)))
+            .Select(g => $"Found duplicate file paths: {g.Key} (appears {g.Count()} times)");
 
-        foreach (var file in csFilesFound)
+        Assert.That(duplicatePaths, Is.Empty, "Duplicate files validation failed");
+    }
+
+    [Test]
+    public void EvaluateInterfaceDeclarations() => InterfaceDeclarationsCorrect.FindProblems();
+
+    [Test]
+    public void EvaluateClassDocumentation() => new AllImportantClassesDocumented().FindProblems(_csFilesFound);
+
+    [Test]
+    public void EvaluateDocumentationCrossExamination() =>
+        new DocumentationCrossExaminationTest(_solutionDir).FindProblems(_csFilesFound);
+
+    [Test]
+    public void EvaluateRelationshipProperties() =>
+        new SuspiciousRelationshipPropertyUse().FindPropertyMisuse(_csFilesFound);
+
+    [Test]
+    public void EvaluateExplicitDatabaseNames() => ExplicitDatabaseNameChecker.FindProblems(_csFilesFound);
+
+    /// <summary>
+    /// RDMPForm and RDMPUserControl classes do not use RepositoryLocator in their constructors or LicenseManager.UsageMode
+    /// </summary>
+    [Test]
+    public void EvaluateFormInitialization() =>
+        new RDMPFormInitializationTests().FindUninitializedForms(_csFilesFound);
+
+    [Test]
+    public void EvaluateAutoComments() => AutoCommentsEvaluator.FindProblems(_csFilesFound);
+
+    /// <summary>
+    /// Every project in the solution (except the externals/ wrappers around vendored source) is found exactly once
+    /// when traversing the repository, and there are no csproj files which are not in the solution
+    /// </summary>
+    private void ValidateProjectsOnDisk(List<string> errors)
+    {
+        var foundProjects = _sln.Projects
+            .Where(project => !RepositoryLayout.IsExternalsProject(project.Path))
+            .ToDictionary(project => project, _ => new List<string>());
+
+        FindProjectsRecursively(foundProjects, _solutionDir, errors);
+
+        foreach (var (project, locations) in foundProjects)
+            switch (locations.Count)
+            {
+                case 0:
+                    errors.Add(
+                        $"FAIL: Did not find project {project.Name} while traversing solution directories and subdirectories");
+                    break;
+                case > 1:
+                    errors.Add(
+                        $"FAIL: Found 2+ copies of project {project.Name} while traversing solution directories and subdirectories:{Environment.NewLine}{string.Join(Environment.NewLine, locations)}");
+                    break;
+            }
+    }
+
+    private static void FindProjectsRecursively(Dictionary<VisualStudioProjectReference, List<string>> projects,
+        DirectoryInfo dir, List<string> errors)
+    {
+        if (!dir.FullName.Contains("CodeTutorials"))
+            foreach (var projFile in dir.EnumerateFiles("*.csproj"))
+            {
+                var key = projects.Keys.SingleOrDefault(p => $"{p.Name}.csproj".Equals(projFile.Name));
+                if (key == null)
+                    errors.Add($"FAIL:Unreferenced csproj file spotted :{projFile.FullName}");
+                else
+                    projects[key].Add(projFile.FullName);
+            }
+
+        // Skips build output, nested git checkouts (worktrees, submodules) and vendored third party source
+        foreach (var subdir in RepositoryLayout.EnumerateDirectories(dir, true))
+            FindProjectsRecursively(projects, subdir, errors);
+    }
+
+    private void ProcessFolderRecursive(IEnumerable<VisualStudioSolutionFolder> folders,
+        DirectoryInfo currentPhysicalDirectory)
+    {
+        // Vendored third party source (externals solution folder) is exempt from hygiene rules
+        foreach (var solutionFolder in folders.Where(static f =>
+                     !f.Name.Equals(RepositoryLayout.ExternalsDirectoryName, StringComparison.Ordinal)))
         {
-            if (file.Contains(".Designer.cs") || EvaluateNamespacesAndSolutionFoldersTests.IgnoreList.Contains(file))
+            var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
+                .SingleOrDefault(d => d.Name.Equals(solutionFolder.Name));
+
+            if (physicalSolutionFolder == null)
+            {
+                _structureErrors.Add(
+                    $"FAIL: Solution Folder exists called {solutionFolder.Name} but there is no corresponding physical folder in {currentPhysicalDirectory.FullName}");
                 continue;
-
-            var changes = false;
-
-            var sbSuggestedText = new StringBuilder();
-
-            var text = File.ReadLines(file).First();
-
-            if (!text.StartsWith("// Copyright (c) The University of Dundee 2018-20")
-                && text !=
-                @"// This code is adapted from https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications")
-            {
-                changes = true;
-                var expectedCopyright = $"// Copyright (c) The University of Dundee 2018-{DateTime.Now.Year}";
-                copyrightIssues.Add(file, (text, expectedCopyright));
-
-                sbSuggestedText.AppendLine(expectedCopyright);
-                sbSuggestedText.AppendLine(@"// This file is part of the Research Data Management Platform (RDMP).");
-                sbSuggestedText.AppendLine(
-                    @"// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.");
-                sbSuggestedText.AppendLine(
-                    @"// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.");
-                sbSuggestedText.AppendLine(
-                    @"// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.");
-                sbSuggestedText.AppendLine();
-                sbSuggestedText.AppendJoin(Environment.NewLine, text);
             }
 
-            if (changes)
-                suggestedNewFileContents.Add(file, sbSuggestedText.ToString());
-        }
+            foreach (var p in solutionFolder.ChildrenProjects)
+                FindProjectInFolder(p, physicalSolutionFolder);
 
-        foreach (var kvp in suggestedNewFileContents)
-        {
-            var actualContents = File.ReadAllText(kvp.Key);
-            var suggestedContents = kvp.Value;
-            Assert.That(actualContents, Is.EqualTo(suggestedContents), $"Copyright header mismatch in {kvp.Key}");
+            ProcessFolderRecursive(solutionFolder.ChildrenFolders, physicalSolutionFolder);
         }
     }
-}
 
-public partial class AutoCommentsEvaluator
-{
-    public static void FindProblems(List<string> csFilesFound)
+    private void FindProjectInFolder(VisualStudioProjectReference p, DirectoryInfo physicalSolutionFolder)
     {
-        var suggestedNewFileContents = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+        var csProjFile = IsConsolidatedPluginProject(p.Name)
+            ? FindConsolidatedPluginProject(p, physicalSolutionFolder)
+            : FindProject(p, physicalSolutionFolder);
 
-        foreach (var f in csFilesFound)
+        if (csProjFile == null)
+            return;
+
+        var tidy = new CsProjFileTidy(csProjFile);
+        _projectFileErrors.AddRange(tidy.ProjectFileProblems);
+        _classNamingErrors.AddRange(tidy.SourceFileProblems);
+
+        // The plugin projects (Plugins, Plugins.UI) are in the same Plugins directory, so only collect their files
+        // once (from the base Plugins project).  Other projects only add files not already collected.
+        if (IsConsolidatedPluginProject(p.Name))
         {
-            if (f.Contains(".Designer.cs"))
-                continue;
-
-            var changes = false;
-
-            var sbSuggestedText = new StringBuilder();
-
-            var text = File.ReadAllLines(f);
-            var areInSummary = false;
-            var paraOpened = false;
-
-            for (var i = 0; i < text.Length; i++)
-            {
-                //////////////////////////////////No Mapping Properties////////////////////////////////////////////////////
-                if (text[i].Trim().Equals("[NoMappingToDatabase]"))
-                {
-                    var currentClassName = GetUniqueTypeName(Path.GetFileNameWithoutExtension(f));
-
-                    var t = MEF.GetType(currentClassName);
-
-                    //if the previous line isn't a summary comment
-                    if (!text[i - 1].Trim().StartsWith("///"))
-                    {
-                        var next = text[i + 1];
-
-                        var m = PublicRegex().Match(next);
-                        if (m.Success)
-                        {
-                            var whitespace = m.Groups[1].Value;
-                            var member = m.Groups[3].Value;
-
-                            Assert.Multiple(() =>
-                            {
-                                Assert.That(string.IsNullOrWhiteSpace(whitespace));
-                                Assert.That(t, Is.Not.Null, $"MEF.GetType() returned null for class '{currentClassName}' in file '{f}'. The assembly containing this type may not be loaded.");
-                            });
-
-                            if (t.GetProperty($"{member}_ID") != null)
-                            {
-                                changes = true;
-                                sbSuggestedText.AppendLine(whitespace + $"/// <inheritdoc cref=\"{member}_ID\"/>");
-                            }
-                            else
-                            {
-                                sbSuggestedText.AppendLine(text[i]);
-                                continue;
-                            }
-                        }
-                    }
-                }
-
-
-                if (text[i].Trim().Equals("/// <summary>"))
-                {
-                    areInSummary = true;
-                    paraOpened = false;
-                }
-
-                if (text[i].Trim().Equals("/// </summary>"))
-                {
-                    if (paraOpened)
-                    {
-                        //
-                        sbSuggestedText.Insert(sbSuggestedText.Length - 2, "</para>");
-                        paraOpened = false;
-                    }
-
-                    areInSummary = false;
-                }
-
-                //if we have a paragraph break in the summary comments and the next line isn't an end summary
-                if (areInSummary && text[i].Trim().Equals("///") && !text[i + 1].Trim().Equals("/// </summary>"))
-                {
-                    if (paraOpened)
-                    {
-                        sbSuggestedText.Insert(sbSuggestedText.Length - 2, "</para>");
-                        paraOpened = false;
-                    }
-
-                    //there should be a para tag
-                    if (!text[i + 1].Contains("<para>") && text[i + 1].Contains("///"))
-                    {
-                        changes = true;
-
-                        //add current line
-                        sbSuggestedText.AppendLine(text[i]);
-
-                        //add the para tag
-                        var commentStart = text[i + 1].IndexOf("///", StringComparison.Ordinal);
-                        if (commentStart >= 0 && text[i + 1].Length > commentStart + 4)
-                        {
-                            var nextLine = text[i + 1].Insert(commentStart + 4, "<para>");
-                            sbSuggestedText.AppendLine(nextLine);
-                        }
-                        else
-                        {
-                            // Line too short to insert para tag, just add as-is
-                            sbSuggestedText.AppendLine(text[i + 1]);
-                        }
-                        i++;
-                        paraOpened = true;
-                        continue;
-                    }
-                }
-
-                sbSuggestedText.AppendLine(text[i]);
-            }
-
-            if (changes)
-                suggestedNewFileContents.Add(f, sbSuggestedText.ToString());
+            if (p.Name == "Plugins")
+                _csFilesFound.AddRange(tidy.csFilesFound);
+            return;
         }
 
-
-        //drag your debugger stack pointer to here to mess up all your files to match the suggestedNewFileContents :)
-        foreach (var kvp in suggestedNewFileContents)
-        {
-            var actualContents = File.ReadAllText(kvp.Key);
-            var suggestedContents = kvp.Value;
-            Assert.That(actualContents, Is.EqualTo(suggestedContents), $"Auto-comment mismatch in {kvp.Key}");
-        }
+        _csFilesFound.AddRange(tidy.csFilesFound.Where(f => !_csFilesFound.Contains(f)).ToList());
     }
 
-    private static string GetUniqueTypeName(string typename)
+    private FileInfo FindProject(VisualStudioProjectReference p, DirectoryInfo physicalSolutionFolder)
     {
-        return typename switch
+        var physicalProjectFolder =
+            physicalSolutionFolder.EnumerateDirectories().SingleOrDefault(f => f.Name.Equals(p.Name));
+
+        if (physicalProjectFolder == null)
         {
-            "ColumnInfo" => "Rdmp.Core.Curation.Data.ColumnInfo",
-            "IFilter" => "Rdmp.Core.Curation.Data.IFilter",
-            _ => typename
-        };
+            _structureErrors.Add(
+                $"FAIL: Physical folder {p.Name} does not exist in directory {physicalSolutionFolder.FullName}");
+            return null;
+        }
+
+        var csProjFile = FindCsProj(physicalProjectFolder.FullName, p.Name);
+        if (csProjFile == null)
+            _structureErrors.Add(
+                $"FAIL: .csproj file {p.Name}.csproj was not found in folder {physicalProjectFolder.FullName}");
+
+        return csProjFile;
     }
 
-    [GeneratedRegex("(.*)public\\b(.*)\\s+(.*)\\b")]
-    private static partial Regex PublicRegex();
+    /// <summary>
+    /// The consolidated plugin projects live under a Plugins directory, i.e. Plugins\Plugins\Plugins.csproj and
+    /// Plugins\Plugins.UI\Plugins.UI.csproj.  Also tolerates the csproj directly in Plugins, in the solution
+    /// folder or in a subdirectory of the solution folder named after the project.
+    /// </summary>
+    private FileInfo FindConsolidatedPluginProject(VisualStudioProjectReference p, DirectoryInfo physicalSolutionFolder)
+    {
+        var pluginsDir = Path.Join(physicalSolutionFolder.FullName, "Plugins");
+
+        var csProjFile = FindCsProj(Path.Join(pluginsDir, p.Name), p.Name)
+                         ?? FindCsProj(pluginsDir, p.Name)
+                         ?? FindCsProj(physicalSolutionFolder.FullName, p.Name)
+                         ?? FindCsProj(Path.Join(physicalSolutionFolder.FullName, p.Name), p.Name);
+
+        if (csProjFile == null)
+            _structureErrors.Add(
+                $"FAIL: .csproj file {p.Name}.csproj was not found in {physicalSolutionFolder.FullName} or its Plugins subdirectory");
+
+        return csProjFile;
+    }
+
+    private static FileInfo FindCsProj(string directory, string projectName) =>
+        Directory.Exists(directory)
+            ? new DirectoryInfo(directory).EnumerateFiles("*.csproj")
+                .SingleOrDefault(f => f.Name.Equals($"{projectName}.csproj"))
+            : null;
+
+    private static bool IsConsolidatedPluginProject(string projectName) =>
+        projectName is "Plugins" or "Plugins.UI";
 }

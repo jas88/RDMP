@@ -10,7 +10,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using NPOI.XWPF.UserModel;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.DataExport.DataExtraction;
@@ -230,7 +229,7 @@ public class WordDataWriter : DocXHelper
         return result.ToString().Trim();
     }
 
-    private void AddFiltersAndParameters(XWPFDocument document)
+    private void AddFiltersAndParameters(DocXDocument document)
     {
         var request = Executer.Source.Request;
         var fc = (FilterContainer)request.Configuration.GetFilterContainerFor(request.DatasetBundle.DataSet);
@@ -245,7 +244,7 @@ public class WordDataWriter : DocXHelper
         }
     }
 
-    private void WriteOutParameters(XWPFDocument document, List<IFilter> filtersUsed)
+    private void WriteOutParameters(DocXDocument document, List<IFilter> filtersUsed)
     {
         InsertHeader(document, "Parameters");
 
@@ -279,7 +278,7 @@ public class WordDataWriter : DocXHelper
         }
     }
 
-    private static void WriteOutFilters(XWPFDocument document, List<IFilter> filtersUsed)
+    private static void WriteOutFilters(DocXDocument document, List<IFilter> filtersUsed)
     {
         InsertHeader(document, "Filters");
 
@@ -298,7 +297,7 @@ public class WordDataWriter : DocXHelper
         }
     }
 
-    private void AddAllCatalogueItemMetaData(XWPFDocument document)
+    private void AddAllCatalogueItemMetaData(DocXDocument document)
     {
         var cata = Executer.Source.Request.Catalogue;
         var catalogueMetaData = new WordCatalogueExtractor(cata, document);
@@ -432,7 +431,7 @@ public class WordDataWriter : DocXHelper
             */
     }
 
-    private void CreateValidationRulesTable(XWPFDocument document)
+    private void CreateValidationRulesTable(DocXDocument document)
     {
         var validator = Executer.Source.ExtractionTimeValidator.Validator;
 
@@ -485,7 +484,7 @@ public class WordDataWriter : DocXHelper
         }
     }
 
-    private void CreateValidationResultsTable(XWPFDocument document)
+    private void CreateValidationResultsTable(DocXDocument document)
     {
         var results = Executer.Source.ExtractionTimeValidator.Results;
 

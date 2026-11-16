@@ -8,7 +8,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Spontaneous;
 using Rdmp.Core.Icons;
@@ -31,7 +33,7 @@ public class DocumentationReportDatabaseEntities : DocXHelper
     private Dictionary<Type, string> Summaries = new();
 
     /// <summary>
-    /// Generates the report
+    /// Writes the report to a new .docx file in the temp directory
     /// </summary>
     /// <param name="commentStore">Documentation for the classes</param>
     /// <param name="notifier">Where to report progress/failures</param>
@@ -39,7 +41,8 @@ public class DocumentationReportDatabaseEntities : DocXHelper
     /// <param name="showFile">True to open the generated file once complete</param>
     /// <param name="iconRenderer">Optional function that renders an <see cref="RdmpIcon"/> (including overlays etc) to PNG data.
     /// If not provided then the base image of each icon is used (<see cref="RdmpIcon.Operations"/> are ignored).</param>
-    public void GenerateReport(CommentStore commentStore, ICheckNotifier notifier, IIconProvider iconProvider,
+    /// <returns>The file written, or null if generation failed</returns>
+    public FileInfo GenerateReport(CommentStore commentStore, ICheckNotifier notifier, IIconProvider iconProvider,
         bool showFile, Func<RdmpIcon, byte[]> iconRenderer = null)
     {
         iconRenderer ??= EmbeddedIconHelper.GetPngBytes;
@@ -66,9 +69,9 @@ public class DocumentationReportDatabaseEntities : DocXHelper
 
                 if (icon != null)
                 {
-                    var para = t.Rows[i * 2 + 1].GetCell(0).Paragraphs.First();
-                    var run = para.Runs.FirstOrDefault() ?? para.CreateRun();
-                    GetPicture(run, iconRenderer(icon));
+                    var para = GetTableCell(t, i * 2 + 1, 0).Elements<Paragraph>().First();
+                    var run = para.Elements<Run>().FirstOrDefault() ?? para.AppendChild(new Run());
+                    GetPicture(document, run, iconRenderer(icon));
                 }
 
                 SetTableCell(t, i * 2 + 1, 0, $" {keys[i].Name}");
@@ -76,13 +79,20 @@ public class DocumentationReportDatabaseEntities : DocXHelper
                 SetTableCell(t, i * 2 + 2, 0, Summaries[keys[i]]);
             }
 
+            //save and close the file before showing it to the user
+            document.Dispose();
+
             if (showFile)
                 ShowFile(document);
+
+            return document.FileInfo;
         }
         catch (Exception e)
         {
             notifier.OnCheckPerformed(new CheckEventArgs("Report generation failed", CheckResult.Fail, e));
         }
+
+        return null;
     }
 
     private void Check(ICheckNotifier notifier)

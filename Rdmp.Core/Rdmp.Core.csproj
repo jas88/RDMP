@@ -327,6 +327,7 @@
 		<PackageReference Include="AWSSDK.SSO" />
 		<PackageReference Include="AWSSDK.SSOOIDC" />
 		<PackageReference Include="CommandLineParser" />
+		<PackageReference Include="DocumentFormat.OpenXml" />
 		<PackageReference Include="ExcelDataReader" />
 		<PackageReference Include="ExcelNumberFormat" />
 		<PackageReference Include="FluentFTP" />
