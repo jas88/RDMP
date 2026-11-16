@@ -26,10 +26,12 @@ namespace Rdmp.Core.Tests.DataLoad.Engine.Unit;
 /// <summary>
 /// Pins down how <see cref="ExcelDataFlowSource"/> and <see cref="ExcelToCSVFilesConverter"/> translate worksheet
 /// layout and cell contents (number formats, formulas, blanks, offsets etc).  The expected values were captured from the
-/// original NPOI based implementation so that changes of reading library do not silently change loaded data.
+/// original NPOI based implementation so that changes of reading library do not silently change loaded data.  Plain numbers
+/// are formatted with the current culture so the fixture is pinned to one.
 /// </summary>
 [TestFixture]
 [Category("Unit")]
+[SetCulture("en-GB")]
 public class ExcelSourceCellHandlingTests
 {
     private DirectoryInfo _dir;

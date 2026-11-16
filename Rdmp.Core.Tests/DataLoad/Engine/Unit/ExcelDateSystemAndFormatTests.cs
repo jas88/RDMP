@@ -20,10 +20,12 @@ namespace Rdmp.Core.Tests.DataLoad.Engine.Unit;
 
 /// <summary>
 /// Tests for workbook date system (1900 vs 1904) handling and for distinguishing date formats from other number formats
-/// (e.g. fractions) in <see cref="ExcelDataFlowSource"/>.
+/// (e.g. fractions) in <see cref="ExcelDataFlowSource"/>.  Plain numbers are formatted with the current culture so the
+/// fixture is pinned to one.
 /// </summary>
 [TestFixture]
 [Category("Unit")]
+[SetCulture("en-GB")]
 public class ExcelDateSystemAndFormatTests
 {
     public const string Date1904XlsFile = "Date1904.xls";
@@ -157,7 +159,7 @@ public class ExcelDateSystemAndFormatTests
     [TestCase("[Red]0.00", 1000.25, "1000.25")]
     [TestCase("[$-F400]h:mm:ss\\ AM/PM", 0.5, "12:00:00")]
     [TestCase("[h]:mm:ss", 0.5, "12:00:00")]
-    public void NumberFormats_FractionsAreNotDates(string format, double value, string expected)
+    public void NumberFormats_RenderAsExpected(string format, double value, string expected)
     {
         var dt = Read(Save(new MinimalXlsxBuilder().Text("A1", "Value").NumberWithCustomFormat("A2", value, format)));
 

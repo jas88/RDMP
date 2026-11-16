@@ -25,6 +25,7 @@ namespace Rdmp.Core.Tests.DataLoad.Engine.Unit;
 
 [TestFixture]
 [Category("Unit")]
+[SetCulture("en-GB")] // plain numbers are formatted with the current culture, the expectations assume a '.' decimal separator
 public class ExcelTests
 {
     public const string TestFile = "Book1.xlsx";
