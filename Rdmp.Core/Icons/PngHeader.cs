@@ -20,15 +20,21 @@ public static class PngHeader
     private static ReadOnlySpan<byte> IhdrType => "IHDR"u8;
 
     /// <summary>
+    /// The PNG specification fixes the IHDR chunk's data length at 13 bytes
+    /// </summary>
+    private const int IhdrLength = 13;
+
+    /// <summary>
     /// The minimum number of bytes needed to read the signature and image dimensions
     /// </summary>
     public const int MinimumLength = 24;
 
     /// <summary>
-    /// Returns true if <paramref name="data"/> starts with the PNG signature followed by an IHDR chunk
+    /// Returns true if <paramref name="data"/> starts with the PNG signature followed by an IHDR chunk of the correct length
     /// </summary>
     public static bool IsPng(ReadOnlySpan<byte> data) =>
-        data.Length >= MinimumLength && data[..8].SequenceEqual(Signature) && data.Slice(12, 4).SequenceEqual(IhdrType);
+        data.Length >= MinimumLength && data[..8].SequenceEqual(Signature) &&
+        BinaryPrimitives.ReadInt32BigEndian(data.Slice(8, 4)) == IhdrLength && data.Slice(12, 4).SequenceEqual(IhdrType);
 
     /// <summary>
     /// Reads the pixel width and height from the IHDR chunk of PNG <paramref name="data"/> (bytes 16-23, big-endian)

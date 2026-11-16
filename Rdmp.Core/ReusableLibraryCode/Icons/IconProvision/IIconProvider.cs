@@ -9,7 +9,8 @@ using Rdmp.Core.Icons;
 namespace Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 
 /// <summary>
-/// Provides 19x19 pixel images for the given object which could be an RDMPConcept, class instance or Type.
+/// Provides <see cref="RdmpIcon"/> descriptions of 19x19 pixel icons for the given object which could be an RDMPConcept,
+/// class instance or Type.  Rendering to pixels is left to the user interface (e.g. Rdmp.UI's ImageTools).
 /// </summary>
 public interface IIconProvider
 {

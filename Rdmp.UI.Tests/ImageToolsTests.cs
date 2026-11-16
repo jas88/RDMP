@@ -92,7 +92,8 @@ internal class ImageToolsTests
     [Test]
     public void ImageToBitmap_Greyscale_UsesBt709Luminance()
     {
-        var icon = CatalogueIcons.Catalogue;
+        // TableInfo has plenty of coloured pixels (Catalogue's visible pixels are all already grey)
+        var icon = CatalogueIcons.TableInfo;
         var grey = icon.AsGreyscale().ImageToBitmap();
         using var original = Decode(icon);
 

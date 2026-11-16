@@ -10,7 +10,7 @@ using Rdmp.Core.Icons;
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
 /// <summary>
-/// <see cref="ICommandExecution"/> with an Image designed for use with MenuItems and HomeUI.  Represents a single atomic
+/// <see cref="ICommandExecution"/> with an <see cref="RdmpIcon"/> designed for use with MenuItems and HomeUI.  Represents a single atomic
 /// action which the user can undertake.  The command may be <see cref="ICommandExecution.IsImpossible"/>.
 /// </summary>
 public interface IAtomicCommand : ICommandExecution

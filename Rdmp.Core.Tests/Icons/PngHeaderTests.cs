@@ -59,6 +59,24 @@ internal class PngHeaderTests
         Assert.That(PngHeader.IsPng(bmp), Is.False);
     }
 
+    [TestCase(0)]
+    [TestCase(12)]
+    [TestCase(14)]
+    [TestCase(-1)]
+    public void IsPng_FalseWhenIhdrLengthIsNot13(int length)
+    {
+        var data = Header(19, 19);
+        data[8] = (byte)(length >> 24);
+        data[9] = (byte)(length >> 16);
+        data[10] = (byte)(length >> 8);
+        data[11] = (byte)length;
+        Assert.Multiple(() =>
+        {
+            Assert.That(PngHeader.IsPng(data), Is.False);
+            Assert.Throws<ArgumentException>(() => PngHeader.GetDimensions(data));
+        });
+    }
+
     [Test]
     public void IsPng_FalseWhenFirstChunkIsNotIhdr()
     {
