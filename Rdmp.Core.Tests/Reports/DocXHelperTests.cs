@@ -336,7 +336,7 @@ internal class DocXHelperTests : DocXHelper
         Assert.Multiple(() =>
         {
             Assert.That(() => GetPicture(document, new byte[] { 1, 2, 3 }), Throws.ArgumentException);
-            Assert.That(() => GetPicture(document, (byte[])null), Throws.ArgumentNullException);
+            Assert.That(() => GetPicture(document, null), Throws.ArgumentNullException);
         });
     }
 
