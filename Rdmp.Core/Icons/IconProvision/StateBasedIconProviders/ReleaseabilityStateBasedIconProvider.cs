@@ -7,19 +7,17 @@
 using System.Collections.Generic;
 using Rdmp.Core.DataExport.DataRelease.Potential;
 using Rdmp.Core.Ticketing;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public class ReleaseabilityStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private readonly Dictionary<Releaseability, Image<Rgba32>> _images;
-    private readonly Dictionary<TicketingReleaseabilityEvaluation, Image<Rgba32>> _environmentImages;
+    private readonly Dictionary<Releaseability, RdmpIcon> _images;
+    private readonly Dictionary<TicketingReleaseabilityEvaluation, RdmpIcon> _environmentImages;
 
     public ReleaseabilityStateBasedIconProvider()
     {
-        _images = new Dictionary<Releaseability, Image<Rgba32>>
+        _images = new Dictionary<Releaseability, RdmpIcon>
         {
             { Releaseability.Undefined, CatalogueIcons.TinyRed },
 
@@ -35,7 +33,7 @@ public class ReleaseabilityStateBasedIconProvider : IObjectStateBasedIconProvide
             { Releaseability.Releaseable, CatalogueIcons.TinyGreen }
         };
 
-        _environmentImages = new Dictionary<TicketingReleaseabilityEvaluation, Image<Rgba32>>
+        _environmentImages = new Dictionary<TicketingReleaseabilityEvaluation, RdmpIcon>
         {
             {
                 TicketingReleaseabilityEvaluation.CouldNotAuthenticateAgainstServer,
@@ -55,7 +53,7 @@ public class ReleaseabilityStateBasedIconProvider : IObjectStateBasedIconProvide
         };
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         return o switch
         {

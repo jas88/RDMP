@@ -4,44 +4,36 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
-using System;
-using System.Collections.Concurrent;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 
 namespace Rdmp.Core.Icons.IconOverlays;
 
+/// <summary>
+/// Describes icons decorated with overlays or rendered in greyscale.  The results are <see cref="RdmpIcon"/> descriptions
+/// which are cheap to create and compare; rendering (and caching of rendered images) is done by the user interface.
+/// </summary>
 public static class IconOverlayProvider
 {
-    private static readonly ConcurrentDictionary<ValueTuple<Image<Rgba32>, OverlayKind>, Image<Rgba32>> Cache = new();
-
-    private static readonly ConcurrentDictionary<ValueTuple<Image<Rgba32>, Image<Rgba32>>, Image<Rgba32>>
-        ResultCacheCustom = new();
-
-    private static readonly ConcurrentDictionary<Image<Rgba32>, Image<Rgba32>> GreyscaleCache = new();
-
     private static readonly EnumImageCollection<OverlayKind> Images = new("Rdmp.Core.Icons.Overlays.");
 
-    public static Image<Rgba32> GetOverlay(Image<Rgba32> forImage, OverlayKind overlayKind) =>
-        Cache.GetOrAdd((forImage, overlayKind), _ => GetOverlayNoCache(forImage, overlayKind));
-
-    public static Image<Rgba32> GetOverlay(Image<Rgba32> forImage, Image<Rgba32> customOverlay) =>
-        ResultCacheCustom.GetOrAdd((forImage, customOverlay),
-            _ => forImage.Clone<Rgba32>(x => x.DrawImage(customOverlay, 1.0f)));
-
-    public static Image<Rgba32> GetGreyscale(Image<Rgba32> forImage) =>
-        GreyscaleCache.GetOrAdd(forImage, MakeGreyscale);
+    /// <summary>
+    /// Returns the overlay image itself (e.g. the small 'link' arrow) for <paramref name="overlayKind"/>
+    /// </summary>
+    public static RdmpIcon GetOverlayIcon(OverlayKind overlayKind) => Images[overlayKind];
 
     /// <summary>
-    /// Use ImageSharp's greyscale converter
+    /// Returns <paramref name="forImage"/> with the standard <paramref name="overlayKind"/> drawn on top
     /// </summary>
-    /// <param name="original"></param>
-    /// <returns></returns>
-    private static Image<Rgba32> MakeGreyscale(Image<Rgba32> original) => original.Clone(static x => x.Grayscale());
+    public static RdmpIcon GetOverlay(RdmpIcon forImage, OverlayKind overlayKind) => forImage.WithOverlay(overlayKind);
 
-    public static Image<Rgba32> GetOverlayNoCache(Image<Rgba32> forImage, OverlayKind overlayKind) =>
-        forImage.Clone<Rgba32>(x => x.DrawImage(Images[overlayKind], 1.0f));
+    /// <summary>
+    /// Returns <paramref name="forImage"/> with <paramref name="customOverlay"/> drawn on top
+    /// </summary>
+    public static RdmpIcon GetOverlay(RdmpIcon forImage, RdmpIcon customOverlay) => forImage.WithOverlay(customOverlay);
+
+    /// <summary>
+    /// Returns a greyscale version of <paramref name="forImage"/>
+    /// </summary>
+    public static RdmpIcon GetGreyscale(RdmpIcon forImage) => forImage.AsGreyscale();
 }

@@ -8,8 +8,7 @@ using System;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -24,7 +23,7 @@ public class ExecuteCommandCreateNewEmptyCatalogue : BasicCommandExecution, IAto
     public override string GetCommandHelp() =>
         @"Create a new dataset not yet linked to any underlying database columns\tables";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.Catalogue, OverlayKind.Problem);
 
     public override void Execute()

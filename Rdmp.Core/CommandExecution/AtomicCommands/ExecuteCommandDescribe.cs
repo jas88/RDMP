@@ -15,8 +15,7 @@ using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.Core.Startup;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -76,7 +75,7 @@ public class ExecuteCommandDescribe : BasicCommandExecution
         _nonDatabaseObjectToDescribe = randomThing;
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => _nonDatabaseObjectToDescribe != null
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => _nonDatabaseObjectToDescribe != null
         ? iconProvider.GetImage(_nonDatabaseObjectToDescribe)
         : base.GetImage(iconProvider);
 

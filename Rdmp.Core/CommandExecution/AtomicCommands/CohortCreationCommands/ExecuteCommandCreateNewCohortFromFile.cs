@@ -12,8 +12,7 @@ using Rdmp.Core.DataFlowPipeline.Requirements;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands.CohortCreationCommands;
 
@@ -58,7 +57,7 @@ public class ExecuteCommandCreateNewCohortFromFile : CohortCreationCommandExecut
     public override string GetCommandHelp() =>
         "Create a cohort containing ALL the patient identifiers in the chosen file";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.ImportFile;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => CatalogueIcons.ImportFile;
 
     public override void Execute()
     {

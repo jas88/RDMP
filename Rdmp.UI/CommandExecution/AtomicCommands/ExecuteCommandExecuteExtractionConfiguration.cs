@@ -13,8 +13,7 @@ using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.ProjectUI;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -51,7 +50,7 @@ public class ExecuteCommandExecuteExtractionConfiguration : BasicUICommandExecut
     public override string GetCommandHelp() =>
         "Extract all the datasets in the configuration linking each against the configuration's cohort";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.ExtractionConfiguration, OverlayKind.Execute);
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)

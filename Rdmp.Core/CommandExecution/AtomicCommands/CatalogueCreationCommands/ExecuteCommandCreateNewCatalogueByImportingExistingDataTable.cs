@@ -11,8 +11,7 @@ using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands.CatalogueCreationCommands;
 
@@ -65,7 +64,7 @@ public class ExecuteCommandCreateNewCatalogueByImportingExistingDataTable : Cata
             ti.DeleteInDatabase();
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.TableInfo, OverlayKind.Import);
 
     public override string GetCommandHelp() => GlobalStrings.CreateNewCatalogueByImportingExistingDataTableHelp;

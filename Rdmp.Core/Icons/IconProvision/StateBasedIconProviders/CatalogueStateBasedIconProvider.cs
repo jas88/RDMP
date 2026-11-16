@@ -8,15 +8,13 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconOverlays;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public sealed class CatalogueStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private static readonly Image<Rgba32> _basic = CatalogueIcons.Catalogue;
-    private static readonly Image<Rgba32> _projectSpecific = CatalogueIcons.ProjectCatalogue;
+    private static readonly RdmpIcon _basic = CatalogueIcons.Catalogue;
+    private static readonly RdmpIcon _projectSpecific = CatalogueIcons.ProjectCatalogue;
     private readonly IDataExportRepository _dataExportRepository;
 
 
@@ -25,7 +23,7 @@ public sealed class CatalogueStateBasedIconProvider : IObjectStateBasedIconProvi
         _dataExportRepository = dataExportRepository;
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         if (o is not Catalogue c)
             return null;

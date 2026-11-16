@@ -13,8 +13,7 @@ using Rdmp.Core.Icons.IconOverlays;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -124,13 +123,13 @@ public class ExecuteCommandCreateNewFileBasedProcessTask : BasicCommandExecution
         };
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider)
+    public override RdmpIcon GetImage(IIconProvider iconProvider)
     {
         return _taskType switch
         {
             ProcessTaskType.SQLFile => iconProvider.GetImage(RDMPConcept.SQL, OverlayKind.Add),
             ProcessTaskType.SQLBakFile => iconProvider.GetImage(RDMPConcept.SQL, OverlayKind.Add), //todo maybe better
-            ProcessTaskType.Executable => IconOverlayProvider.GetOverlayNoCache(
+            ProcessTaskType.Executable => IconOverlayProvider.GetOverlay(
                 CatalogueIcons.Exe, OverlayKind.Add),
             _ => null
         };

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Spontaneous;
+using Rdmp.Core.Icons;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.Checks;
@@ -29,9 +30,20 @@ public class DocumentationReportDatabaseEntities : DocXHelper
     private CommentStore _commentStore;
     private Dictionary<Type, string> Summaries = new();
 
+    /// <summary>
+    /// Generates the report
+    /// </summary>
+    /// <param name="commentStore">Documentation for the classes</param>
+    /// <param name="notifier">Where to report progress/failures</param>
+    /// <param name="iconProvider">Provides the icon shown next to each class</param>
+    /// <param name="showFile">True to open the generated file once complete</param>
+    /// <param name="iconRenderer">Optional function that renders an <see cref="RdmpIcon"/> (including overlays etc) to PNG data.
+    /// If not provided then the base image of each icon is used (<see cref="RdmpIcon.Operations"/> are ignored).</param>
     public void GenerateReport(CommentStore commentStore, ICheckNotifier notifier, IIconProvider iconProvider,
-        bool showFile)
+        bool showFile, Func<RdmpIcon, byte[]> iconRenderer = null)
     {
+        iconRenderer ??= EmbeddedIconHelper.GetPngBytes;
+
         _commentStore = commentStore;
         try
         {
@@ -50,13 +62,13 @@ public class DocumentationReportDatabaseEntities : DocXHelper
                 //creates the run
                 SetTableCell(t, i * 2 + 1, 0, "");
 
-                var bmp = iconProvider.GetImage(keys[i]);
+                var icon = iconProvider.GetImage(keys[i]);
 
-                if (bmp != null)
+                if (icon != null)
                 {
                     var para = t.Rows[i * 2 + 1].GetCell(0).Paragraphs.First();
                     var run = para.Runs.FirstOrDefault() ?? para.CreateRun();
-                    GetPicture(run, bmp);
+                    GetPicture(run, iconRenderer(icon));
                 }
 
                 SetTableCell(t, i * 2 + 1, 0, $" {keys[i].Name}");

@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: Foreign Key visibility race condition in DB with AUTO_UPDATE_STATISTICS_ASYNC enabled
 - Replace HIC.SynthEHR 2.0.1 with SynthEHR.Core 3.0.2 (jas88 fork); seeded test data differs from 2.x for the same seed
 - Reference CsvHelper 33.0.1 directly (previously only a transitive dependency of HIC.SynthEHR)
+- Remove the SixLabors.ImageSharp dependency: `Rdmp.Core` now describes icons as immutable `RdmpIcon` values (embedded PNG plus overlay/greyscale operations) and `Rdmp.UI` renders them with System.Drawing. API change for plugins: `IIconProvider.GetImage`, `IAtomicCommand.GetImage` etc. return `RdmpIcon` instead of `Image<Rgba32>`; `BitmapWithDescription.Bitmap` is now PNG data (`byte[]`); the uncached variant of `IconOverlayProvider.GetOverlay` is removed (`GetOverlay` is now cheap)
+- FIX: `SqlThenVSNow` and `Blocked` icons were BMP files with a .png extension, converted to real PNGs
 - Read Excel files (ExcelDataFlowSource, ExcelAttacher, ExcelToCSVFilesConverter) with ExcelDataReader instead of NPOI. The data loaded is the same except that:
   - Workbooks are opened read-only, so a read-only file can be loaded (it failed with UnauthorizedAccessException)
   - Whether a workbook is .xls or .xlsx is detected from its content not its extension, so a file with the other extension or an upper case one (`.XLS`) loads. .xls files saved by Excel 95 and earlier can also be read (NPOI rejected them)

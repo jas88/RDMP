@@ -16,8 +16,7 @@ using Rdmp.Core.Curation.Data.DataLoad;
 using Rdmp.Core.DataViewing;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.QueryBuilding;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.Autocomplete;
 
@@ -32,7 +31,7 @@ public partial class AutoCompleteProvider : IAutoCompleteProvider
     /// Array of images that items can be depicted with.  Use <see cref="ItemsWithImages"/> to index into
     /// this array to get the image out
     /// </summary>
-    public Image<Rgba32>[] Images;
+    public RdmpIcon[] Images;
 
     public Dictionary<string, int> ItemsWithImages { get; set; } = new();
 
@@ -43,7 +42,7 @@ public partial class AutoCompleteProvider : IAutoCompleteProvider
 
     public AutoCompleteProvider()
     {
-        Images = new Image<Rgba32>[4];
+        Images = new RdmpIcon[4];
 
         Images[TABLE_INFO_IDX] = CatalogueIcons.TableInfo;
         Images[COLUMN_INFO_IDX] = CatalogueIcons.ColumnInfo;

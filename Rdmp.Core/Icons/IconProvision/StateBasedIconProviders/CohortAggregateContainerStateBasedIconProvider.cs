@@ -6,16 +6,14 @@
 
 using System;
 using Rdmp.Core.Curation.Data.Cohort;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public class CohortAggregateContainerStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private readonly Image<Rgba32> _union;
-    private readonly Image<Rgba32> _intersect;
-    private readonly Image<Rgba32> _except;
+    private readonly RdmpIcon _union;
+    private readonly RdmpIcon _intersect;
+    private readonly RdmpIcon _except;
 
     public CohortAggregateContainerStateBasedIconProvider()
     {
@@ -24,7 +22,7 @@ public class CohortAggregateContainerStateBasedIconProvider : IObjectStateBasedI
         _except = CatalogueIcons.EXCEPT;
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         return o switch
         {
@@ -34,7 +32,7 @@ public class CohortAggregateContainerStateBasedIconProvider : IObjectStateBasedI
         };
     }
 
-    private Image<Rgba32> GetImage(SetOperation operation)
+    private RdmpIcon GetImage(SetOperation operation)
     {
         return operation switch
         {

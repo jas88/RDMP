@@ -7,8 +7,7 @@
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -43,7 +42,7 @@ public class ExecuteCommandMakeCatalogueInternal : BasicCommandExecution, IAtomi
         Publish(_catalogue);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => BasicActivator.CoreIconProvider.GetImage(_catalogue, OverlayKind.Internal);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => BasicActivator.CoreIconProvider.GetImage(_catalogue, OverlayKind.Internal);
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)
     {

@@ -7,8 +7,7 @@
 using Rdmp.Core.Curation.Data.Cohort;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -44,7 +43,7 @@ public class ExecuteCommandSetContainerOperation : BasicCommandExecution
         ? OverrideCommandName
         : $"Set operation {_operation}";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider)
+    public override RdmpIcon GetImage(IIconProvider iconProvider)
     {
         return _operation switch
         {

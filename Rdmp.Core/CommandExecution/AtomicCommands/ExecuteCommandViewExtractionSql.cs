@@ -12,8 +12,7 @@ using Rdmp.Core.DataViewing;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -63,7 +62,7 @@ public class ExecuteCommandViewExtractionSql : ExecuteCommandViewDataBase, IAtom
     public override string GetCommandHelp() =>
         "Shows the SQL that will be executed for the given dataset when it is extracted including the linkage with the cohort table";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.SQL, OverlayKind.Execute);
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)

@@ -8,17 +8,15 @@ using System;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconOverlays;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public sealed class CatalogueItemStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private static readonly Image<Rgba32> BasicImage = CatalogueIcons.CatalogueItem;
-    private static readonly Image<Rgba32> TransformImage = CatalogueIcons.CatalogueItemTransform;
+    private static readonly RdmpIcon BasicImage = CatalogueIcons.CatalogueItem;
+    private static readonly RdmpIcon TransformImage = CatalogueIcons.CatalogueItemTransform;
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         if (o is not CatalogueItem ci)
             return null;

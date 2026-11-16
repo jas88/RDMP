@@ -23,8 +23,6 @@ using Rdmp.Core.Providers.Nodes.LoadMetadataNodes;
 using Rdmp.Core.Providers.Nodes.PipelineNodes;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision;
 
@@ -38,7 +36,7 @@ public class CatalogueIconProvider : ICoreIconProvider
     protected readonly CatalogueStateBasedIconProvider CatalogueStateBasedIconProvider;
     private DatabaseTypeIconProvider _databaseTypeIconProvider = new();
 
-    public Image<Rgba32> ImageUnknown => ImagesCollection[RDMPConcept.NoIconAvailable];
+    public RdmpIcon ImageUnknown => ImagesCollection[RDMPConcept.NoIconAvailable];
 
     public CatalogueIconProvider(IRDMPPlatformRepositoryServiceLocator repositoryLocator,
         IIconProvider[] pluginIconProviders)
@@ -71,12 +69,12 @@ public class CatalogueIconProvider : ICoreIconProvider
         StateBasedIconProviders.Add(new ExtractCommandStateBasedIconProvider());
     }
 
-    public virtual Image<Rgba32> GetImage(object concept, OverlayKind kind = OverlayKind.None) =>
+    public virtual RdmpIcon GetImage(object concept, OverlayKind kind = OverlayKind.None) =>
         concept is IDisableable { IsDisabled: true }
             ? IconOverlayProvider.GetGreyscale(GetImageImpl(concept, kind))
             : GetImageImpl(concept, kind);
 
-    protected virtual Image<Rgba32> GetImageImpl(object concept, OverlayKind kind = OverlayKind.None)
+    protected virtual RdmpIcon GetImageImpl(object concept, OverlayKind kind = OverlayKind.None)
     {
         switch (concept)
         {
@@ -95,7 +93,7 @@ public class CatalogueIconProvider : ICoreIconProvider
             return GetImage(RDMPConcept.CatalogueFolder, kind);
 
         //if they already passed in an image just return it back (optionally with the overlay).
-        if (concept is Image<Rgba32> image)
+        if (concept is RdmpIcon image)
             return GetActualImage(image, kind);
 
         //if there are plugins injecting random objects into RDMP tree views etc then we need the ability to provide icons for them
@@ -246,9 +244,9 @@ public class CatalogueIconProvider : ICoreIconProvider
     /// </summary>
     /// <param name="addFavouritesOverlayKeysToo">Pass true to also generate Images for every concept with a star overlay with the key being EnumNameFavourite (where EnumName is the RDMPConcept name e.g. CatalogueFavourite for the icon RDMPConcept.Catalogue and the favourite star)</param>
     /// <returns></returns>
-    public Dictionary<string, Image<Rgba32>> GetImageList(bool addFavouritesOverlayKeysToo)
+    public Dictionary<string, RdmpIcon> GetImageList(bool addFavouritesOverlayKeysToo)
     {
-        var imageList = new Dictionary<string, Image<Rgba32>>();
+        var imageList = new Dictionary<string, RdmpIcon>();
 
         foreach (RDMPConcept concept in Enum.GetValues(typeof(RDMPConcept)))
         {
@@ -262,6 +260,6 @@ public class CatalogueIconProvider : ICoreIconProvider
         return imageList;
     }
 
-    private static Image<Rgba32> GetActualImage(Image<Rgba32> img, OverlayKind kind) =>
+    private static RdmpIcon GetActualImage(RdmpIcon img, OverlayKind kind) =>
         kind == OverlayKind.None ? img : IconOverlayProvider.GetOverlay(img, kind);
 }

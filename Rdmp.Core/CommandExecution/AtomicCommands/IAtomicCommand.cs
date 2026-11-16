@@ -5,18 +5,17 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
 /// <summary>
-/// <see cref="ICommandExecution"/> with an Image designed for use with MenuItems and HomeUI.  Represents a single atomic
+/// <see cref="ICommandExecution"/> with an <see cref="RdmpIcon"/> designed for use with MenuItems and HomeUI.  Represents a single atomic
 /// action which the user can undertake.  The command may be <see cref="ICommandExecution.IsImpossible"/>.
 /// </summary>
 public interface IAtomicCommand : ICommandExecution
 {
-    Image<Rgba32> GetImage(IIconProvider iconProvider);
+    RdmpIcon GetImage(IIconProvider iconProvider);
 
 
     /// <summary>

@@ -20,8 +20,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.MapsDirectlyToDatabaseTable.Injection;
 using Rdmp.Core.Providers;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution;
 
@@ -420,5 +419,5 @@ public class GoToCommandFactory : CommandFactoryBase
             : new[] { mt.Repository.GetObjectByID(mt.GetType(), int.Parse(replacement.Value)) };
     }
 
-    private Image<Rgba32> GetImage(RDMPConcept concept) => _activator.CoreIconProvider.GetImage(concept);
+    private RdmpIcon GetImage(RDMPConcept concept) => _activator.CoreIconProvider.GetImage(concept);
 }

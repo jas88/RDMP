@@ -13,8 +13,7 @@ using Rdmp.UI.ItemActivation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.UI.ChecksUI;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Dicom.UI.CommandExecution.AtomicCommands;
 
@@ -26,7 +25,7 @@ public class ExecuteCommandPromoteNewTag:BasicUICommandExecution,IAtomicCommandW
     {
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider)
+    public override RdmpIcon GetImage(IIconProvider iconProvider)
     {
         return iconProvider.GetImage(RDMPConcept.ColumnInfo,OverlayKind.Add);
     }

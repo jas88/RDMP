@@ -36,8 +36,12 @@ internal class TestExecuteCommandImportTableInfo : CommandCliTests
     [Test]
     public void Test_ImportTableInfo_NoTable()
     {
+        // PostgreSQL fails at once on an unresolvable host, whereas SqlClient retries until FAnsi's 10s
+        // TestConnection timeout (the importer rebuilds the server from its name, so a Connect Timeout keyword
+        // would be dropped). MySQL is no use here: DatabaseTests registers the test MySQL server's address as a
+        // process-wide connection string keyword, which would redirect this to a server that does exist.
         var tbl =
-            "Table:MyTable:DatabaseType:MicrosoftSQLServer:Server=myServerAddress;Database=myDataBase;Trusted_Connection=True";
+            "Table:MyTable:DatabaseType:PostgreSql:Host=myServerAddress.invalid;Database=myDataBase";
 
         var ex = Assert.Catch<Exception>(() => GetInvoker().ExecuteCommand(typeof(ExecuteCommandImportTableInfo),
             new CommandLineObjectPicker(new string[] { tbl, "true" }, GetActivator())));

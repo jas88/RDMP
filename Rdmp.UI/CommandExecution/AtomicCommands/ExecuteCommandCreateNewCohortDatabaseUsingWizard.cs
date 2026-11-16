@@ -9,8 +9,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.CohortUI.CohortSourceManagement;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -38,5 +37,5 @@ public class ExecuteCommandCreateNewCohortDatabaseUsingWizard : BasicUICommandEx
         };
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => FamFamFamIcons.wand;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => FamFamFamIcons.wand;
 }
