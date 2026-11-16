@@ -102,10 +102,24 @@ public class RemoteAttacher : Attacher, IPluginAttacher
 
     }
 
+    /// <summary>
+    /// Wraps a bare column name in the DBMS's identifier qualifiers so that case-sensitive names (e.g. on PostgreSQL)
+    /// resolve. Qualified names and expressions are returned unchanged.
+    /// </summary>
+    private static string WrapColumnName(DatabaseType dbType, string column)
+    {
+        if (string.IsNullOrWhiteSpace(column) || column.IndexOfAny(['.', '(', ')']) >= 0)
+            return column;
+
+        return QuerySyntaxHelperFactory.Create(dbType).EnsureWrapped(column.Trim());
+    }
+
     public string SqlHistoricalDataFilter(ILoadMetadata loadMetadata, DatabaseType dbType, string column)
     {
         // Don't cast to Date - preserve time component for accurate filtering
         // Casting to Date causes timezone-sensitive failures when time crosses midnight
+
+        column = WrapColumnName(dbType, column);
 
         switch (HistoricalFetchDuration)
         {
