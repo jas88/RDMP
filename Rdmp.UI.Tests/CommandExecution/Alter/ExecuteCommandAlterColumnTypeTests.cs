@@ -55,9 +55,7 @@ internal class ExecuteCommandAlterColumnTypeTests : DatabaseTests
     }
 
 
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.Oracle)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     [UITimeout(10000)]
     public void AlterColumnType_WithArchive(DatabaseType dbType)
     {

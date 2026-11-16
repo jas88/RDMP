@@ -18,10 +18,7 @@ namespace Rdmp.Dicom.Tests;
 class IsolationReviewTests : DatabaseTests
 {
 
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.Oracle)]
-    [TestCase(DatabaseType.PostgreSql)]
-    [TestCase(DatabaseType.MySql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void TestFindTables(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);

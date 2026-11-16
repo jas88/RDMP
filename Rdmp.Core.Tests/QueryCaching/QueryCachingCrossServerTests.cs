@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using SynthEHR;
@@ -28,11 +29,11 @@ namespace Rdmp.Core.Tests.QueryCaching;
 
 internal class QueryCachingCrossServerTests : TestsRequiringA
 {
-    [TestCase(DatabaseType.MicrosoftSQLServer, typeof(QueryCachingPatcher))]
-    [TestCase(DatabaseType.MySql, typeof(QueryCachingPatcher))]
-    [TestCase(DatabaseType.Oracle, typeof(QueryCachingPatcher))]
-    [TestCase(DatabaseType.PostgreSql, typeof(QueryCachingPatcher))]
-    [TestCase(DatabaseType.MicrosoftSQLServer, typeof(DataQualityEnginePatcher))]
+    private static IEnumerable<object[]> CreateQueryCacheCases =>
+        All.DatabaseTypes.Select(static t => new object[] { t, typeof(QueryCachingPatcher) })
+            .Append(new object[] { DatabaseType.MicrosoftSQLServer, typeof(DataQualityEnginePatcher) });
+
+    [TestCaseSource(nameof(CreateQueryCacheCases))]
     public void Create_QueryCache(DatabaseType dbType, Type patcherType)
     {
         var db = GetCleanedServer(dbType);
@@ -325,12 +326,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
     /// </summary>
     /// <param name="dbType"></param>
     /// <param name="createQueryCache"></param>
-    [TestCase(DatabaseType.Oracle, true)]
-    [TestCase(DatabaseType.MySql, true)]
-    [TestCase(DatabaseType.MicrosoftSQLServer, true)]
-    [TestCase(DatabaseType.Oracle, false)]
-    [TestCase(DatabaseType.MySql, false)]
-    [TestCase(DatabaseType.MicrosoftSQLServer, false)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypesWithBoolFlags))]
     public void Join_PatientIndexTable_OptionalCacheOnSameServer(DatabaseType dbType, bool createQueryCache)
     {
         /*

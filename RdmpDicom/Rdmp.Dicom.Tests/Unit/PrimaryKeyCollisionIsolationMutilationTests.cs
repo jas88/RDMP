@@ -25,9 +25,7 @@ namespace Rdmp.Dicom.Tests.Unit;
 
 class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
 {
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateSingleTable_Check(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);
@@ -79,9 +77,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
         return mutilation;
     }
 
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateSingleTable_Duplication(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);
@@ -186,9 +182,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
         using var dtIsolation = tbl.Database.ExpectTable("MyCoolTable2_Isolation").GetDataTable();
         Assert.That(dtIsolation.Rows, Has.Count.EqualTo(3));
     }
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateTwoTables_Duplication(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);
@@ -299,12 +293,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
 
 
 
-    [TestCase(DatabaseType.MicrosoftSQLServer, false)]
-    [TestCase(DatabaseType.MySql, false)]
-    [TestCase(DatabaseType.MicrosoftSQLServer, true)]
-    [TestCase(DatabaseType.MySql, true)]
-    [TestCase(DatabaseType.PostgreSql, false)]
-    [TestCase(DatabaseType.PostgreSql, true)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypesWithBoolFlags))]
     public void Test_IsolateTwoTables_MultipleConflictingColumns(DatabaseType dbType, bool whitespace)
     {
         var db = GetCleanedServer(dbType);
@@ -384,9 +373,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
         Assert.That(dtChildIsolation.Rows, Has.Count.EqualTo(4));
     }
 
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateTwoTables_IntKeys(DatabaseType dbType)
     {
         /***************************************
@@ -475,9 +462,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
         Assert.That(dtChildIsolation.Rows, Has.Count.EqualTo(2));
     }
 
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateTwoTables_MultipleCollidingChildren(DatabaseType dbType)
     {
         /***************************************
@@ -565,9 +550,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
         using var dtChildIsolation = db.ExpectTable("Child_Isolation").GetDataTable();
         Assert.That(dtChildIsolation.Rows, Has.Count.EqualTo(4));
     }
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateTables_Orphans(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);
@@ -639,9 +622,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
         Assert.That(ex.Message, Is.EqualTo("Primary key value not found for X"));
     }
 
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateTables_NullForeignKey(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);
@@ -737,9 +718,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
             dt.Rows.Cast<DataRow>().Select(r => string.Join(",", r.ItemArray)))}");
     }
 
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateTables_AmbiguousFk(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);
@@ -828,9 +807,7 @@ class PrimaryKeyCollisionIsolationMutilationTests : DatabaseTests
 
     }
 
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test_IsolateTables_NoRecordsLeftBehind(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);

@@ -17,9 +17,7 @@ namespace Rdmp.Core.Tests.CommandExecution;
 
 internal class ExecuteCommandAlterTableMakeDistinctTests : DatabaseTests
 {
-    [TestCase(DatabaseType.MicrosoftSQLServer)]
-    [TestCase(DatabaseType.MySql)]
-    [TestCase(DatabaseType.PostgreSql)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
     public void Test(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);
