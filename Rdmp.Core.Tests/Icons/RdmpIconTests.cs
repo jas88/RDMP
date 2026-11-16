@@ -51,6 +51,10 @@ internal class RdmpIconTests
         var plain = CatalogueIcons.Catalogue;
         var linked = plain.WithOverlay(OverlayKind.Link);
 
+        // 'plain' is compared with this rather than with the null literal: static analysis reads a comparison with
+        // the literal (including Equals(null)) as evidence that 'plain' itself can be null where it is used
+        RdmpIcon none = null;
+
         Assert.Multiple(() =>
         {
             Assert.That(plain, Is.Not.EqualTo(CatalogueIcons.Project));
@@ -58,10 +62,9 @@ internal class RdmpIconTests
             Assert.That(linked, Is.Not.EqualTo(plain.WithOverlay(OverlayKind.Add)));
             Assert.That(linked, Is.Not.EqualTo(CatalogueIcons.Project.WithOverlay(OverlayKind.Link)));
             Assert.That(linked.AsGreyscale(), Is.Not.EqualTo(linked));
-            Assert.That(plain.Equals(null), Is.False);
-
-            // not compared through 'plain': a null comparison would suggest that the variable used above can be null
-            Assert.That(CatalogueIcons.Catalogue == null, Is.False);
+            Assert.That(plain.Equals(none), Is.False);
+            Assert.That(plain == none, Is.False);
+            Assert.That(none == plain, Is.False);
             Assert.That((RdmpIcon)null == null);
         });
     }
