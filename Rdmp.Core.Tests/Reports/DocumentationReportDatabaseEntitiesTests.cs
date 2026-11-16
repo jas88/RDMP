@@ -4,6 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using System.Linq;
 using NSubstitute;
 using NUnit.Framework;
 using Rdmp.Core.Icons;
@@ -32,7 +33,23 @@ internal class DocumentationReportDatabaseEntitiesTests : UnitTests
                 iconProvider.GetImage(Arg.Any<object>(), Arg.Any<OverlayKind>()).Returns(img);
 
                 // without a renderer the base PNG of the icon is used
-                reporter.GenerateReport(store, ThrowImmediatelyCheckNotifier.Quiet, iconProvider, false);
+                var file = reporter.GenerateReport(store, ThrowImmediatelyCheckNotifier.Quiet, iconProvider, false);
+
+                Assert.That(file, Is.Not.Null);
+                var contents = DocXContents.Read(file.FullName);
+                var table = contents.Tables.Single();
+
+                Assert.Multiple(() =>
+                {
+                        contents.AssertValid();
+                        Assert.That(table[0], Is.EqualTo(new[] { "Tables" }));
+                        Assert.That(table, Has.Length.GreaterThan(1));
+                        Assert.That(table[1][0], Does.StartWith(" "), "Type name row should follow the icon");
+                        // one icon per documented type
+                        Assert.That(contents.DrawingCount, Is.EqualTo((table.Length - 1) / 2));
+                        Assert.That(contents.ImageCount, Is.EqualTo(contents.DrawingCount));
+                });
+                file.Delete();
         }
 
         [Test]
@@ -48,14 +65,26 @@ internal class DocumentationReportDatabaseEntitiesTests : UnitTests
                 var iconProvider = Substitute.For<IIconProvider>();
                 iconProvider.GetImage(Arg.Any<object>(), Arg.Any<OverlayKind>()).Returns(img);
 
+                var png = EmbeddedIconHelper.GetPngBytes(CatalogueIcons.Project);
+
                 var rendered = 0;
-                reporter.GenerateReport(store, ThrowImmediatelyCheckNotifier.Quiet, iconProvider, false, icon =>
+                var file = reporter.GenerateReport(store, ThrowImmediatelyCheckNotifier.Quiet, iconProvider, false, icon =>
                 {
                         Assert.That(icon, Is.EqualTo(img));
                         rendered++;
-                        return EmbeddedIconHelper.GetPngBytes(CatalogueIcons.Project);
+                        return png;
                 });
 
                 Assert.That(rendered, Is.GreaterThan(0));
+
+                // what the renderer returned is what was put in the document, once per icon
+                Assert.That(file, Is.Not.Null);
+                var images = DocXContents.Read(file.FullName).Images;
+                Assert.Multiple(() =>
+                {
+                        Assert.That(images, Has.Count.EqualTo(rendered));
+                        Assert.That(images, Is.All.EqualTo(png));
+                });
+                file.Delete();
         }
 }

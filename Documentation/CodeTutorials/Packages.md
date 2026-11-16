@@ -23,6 +23,7 @@
 | SkiaSharp | [GitHub](https://github.com/mono/SkiaSharp) | [MIT](https://opensource.org/licenses/MIT) | Graphics/font metrics, compile-time dependency of NPOI | |
 | System.Security.Cryptography.Xml | [GitHub](https://github.com/dotnet/runtime) | [MIT](https://opensource.org/licenses/MIT) | XML digital signatures, dependency of NPOI.OOXML | |
 | ZString | [GitHub](https://github.com/Cysharp/ZString) | [MIT](https://opensource.org/licenses/MIT) | Zero-allocation string building, dependency of NPOI | |
+| DocumentFormat.OpenXml | [GitHub](https://github.com/dotnet/Open-XML-SDK) | [MIT](https://opensource.org/licenses/MIT) | Creating Microsoft Word (.docx) reports | |
 | ExcelNumberFormat | [GitHub](https://github.com/andersnm/ExcelNumberFormat) |[MIT](https://opensource.org/licenses/MIT)  | Handles translating number formats from Excel formats into usable values | |
 | LibArchive.Net | [GitHub](https://github.com/jas88/libarchive.net) | [BSD](https://opensource.org/license/bsd-2-clause/) | Access archive formats without the LZMA bugs of SharpCompress | |
 | [NLog](https://nlog-project.org/) | [GitHub](https://github.com/NLog/NLog) | [BSD 3-Clause](https://github.com/NLog/NLog/blob/dev/LICENSE.txt) | Flexible user configurable logging | |

@@ -6,7 +6,6 @@
 
 using System.IO;
 using System.Linq;
-using NPOI.XWPF.UserModel;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons;
@@ -45,10 +44,26 @@ internal class MetadataReportTests : UnitTests
             Assert.That(new FileInfo(file.FullName).Length, Is.GreaterThan(0));
         });
 
-        // the PNG should have been embedded unchanged
-        using var stream = File.OpenRead(file.FullName);
-        using var doc = new XWPFDocument(stream);
-        Assert.That(doc.AllPictures.Select(static p => p.Data), Has.One.EqualTo(png));
+        var contents = DocXContents.Read(file.FullName);
+
+        Assert.Multiple(() =>
+        {
+            contents.AssertValid();
+            Assert.That(contents.Paragraphs, Does.Contain(cata.Name));
+            Assert.That(contents.Paragraphs, Does.Contain(cata.Description));
+            Assert.That(contents.Paragraphs, Does.Contain("Aggregates"));
+            Assert.That(contents.Paragraphs, Does.Contain("MyPicture"));
+            Assert.That(contents.Paragraphs, Does.Contain("Something interesting about it"));
+            Assert.That(contents.FontSizeOf(cata.Name), Is.EqualTo(16));
+            Assert.That(contents.FontSizeOf(cata.Description), Is.EqualTo(7));
+
+            // the PNG should have been embedded unchanged
+            Assert.That(contents.Images, Has.Count.EqualTo(1));
+            Assert.That(contents.Images, Has.One.EqualTo(png));
+            Assert.That(contents.DrawingCount, Is.EqualTo(1));
+            Assert.That(contents.FooterTexts.Single(), Does.StartWith("Created on "));
+            Assert.That(contents.PageMargin.Left?.Value, Is.EqualTo(292u));
+        });
     }
 
     [Test]
@@ -72,6 +87,19 @@ internal class MetadataReportTests : UnitTests
         {
             Assert.That(file, Is.Not.Null);
             Assert.That(File.Exists(file.FullName));
+        });
+
+        var contents = DocXContents.Read(file.FullName);
+        var columnsTable = contents.Tables.Single(t => t[0][0] == "Column");
+
+        Assert.Multiple(() =>
+        {
+            contents.AssertValid();
+            Assert.That(contents.Paragraphs, Does.Contain("Extractable Columns"));
+            Assert.That(columnsTable[0], Is.EqualTo(new[] { "Column", "Datatype", "Description", "Category" }));
+            Assert.That(columnsTable, Has.Length.EqualTo(2));
+            Assert.That(columnsTable[1][0], Is.EqualTo(ei.GetRuntimeName()));
+            Assert.That(columnsTable[1][1], Is.EqualTo("ORPHAN"));
         });
     }
 }
