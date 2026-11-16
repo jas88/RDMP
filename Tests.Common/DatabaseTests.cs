@@ -12,7 +12,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using FAnsi;
-using FAnsi.Connections;
 using FAnsi.Discovery;
 using FAnsi.Discovery.Constraints;
 using FAnsi.Implementation;
@@ -754,22 +753,6 @@ delete from {1}..Project
             forCleanup.Add(database);
 
         return database;
-    }
-
-    private static DiscoveredServer MsScratch, MyScratch, PostScratch, OracleScratch;
-
-    protected (IManagedConnection trans, DiscoveredDatabase) GetScratchDatabase(DatabaseType type)
-    {
-        var server = type switch
-        {
-            DatabaseType.MicrosoftSQLServer => MsScratch ??= GetCleanedServer(type).Server,
-            DatabaseType.MySql => MyScratch ??= GetCleanedServer(type).Server,
-            DatabaseType.PostgreSql => PostScratch ??= GetCleanedServer(type).Server,
-            DatabaseType.Oracle => OracleScratch ??= GetCleanedServer(type).Server,
-            _ => throw new ArgumentOutOfRangeException(nameof(type))
-        };
-        var trans = server.BeginNewTransactedConnection();
-        return (trans, server.GetCurrentDatabase());
     }
 
     protected static void DeleteTables(DiscoveredDatabase database)
