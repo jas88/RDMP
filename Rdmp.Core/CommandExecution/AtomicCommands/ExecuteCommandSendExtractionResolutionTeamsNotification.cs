@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Rdmp.Core.ReusableLibraryCode.Settings;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
@@ -29,10 +30,19 @@ class ExecuteCommandSendExtractionResolutionTeamsNotification: BasicCommandExecu
     public override void Execute()
     {
         base.Execute();
-        var content = new StringContent(GetContent(), Encoding.UTF8, "application/json");
-        client.PostAsync(url, content);
-        content.Dispose();
 
+        // the notification is sent in the background and Execute does not wait for it
+        _ = PostAsync(GetContent());
+    }
+
+    /// <summary>
+    /// Posts <paramref name="json"/> to the webhook.  The request content must stay alive until the request has
+    /// completed, so it is disposed here rather than by <see cref="Execute"/>.
+    /// </summary>
+    private async Task PostAsync(string json)
+    {
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+        using var response = await client.PostAsync(url, content).ConfigureAwait(false);
     }
 
     private string GetContent()
