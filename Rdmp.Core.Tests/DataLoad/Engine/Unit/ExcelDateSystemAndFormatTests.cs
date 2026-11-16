@@ -56,10 +56,10 @@ public class ExcelDateSystemAndFormatTests
         UsefulStuff.SprayFile(typeof(ExcelTests).Assembly, $"{typeof(ExcelTests).Namespace}.TestFile.{resourceFile}",
             resourceFile, _dir.FullName);
 
-    private static DataTable Read(FileInfo file)
+    private static DataTable Read(FileInfo file, string sheet = null)
     {
         var listener = ThrowImmediatelyDataLoadEventListener.Quiet;
-        var source = new ExcelDataFlowSource();
+        var source = new ExcelDataFlowSource { WorkSheetName = sheet };
         source.PreInitialize(new FlatFileToLoad(file), listener);
         return source.GetChunk(listener, new GracefulCancellationToken());
     }
@@ -148,6 +148,32 @@ public class ExcelDateSystemAndFormatTests
         }
 
         Assert.That(Row(Read(file), 0), Is.EqualTo(new object[] { expected, expected }));
+    }
+
+    /// <summary>
+    /// Excel stores its own locale's definitions of the built-in currency formats in every .xls workbook and they must be
+    /// used in preference to the standard (US dollar) definitions.  OddFormats.xls was written by a UK copy of Excel so,
+    /// to have a cell which uses one of them, the format index in the style (XF) record of its Wage cell (11, formatted
+    /// with a custom format) is changed to that of a built-in format.
+    /// </summary>
+    [TestCase(7, @"^\W11\.00$")] // "£"#,##0.00;\-"£"#,##0.00 in this workbook
+    [TestCase(44, @"^ \W 11\.00 $")] // _-"£"* #,##0.00_-;\-"£"* #,##0.00_-;_-"£"* "-"??_-;_-@_- in this workbook
+    public void Xls_BuiltinFormatsDefinedByTheWorkbookAreUsed(int builtinFormat, string expectedPattern)
+    {
+        const int wageFormatIndexOffset = 3382;
+        const ushort wageCustomFormat = 164;
+
+        var file = Spray(ExcelTests.OddFormatsFile);
+        var bytes = File.ReadAllBytes(file.FullName);
+        Assert.That(BitConverter.ToUInt16(bytes, wageFormatIndexOffset), Is.EqualTo(wageCustomFormat),
+            "OddFormats.xls is not laid out as this test expects");
+
+        BitConverter.TryWriteBytes(bytes.AsSpan(wageFormatIndexOffset), (ushort)builtinFormat);
+        File.WriteAllBytes(file.FullName, bytes);
+
+        var wage = Read(file, "MySheet").Rows[0]["Wage"];
+
+        Assert.That(wage, Does.Match(expectedPattern).And.Not.Contain("$"));
     }
 
     [TestCase(true)]

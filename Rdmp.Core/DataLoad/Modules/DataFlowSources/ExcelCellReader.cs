@@ -37,25 +37,22 @@ public static partial class ExcelCellReader
     private static readonly DateTime FirstUnambiguousExcelDate = new(1900, 3, 1);
 
     /// <summary>
-    /// Excel's built-in number formats (these are not stored in the workbook).  Using a fixed table means the formatting
-    /// rules applied do not depend on the reading library's own interpretation of the built-in formats.
+    /// The built-in accounting formats, which ExcelDataReader's table of built-in formats has the wrong way round: 41 and
+    /// 43 have no currency symbol, 42 and 44 do (ECMA-376 part 1, 18.8.30).  Keyed by format index, each entry is the
+    /// definition ExcelDataReader reports and the standard one to use instead.
     /// </summary>
-    private static readonly Dictionary<int, string> BuiltinFormats = new()
+    private static readonly Dictionary<int, (string Reported, string Standard)> MisreportedBuiltinFormats = new()
     {
-        { 1, "0" }, { 2, "0.00" }, { 3, "#,##0" }, { 4, "#,##0.00" },
-        { 5, "\"$\"#,##0_);(\"$\"#,##0)" }, { 6, "\"$\"#,##0_);[Red](\"$\"#,##0)" },
-        { 7, "\"$\"#,##0.00_);(\"$\"#,##0.00)" }, { 8, "\"$\"#,##0.00_);[Red](\"$\"#,##0.00)" },
-        { 9, "0%" }, { 10, "0.00%" }, { 11, "0.00E+00" }, { 12, "# ?/?" }, { 13, "# ??/??" },
-        { 14, "m/d/yy" }, { 15, "d-mmm-yy" }, { 16, "d-mmm" }, { 17, "mmm-yy" },
-        { 18, "h:mm AM/PM" }, { 19, "h:mm:ss AM/PM" }, { 20, "h:mm" }, { 21, "h:mm:ss" }, { 22, "m/d/yy h:mm" },
-        { 37, "#,##0_);(#,##0)" }, { 38, "#,##0_);[Red](#,##0)" },
-        { 39, "#,##0.00_);(#,##0.00)" }, { 40, "#,##0.00_);[Red](#,##0.00)" },
-        { 41, "_(* #,##0_);_(* (#,##0);_(* \"-\"_);_(@_)" },
-        { 42, "_(\"$\"* #,##0_);_(\"$\"* (#,##0);_(\"$\"* \"-\"_);_(@_)" },
-        { 43, "_(* #,##0.00_);_(* (#,##0.00);_(* \"-\"??_);_(@_)" },
-        { 44, "_(\"$\"* #,##0.00_);_(\"$\"* (#,##0.00);_(\"$\"* \"-\"??_);_(@_)" },
-        { 45, "mm:ss" }, { 46, "[h]:mm:ss" }, { 47, "mm:ss.0" }, { 48, "##0.0E+0" }, { 49, "@" }
+        { 41, (AccountingWithCurrency0, Accounting0) },
+        { 42, (Accounting0, AccountingWithCurrency0) },
+        { 43, (AccountingWithCurrency2, Accounting2) },
+        { 44, (Accounting2, AccountingWithCurrency2) }
     };
+
+    private const string Accounting0 = "_(* #,##0_);_(* (#,##0);_(* \"-\"_);_(@_)";
+    private const string AccountingWithCurrency0 = "_(\"$\"* #,##0_);_(\"$\"* (#,##0);_(\"$\"* \"-\"_);_(@_)";
+    private const string Accounting2 = "_(* #,##0.00_);_(* (#,##0.00);_(* \"-\"??_);_(@_)";
+    private const string AccountingWithCurrency2 = "_(\"$\"* #,##0.00_);_(\"$\"* (#,##0.00);_(\"$\"* \"-\"??_);_(@_)";
 
     private static readonly ConcurrentDictionary<string, NumberFormat> NumberFormats = new();
 
@@ -151,9 +148,7 @@ public static partial class ExcelCellReader
         if (formatIndex == 0)
             return number;
 
-        var format = BuiltinFormats.TryGetValue(formatIndex, out var builtin)
-            ? builtin
-            : reader.GetNumberFormatString(column) ?? "General";
+        var format = GetFormatString(reader, column, formatIndex);
 
         switch (FormatKinds.GetOrAdd(format, Classify))
         {
@@ -172,6 +167,19 @@ public static partial class ExcelCellReader
                 // ExcelNumberFormat applies the workbook's date system and elapsed time formats show the full duration
                 return Render(format, number, isDate1904);
         }
+    }
+
+    /// <summary>
+    /// Returns the definition of the cell's number format: the workbook's own if it has one (Excel stores its locale's
+    /// versions of the built-in currency formats in .xls workbooks) otherwise the standard definition of a built-in format.
+    /// </summary>
+    private static string GetFormatString(IExcelDataReader reader, int column, int formatIndex)
+    {
+        var format = reader.GetNumberFormatString(column) ?? "General";
+
+        return MisreportedBuiltinFormats.TryGetValue(formatIndex, out var builtin) && format == builtin.Reported
+            ? builtin.Standard
+            : format;
     }
 
     private static string Render(string format, double value, bool isDate1904) =>
