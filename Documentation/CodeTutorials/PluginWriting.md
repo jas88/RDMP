@@ -683,7 +683,7 @@ ServerName: localhost\sqlexpress
 Prefix: TEST_
 MySql: Server=localhost;Uid=root;Pwd=zombie;SSLMode=None
 Oracle: Data Source=localhost:1521/orclpdb.dundee.uni;User Id=ora;Password=zombie;
-``` 
+```
 
 Add the following 2 test cases to the test
 ```
@@ -1214,7 +1214,7 @@ Finally we have the test case `LoggerTestCase.ToDatabase` which creates a `ToLog
 TableName|Purpose
 --------|---------
 DataLoadTask | The overarching task which occurs regularly e.g. DataExtraction
-DataLoadRun | An instance of the overarching task being attempted/executed e.g. `Extracting 'Cases' for 'Project 32'
+DataLoadRun | An instance of the overarching task being attempted/executed e.g. `Extracting 'Cases' for 'Project 32'`
 ProgressLog | All the messages generated during a given `DataLoadRun`
 FatalError | All Error messages generated during a given `DataLoadRun` with a flag for whether they have been resolved or not
 TableLoadRun | A count of the number of records that ended up at a given destination (this might be a database table but could equally be a flat file etc)
@@ -1244,7 +1244,7 @@ You can also convert between an `IDataLoadEventListener` and an `ICheckNotifier`
 ```csharp
 IDataLoadEventListener listener = new ThrowImmediatelyDataLoadEventListener();
 ICheckNotifier checker = new FromDataLoadEventListenerToCheckNotifier(listener);
-```		
+```
 
 And even back again
 ```csharp
@@ -1434,7 +1434,7 @@ When packaging `dotnet publish` results you can exclude dlls that already come w
 ```
 <files>
     <file src="Plugin\windows\bin\$configuration$\net6.0-windows\win-x64\publish\*"
-          exclude="**\SynthEHR.Core.dll;**\FAnsi.*;**\MapsDirectlyToDatabaseTable.dll;**\MySql.Data.dll;**\Oracle.ManagedDataAccess.dll;**\Rdmp.Core.dll;**\NPOI.*;**\Renci.*;**\MathNet.Numerics.dll*;**\Rdmp.UI.dll;**\ScintillaNET.dll;**\ReusableUIComponents.dll;**\ObjectListView.dll;**\WeifenLuo.WinFormsUI.Docking*"
+          exclude="**\SynthEHR.Core.dll;**\FAnsi.*;**\MapsDirectlyToDatabaseTable.dll;**\MySql.Data.dll;**\Oracle.ManagedDataAccess.dll;**\Rdmp.Core.dll;**\Renci.*;**\Rdmp.UI.dll;**\ScintillaNET.dll;**\ReusableUIComponents.dll;**\ObjectListView.dll;**\WeifenLuo.WinFormsUI.Docking*"
           target="lib\windows" />
 </files>
 ```
