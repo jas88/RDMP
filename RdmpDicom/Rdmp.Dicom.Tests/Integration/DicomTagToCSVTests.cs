@@ -6,7 +6,6 @@
 
 ﻿using FAnsi;
 using FellowOakDicom;
-using NPOI.SS.Formula.Functions;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataExport.DataExtraction.Commands;

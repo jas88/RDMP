@@ -339,8 +339,5 @@
 		<Folder Include="PluginChildProvision\" />
 	</ItemGroup>
 	<ItemGroup>
-		<!-- NPOI built from source (Apache-2.0) via git submodule -->
-		<ProjectReference Include="..\externals\NPOI.Core\NPOI.Core.csproj" />
-		<ProjectReference Include="..\externals\NPOI.OOXML\NPOI.OOXML.csproj" />
 	</ItemGroup>
 </Project>
