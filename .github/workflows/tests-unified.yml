@@ -498,7 +498,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: minioadmin
           TEST_FILTER: ${{ matrix.filter }}
         run: |
-          dotnet test linuxtests.slnf -c Release --no-build \
+          # -m:1 runs the test assemblies one at a time: they share the test databases
+          dotnet test linuxtests.slnf -c Release --no-build -m:1 \
             --nologo \
             ${TEST_FILTER:+--filter "$TEST_FILTER"} \
             --logger trx \
