@@ -111,8 +111,11 @@ public class ExcelDateSystemCompoundFileTests
         Assert.That(IsDate1904(file), Is.True);
     }
 
+    /// <summary>
+    /// Excel 95 and earlier call the workbook stream Book rather than Workbook
+    /// </summary>
     [Test]
-    public void Biff5Workbook_IsFoundInTheBookStream()
+    public void WorkbookInAStreamCalledBook_IsFound()
     {
         var file = CompoundFile(Workbook(600, 1), "Book");
 
@@ -147,6 +150,35 @@ public class ExcelDateSystemCompoundFileTests
         {
             Assert.That(ExcelDateSystem.IsDate1904(counter), Is.False);
             Assert.That(counter.BytesRead, Is.LessThan(10 * file.Length));
+        });
+    }
+
+    /// <summary>
+    /// A corrupt header can claim far more FAT sectors than the file could hold and point at a list of them which loops
+    /// back on itself.  The FAT cannot take up more sectors than the file has, so the claim is cut down to that, the
+    /// list is never followed and the date system is still found.
+    /// </summary>
+    [Test]
+    public void InflatedFatSectorCount_IsCappedAtTheSizeOfTheFile()
+    {
+        var file = CompoundFile(Workbook(600, 1),
+            // the last entry of a list sector is the location of the next: sector 0 is made to point at itself
+            editFat: fat => fat[SectorSize / 4 - 1] = 0,
+            editHeader: header =>
+            {
+                Write(header, 0x2C, uint.MaxValue); // number of FAT sectors
+                Write(header, 0x44, 0u); // the rest of the list of FAT sectors starts in sector 0
+            });
+
+        using var counter = new ReadCountingStream(new MemoryStream(file));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ExcelDateSystem.IsDate1904(counter), Is.True);
+
+            // the header, the FAT sector, the directory sector and a few record headers: following the list would
+            // read sector 0 again for every sector in the file
+            Assert.That(counter.BytesRead, Is.LessThan(4 * SectorSize));
         });
     }
 
@@ -188,8 +220,9 @@ public class ExcelDateSystemCompoundFileTests
     /// <param name="reverseSectors">True to store the last sector of the stream first and so on</param>
     /// <param name="declaredSize">Size of the stream according to the directory if not its real size</param>
     /// <param name="editFat">Changes to make to the FAT, to corrupt it</param>
+    /// <param name="editHeader">Changes to make to the finished file's header, to corrupt it</param>
     private static byte[] CompoundFile(byte[] workbook, string streamName = "Workbook", bool reverseSectors = false,
-        int? declaredSize = null, Action<uint[]> editFat = null)
+        int? declaredSize = null, Action<uint[]> editFat = null, Action<byte[]> editHeader = null)
     {
         var dataSectors = Math.Max(8, (workbook.Length + SectorSize - 1) / SectorSize);
         var file = new byte[(3 + dataSectors) * SectorSize];
@@ -236,6 +269,8 @@ public class ExcelDateSystemCompoundFileTests
             (uint)(declaredSize ?? dataSectors * SectorSize));
         WriteDirectoryEntry(file, directory + 256, "", 0, Unused, 0, 0);
         WriteDirectoryEntry(file, directory + 384, "", 0, Unused, 0, 0);
+
+        editHeader?.Invoke(file);
 
         return file;
     }

@@ -131,6 +131,30 @@ public class ExcelSourceCellHandlingTests
     }
 
     /// <summary>
+    /// The fixture is pinned to en-GB so that its expectations do not depend on the machine.  This test is not: plain
+    /// numbers and numeric headers are written in the current culture (as they always have been, and the values are
+    /// parsed with the culture of the load further down the pipeline), while formatted numbers, dates and times are not
+    /// affected by it.
+    /// </summary>
+    [Test]
+    [SetCulture("fr-FR")]
+    public void PlainNumbers_FollowTheCurrentCulture()
+    {
+        var file = Save(new MinimalXlsxBuilder()
+            .Text("A1", "General").Text("B1", "TwoDp").Text("C1", "Date").Text("D1", "Time").Number("E1", 2.5)
+            .Number("A2", 1234567.891).Number("B2", 0.1, "TwoDp").Number("C2", 36892, "BuiltinDate")
+            .Number("D2", 0.4375, "Time").Number("E2", 0.5));
+
+        var dt = Read(file);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(Headers(dt), Is.EqualTo(new[] { "General", "TwoDp", "Date", "Time", "2,5" }));
+            Assert.That(Row(dt, 0), Is.EqualTo(new object[] { "1234567,891", "0.10", "2001-01-01", "10:30:00", "0,5" }));
+        });
+    }
+
+    /// <summary>
     /// Every built-in format with a fixed definition.  The expectations are those of the NPOI based implementation except
     /// where it was wrong: the fractions (12 and 13) were loaded as dates and elapsed hours (46) as the hour of the day.
     /// </summary>
