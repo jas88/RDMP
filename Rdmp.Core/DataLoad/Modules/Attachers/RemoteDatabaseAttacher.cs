@@ -97,6 +97,10 @@ False - Trigger an error reporting the missing table(s)
                 continue;
             }
 
+            var dateColumn = HistoricalFetchDuration == AttacherHistoricalDurations.AllTime
+                ? RemoteTableDateColumn
+                : GetColumnSql(dbFrom.ExpectTable(table), RemoteTableDateColumn);
+
             string sql;
             if (LoadRawColumnsOnly)
             {
@@ -104,11 +108,11 @@ False - Trigger an error reporting the missing table(s)
                     ? tableInfo.GetColumnsAtStage(LoadStage.AdjustRaw)
                     : tableInfo.ColumnInfos;
                 sql =
-                    $"SELECT {string.Join(",", rawColumns.Select(c => syntaxFrom.EnsureWrapped(c.GetRuntimeName(LoadStage.AdjustRaw))))} FROM {syntaxFrom.EnsureWrapped(table)} {SqlHistoricalDataFilter(job.LoadMetadata, dbFrom.Server.DatabaseType,RemoteTableDateColumn)}";
+                    $"SELECT {string.Join(",", rawColumns.Select(c => syntaxFrom.EnsureWrapped(c.GetRuntimeName(LoadStage.AdjustRaw))))} FROM {syntaxFrom.EnsureWrapped(table)} {SqlHistoricalDataFilter(job.LoadMetadata, dbFrom.Server.DatabaseType, dateColumn)}";
             }
             else
             {
-                sql = $"SELECT * FROM {syntaxFrom.EnsureWrapped(table)} {SqlHistoricalDataFilter(job.LoadMetadata,RemoteSource.DatabaseType, RemoteTableDateColumn)}";
+                sql = $"SELECT * FROM {syntaxFrom.EnsureWrapped(table)} {SqlHistoricalDataFilter(job.LoadMetadata,RemoteSource.DatabaseType, dateColumn)}";
             }
             job.OnNotify(this, new NotifyEventArgs(ProgressEventType.Information,
                 $"About to execute SQL:{Environment.NewLine}{sql}"));

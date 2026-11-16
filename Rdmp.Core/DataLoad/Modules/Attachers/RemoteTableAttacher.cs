@@ -372,7 +372,11 @@ public class RemoteTableAttacher : RemoteAttacher
         }
         else
         {
-            sql = $"Select {SelectedColumns} from {syntax.EnsureWrapped(RemoteTableName)}  {SqlHistoricalDataFilter(job.LoadMetadata, DatabaseType, RemoteTableDateColumn)}";
+            // RemoteSelectSQL is the user's own SQL, so the date column is only resolved against the table here
+            var dateColumn = HistoricalFetchDuration == AttacherHistoricalDurations.AllTime
+                ? RemoteTableDateColumn
+                : GetColumnSql(_remoteDatabase.ExpectTable(RemoteTableName), RemoteTableDateColumn);
+            sql = $"Select {SelectedColumns} from {syntax.EnsureWrapped(RemoteTableName)}  {SqlHistoricalDataFilter(job.LoadMetadata, DatabaseType, dateColumn)}";
         }
 
         var scheduleMismatch = false;

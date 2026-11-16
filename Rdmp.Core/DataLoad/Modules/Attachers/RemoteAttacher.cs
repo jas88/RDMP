@@ -9,6 +9,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 using FAnsi;
+using FAnsi.Discovery;
 using FAnsi.Discovery.QuerySyntax;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.DataLoad;
@@ -18,8 +19,10 @@ using Rdmp.Core.DataLoad.Engine.Job;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Rdmp.Core.DataLoad.Modules.Attachers;
 
@@ -102,24 +105,55 @@ public class RemoteAttacher : Attacher, IPluginAttacher
 
     }
 
+    private static readonly Regex BareIdentifier = new("^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
+
     /// <summary>
-    /// Wraps a bare column name in the DBMS's identifier qualifiers so that case-sensitive names (e.g. on PostgreSQL)
-    /// resolve. Qualified names and expressions are returned unchanged.
+    /// Returns the SQL with which to refer to the configured date <paramref name="column"/> of <paramref name="table"/>.
+    /// See <see cref="ResolveColumnSql"/>.
     /// </summary>
-    private static string WrapColumnName(DatabaseType dbType, string column)
+    protected static string GetColumnSql(DiscoveredTable table, string column)
     {
-        if (string.IsNullOrWhiteSpace(column) || column.IndexOfAny(['.', '(', ')']) >= 0)
+        if (table == null || string.IsNullOrWhiteSpace(column) || !BareIdentifier.IsMatch(column) || !table.Exists())
             return column;
 
-        return QuerySyntaxHelperFactory.Create(dbType).EnsureWrapped(column.Trim());
+        return ResolveColumnSql(table.GetQuerySyntaxHelper(), column,
+            table.DiscoverColumns().Select(static c => c.GetRuntimeName()).ToArray());
     }
 
+    /// <summary>
+    /// Matches a bare <paramref name="column"/> name (letters, digits and underscores) against the names of the
+    /// <paramref name="tableColumns"/>, exact case first and then ignoring case, and returns the real name wrapped by
+    /// <paramref name="syntax"/>. Unquoted names are folded by some DBMS (PostgreSQL to lower case, Oracle to upper
+    /// case), so a column created with a quoted mixed-case name (as FAnsi does) is otherwise unreachable, while a
+    /// conventional name typed in another case keeps resolving. Anything else (already wrapped or qualified names,
+    /// expressions such as casts) and names matching no column, or several, are returned unchanged.
+    /// </summary>
+    public static string ResolveColumnSql(IQuerySyntaxHelper syntax, string column,
+        IReadOnlyCollection<string> tableColumns)
+    {
+        if (string.IsNullOrWhiteSpace(column) || !BareIdentifier.IsMatch(column))
+            return column;
+
+        var match = SingleOrNull(tableColumns.Where(c => c.Equals(column, StringComparison.Ordinal))) ??
+                    SingleOrNull(tableColumns.Where(c => c.Equals(column, StringComparison.OrdinalIgnoreCase)));
+
+        return match == null ? column : syntax.EnsureWrapped(match);
+    }
+
+    private static string SingleOrNull(IEnumerable<string> candidates)
+    {
+        var found = candidates.Take(2).ToArray();
+        return found.Length == 1 ? found[0] : null;
+    }
+
+    /// <summary>
+    /// Returns the WHERE clause (with leading space) that restricts the fetch to <see cref="HistoricalFetchDuration"/>.
+    /// <paramref name="column"/> is inserted as SQL; use <see cref="GetColumnSql"/> to refer to a column by name.
+    /// </summary>
     public string SqlHistoricalDataFilter(ILoadMetadata loadMetadata, DatabaseType dbType, string column)
     {
         // Don't cast to Date - preserve time component for accurate filtering
         // Casting to Date causes timezone-sensitive failures when time crosses midnight
-
-        column = WrapColumnName(dbType, column);
 
         switch (HistoricalFetchDuration)
         {
@@ -204,6 +238,9 @@ public class RemoteAttacher : Attacher, IPluginAttacher
         {
             column = RawTableDateColumn;
         }
+
+        // the query runs against the loaded (RAW) copy of the table
+        column = GetColumnSql(_dbInfo.ExpectTable(table), column);
         var maxDateSql = $"SELECT MAX({column}) FROM {syntaxFrom.EnsureWrapped(table)} {SqlHistoricalDataFilter(job.LoadMetadata, dbType, column)}";
 
         using var con = _dbInfo.Server.GetConnection();
