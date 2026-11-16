@@ -18,11 +18,6 @@ updates:
       patterns:
         - "AWSSDK.*"
   ignore:
-    # Vendored NPOI (externals/npoi) targets the 2025.x BigDecimal API; 3000+ is a
-    # rewrite (SignifigantDigits renamed, default Precision 5000 -> 100). Follow
-    # nissl-lab/npoi's own pin; revisit when an npoi-update-check PR moves it.
-    - dependency-name: "ExtendedNumerics.BigDecimal"
-      versions: [">=3000.0.0"]
     # Terminal.Gui 2.x is a ground-up API redesign (231 unique compile errors
     # across the 29-file console GUI); v1.19.0 is the latest v1 and has no known
     # advisories. Migration to v2 is a dedicated effort - see tracking issue.
@@ -36,7 +31,3 @@ updates:
   directory: "/"
   schedule:
     interval: weekly
-  # Only build-standards: externals/npoi is pinned to NPOI release tags by
-  # npoi-update-check.yml, whereas Dependabot would track its branch head.
-  allow:
-    - dependency-name: "build-standards"
