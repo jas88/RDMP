@@ -9,8 +9,7 @@ using Rdmp.Core.CommandExecution;
 using Rdmp.Core.CommandExecution.AtomicCommands;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core;
 
@@ -18,7 +17,7 @@ public abstract class PluginUserInterface : IPluginUserInterface
 {
     protected readonly IBasicActivateItems BasicActivator;
 
-    public Image<Rgba32> ImageUnknown => BasicActivator.CoreIconProvider.ImageUnknown;
+    public RdmpIcon ImageUnknown => BasicActivator.CoreIconProvider.ImageUnknown;
 
     /// <summary>
     /// Creates a new instance of your plugin UI.  See notes on <paramref name="itemActivator"/>
@@ -43,7 +42,7 @@ public abstract class PluginUserInterface : IPluginUserInterface
         yield break;
     }
 
-    public virtual Image<Rgba32> GetImage(object concept, OverlayKind kind = OverlayKind.None) => null;
+    public virtual RdmpIcon GetImage(object concept, OverlayKind kind = OverlayKind.None) => null;
 
     /// <inheritdoc/>
     public virtual bool CustomActivate(IMapsDirectlyToDatabaseTable o) => false;

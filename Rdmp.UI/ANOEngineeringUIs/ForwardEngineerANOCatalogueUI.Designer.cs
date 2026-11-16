@@ -42,7 +42,6 @@ namespace Rdmp.UI.ANOEngineeringUIs
             this.olvPickedANOTable = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvDilution = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvDestinationType = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
-            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.panel2 = new System.Windows.Forms.Panel();
             this.label6 = new System.Windows.Forms.Label();
             this.tbFilter = new System.Windows.Forms.TextBox();
@@ -116,7 +115,6 @@ namespace Rdmp.UI.ANOEngineeringUIs
             this.tlvTableInfoMigrations.Name = "tlvTableInfoMigrations";
             this.tlvTableInfoMigrations.ShowGroups = false;
             this.tlvTableInfoMigrations.Size = new System.Drawing.Size(903, 286);
-            this.tlvTableInfoMigrations.SmallImageList = this.imageList1;
             this.tlvTableInfoMigrations.TabIndex = 0;
             this.tlvTableInfoMigrations.UseCellFormatEvents = true;
             this.tlvTableInfoMigrations.UseCompatibleStateImageBehavior = false;
@@ -157,13 +155,6 @@ namespace Rdmp.UI.ANOEngineeringUIs
             // 
             this.olvDestinationType.Text = "Destination Type";
             this.olvDestinationType.Width = 100;
-            // 
-            // imageList1
-            // 
-            this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
-            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-            this.imageList1.Images.SetKeyName(0, "ANOTable");
-            this.imageList1.Images.SetKeyName(1, "PreLoadDiscardedColumn");
             // 
             // panel2
             // 
@@ -503,7 +494,6 @@ namespace Rdmp.UI.ANOEngineeringUIs
         private System.Windows.Forms.Label lblMandatory;
         private OLVColumn olvMigrationPlan;
         private OLVColumn olvPickedANOTable;
-        private System.Windows.Forms.ImageList imageList1;
         private OLVColumn olvDilution;
         private OLVColumn olvDestinationType;
         private RAGSmiley ragSmiley1;

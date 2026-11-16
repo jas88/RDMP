@@ -343,7 +343,6 @@
 		</PackageReference>
 		<PackageReference Include="Newtonsoft.Json" />
 		<PackageReference Include="NLog" />
-		<PackageReference Include="SixLabors.ImageSharp" />
 		<PackageReference Include="Spectre.Console" />
 		<PackageReference Include="SSH.NET" />
 		<PackageReference Include="Terminal.Gui" />

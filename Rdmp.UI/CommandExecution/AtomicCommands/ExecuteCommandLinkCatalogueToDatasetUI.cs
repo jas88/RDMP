@@ -11,8 +11,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Annotations;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -49,6 +48,6 @@ public sealed class ExecuteCommandLinkCatalogueToDatasetUI : BasicUICommandExecu
         cmd.Execute();
     }
 
-    public override Image<Rgba32> GetImage([NotNull] IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage([NotNull] IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.Dataset, OverlayKind.Link);
 }

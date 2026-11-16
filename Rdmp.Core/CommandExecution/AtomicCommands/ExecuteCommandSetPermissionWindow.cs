@@ -9,8 +9,7 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Cache;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -46,7 +45,7 @@ public class ExecuteCommandSetPermissionWindow : BasicCommandExecution, IAtomicC
         Publish(_cacheProgress);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.PermissionWindow, OverlayKind.Link);
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)

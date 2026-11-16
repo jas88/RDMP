@@ -13,8 +13,7 @@ using Rdmp.Core.DataViewing;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.DataAccess;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 using System;
 using System.Data;
 using System.IO;
@@ -197,5 +196,5 @@ public class ExecuteCommandCreateHoldoutLookup : BasicCommandExecution
 
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.CohortAggregate,OverlayKind.Link);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.CohortAggregate,OverlayKind.Link);
 }

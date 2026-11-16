@@ -11,8 +11,7 @@ using Rdmp.Core.CommandLine.Options;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands.Automation;
 
@@ -34,7 +33,7 @@ public class ExecuteCommandRunDetached : AutomationCommandExecution, IAtomicComm
 
     public override string GetCommandHelp() => "Generates the execute command line invocation (including arguments)";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.Exe;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => CatalogueIcons.Exe;
 
     public override void Execute()
     {

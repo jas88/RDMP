@@ -12,8 +12,7 @@
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -36,7 +35,7 @@ public class ExecuteCommandSetExtractionConfigurationCohort : BasicCommandExecut
         _extractionConfiguration.SaveToDatabase();
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
     iconProvider.GetImage(RDMPConcept.ExtractionConfiguration, OverlayKind.None);
 
 }

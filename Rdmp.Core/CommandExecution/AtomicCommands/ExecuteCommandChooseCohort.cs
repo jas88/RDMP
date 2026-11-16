@@ -11,8 +11,7 @@ using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Providers;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -69,7 +68,7 @@ public class ExecuteCommandChooseCohort : BasicCommandExecution, IAtomicCommand
                 $"Specified cohort {_pick} was not compatible with Project.  Check the cohorts ProjectNumber matches");
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.ExtractableCohort, OverlayKind.Link);
 
     public override void Execute()

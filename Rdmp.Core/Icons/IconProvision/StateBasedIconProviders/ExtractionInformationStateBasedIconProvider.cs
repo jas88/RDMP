@@ -8,36 +8,34 @@ using System;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconOverlays;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 internal sealed class ExtractionInformationStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private static readonly Image<Rgba32> ExtractionInformationCore =
+    private static readonly RdmpIcon ExtractionInformationCore =
         CatalogueIcons.ExtractionInformation;
 
-    private static readonly Image<Rgba32> ExtractionInformationSupplemental =
+    private static readonly RdmpIcon ExtractionInformationSupplemental =
         CatalogueIcons.ExtractionInformation_Supplemental;
 
-    private static readonly Image<Rgba32> ExtractionInformationSpecialApproval =
+    private static readonly RdmpIcon ExtractionInformationSpecialApproval =
         CatalogueIcons.ExtractionInformation_SpecialApproval;
 
-    private static readonly Image<Rgba32> ExtractionInformationInternalOnly =
-        IconOverlayProvider.GetOverlayNoCache(ExtractionInformationSpecialApproval, OverlayKind.Internal);
+    private static readonly RdmpIcon ExtractionInformationInternalOnly =
+        IconOverlayProvider.GetOverlay(ExtractionInformationSpecialApproval, OverlayKind.Internal);
 
-    private static readonly Image<Rgba32> ExtractionInformationDeprecated =
-        IconOverlayProvider.GetOverlayNoCache(ExtractionInformationCore, OverlayKind.Deprecated);
+    private static readonly RdmpIcon ExtractionInformationDeprecated =
+        IconOverlayProvider.GetOverlay(ExtractionInformationCore, OverlayKind.Deprecated);
 
-    private static readonly Image<Rgba32> ExtractionInformationProjectSpecific =
+    private static readonly RdmpIcon ExtractionInformationProjectSpecific =
         CatalogueIcons.ExtractionInformation_ProjectSpecific;
 
-    private static readonly Image<Rgba32> NoIconAvailable = CatalogueIcons.NoIconAvailable;
+    private static readonly RdmpIcon NoIconAvailable = CatalogueIcons.NoIconAvailable;
 
-    private static readonly Image<Rgba32> ExtractionInformationNotExtractable = IconOverlayProvider.GetOverlayNoCache(ExtractionInformationCore, OverlayKind.Delete);
+    private static readonly RdmpIcon ExtractionInformationNotExtractable = IconOverlayProvider.GetOverlay(ExtractionInformationCore, OverlayKind.Delete);
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         if (o is ExtractionCategory cat)
             return GetImage(cat);
@@ -58,7 +56,7 @@ internal sealed class ExtractionInformationStateBasedIconProvider : IObjectState
         return toReturn;
     }
 
-    private static Image<Rgba32> GetImage(ExtractionCategory category)
+    private static RdmpIcon GetImage(ExtractionCategory category)
     {
         return category switch
         {

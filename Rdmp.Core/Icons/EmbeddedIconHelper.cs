@@ -6,30 +6,32 @@
 
 using System;
 using System.Collections.Frozen;
+using System.IO;
 using System.Linq;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using System.Reflection;
 
 namespace Rdmp.Core.Icons;
 
 /// <summary>
-/// Helper class for loading embedded icon resources.
-/// All icons are loaded once at initialization and cached in a FrozenDictionary.
+/// Helper class for locating embedded icon resources.
+/// All icon resource names are indexed once at initialization in a FrozenDictionary.  Images are not decoded here;
+/// <see cref="RdmpIcon"/> only describes the icon and user interfaces render it.
 /// </summary>
 public static class EmbeddedIconHelper
 {
     private const string P = "Rdmp.Core.Icons.";
-    private static readonly FrozenDictionary<string, Image<Rgba32>> Cache = BuildCache();
+    private const string Extension = ".png";
 
-    private static FrozenDictionary<string, Image<Rgba32>> BuildCache()
+    private static readonly Assembly ResourceAssembly = typeof(EmbeddedIconHelper).Assembly;
+    private static readonly FrozenDictionary<string, RdmpIcon> Cache = BuildCache();
+
+    private static FrozenDictionary<string, RdmpIcon> BuildCache()
     {
-        var assembly = typeof(EmbeddedIconHelper).Assembly;
-        var dict = assembly.GetManifestResourceNames()
-            .Where(name => name.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+        var dict = ResourceAssembly.GetManifestResourceNames()
+            .Where(static name => name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase))
             .ToDictionary(
-                name => name[..^4],
-                name => Image.Load<Rgba32>(assembly.GetManifestResourceStream(name)
-                    ?? throw new InvalidOperationException($"Failed to load embedded resource: {name}")),
+                static name => name[..^Extension.Length],
+                static name => new RdmpIcon(name),
                 StringComparer.OrdinalIgnoreCase);
 
         // Add aliases for icons that map to other resources (from original .resx files)
@@ -43,21 +45,44 @@ public static class EmbeddedIconHelper
     }
 
     /// <summary>
-    /// Gets an icon by its full resource name (without .png extension).
+    /// Gets an icon by its full resource name (without .png extension, case insensitive).
     /// Returns null if not found.
     /// </summary>
-    public static Image<Rgba32> Get(string resourceName) =>
+    public static RdmpIcon Get(string resourceName) =>
         Cache.TryGetValue(resourceName, out var img) ? img : null;
 
     /// <summary>
-    /// Gets an icon by its full resource name (without .png extension).
+    /// Gets an icon by its full resource name (without .png extension, case insensitive).
     /// Throws if not found - use for required icons in static initializers.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when the icon resource is not found.</exception>
-    public static Image<Rgba32> GetRequired(string resourceName) =>
+    public static RdmpIcon GetRequired(string resourceName) =>
         Cache.TryGetValue(resourceName, out var img)
             ? img
             : throw new InvalidOperationException(
                 $"Required embedded icon not found: '{resourceName}'. " +
                 $"Ensure the PNG file exists and is embedded as a resource.");
+
+    /// <summary>
+    /// Opens a stream over the raw PNG data of the base image of <paramref name="icon"/> (i.e. ignoring any
+    /// <see cref="RdmpIcon.Operations"/>).  The caller must dispose the stream.
+    /// </summary>
+    public static Stream OpenPngStream(RdmpIcon icon)
+    {
+        ArgumentNullException.ThrowIfNull(icon);
+        return ResourceAssembly.GetManifestResourceStream(icon.ResourceName)
+               ?? throw new InvalidOperationException($"Failed to load embedded resource: {icon.ResourceName}");
+    }
+
+    /// <summary>
+    /// Returns the raw PNG bytes of the base image of <paramref name="icon"/> (i.e. ignoring any
+    /// <see cref="RdmpIcon.Operations"/>).  No decoding is performed.
+    /// </summary>
+    public static byte[] GetPngBytes(RdmpIcon icon)
+    {
+        using var stream = OpenPngStream(icon);
+        var bytes = new byte[stream.Length];
+        stream.ReadExactly(bytes);
+        return bytes;
+    }
 }

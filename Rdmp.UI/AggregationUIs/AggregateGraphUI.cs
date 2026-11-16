@@ -876,14 +876,24 @@ public partial class AggregateGraphUI : AggregateGraph_Design
 
     public IEnumerable<BitmapWithDescription> GetImages()
     {
-        var b = new Bitmap(chart1.Width, chart1.Height);
-        chart1.DrawToBitmap(b, new Rectangle(new Point(0, 0), new Size(chart1.Width, chart1.Height)));
+        byte[] chartPng;
+        using (var b = new Bitmap(chart1.Width, chart1.Height))
+        {
+            chart1.DrawToBitmap(b, new Rectangle(new Point(0, 0), new Size(chart1.Width, chart1.Height)));
+            chartPng = b.ToPngBytes();
+        }
 
-        yield return new BitmapWithDescription(b.LegacyToImage(), AggregateConfiguration.Name,
+        yield return new BitmapWithDescription(chartPng, AggregateConfiguration.Name,
             AggregateConfiguration.Description);
 
-        if (heatmapUI.HasDataTable())
-            yield return new BitmapWithDescription(heatmapUI.GetImage(800).LegacyToImage(), null, null);
+        if (!heatmapUI.HasDataTable())
+            yield break;
+
+        byte[] heatmapPng;
+        using (var heatmap = heatmapUI.GetImage(800))
+            heatmapPng = heatmap.ToPngBytes();
+
+        yield return new BitmapWithDescription(heatmapPng, null, null);
     }
 
     private void MiSaveImagesClick(object sender, EventArgs e)

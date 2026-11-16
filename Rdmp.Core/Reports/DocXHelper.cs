@@ -9,8 +9,8 @@ using System.IO;
 using NPOI.OpenXmlFormats.Wordprocessing;
 using NPOI.Util;
 using NPOI.XWPF.UserModel;
+using Rdmp.Core.Icons;
 using Rdmp.Core.ReusableLibraryCode;
-using SixLabors.ImageSharp;
 
 namespace Rdmp.Core.Reports;
 
@@ -29,7 +29,7 @@ public class DocXHelper
 
     /// <summary>
     /// <see cref="Units.ToEMU(double)"/> seems to result in word showing images at 133% size.  This constant fixes that
-    /// problem when using the <see cref="GetPicture(XWPFDocument, Image)"/> methods.
+    /// problem when using the <see cref="GetPicture(XWPFDocument, byte[])"/> methods.
     /// 
     /// </summary>
     private const float PICTURE_SCALING = 0.75f;
@@ -92,24 +92,34 @@ public class DocXHelper
 
     public const int PICTURE_TYPE_PNG = 6;
 
-    protected static XWPFPicture GetPicture(XWPFDocument document, Image bmp)
+    /// <summary>
+    /// Adds a new paragraph to <paramref name="document"/> containing the image <paramref name="png"/>
+    /// </summary>
+    /// <param name="document"></param>
+    /// <param name="png">PNG file data</param>
+    protected static XWPFPicture GetPicture(XWPFDocument document, byte[] png)
     {
         var para = document.CreateParagraph();
         var run = para.CreateRun();
 
-        return GetPicture(run, bmp);
+        return GetPicture(run, png);
     }
 
-    protected static XWPFPicture GetPicture(XWPFRun run, Image bmp)
+    /// <summary>
+    /// Adds the image <paramref name="png"/> to <paramref name="run"/> at its natural pixel size
+    /// </summary>
+    /// <param name="run"></param>
+    /// <param name="png">PNG file data</param>
+    protected static XWPFPicture GetPicture(XWPFRun run, byte[] png)
     {
-        using var ms = new MemoryStream();
-        bmp.SaveAsPng(ms);
+        ArgumentNullException.ThrowIfNull(png);
+        var (width, height) = PngHeader.GetDimensions(png);
 
-        ms.Seek(0, 0);
+        using var ms = new MemoryStream(png, false);
 
         // Add an image into the document.
-        var picture = run.AddPicture(ms, PICTURE_TYPE_PNG, "", Units.ToEMU(bmp.Width * PICTURE_SCALING),
-            Units.ToEMU(bmp.Height * PICTURE_SCALING));
+        var picture = run.AddPicture(ms, PICTURE_TYPE_PNG, "", Units.ToEMU(width * PICTURE_SCALING),
+            Units.ToEMU(height * PICTURE_SCALING));
 
         return picture;
     }

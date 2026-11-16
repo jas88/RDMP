@@ -8,8 +8,7 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.DataAccess;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -30,5 +29,5 @@ public class ExecuteCommandScriptTable : BasicCommandExecution, IAtomicCommand
             _tableInfo.Discover(DataAccessContext.InternalDataProcessing).ScriptTableCreation(false, false, false));
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.SQL);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.SQL);
 }

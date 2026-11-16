@@ -8,8 +8,7 @@ using Rdmp.Core.CommandExecution.AtomicCommands;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -34,7 +33,7 @@ public class ExecuteCommandShowXmlDoc : BasicUICommandExecution, IAtomicCommand
             SetImpossible($"No help available for keyword '{classOrProperty}'");
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.Help);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.Help);
 
     public override void Execute()
     {
