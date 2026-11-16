@@ -278,8 +278,10 @@ public static partial class ExcelCellReader
     private static partial Regex ElapsedTime();
 
     /// <summary>
-    /// Converts an Excel serial number to a date in the given date system, allowing for Excel treating 1900 as a leap
-    /// year (as NPOI did).  Returns null for values which Excel cannot display as dates.
+    /// Converts an Excel serial number to a date in the given date system.  Excel's 1900 date system treats 1900 as a leap
+    /// year, so serial numbers up to 59 (28th February 1900) are a day out and 60 is a 29th of February which never
+    /// existed: it is given as the 28th, exactly as ExcelDataReader's own conversion does.  Returns null for values which
+    /// Excel cannot display as dates.
     /// </summary>
     private static DateTime? ToDateTime(double serial, bool isDate1904)
     {
@@ -291,7 +293,7 @@ public static partial class ExcelCellReader
         if (isDate1904)
             return Epoch1904.AddDays(wholeDays).AddMilliseconds(milliseconds);
 
-        var dayAdjust = wholeDays < 61 ? 0 : -1; // Excel thinks 1900-02-29 exists
+        var dayAdjust = wholeDays < 60 ? 0 : -1; // Excel thinks 1900-02-29 (serial 60) exists
         return Epoch1900.AddDays(wholeDays + dayAdjust - 1).AddMilliseconds(milliseconds);
     }
 

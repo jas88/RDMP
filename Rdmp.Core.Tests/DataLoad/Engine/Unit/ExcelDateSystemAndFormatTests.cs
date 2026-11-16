@@ -117,6 +117,39 @@ public class ExcelDateSystemAndFormatTests
         });
     }
 
+    /// <summary>
+    /// Excel's 1900 date system has a 29th of February 1900 (serial number 60) which never existed.  It is loaded as the
+    /// 28th whether the number is converted to a date by ExcelDataReader (first column) or by RDMP (second column, a date
+    /// format which ExcelDataReader does not recognise).
+    /// </summary>
+    [TestCase(0, "1899-12-31 00:00:00")]
+    [TestCase(1, "1900-01-01 00:00:00")]
+    [TestCase(59, "1900-02-28 00:00:00")]
+    [TestCase(59.5, "1900-02-28 12:00:00")]
+    [TestCase(60, "1900-02-28 00:00:00")]
+    [TestCase(60.5, "1900-02-28 12:00:00")]
+    [TestCase(61, "1900-03-01 00:00:00")]
+    [TestCase(61.5, "1900-03-01 12:00:00")]
+    public void Xlsx_NonExistentLeapDayIsThe28thInBothConversions(double serial, string expected)
+    {
+        var file = Save(new MinimalXlsxBuilder().Text("A1", "ByExcelDataReader").Text("B1", "ByRdmp")
+            .NumberWithCustomFormat("A2", serial, "yyyy-mm-dd hh:mm:ss")
+            .NumberWithCustomFormat("B2", serial, "General yyyy-mm-dd hh:mm:ss"));
+
+        using (var workbook = ExcelWorkbook.Open(file))
+        {
+            workbook.Reader.Read();
+            workbook.Reader.Read();
+            Assert.Multiple(() =>
+            {
+                Assert.That(workbook.Reader.GetValue(0), Is.TypeOf<DateTime>(), "Expected ExcelDataReader to convert this");
+                Assert.That(workbook.Reader.GetValue(1), Is.TypeOf<double>(), "Expected RDMP to have to convert this");
+            });
+        }
+
+        Assert.That(Row(Read(file), 0), Is.EqualTo(new object[] { expected, expected }));
+    }
+
     [TestCase(true)]
     [TestCase(false)]
     public void IsDate1904_Xlsx(bool date1904)
