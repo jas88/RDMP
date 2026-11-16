@@ -11,24 +11,27 @@ on:
   # (e.g. #262+#265) that head-only builds miss
   pull_request:
 
+# Superseded PR runs are cancelled; push runs (main, tags, dependabot) always finish
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   DOTNET_NOLOGO: 1
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
 jobs:
-  # Windows UI Tests - Both Database and File System modes on single VM
-  tests_windows_ui:
-    name: Windows UI Tests
+  # CodeQL runs in its own job so its traced build and analysis overlap the tests
+  codeql:
+    name: CodeQL
     # Dependabot PRs are validated by the push run on their branch instead
     if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
       security-events: write
-    env:
-      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -45,8 +48,63 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: csharp
+          build-mode: manual
           config-file: ./.github/configs/codeql.yml
           queries: +security-and-quality
+
+      # Whole solution, including the WinForms projects (EnableWindowsTargeting)
+      - name: Build
+        run: dotnet build DataManagementPlatform.sln --configuration Release --verbosity minimal
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:csharp"
+          upload: false
+          output: sarif-results
+
+      - name: Filter SARIF for generated files
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -**/*.Designer.cs
+            -**/*.g.cs
+            -**/*Generated.cs
+            -**/*.g.i.cs
+            -**/*.designer.cs
+            -**/obj/**
+            -**/bin/**
+            -**/externals/**
+          input: sarif-results/csharp.sarif
+          output: sarif-results/csharp.sarif
+
+      - name: Upload CodeQL Results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif-results/csharp.sarif
+          category: "/language:csharp"
+
+  # Windows UI Tests - Both Database and File System modes on single VM
+  tests_windows_ui:
+    name: Windows UI Tests
+    # Dependabot PRs are validated by the push run on their branch instead
+    if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    env:
+      RDMP_KEY_LOCATION: D:\a\RDMP\RDMP\key\private-key.xml
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          cache: true
+          cache-dependency-path: Directory.Packages.props
 
       - name: Populate Databases.yaml
         shell: bash
@@ -156,8 +214,11 @@ jobs:
             sleep 2
           done
 
+      # Only what the UI tests and the CLI need; the CodeQL job builds the whole solution
       - name: Build
-        run: dotnet build --configuration Release --verbosity minimal
+        run: |
+          dotnet build Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --configuration Release --verbosity minimal
+          dotnet build Tools/rdmp/rdmp.csproj --configuration Release --verbosity minimal
 
       - name: Initialise RDMP (Database)
         run: |
@@ -197,7 +258,11 @@ jobs:
         timeout-minutes: 45
         shell: bash
         run: |
-          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
+          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release \
+            --logger trx \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults/database \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Re-initialise RDMP (File System)
         shell: bash
@@ -205,53 +270,55 @@ jobs:
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
           cp Tests.Common/TestDatabases.txt Rdmp.UI.Tests/bin/Release/net10.0-windows/
 
+      # The repository type only matters to DatabaseTests fixtures (Category "Database").
+      # No coverage here: instrumenting costs far more than these few tests take.
       - name: Test UI (File System Mode)
         timeout-minutes: 30
         shell: bash
         run: |
-          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release
+          dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release \
+            --filter "TestCategory=Database" \
+            --logger trx \
+            --results-directory TestResults/filesystem
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:csharp"
-          upload: false
-          output: sarif-results
-
-      - name: Filter SARIF for generated files
-        uses: advanced-security/filter-sarif@v1
-        with:
-          patterns: |
-            -**/*.Designer.cs
-            -**/*.g.cs
-            -**/*Generated.cs
-            -**/*.g.i.cs
-            -**/*.designer.cs
-            -**/obj/**
-            -**/bin/**
-            -**/externals/**
-          input: sarif-results/csharp.sarif
-          output: sarif-results/csharp.sarif
-
-      - name: Upload CodeQL Results
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: sarif-results/csharp.sarif
-          category: "/language:csharp"
-
-      - name: Run markdown link check
-        continue-on-error: true
+      - name: Summarise test results
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
-          npx markdown-link-check --quiet README.md Documentation/**/*.md || true
+          python .github/scripts/test-timings.py TestResults/database "Windows UI tests (database repository)"
+          python .github/scripts/test-timings.py TestResults/filesystem "Windows UI tests (file system repository)" 10
 
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-windows
+          path: TestResults/**/*.trx
+          retention-days: 14
 
-  # Linux Database Tests
-  tests_linux_db:
-    name: Linux Database Tests
+      - name: Upload coverage
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./TestResults
+          fail_ci_if_error: false
+        continue-on-error: true
+
+  # Linux tests, one job per repository type. The file system pass only re-runs
+  # DatabaseTests fixtures (Category "Database"): nothing else reads UseFileSystemRepo.
+  tests_linux:
+    name: Linux Tests (${{ matrix.repository }} repository)
     # Dependabot PRs are validated by the push run on their branch instead
     if: github.event_name != 'pull_request' || github.actor != 'dependabot[bot]'
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repository: database
+            filter: ''
+          - repository: filesystem
+            filter: TestCategory=Database
     env:
       # RDMP_KEY_LOCATION not set - will use built-in fallback key
       MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
@@ -366,93 +433,121 @@ jobs:
           EOF
 
       - name: Build
-        run: dotnet build --configuration Release --verbosity minimal
+        run: dotnet build linuxtests.slnf --configuration Release --verbosity minimal
 
       - name: Initialise RDMP
         run: |
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" -u SA -p $MSSQL_SA_PASSWORD localhost TEST_ -e
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" -u SA -p "$MSSQL_SA_PASSWORD" localhost TEST_ -e
 
-      - name: Setup MinIO
+      # Only S3BucketReleaseDestinationTests use this. MinIO no longer publishes
+      # community binaries (dl.min.io returns 410) or images, so use Bitnami's
+      # archived image of the last community release.
+      - name: Start MinIO
         run: |
-          curl -sL "https://dl.min.io/server/minio/release/linux-amd64/minio" > minio
-          chmod +x minio
-          mkdir -p ./minio-data
-          ./minio server ./minio-data --console-address :9001 &
-          MINIO_PID=$!
+          docker run -d --name minio -p 9000:9000 -p 9001:9001 \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+            bitnamilegacy/minio:2025.7.23-debian-12-r5
 
-          # Wait for MinIO
-          for i in {1..30}; do
-            if curl -s http://127.0.0.1:9000/minio/health/live > /dev/null; then
+          for _ in {1..30}; do
+            if curl -sf http://127.0.0.1:9000/minio/health/live > /dev/null; then
               echo "MinIO is ready!"
               break
             fi
-            sleep 2
+            sleep 1
           done
+          curl -sf http://127.0.0.1:9000/minio/health/live > /dev/null || { docker logs minio; exit 1; }
 
-          # Configure AWS credentials
           mkdir -p ~/.aws
           cat > ~/.aws/credentials << EOF
           [minio]
           aws_access_key_id=minioadmin
           aws_secret_access_key=minioadmin
-          aws_endpoint_url=http://127.0.0.1:9001
+          aws_endpoint_url=http://127.0.0.1:9000
           EOF
 
-          echo $MINIO_PID > /tmp/minio.pid
-
-      - name: Test non-UI
-        timeout-minutes: 45
-        env:
-          AWS_ENDPOINT_URL: http://127.0.0.1:9000
-          AWS_ACCESS_KEY_ID: minioadmin
-          AWS_SECRET_ACCESS_KEY: minioadmin
-        run: |
-          dotnet test linuxtests.slnf \
-            --nologo \
-            --collect:"XPlat Code Coverage" \
-            --verbosity minimal \
-            --results-directory coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov \
-            NUnit.OutputXmlFolderMode=AsSpecified NUnit.TestOutputXml=${{ github.workspace }}/nunit-results/db
-
-      - name: Check for Inconclusive tests (Database Mode)
-        if: ${{ !cancelled() }}
-        run: python3 .github/scripts/inconclusive-report.py --fail nunit-results/db
-
       - name: Switch to File System Mode
-        if: ${{ !cancelled() }}
+        if: matrix.repository == 'filesystem'
         run: |
-          echo "=== Switching to File System Mode ==="
-          # Add filesystem flag to TestDatabases.txt - RDMP will auto-create YAML repo
-          echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
+          # DatabaseTests reads TestDatabases.txt from beside its test assembly, where the
+          # build has already copied it. Flag that copy in the output of every test project
+          # the Test step runs; RDMP then auto-creates a YAML repository.
+          updated=0
+          while IFS= read -r project; do
+            properties=$(dotnet msbuild "$project" -getProperty:IsTestProject -getProperty:TargetDir -p:Configuration=Release)
+            [ "$(jq -r .Properties.IsTestProject <<< "$properties")" = true ] || continue
+            settings="$(jq -r .Properties.TargetDir <<< "$properties")TestDatabases.txt"
+            if [ ! -f "$settings" ]; then
+              echo "$project: no $settings, nothing to switch"
+              continue
+            fi
+            printf '\nUseFileSystemRepo: true\n' >> "$settings"
+            echo "$project: file system mode set in $settings"
+            grep -E '^(ServerName|UseFileSystemRepo):' "$settings" | sed 's/^/    /'
+            updated=$((updated + 1))
+          done < <(jq -r '.solution.projects[] | gsub("\\\\"; "/")' linuxtests.slnf)
+          if [ "$updated" -eq 0 ]; then
+            echo "::error::No test project in linuxtests.slnf has a TestDatabases.txt in its output"
+            exit 1
+          fi
 
-      - name: Test Core (File System Mode)
-        if: ${{ !cancelled() }}
+      - name: Test
         timeout-minutes: 45
         env:
           AWS_ENDPOINT_URL: http://127.0.0.1:9000
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
+          TEST_FILTER: ${{ matrix.filter }}
         run: |
-          dotnet test linuxtests.slnf \
+          dotnet test linuxtests.slnf -c Release --no-build \
             --nologo \
+            ${TEST_FILTER:+--filter "$TEST_FILTER"} \
+            --logger trx \
             --collect:"XPlat Code Coverage" \
             --verbosity minimal \
-            --results-directory coverage \
+            --results-directory TestResults \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov \
-            NUnit.OutputXmlFolderMode=AsSpecified NUnit.TestOutputXml=${{ github.workspace }}/nunit-results/fs
+            NUnit.OutputXmlFolderMode=AsSpecified NUnit.TestOutputXml=${{ github.workspace }}/TestResults/nunit
 
-      - name: Report Inconclusive tests (File System Mode)
+      # trx reports Inconclusive as NotExecuted, like ignored tests, so read the NUnit XML.
+      # Any Inconclusive test in the database leg means a database was not reachable or
+      # configured; in the file system leg many are by design (TableRepository-only tests).
+      - name: Check for Inconclusive tests
         if: ${{ !cancelled() }}
-        run: python3 .github/scripts/inconclusive-report.py nunit-results/fs
+        run: python3 .github/scripts/inconclusive-report.py ${{ matrix.repository == 'database' && '--fail' || '' }} TestResults/nunit
+
+      - name: Summarise test results
+        if: ${{ !cancelled() }}
+        run: python3 .github/scripts/test-timings.py TestResults "Linux tests (${{ matrix.repository }} repository)"
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-linux-${{ matrix.repository }}
+          path: TestResults/**/*.trx
+          retention-days: 14
 
       - name: Upload coverage
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./coverage
+          directory: ./TestResults
           fail_ci_if_error: false
         continue-on-error: true
+
+  # Single status for branch protection, which requires "Linux Database Tests"
+  tests_linux_db:
+    name: Linux Database Tests
+    needs: tests_linux
+    if: ${{ always() && (github.event_name != 'pull_request' || github.actor != 'dependabot[bot]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Linux test jobs
+        env:
+          RESULT: ${{ needs.tests_linux.result }}
+        run: |
+          echo "Linux test matrix result: $RESULT"
+          test "$RESULT" = success
 
   # Bundle job - only runs on tagged releases
   bundle:

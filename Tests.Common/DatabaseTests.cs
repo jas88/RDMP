@@ -12,7 +12,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using FAnsi;
-using FAnsi.Connections;
 using FAnsi.Discovery;
 using FAnsi.Discovery.Constraints;
 using FAnsi.Implementation;
@@ -62,6 +61,14 @@ public abstract partial class DatabaseTests
     protected readonly IRDMPPlatformRepositoryServiceLocator RepositoryLocator;
     public static TestDatabasesSettings TestDatabaseSettings;
     private static bool HaveTriedCreatingTestDatabases;
+
+    // Probed once per process, and only when a file system repository stands in for the platform databases
+    private static readonly Lazy<bool> TestServerExists = new(static () => new DiscoveredServer(
+        TestDatabaseSettings.ServerName, null, DatabaseType.MicrosoftSQLServer, TestDatabaseSettings.Username,
+        TestDatabaseSettings.Password).Exists());
+
+    private const string TestServerMissingMessage =
+        "Test database server does not exist.  You must install SQL Server LocalDb or Sql Server Express to run DatabaseTests. Or update TestDatabases.txt to point to your existing server.";
 
     public ICatalogueRepository CatalogueRepository => RepositoryLocator.CatalogueRepository;
 
@@ -172,6 +179,12 @@ public abstract partial class DatabaseTests
 
             if (!cataRepo.DiscoveredServer.Exists()) DealWithMissingTestDatabases(opts, cataRepo);
         }
+        else if (!TestServerExists.Value)
+        {
+            // A file system repository only replaces the Catalogue and DataExport databases. Everything else is
+            // still on the test server, and without it Startup fails whichever fixture happens to run first.
+            Assert.Inconclusive(TestServerMissingMessage);
+        }
 
 
         Console.WriteLine("Found Catalogue");
@@ -238,8 +251,7 @@ public abstract partial class DatabaseTests
         var mainDb = cataRepo.DiscoveredServer.ExpectDatabase("master");
 
         if (HaveTriedCreatingTestDatabases || !mainDb.Server.Exists())
-            Assert.Inconclusive(
-                "Test database server does not exist.  You must install SQL Server LocalDb or Sql Server Express to run DatabaseTests. Or update TestDatabases.txt to point to your existing server.");
+            Assert.Inconclusive(TestServerMissingMessage);
 
         // if user is trying to connect to a test database
         // and that server exists (but TEST_ databases don't)
@@ -759,22 +771,6 @@ delete from {1}..Project
             forCleanup.Add(database);
 
         return database;
-    }
-
-    private static DiscoveredServer MsScratch, MyScratch, PostScratch, OracleScratch;
-
-    protected (IManagedConnection trans, DiscoveredDatabase) GetScratchDatabase(DatabaseType type)
-    {
-        var server = type switch
-        {
-            DatabaseType.MicrosoftSQLServer => MsScratch ??= GetCleanedServer(type).Server,
-            DatabaseType.MySql => MyScratch ??= GetCleanedServer(type).Server,
-            DatabaseType.PostgreSql => PostScratch ??= GetCleanedServer(type).Server,
-            DatabaseType.Oracle => OracleScratch ??= GetCleanedServer(type).Server,
-            _ => throw new ArgumentOutOfRangeException(nameof(type))
-        };
-        var trans = server.BeginNewTransactedConnection();
-        return (trans, server.GetCurrentDatabase());
     }
 
     protected static void DeleteTables(DiscoveredDatabase database)
