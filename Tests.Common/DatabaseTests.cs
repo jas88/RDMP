@@ -112,6 +112,9 @@ public abstract partial class DatabaseTests
 
     private static Startup _startup;
 
+    private static readonly HashSet<string> ServerAndCredentialKeywords =
+        new(StringComparer.OrdinalIgnoreCase) { "server", "database", "user id", "password", "uid", "pwd" };
+
     static DatabaseTests()
     {
         Rdmp.Core.Repositories.CatalogueRepository.SuppressHelpLoading = true;
@@ -212,7 +215,9 @@ public abstract partial class DatabaseTests
 
             foreach (string k in builder.Keys)
             {
-                if (k is "server" or "database" or "user id" or "password")
+                // Builder keys come back in canonical case (e.g. "User ID"); server and credentials must not become
+                // keywords or they would override the credentials of every MySQL connection (e.g. low privilege users)
+                if (ServerAndCredentialKeywords.Contains(k))
                     continue;
 
                 _ = new ConnectionStringKeyword(CatalogueRepository, DatabaseType.MySql, k, builder[k].ToString());
