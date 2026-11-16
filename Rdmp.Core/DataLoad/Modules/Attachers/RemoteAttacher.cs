@@ -231,7 +231,11 @@ public class RemoteAttacher : Attacher, IPluginAttacher
         return true;
     }
 
-    public void FindMostRecentDateInLoadedData(IQuerySyntaxHelper syntaxFrom, DatabaseType dbType, string table, IDataLoadJob job, bool userOverrideColumn = false)
+    /// <summary>
+    /// Records the latest date in the loaded (RAW) copy of <paramref name="table"/> as <see cref="MostRecentlySeenDate"/>.
+    /// The query runs on the RAW server, so it is built with that server's syntax whatever DBMS the data came from.
+    /// </summary>
+    public void FindMostRecentDateInLoadedData(string table, IDataLoadJob job, bool userOverrideColumn = false)
     {
         var column = RemoteTableDateColumn;
         if (userOverrideColumn && !string.IsNullOrWhiteSpace(RawTableDateColumn))
@@ -239,9 +243,9 @@ public class RemoteAttacher : Attacher, IPluginAttacher
             column = RawTableDateColumn;
         }
 
-        // the query runs against the loaded (RAW) copy of the table
+        var rawSyntax = _dbInfo.Server.GetQuerySyntaxHelper();
         column = GetColumnSql(_dbInfo.ExpectTable(table), column);
-        var maxDateSql = $"SELECT MAX({column}) FROM {syntaxFrom.EnsureWrapped(table)} {SqlHistoricalDataFilter(job.LoadMetadata, dbType, column)}";
+        var maxDateSql = $"SELECT MAX({column}) FROM {rawSyntax.EnsureWrapped(table)} {SqlHistoricalDataFilter(job.LoadMetadata, _dbInfo.Server.DatabaseType, column)}";
 
         using var con = _dbInfo.Server.GetConnection();
         using var dt = new DataTable();

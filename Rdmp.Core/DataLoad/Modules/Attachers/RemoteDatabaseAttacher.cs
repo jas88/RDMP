@@ -149,7 +149,7 @@ False - Trigger an error reporting the missing table(s)
 
             if (SetDeltaReadingToLatestSeenDatePostLoad)
             {
-                FindMostRecentDateInLoadedData(syntaxFrom, dbFrom.Server.DatabaseType ,table, job);
+                FindMostRecentDateInLoadedData(table, job);
             }
 
         }
