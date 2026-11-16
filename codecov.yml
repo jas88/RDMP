@@ -5,6 +5,8 @@ codecov:
     # Three jobs upload coverage for each commit: Windows UI Tests and the two Linux test legs (database and
     # filesystem repository).  Wait for all of them before reporting.  Otherwise the status is calculated from
     # whichever finishes first (the Windows job, which covers the least) and is not corrected afterwards.
+    # If an upload fails, Codecov therefore does not report on that commit: the job concerned stays green but
+    # raises a "Coverage not uploaded" warning (see the upload steps in .github/workflows/tests-unified.yml).
     after_n_builds: 3
 
 comment:
