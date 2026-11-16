@@ -77,6 +77,9 @@ public class WordDataReleaseFileGenerator : DocXHelper
 
         CreateFileSummary(document);
 
+        //save and close the file before showing it to the user
+        document.Dispose();
+
         //interactive mode, user didn't ask us to save to a specific location so we created it in temp and so we can now show them where that file is
         if (string.IsNullOrWhiteSpace(saveAsFilename))
             ShowFile(f);

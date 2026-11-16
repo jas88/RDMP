@@ -11,49 +11,48 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Rdmp.Core.ReusableLibraryCode.Settings;
 
-namespace Rdmp.Core.CommandExecution.AtomicCommands
+namespace Rdmp.Core.CommandExecution.AtomicCommands;
+
+class ExecuteCommandSendExtractionResolutionTeamsNotification: BasicCommandExecution,IAtomicCommand
 {
-    class ExecuteCommandSendExtractionResolutionTeamsNotification: BasicCommandExecution,IAtomicCommand
+
+    private readonly ExtractionConfiguration _ec;
+    private readonly bool _success;
+    private static readonly HttpClient client = new HttpClient();
+    private readonly string url = UserSettings.ExtractionWebhookUrl;
+    private readonly string template = "{  \"type\":\"AdaptiveCard\",  \"attachments\":[      {        \"contentType\":\"application/vnd.microsoft.card.adaptive\",        \"contentUrl\":null,        \"content\":{  \"type\": \"AdaptiveCard\",    \"$schema\": \"https://adaptivecards.io/schemas/adaptive-card.json\",    \"version\": \"1.5\",    \"body\": [        {            \"type\": \"Table\",            \"columns\": [                {                    \"width\": 1                },                {                    \"width\": 7                }            ],            \"rows\": [                {                    \"type\": \"TableRow\",                    \"cells\": [                        {                            \"type\": \"TableCell\",                            \"items\": [                                {                                    \"type\": \"Image\",                                    \"url\": \"\",                                    \"size\": \"Small\",                                    \"width\": \"40px\"                                }                            ]                        },                        {                            \"type\": \"TableCell\",                            \"verticalContentAlignment\": \"Center\",                            \"items\": [                                {                                    \"type\": \"TextBlock\",                                    \"text\": \"\",                                    \"wrap\": true,                                    \"maxLines\": 3                                }                            ],                            \"targetWidth\": \"Wide\",                            \"bleed\": true                        },                        {                            \"type\": \"TableCell\",                            \"isVisible\": false                        }                    ]                }            ]        },        {            \"type\": \"TextBlock\",            \"text\": \"<at></at>\"        }    ],    \"msteams\": {                \"entities\": [                    {                    \"type\": \"mention\",                    \"text\": \"<at></at>\",                    \"mentioned\": {                        \"id\": \"\",                        \"name\": \"\"                    }                    }                ]            }        }       }  ]}";
+    public ExecuteCommandSendExtractionResolutionTeamsNotification(IBasicActivateItems activator, ExtractionConfiguration ec, bool success) {
+        _ec = ec;
+        _success = success;
+    }
+
+    public override void Execute()
     {
+        base.Execute();
+        var content = new StringContent(GetContent(), Encoding.UTF8, "application/json");
+        client.PostAsync(url, content);
+        content.Dispose();
 
-        private readonly ExtractionConfiguration _ec;
-        private readonly bool _success;
-        private static readonly HttpClient client = new HttpClient();
-        private readonly string url = UserSettings.ExtractionWebhookUrl;
-        private readonly string template = "{  \"type\":\"AdaptiveCard\",  \"attachments\":[      {        \"contentType\":\"application/vnd.microsoft.card.adaptive\",        \"contentUrl\":null,        \"content\":{  \"type\": \"AdaptiveCard\",    \"$schema\": \"https://adaptivecards.io/schemas/adaptive-card.json\",    \"version\": \"1.5\",    \"body\": [        {            \"type\": \"Table\",            \"columns\": [                {                    \"width\": 1                },                {                    \"width\": 7                }            ],            \"rows\": [                {                    \"type\": \"TableRow\",                    \"cells\": [                        {                            \"type\": \"TableCell\",                            \"items\": [                                {                                    \"type\": \"Image\",                                    \"url\": \"\",                                    \"size\": \"Small\",                                    \"width\": \"40px\"                                }                            ]                        },                        {                            \"type\": \"TableCell\",                            \"verticalContentAlignment\": \"Center\",                            \"items\": [                                {                                    \"type\": \"TextBlock\",                                    \"text\": \"\",                                    \"wrap\": true,                                    \"maxLines\": 3                                }                            ],                            \"targetWidth\": \"Wide\",                            \"bleed\": true                        },                        {                            \"type\": \"TableCell\",                            \"isVisible\": false                        }                    ]                }            ]        },        {            \"type\": \"TextBlock\",            \"text\": \"<at></at>\"        }    ],    \"msteams\": {                \"entities\": [                    {                    \"type\": \"mention\",                    \"text\": \"<at></at>\",                    \"mentioned\": {                        \"id\": \"\",                        \"name\": \"\"                    }                    }                ]            }        }       }  ]}";
-        public ExecuteCommandSendExtractionResolutionTeamsNotification(IBasicActivateItems activator, ExtractionConfiguration ec, bool success) {
-            _ec = ec;
-            _success = success;
-        }
+    }
 
-        public override void Execute()
-        {
-            base.Execute();
-            var content = new StringContent(GetContent(), Encoding.UTF8, "application/json");
-            client.PostAsync(url, content);
-            content.Dispose();
-
-        }
-
-        private string GetContent()
-        {
-            var badIcon = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Cross_red_circle.svg/1200px-Cross_red_circle.svg.png";
-            var goodIcon = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Eo_circle_green_checkmark.svg/2048px-Eo_circle_green_checkmark.svg.png";
-            var icon = _success ? goodIcon : badIcon;
-            var subText = _success ? "completed successfully" : "failed";
-            var email = UserSettings.ExtractionWebhookUsername;
-            var mention = $"<at>{email}</at>";
-            var adatpiveCard = AdaptiveCard.FromJson(template);
-            adatpiveCard.Attachments[0].Content.Body[0].Rows[0].Cells[0].Items[0].Url = icon;
-            adatpiveCard.Attachments[0].Content.Body[0].Rows[0].Cells[1].Items[0].Text = $"Extraction {_ec.Name}: {subText}.";
-            adatpiveCard.Attachments[0].Content.Body[1].Text =mention;
-            adatpiveCard.Attachments[0].Content.Msteams.Entities[0].Text = mention;
-            adatpiveCard.Attachments[0].Content.Msteams.Entities[0].Mentioned.Id = email;
-            adatpiveCard.Attachments[0].Content.Msteams.Entities[0].Mentioned.Name =email;
+    private string GetContent()
+    {
+        var badIcon = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Cross_red_circle.svg/1200px-Cross_red_circle.svg.png";
+        var goodIcon = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Eo_circle_green_checkmark.svg/2048px-Eo_circle_green_checkmark.svg.png";
+        var icon = _success ? goodIcon : badIcon;
+        var subText = _success ? "completed successfully" : "failed";
+        var email = UserSettings.ExtractionWebhookUsername;
+        var mention = $"<at>{email}</at>";
+        var adatpiveCard = AdaptiveCard.FromJson(template);
+        adatpiveCard.Attachments[0].Content.Body[0].Rows[0].Cells[0].Items[0].Url = icon;
+        adatpiveCard.Attachments[0].Content.Body[0].Rows[0].Cells[1].Items[0].Text = $"Extraction {_ec.Name}: {subText}.";
+        adatpiveCard.Attachments[0].Content.Body[1].Text =mention;
+        adatpiveCard.Attachments[0].Content.Msteams.Entities[0].Text = mention;
+        adatpiveCard.Attachments[0].Content.Msteams.Entities[0].Mentioned.Id = email;
+        adatpiveCard.Attachments[0].Content.Msteams.Entities[0].Mentioned.Name =email;
 
 
-            return Serialize.ToJson(adatpiveCard);
-        }
+        return Serialize.ToJson(adatpiveCard);
     }
 }
 

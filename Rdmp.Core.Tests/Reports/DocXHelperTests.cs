@@ -116,6 +116,27 @@ internal class DocXHelperTests : DocXHelper
     }
 
     [Test]
+    public void Dispose_SavesCompleteFileAndIsIdempotent()
+    {
+        using var document = GetNewDocFile(new FileInfo(_path));
+        InsertParagraph(document, "content");
+        AddFooter(document, "footer", -1);
+
+        // explicit dispose (as done before showing the file to the user) must leave a complete, closed file
+        document.Dispose();
+
+        var contents = DocXContents.Read(_path);
+        Assert.Multiple(() =>
+        {
+            contents.AssertValid();
+            Assert.That(contents.Paragraphs, Is.EqualTo(new[] { "content" }));
+            Assert.That(contents.FooterTexts, Is.EqualTo(new[] { "footer" }));
+            Assert.That(() => document.Append(new Paragraph()), Throws.TypeOf<ObjectDisposedException>());
+            Assert.That(document.Dispose, Throws.Nothing);
+        });
+    }
+
+    [Test]
     public void Document_CanBeWrittenWithNonDocxExtension()
     {
         var docPath = Path.ChangeExtension(_path, ".doc");

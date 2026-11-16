@@ -70,6 +70,9 @@ public class DocumentationReportDatabaseEntities : DocXHelper
                 SetTableCell(t, i * 2 + 2, 0, Summaries[keys[i]]);
             }
 
+            //save and close the file before showing it to the user
+            document.Dispose();
+
             if (showFile)
                 ShowFile(document);
 

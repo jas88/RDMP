@@ -44,7 +44,7 @@ public sealed class DocXDocument : IDisposable
     /// <summary>
     /// The document body.  Prefer <see cref="Append"/> for adding content so it stays ahead of <see cref="SectionProperties"/>
     /// </summary>
-    public DocumentFormat.OpenXml.Wordprocessing.Body Body { get; }
+    public Body Body { get; }
 
     /// <summary>
     /// The final (document level) section properties: page size, orientation, margins and header/footer references
@@ -75,7 +75,7 @@ public sealed class DocXDocument : IDisposable
             },
             new Columns { Space = "425" });
 
-        Body = new DocumentFormat.OpenXml.Wordprocessing.Body(SectionProperties);
+        Body = new Body(SectionProperties);
         MainDocumentPart.Document = new Document(Body);
     }
 
@@ -93,7 +93,8 @@ public sealed class DocXDocument : IDisposable
     }
 
     /// <summary>
-    /// Saves the document and releases the underlying file
+    /// Saves the document and releases the underlying file.  Safe to call more than once, so callers can dispose
+    /// explicitly (e.g. before showing the file to the user) while still holding a <c>using</c> declaration.
     /// </summary>
     public void Dispose()
     {

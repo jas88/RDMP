@@ -155,12 +155,15 @@ public class MetadataReport : DocXHelper
                 if (_lookupsEncounteredToAppearInAppendix.Any())
                     CreateLookupAppendix(document, listener);
 
-                if (showFile)
-                    ShowFile(document);
-
                 SetMargins(document, 20);
 
                 AddFooter(document, $"Created on {DateTime.Now}", TextFontSize);
+
+                //save and close the file before showing it to the user
+                document.Dispose();
+
+                if (showFile)
+                    ShowFile(document);
 
                 return document.FileInfo;
             }
