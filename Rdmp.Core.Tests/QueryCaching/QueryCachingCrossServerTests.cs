@@ -510,9 +510,15 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
          *
          */
 
+        // the cache can be any configured DBMS other than the two holding the data
+        var cacheType = All.DatabaseTypes.Cast<DatabaseType?>()
+            .FirstOrDefault(static t => t is not (DatabaseType.MySql or DatabaseType.MicrosoftSQLServer));
+        if (cacheType == null)
+            Assert.Inconclusive("Requires a third configured DBMS (Oracle or PostgreSql) to host the cache");
+
         var server1 = GetCleanedServer(DatabaseType.MySql);
         var server2 = GetCleanedServer(DatabaseType.MicrosoftSQLServer);
-        var server3 = GetCleanedServer(DatabaseType.Oracle);
+        var server3 = GetCleanedServer(cacheType.Value);
 
         var cache = CreateCache(server3);
 
@@ -568,10 +574,13 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
         //get the data database
         var db = GetCleanedServer(dbType);
 
-        //create the cache on the other server type (either Sql Server or Oracle) since  MySql can't do EXCEPT or UNION etc)
-        var dbCache =
-            GetCleanedServer(Enum.GetValues(typeof(DatabaseType)).Cast<DatabaseType>().First(t =>
-                t != dbType && t != DatabaseType.MySql));
+        //create the cache on another configured server type (not MySql, which can't do EXCEPT or UNION etc)
+        var cacheType = All.DatabaseTypes.Cast<DatabaseType?>()
+            .FirstOrDefault(t => t != dbType && t != DatabaseType.MySql);
+        if (cacheType == null)
+            Assert.Inconclusive($"Requires a second configured DBMS other than {dbType} and MySql to host the cache");
+
+        var dbCache = GetCleanedServer(cacheType.Value);
 
         var cache = CreateCache(dbCache);
 
