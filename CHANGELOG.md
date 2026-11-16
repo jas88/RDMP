@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add cli command to export catalogue metadata to a Atlassian Confluence space
 - Integrate plugin tests (HICPluginTests, LoadModules.Extensions.Tests, Rdmp.Dicom.Tests) into main solution and test orchestration
 - FIX: Foreign Key visibility race condition in DB with AUTO_UPDATE_STATISTICS_ASYNC enabled
+- Replace HIC.SynthEHR 2.0.1 with SynthEHR.Core 3.0.2 (jas88 fork); seeded test data differs from 2.x for the same seed
+- Reference CsvHelper 33.0.1 directly (previously only a transitive dependency of HIC.SynthEHR)
 
 
 ## [9.0.1] - 2025-07-31
@@ -128,12 +130,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - Add Key-Value store for instance settings
-- Allow for Re-extractions of projects to a database, see [ExecuteFullExtractionToDatabaseMSSql](Documentation\DataExtractions\ExecuteFullExtractionToDatabaseMSSql.md)
+- Allow for Re-extractions of projects to a database, see [ExecuteFullExtractionToDatabaseMSSql](Documentation/DataExtractions/ExecuteFullExtractionToDatabaseMSSql.md)
 - Add ability to use .rdmp plugin files
-- Add the ability to store versions of cohort configurations, see [Cohort Versioning](Documentation\Cohorts\CohortVersioning.md)
+- Add the ability to store versions of cohort configurations, see [Cohort Versioning](Documentation/Cohorts/CohortVersioning.md)
 - Add ability to restrict GROUPBY clause in cohort aggregate builder
 - When cloning an ExtractionConfiguration with a deprecated catalogue, the GUI will ask if you want to replace the deprecated catalogue with the known replacement
-- Add ability to customise LoadMetdata Folder Location. See [LoadMetadata](Documentation\DataLoadEngine\LoadMetadata.md)
+- Add ability to customise LoadMetdata Folder Location. See [LoadMetadata](Documentation/DataLoadEngine/LoadMetadata.md)
 - Add ability to point a catalogue to a new data source [Documentation](./Documentation/Catalogues/UpdateCatalogueDataLocation.md)
 - Allow DQE graphs to be scrollable and scalable
 - Allow for partial refreshes of time-based DQE charts
@@ -198,7 +200,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - Add ability to use Extraction Category with Project Specific Catalogues
-- Allow arbitrary MDF files from foreign file systems to work with the MDF Attacher, see [MDFAttacher](Documentation\DataLoadEngine\MDFAttacher.md)
+- Allow arbitrary MDF files from foreign file systems to work with the MDF Attacher, see [MDFAttacher](Documentation/DataLoadEngine/MDFAttacher.md)
 - Update Excel Attacher to read data from arbitrary start points within sheets
 - Add Time based filtering of remote table and database attachers
 

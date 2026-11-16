@@ -329,7 +329,8 @@
 		<PackageReference Include="CommandLineParser" />
 		<PackageReference Include="ExcelNumberFormat" />
 		<PackageReference Include="FluentFTP" />
-		<PackageReference Include="HIC.SynthEHR" />
+		<PackageReference Include="SynthEHR.Core" />
+		<PackageReference Include="CsvHelper" />
 		<PackageReference Include="FAnsiSql.Legacy" />
 		<PackageReference Include="LibArchive.Net" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers">

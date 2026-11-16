@@ -264,7 +264,7 @@ internal class NightmareDatasets : DataGenerator
     }
 
     // we are not actually interested in these methods, just want to use GetGaussian etc
-    public override object[] GenerateTestDataRow(Person p) => throw new NotSupportedException();
+    public override object[] GenerateTestDataRow(Person person) => throw new NotSupportedException();
 
     protected override string[] GetHeaders() => throw new NotSupportedException();
 }

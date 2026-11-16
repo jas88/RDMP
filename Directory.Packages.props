@@ -7,12 +7,14 @@
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="ExcelNumberFormat" Version="1.2.0" />
     <PackageVersion Include="FluentFTP" Version="55.1.0" />
-    <PackageVersion Include="HIC.SynthEHR" Version="2.0.1" />
-    <PackageVersion Include="SynthDicom" Version="1.0.0" />
+    <PackageVersion Include="SynthEHR.Core" Version="3.0.2" />
+    <PackageVersion Include="SynthDicom" Version="2.0.0" />
     <PackageVersion Include="FAnsiSql.Legacy" Version="3.7.0" />
     <PackageVersion Include="LibArchive.Net" Version="0.3.1" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.12.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.12.0" />
+    <!-- Used directly; previously only available transitively via HIC.SynthEHR -->
+    <PackageVersion Include="CsvHelper" Version="33.0.1" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <!-- Dependencies of NPOI, built from source in externals/ (see externals/npoi submodule) -->
     <PackageVersion Include="BouncyCastle.Cryptography" Version="2.7.0" />

@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Replace HIC.BadMedicine.Dicom 0.1.2 with SynthDicom 1.0.0 for test data generation
+- Bump SynthDicom from 1.0.0 to 2.0.0, which removes the SixLabors.ImageSharp and ImageSharp.Drawing test dependencies
 - Fix DicomServiceDependencies constructor calls to use proper ServiceProvider instance instead of null (fo-dicom 5.2.4 requires non-null serviceProvider)
 - Integrate Rdmp.Dicom.Tests into main RDMP test orchestration
 
