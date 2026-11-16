@@ -46,8 +46,6 @@ public class DocXHelper
     /// </summary>
     private const int TableWidth = 10000;
 
-    private static readonly string[] LineEndings = { "\r\n", "\r", "\n" };
-
     protected static void InsertParagraph(DocXDocument document, string ptext, int textFontSize = -1)
     {
         if (string.IsNullOrWhiteSpace(ptext)) return;
@@ -73,8 +71,9 @@ public class DocXHelper
 
     /// <summary>
     /// Creates a run containing <paramref name="text"/> (whitespace preserved) in the given point size (-1 for unspecified).
-    /// Line endings within <paramref name="text"/> become line breaks in the run and characters which cannot be stored
-    /// in XML are dealt with by <see cref="RemoveInvalidXmlCharacters"/>.
+    /// As when these documents were written with NPOI, every line feed in <paramref name="text"/> becomes a line break
+    /// (so blank lines and leading or trailing breaks are kept) and a carriage return on its own is white space.
+    /// Characters which cannot be stored in XML are dealt with by <see cref="RemoveInvalidXmlCharacters"/>.
     /// </summary>
     private static Run CreateTextRun(string text, int fontSize)
     {
@@ -83,14 +82,15 @@ public class DocXHelper
         if (fontSize != -1)
             run.AppendChild(new RunProperties(new FontSize { Val = (fontSize * 2).ToString() }));
 
-        var lines = RemoveInvalidXmlCharacters(text ?? "").Split(LineEndings, StringSplitOptions.RemoveEmptyEntries);
+        var lines = RemoveInvalidXmlCharacters(text ?? "").Replace("\r\n", "\n").Replace('\r', ' ').Split('\n');
 
         for (var i = 0; i < lines.Length; i++)
         {
             if (i > 0)
                 run.AppendChild(new Break());
 
-            run.AppendChild(new Text(lines[i]) { Space = SpaceProcessingModeValues.Preserve });
+            if (lines[i].Length > 0)
+                run.AppendChild(new Text(lines[i]) { Space = SpaceProcessingModeValues.Preserve });
         }
 
         return run;

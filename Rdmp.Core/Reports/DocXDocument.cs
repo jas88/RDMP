@@ -108,13 +108,8 @@ public sealed class DocXDocument : IDisposable
 
         _disposed = true;
 
-        try
-        {
+        // the file is closed whether or not saving succeeds
+        using (_package)
             _package.Save();
-        }
-        finally
-        {
-            _package.Dispose();
-        }
     }
 }

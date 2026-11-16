@@ -244,23 +244,34 @@ internal class DocXHelperTests : DocXHelper
     }
 
     [Test]
-    public void Text_LineEndingsInsideARun_BecomeLineBreaks()
+    public void Text_LineFeedsInsideARun_BecomeLineBreaks()
     {
         using (var document = GetNewDocFile(new FileInfo(_path)))
         {
             // InsertHeader does not split its text into paragraphs, so every kind of line ending reaches the run
-            InsertHeader(document, "one\ntwo\r\nthree\rfour\n\n");
+            InsertHeader(document, "one\ntwo\r\nthree\rfour");
+
+            // as when written with NPOI, each line feed is one break: blank lines, leading and trailing breaks are kept
+            InsertHeader(document, "\nfirst\n\nsecond\n", 2);
+
+            InsertHeader(document, "", 3);
         }
 
         using var doc = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(_path, false);
-        var run = doc.MainDocumentPart!.Document.Body!.Descendants<Run>().Single();
+        var runs = doc.MainDocumentPart!.Document.Body!.Descendants<Run>().ToArray();
+
+        // the first child of each run is its properties (the font size)
+        string[] ContentOf(Run run) => run.ChildElements.Skip(1)
+            .Select(e => e is Text t ? t.Text : $"<{e.LocalName}>").ToArray();
 
         Assert.Multiple(() =>
         {
-            Assert.That(run.Elements<Text>().Select(t => t.Text), Is.EqualTo(new[] { "one", "two", "three", "four" }));
-            Assert.That(run.Elements<Break>().Count(), Is.EqualTo(3));
-            Assert.That(run.ChildElements.Skip(1).Select(e => e.LocalName),
-                Is.EqualTo(new[] { "t", "br", "t", "br", "t", "br", "t" }));
+            Assert.That(runs, Has.Length.EqualTo(3));
+
+            // a carriage return on its own is white space, not a line ending
+            Assert.That(ContentOf(runs[0]), Is.EqualTo(new[] { "one", "<br>", "two", "<br>", "three four" }));
+            Assert.That(ContentOf(runs[1]), Is.EqualTo(new[] { "<br>", "first", "<br>", "<br>", "second", "<br>" }));
+            Assert.That(ContentOf(runs[2]), Is.Empty);
         });
     }
 
