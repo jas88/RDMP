@@ -1,0 +1,19 @@
+# Codecov configuration (https://docs.codecov.com/docs/codecovyml-reference)
+
+codecov:
+  notify:
+    # Three jobs upload coverage for each commit: Windows UI Tests and the two Linux test legs (database and
+    # filesystem repository).  Wait for all of them before reporting.  Otherwise the status is calculated from
+    # whichever finishes first (the Windows job, which covers the least) and is not corrected afterwards.
+    after_n_builds: 3
+
+comment:
+  after_n_builds: 3
+
+# Not product code: third party source built from a submodule, and the test projects themselves
+ignore:
+  - "externals"
+  - "Rdmp.Core.Tests"
+  - "Rdmp.UI.Tests"
+  - "RdmpDicom/Rdmp.Dicom.Tests"
+  - "Tests.Common"
