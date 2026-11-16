@@ -7,6 +7,8 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Xml;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -44,6 +46,8 @@ public class DocXHelper
     /// </summary>
     private const int TableWidth = 10000;
 
+    private static readonly string[] LineEndings = { "\r\n", "\r", "\n" };
+
     protected static void InsertParagraph(DocXDocument document, string ptext, int textFontSize = -1)
     {
         if (string.IsNullOrWhiteSpace(ptext)) return;
@@ -68,7 +72,9 @@ public class DocXHelper
         };
 
     /// <summary>
-    /// Creates a run containing <paramref name="text"/> (whitespace preserved) in the given point size (-1 for unspecified)
+    /// Creates a run containing <paramref name="text"/> (whitespace preserved) in the given point size (-1 for unspecified).
+    /// Line endings within <paramref name="text"/> become line breaks in the run and characters which cannot be stored
+    /// in XML are dealt with by <see cref="RemoveInvalidXmlCharacters"/>.
     /// </summary>
     private static Run CreateTextRun(string text, int fontSize)
     {
@@ -77,8 +83,54 @@ public class DocXHelper
         if (fontSize != -1)
             run.AppendChild(new RunProperties(new FontSize { Val = (fontSize * 2).ToString() }));
 
-        run.AppendChild(new Text(text) { Space = SpaceProcessingModeValues.Preserve });
+        var lines = RemoveInvalidXmlCharacters(text ?? "").Split(LineEndings, StringSplitOptions.RemoveEmptyEntries);
+
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (i > 0)
+                run.AppendChild(new Break());
+
+            run.AppendChild(new Text(lines[i]) { Space = SpaceProcessingModeValues.Preserve });
+        }
+
         return run;
+    }
+
+    /// <summary>
+    /// Returns <paramref name="text"/> without the characters that XML cannot hold (a document containing any of them
+    /// cannot be saved).  Whitespace control characters, such as the vertical tab Microsoft Word uses for a manual
+    /// line break, become a space so that the words either side stay apart.  Other control characters and unpaired
+    /// surrogates are dropped.
+    /// </summary>
+    protected static string RemoveInvalidXmlCharacters(string text)
+    {
+        StringBuilder sb = null;
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+
+            if (XmlConvert.IsXmlChar(c))
+            {
+                sb?.Append(c);
+                continue;
+            }
+
+            if (i + 1 < text.Length && XmlConvert.IsXmlSurrogatePair(text[i + 1], c))
+            {
+                sb?.Append(c).Append(text[i + 1]);
+                i++;
+                continue;
+            }
+
+            // first character to be changed: start from everything accepted so far
+            sb ??= new StringBuilder(text, 0, i, text.Length);
+
+            if (char.IsWhiteSpace(c))
+                sb.Append(' ');
+        }
+
+        return sb?.ToString() ?? text;
     }
 
     /// <summary>
@@ -94,9 +146,9 @@ public class DocXHelper
         // each line goes in the cell's first paragraph, followed by a line break
         var para = GetTableCell(table, row, col).Elements<Paragraph>().First();
 
-        foreach (var bit in value.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+        foreach (var run in value.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+                     .Select(bit => CreateTextRun(bit, fontSize)))
         {
-            var run = CreateTextRun(bit, fontSize);
             run.AppendChild(new Break());
             para.AppendChild(run);
         }

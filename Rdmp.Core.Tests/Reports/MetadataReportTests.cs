@@ -66,8 +66,8 @@ internal class MetadataReportTests : UnitTests
             Assert.That(contents.Paragraphs, Does.Contain("Aggregates"));
             Assert.That(contents.Paragraphs, Does.Contain("MyPicture"));
             Assert.That(contents.Paragraphs, Does.Contain("Something interesting about it"));
-            Assert.That(contents.FontSizes[cata.Name], Is.EqualTo(16));
-            Assert.That(contents.FontSizes[cata.Description], Is.EqualTo(7));
+            Assert.That(contents.FontSizeOf(cata.Name), Is.EqualTo(16));
+            Assert.That(contents.FontSizeOf(cata.Description), Is.EqualTo(7));
             Assert.That(contents.ImageCount, Is.EqualTo(1));
             Assert.That(contents.DrawingCount, Is.EqualTo(1));
             Assert.That(contents.FooterTexts.Single(), Does.StartWith("Created on "));

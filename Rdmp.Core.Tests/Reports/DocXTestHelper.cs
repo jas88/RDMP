@@ -45,9 +45,9 @@ internal sealed class DocXContents
     public int PageBreakCount { get; }
 
     /// <summary>
-    /// Font sizes (in points) of the runs whose text is exactly the dictionary key
+    /// The distinct font sizes (in points, null where none is set) of the runs with each text
     /// </summary>
-    public Dictionary<string, int> FontSizes { get; } = new();
+    private readonly Dictionary<string, HashSet<int?>> _fontSizes = new();
 
     public List<ValidationErrorInfo> ValidationErrors { get; }
 
@@ -71,8 +71,11 @@ internal sealed class DocXContents
         foreach (var run in body.Descendants<Run>())
         {
             var size = run.RunProperties?.FontSize?.Val?.Value;
-            if (size != null)
-                FontSizes.TryAdd(run.InnerText, int.Parse(size) / 2);
+
+            if (!_fontSizes.TryGetValue(run.InnerText, out var sizes))
+                _fontSizes.Add(run.InnerText, sizes = new HashSet<int?>());
+
+            sizes.Add(size == null ? null : int.Parse(size) / 2);
         }
 
         ValidationErrors = new OpenXmlValidator().Validate(doc).ToList();
@@ -83,6 +86,23 @@ internal sealed class DocXContents
         Assert.That(File.Exists(path), $"Expected document {path} to exist");
         using var doc = WordprocessingDocument.Open(path, false);
         return new DocXContents(doc);
+    }
+
+    /// <summary>
+    /// Returns the font size (in points) of the runs whose text is exactly <paramref name="runText"/>, or null if they
+    /// do not set one.  Fails if there is no such run or if the runs disagree, so a size is never asserted against
+    /// only some of the runs with that text.
+    /// </summary>
+    public int? FontSizeOf(string runText)
+    {
+        if (!_fontSizes.TryGetValue(runText, out var sizes))
+            throw new AssertionException($"Document has no run with the text '{runText}'");
+
+        if (sizes.Count > 1)
+            throw new AssertionException(
+                $"Runs with the text '{runText}' have conflicting font sizes: {string.Join(", ", sizes.OrderBy(s => s).Select(s => s?.ToString() ?? "none"))}");
+
+        return sizes.Single();
     }
 
     public void AssertValid() =>

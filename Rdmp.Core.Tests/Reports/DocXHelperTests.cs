@@ -25,7 +25,7 @@ internal class DocXHelperTests : DocXHelper
 
     [SetUp]
     public void SetUp() =>
-        _path = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"DocXHelperTests_{Guid.NewGuid():N}.docx");
+        _path = Path.Join(TestContext.CurrentContext.WorkDirectory, $"DocXHelperTests_{Guid.NewGuid():N}.docx");
 
     [TearDown]
     public void TearDown()
@@ -71,11 +71,11 @@ internal class DocXHelperTests : DocXHelper
 
             Assert.That(contents.Paragraphs.Take(4),
                 Is.EqualTo(new[] { "Main Heading", "Sub Heading", "First line", "Second line" }));
-            Assert.That(contents.FontSizes["Main Heading"], Is.EqualTo(16));
-            Assert.That(contents.FontSizes["Sub Heading"], Is.EqualTo(13));
-            Assert.That(contents.FontSizes["First line"], Is.EqualTo(7));
-            Assert.That(contents.FontSizes["Col A"], Is.EqualTo(8));
-            Assert.That(contents.FontSizes.ContainsKey("Col B"), Is.False, "No size requested so none should be set");
+            Assert.That(contents.FontSizeOf("Main Heading"), Is.EqualTo(16));
+            Assert.That(contents.FontSizeOf("Sub Heading"), Is.EqualTo(13));
+            Assert.That(contents.FontSizeOf("First line"), Is.EqualTo(7));
+            Assert.That(contents.FontSizeOf("Col A"), Is.EqualTo(8));
+            Assert.That(contents.FontSizeOf("Col B"), Is.Null, "No size requested so none should be set");
 
             Assert.That(contents.Tables, Has.Count.EqualTo(1));
             Assert.That(contents.Tables[0], Has.Length.EqualTo(2));
@@ -133,6 +133,134 @@ internal class DocXHelperTests : DocXHelper
             Assert.That(contents.FooterTexts, Is.EqualTo(new[] { "footer" }));
             Assert.That(() => document.Append(new Paragraph()), Throws.TypeOf<ObjectDisposedException>());
             Assert.That(document.Dispose, Throws.Nothing);
+        });
+    }
+
+    [Test]
+    public void Dispose_WhenSavingFails_StillClosesTheFile()
+    {
+        var document = GetNewDocFile(new FileInfo(_path));
+
+        // 0x01 cannot be written to XML.  The helpers remove such characters, so add it directly to make saving fail
+        document.Append(new Paragraph(new Run(new Text("\u0001"))));
+
+        Assert.That(document.Dispose, Throws.ArgumentException);
+
+        Assert.Multiple(() =>
+        {
+            // nothing may still have the file open
+            Assert.That(() =>
+            {
+                using var exclusive = new FileStream(_path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            }, Throws.Nothing);
+
+            Assert.That(document.Dispose, Throws.Nothing);
+        });
+    }
+
+    [Test]
+    public void FontSizeOf_FailsWhenRunsWithTheSameTextDisagree()
+    {
+        using (var document = GetNewDocFile(new FileInfo(_path)))
+        {
+            InsertHeader(document, "Same");
+            InsertParagraph(document, "Same", 7);
+            InsertParagraph(document, "Agreed", 9);
+            InsertParagraph(document, "Agreed", 9);
+
+            var table = InsertTable(document, 1, 2);
+            SetTableCell(table, 0, 0, "Mixed", 8);
+            SetTableCell(table, 0, 1, "Mixed");
+        }
+
+        var contents = DocXContents.Read(_path);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(contents.FontSizeOf("Agreed"), Is.EqualTo(9));
+            Assert.That(() => contents.FontSizeOf("Same"),
+                Throws.TypeOf<AssertionException>().With.Message.Contains("conflicting font sizes: 7, 16"));
+            Assert.That(() => contents.FontSizeOf("Mixed"),
+                Throws.TypeOf<AssertionException>().With.Message.Contains("conflicting font sizes: none, 8"));
+            Assert.That(() => contents.FontSizeOf("Missing"),
+                Throws.TypeOf<AssertionException>().With.Message.Contains("no run with the text"));
+        });
+    }
+
+    [Test]
+    public void Text_CharactersXmlCannotHold_AreRemovedSoTheDocumentSaves()
+    {
+        using (var document = GetNewDocFile(new FileInfo(_path)))
+        {
+            InsertHeader(document, "Head\u0001ing");
+            InsertParagraph(document, "manual\vbreak, form\ffeed, tab\tkept, lone \ud83d surrogate, pair \ud83d\ude00 kept");
+
+            var table = InsertTable(document, 1, 1);
+            SetTableCell(table, 0, 0, "ce\u001bll\uffff");
+
+            AddFooter(document, "foot\u0000er", -1);
+        }
+
+        var contents = DocXContents.Read(_path);
+
+        Assert.Multiple(() =>
+        {
+            contents.AssertValid();
+            Assert.That(contents.Paragraphs, Is.EqualTo(new[]
+            {
+                "Heading",
+                "manual break, form feed, tab\tkept, lone  surrogate, pair \ud83d\ude00 kept"
+            }));
+            Assert.That(contents.Tables.Single()[0], Is.EqualTo(new[] { "cell" }));
+            Assert.That(contents.FooterTexts, Is.EqualTo(new[] { "footer" }));
+        });
+    }
+
+    [Test]
+    public void RemoveInvalidXmlCharacters_KeepsEverythingXmlCanHold()
+    {
+        // not [TestCase]s: attribute arguments cannot hold unpaired surrogates and test names should stay printable
+        var cases = new (string Text, string Expected)[]
+        {
+            ("plain text", "plain text"),
+            ("", ""),
+            ("\u0000", ""),
+            ("a\u000bb\u000cc\u001fd", "a b cd"),
+            ("tab\t cr\r lf\n kept", "tab\t cr\r lf\n kept"),
+            ("\ud83d\ude00 ok \ud83d\ude00", "\ud83d\ude00 ok \ud83d\ude00"),
+            ("\ude00 low first \ud83d", " low first "),
+            ("\ud83d\ud83d\ude00", "\ud83d\ude00"),
+            ("ends with bad\ufffe", "ends with bad")
+        };
+
+        Assert.Multiple(() =>
+        {
+            foreach (var (text, expected) in cases)
+                Assert.That(RemoveInvalidXmlCharacters(text), Is.EqualTo(expected));
+
+            // unchanged text is returned as is rather than copied
+            Assert.That(RemoveInvalidXmlCharacters(cases[0].Text), Is.SameAs(cases[0].Text));
+        });
+    }
+
+    [Test]
+    public void Text_LineEndingsInsideARun_BecomeLineBreaks()
+    {
+        using (var document = GetNewDocFile(new FileInfo(_path)))
+        {
+            // InsertHeader does not split its text into paragraphs, so every kind of line ending reaches the run
+            InsertHeader(document, "one\ntwo\r\nthree\rfour\n\n");
+        }
+
+        using var doc = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(_path, false);
+        var run = doc.MainDocumentPart!.Document.Body!.Descendants<Run>().Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(run.Elements<Text>().Select(t => t.Text), Is.EqualTo(new[] { "one", "two", "three", "four" }));
+            Assert.That(run.Elements<Break>().Count(), Is.EqualTo(3));
+            Assert.That(run.ChildElements.Skip(1).Select(e => e.LocalName),
+                Is.EqualTo(new[] { "t", "br", "t", "br", "t", "br", "t" }));
         });
     }
 

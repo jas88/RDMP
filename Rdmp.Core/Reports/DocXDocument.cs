@@ -58,7 +58,10 @@ public sealed class DocXDocument : IDisposable
     public DocXDocument(FileInfo fileInfo)
     {
         FileInfo = fileInfo;
-        _package = WordprocessingDocument.Create(fileInfo.FullName, WordprocessingDocumentType.Document);
+
+        // autoSave is off so that Dispose decides when to save.  With it on the package saves again as it is disposed
+        // and, if that save fails, never closes the file (however often it is disposed).
+        _package = WordprocessingDocument.Create(fileInfo.FullName, WordprocessingDocumentType.Document, false);
         MainDocumentPart = _package.AddMainDocumentPart();
 
         SectionProperties = new SectionProperties(
@@ -95,6 +98,8 @@ public sealed class DocXDocument : IDisposable
     /// <summary>
     /// Saves the document and releases the underlying file.  Safe to call more than once, so callers can dispose
     /// explicitly (e.g. before showing the file to the user) while still holding a <c>using</c> declaration.
+    /// <para>If saving fails the file is still closed before the exception is thrown.  What was written up to that
+    /// point is left on disk and is not a readable document.</para>
     /// </summary>
     public void Dispose()
     {
@@ -102,7 +107,14 @@ public sealed class DocXDocument : IDisposable
             return;
 
         _disposed = true;
-        MainDocumentPart.Document.Save();
-        _package.Dispose();
+
+        try
+        {
+            _package.Save();
+        }
+        finally
+        {
+            _package.Dispose();
+        }
     }
 }
