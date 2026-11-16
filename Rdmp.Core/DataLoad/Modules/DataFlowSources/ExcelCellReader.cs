@@ -22,6 +22,8 @@ namespace Rdmp.Core.DataLoad.Modules.DataFlowSources;
 /// </summary>
 public static partial class ExcelCellReader
 {
+    private const long MillisecondsPerDay = 86_400_000;
+
     private static readonly DateTime Epoch1900 = new(1900, 1, 1);
     private static readonly DateTime Epoch1904 = new(1904, 1, 1);
 
@@ -56,6 +58,8 @@ public static partial class ExcelCellReader
 
     private static readonly ConcurrentDictionary<string, FormatKind> FormatKinds = new();
 
+    private static readonly char[] DayMonthSecondTokens = { 'd', 'm', 's' };
+
     private enum FormatKind
     {
         /// <summary>Not a date/time format (e.g. "0.00", "0%")</summary>
@@ -67,7 +71,10 @@ public static partial class ExcelCellReader
         DateAndTime,
         TimeOnly,
 
-        /// <summary>A date/time format with neither a year nor an hour component e.g. "d-mmm" or "mm:ss"</summary>
+        /// <summary>A time format which counts hours beyond 24 e.g. "[h]:mm:ss"</summary>
+        ElapsedHours,
+
+        /// <summary>A date/time format with neither a year nor an hour component e.g. "d-mmm", "mm:ss" or "[mm]:ss"</summary>
         OtherDateTime
     }
 
@@ -126,6 +133,11 @@ public static partial class ExcelCellReader
     /// Translates a numeric cell.  'General' and fraction formatted cells give the raw number, date/time formats give an
     /// unambiguous date and/or time string and any other format gives the value as Excel would display it.
     /// </summary>
+    /// <param name="number">The cell's value (for dates and times this is the serial number)</param>
+    /// <param name="date">The cell's value as a date or null if Excel could not display it as one (e.g. it is negative)</param>
+    /// <param name="reader"></param>
+    /// <param name="column"></param>
+    /// <param name="isDate1904"></param>
     private static object FormatNumber(double number, DateTime? date, IExcelDataReader reader, int column,
         bool isDate1904)
     {
@@ -147,6 +159,8 @@ public static partial class ExcelCellReader
                 return date?.ToString("yyyy-MM-dd HH:mm:ss");
             case FormatKind.TimeOnly:
                 return date?.ToString("HH:mm:ss");
+            case FormatKind.ElapsedHours:
+                return date == null ? null : FormatElapsedHours(number);
             default:
                 // Other date/time formats (e.g. "d-mmm", "[mm]:ss") are rendered from the serial number so that
                 // ExcelNumberFormat applies the workbook's date system and elapsed time formats show the full duration
@@ -159,31 +173,60 @@ public static partial class ExcelCellReader
             .Format(value, CultureInfo.InvariantCulture, isDate1904);
 
     /// <summary>
+    /// Returns the whole of a duration as hours, minutes and seconds.  The layout is that of a time of day ("HH:mm:ss",
+    /// including the current culture's time separator) so a duration of less than 24 hours reads the same as a time of day.
+    /// </summary>
+    private static string FormatElapsedHours(double serial)
+    {
+        var (wholeDays, milliseconds) = SplitSerial(serial);
+        var seconds = (wholeDays * MillisecondsPerDay + milliseconds) / 1000;
+        var separator = CultureInfo.CurrentCulture.DateTimeFormat.TimeSeparator;
+
+        return string.Create(CultureInfo.InvariantCulture,
+            $"{seconds / 3600:00}{separator}{seconds / 60 % 60:00}{separator}{seconds % 60:00}");
+    }
+
+    /// <summary>
     /// Classifies an Excel number format.  Literal text (quoted strings, backslash escapes, padding/fill characters) and
     /// bracketed sections such as colours, conditions and locales are ignored so that only genuine date/time tokens
-    /// (d, m, y, h, s and elapsed time e.g. [h]) count.  A format containing '/' which has no date/time tokens is a fraction.
+    /// (d, m, y, h, s and elapsed time e.g. [h]) count, in either case.  A year makes it a date, an hour makes it a time
+    /// (or a date and time if there is also a year or a day) and a format containing '/' which has no date/time tokens is
+    /// a fraction.
     /// </summary>
     private static FormatKind Classify(string format)
     {
-        var tokens = StripLiterals(format).ToLowerInvariant();
+        var tokens = StripLiterals(format, out var hasElapsedHours).ToLowerInvariant();
 
         var hasYear = tokens.Contains('y');
         var hasHour = tokens.Contains('h');
 
-        if (hasYear && hasHour)
-            return FormatKind.DateAndTime;
         if (hasYear)
-            return FormatKind.DateOnly;
+            return hasHour ? FormatKind.DateAndTime : FormatKind.DateOnly;
+
         if (hasHour)
-            return FormatKind.TimeOnly;
-        if (tokens.IndexOfAny(new[] { 'd', 'm', 's' }) >= 0)
+        {
+            // a day of the month or week makes it a point in time even though no year is shown e.g. "m/d h:mm"
+            if (tokens.Contains('d'))
+                return FormatKind.DateAndTime;
+
+            return hasElapsedHours ? FormatKind.ElapsedHours : FormatKind.TimeOnly;
+        }
+
+        if (tokens.IndexOfAny(DayMonthSecondTokens) >= 0)
             return FormatKind.OtherDateTime;
 
         return tokens.Contains('/') ? FormatKind.Fraction : FormatKind.Number;
     }
 
-    private static string StripLiterals(string format)
+    /// <summary>
+    /// Returns <paramref name="format"/> without its literal text and bracketed sections, leaving the format tokens.
+    /// </summary>
+    /// <param name="format"></param>
+    /// <param name="hasElapsedHours">True if the format counts hours beyond 24 i.e. has an [h] section</param>
+    private static string StripLiterals(string format, out bool hasElapsedHours)
     {
+        hasElapsedHours = false;
+
         // "General" is a keyword not a date/time pattern
         var withoutKeywords = GeneralKeyword().Replace(format, "");
         var sb = new StringBuilder(withoutKeywords.Length);
@@ -212,7 +255,11 @@ public static partial class ExcelCellReader
 
                     var inner = withoutKeywords.Substring(i + 1, end - i - 1);
                     if (ElapsedTime().IsMatch(inner))
+                    {
                         sb.Append(inner); // [h], [mm], [ss] elapsed time
+                        hasElapsedHours |= inner[0] is 'h' or 'H';
+                    }
+
                     i = end;
                     break;
                 default:
@@ -239,14 +286,23 @@ public static partial class ExcelCellReader
         if (serial < 0 || serial >= 2_900_000) // comfortably within DateTime range for both systems
             return null;
 
-        var wholeDays = (int)Math.Floor(serial);
-        var milliseconds = (int)((serial - wholeDays) * 86_400_000 + 0.5);
+        var (wholeDays, milliseconds) = SplitSerial(serial);
 
         if (isDate1904)
             return Epoch1904.AddDays(wholeDays).AddMilliseconds(milliseconds);
 
         var dayAdjust = wholeDays < 61 ? 0 : -1; // Excel thinks 1900-02-29 exists
         return Epoch1900.AddDays(wholeDays + dayAdjust - 1).AddMilliseconds(milliseconds);
+    }
+
+    /// <summary>
+    /// Splits a serial number into whole days and the time of day rounded to the nearest millisecond (which can be a
+    /// whole day when the time is within half a millisecond of midnight).
+    /// </summary>
+    private static (int WholeDays, int Milliseconds) SplitSerial(double serial)
+    {
+        var wholeDays = (int)Math.Floor(serial);
+        return (wholeDays, (int)((serial - wholeDays) * MillisecondsPerDay + 0.5));
     }
 
     /// <summary>

@@ -130,6 +130,10 @@ public class ExcelSourceCellHandlingTests
         });
     }
 
+    /// <summary>
+    /// Every built-in format with a fixed definition.  The expectations are those of the NPOI based implementation except
+    /// where it was wrong: the fractions (12 and 13) were loaded as dates and elapsed hours (46) as the hour of the day.
+    /// </summary>
     [Test]
     public void NumberFormats_BuiltinFormats()
     {
@@ -157,7 +161,7 @@ public class ExcelSourceCellHandlingTests
                 "3689225%", "3689225.34%", "3.69E+04", "36892.2534", "36892.2534", "2001-01-01",
                 "2001-01-01", "1-Jan", "2001-01-01", "06:04:53", "06:04:53", "06:04:53", "06:04:53",
                 "2001-01-01 06:04:53", "36,892 ", "36,892 ", "36,892.25 ", "36,892.25 ", "  36,892 ", " $ 36,892 ",
-                "  36,892.25 ", " $ 36,892.25 ", "04:53", "06:04:53", "04:53.8", "36.9E+3", "36892.2534"
+                "  36,892.25 ", " $ 36,892.25 ", "04:53", "885414:04:53", "04:53.8", "36.9E+3", "36892.2534"
             }));
             Assert.That(Row(dt, 1), Is.EqualTo(new object[]
             {
@@ -165,7 +169,7 @@ public class ExcelSourceCellHandlingTests
                 "123456.78%", "1.23E+03", "1234.5678", "1234.5678", "1903-05-18", "1903-05-18",
                 "18-May", "1903-05-18", "13:37:37", "13:37:37", "13:37:37", "13:37:37", "1903-05-18 13:37:37",
                 "1,235 ", "1,235 ", "1,234.57 ", "1,234.57 ", "  1,235 ", " $ 1,235 ", "  1,234.57 ", " $ 1,234.57 ",
-                "37:37", "13:37:37", "37:37.9", "1.2E+3", "1234.5678"
+                "37:37", "29629:37:37", "37:37.9", "1.2E+3", "1234.5678"
             }));
         });
     }

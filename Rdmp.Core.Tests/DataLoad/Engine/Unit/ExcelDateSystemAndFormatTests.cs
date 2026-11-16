@@ -6,6 +6,7 @@
 
 using System;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
@@ -158,11 +159,100 @@ public class ExcelDateSystemAndFormatTests
     [TestCase("0.0 \"hrs\"", 1000.25, "1000.3 hrs")]
     [TestCase("[Red]0.00", 1000.25, "1000.25")]
     [TestCase("[$-F400]h:mm:ss\\ AM/PM", 0.5, "12:00:00")]
+    // times of day wrap at 24 hours
+    [TestCase("h:mm", 1000.25, "06:00:00")]
+    [TestCase("h:mm:ss", 2.0625, "01:30:00")]
+    // elapsed hours do not: 2.0625 days is 49.5 hours
+    [TestCase("[h]:mm:ss", 0, "00:00:00")]
     [TestCase("[h]:mm:ss", 0.5, "12:00:00")]
+    [TestCase("[h]:mm:ss", 0.99999, "23:59:59")]
+    [TestCase("[h]:mm:ss", 1, "24:00:00")]
+    [TestCase("[h]:mm:ss", 1.00001, "24:00:00")]
+    [TestCase("[h]:mm:ss", 2.0625, "49:30:00")]
+    [TestCase("[h]:mm:ss", 1000.25, "24006:00:00")]
+    [TestCase("[hh]:mm", 2.0625, "49:30:00")]
+    [TestCase("[h]", 2.0625, "49:30:00")]
+    [TestCase("[h]:mm:ss.00", 2.0625, "49:30:00")]
+    [TestCase("[Red][h]:mm", 2.0625, "49:30:00")]
+    [TestCase("[h]:mm \"d\"", 2.0625, "49:30:00")]
+    // half a millisecond short of 24 hours rounds up to it (as a time of day this value is 00:00:00)
+    [TestCase("[h]:mm:ss", 0.999999999, "24:00:00")]
+    [TestCase("h:mm:ss", 0.999999999, "00:00:00")]
+    // elapsed minutes and seconds are rendered as Excel displays them
+    [TestCase("[mm]:ss", 0.5, "720:00")]
+    [TestCase("[mm]:ss", 1000.25, "1440360:00")]
+    [TestCase("[m]", 2.5, "3600")]
+    [TestCase("[ss]", 0.5, "43200")]
+    [TestCase("[s].00", 0.5, "43200.00")]
+    // a day and an hour but no year is still a date and time
+    [TestCase("m/d h:mm", 1000.5, "1902-09-26 12:00:00")]
+    [TestCase("dd-mmm hh:mm", 1000.5, "1902-09-26 12:00:00")]
+    [TestCase("ddd h:mm", 1000.5, "1902-09-26 12:00:00")]
+    [TestCase("[$-409]d-mmm h:mm AM/PM", 1000.5, "1902-09-26 12:00:00")]
+    [TestCase("d [h]:mm", 1000.5, "1902-09-26 12:00:00")]
+    // without an hour a year-less date is rendered as Excel displays it, without a day an hour is only a time
+    [TestCase("d-mmm", 1000.5, "26-Sep")]
+    [TestCase("mmm h:mm", 1000.5, "12:00:00")]
+    // quoted and escaped letters are text not date/time tokens
+    [TestCase("0 \"d h\"", 1000.25, "1000 d h")]
+    [TestCase("0\\d\\h", 1000.25, "1000dh")]
+    [TestCase("\"[h]\" 0", 1000.25, "[h] 1000")]
+    [TestCase("h:mm \"d\"", 1000.25, "06:00:00")]
+    [TestCase("h:mm \\d", 1000.25, "06:00:00")]
+    [TestCase("\"h\" d-mmm", 1000.25, "h 26-Sep")]
     public void NumberFormats_RenderAsExpected(string format, double value, string expected)
     {
         var dt = Read(Save(new MinimalXlsxBuilder().Text("A1", "Value").NumberWithCustomFormat("A2", value, format)));
 
         Assert.That(dt.Rows[0][0], Is.EqualTo(expected));
+    }
+
+    /// <summary>
+    /// Built-in format 46 is "[h]:mm:ss", 20 and 21 are the times of day "h:mm" and "h:mm:ss" and 45 is "mm:ss"
+    /// </summary>
+    [TestCase(46, 0.99999, "23:59:59")]
+    [TestCase(46, 1.00001, "24:00:00")]
+    [TestCase(46, 1.5, "36:00:00")]
+    [TestCase(20, 1.5, "12:00:00")]
+    [TestCase(21, 1.5, "12:00:00")]
+    [TestCase(45, 1.5, "00:00")]
+    public void NumberFormats_BuiltinTimesAndElapsedHours(int builtinFormat, double value, string expected)
+    {
+        var dt = Read(Save(new MinimalXlsxBuilder().Text("A1", "Value")
+            .NumberWithBuiltinFormat("A2", value, builtinFormat)));
+
+        Assert.That(dt.Rows[0][0], Is.EqualTo(expected));
+    }
+
+    [TestCase("[h]:mm:ss")]
+    [TestCase("[hh]:mm")]
+    public void NumberFormats_NegativeElapsedHoursAreNull(string format)
+    {
+        var dt = Read(Save(new MinimalXlsxBuilder().Text("A1", "Elapsed").Text("B1", "Other")
+            .NumberWithCustomFormat("A2", -0.5, format).Text("B2", "x")));
+
+        Assert.That(Row(dt, 0), Is.EqualTo(new object[] { null, "x" }));
+    }
+
+    /// <summary>
+    /// Elapsed hours are laid out like a time of day (which uses the current culture's time separator, '.' in Finnish) so
+    /// that durations under 24 hours read exactly as they did when they were loaded as a time of day
+    /// </summary>
+    [Test]
+    [SetCulture("fi-FI")]
+    public void NumberFormats_ElapsedHoursAreLaidOutLikeTimesOfDay()
+    {
+        var dt = Read(Save(new MinimalXlsxBuilder().Text("A1", "Elapsed").Text("B1", "TimeOfDay")
+            .NumberWithCustomFormat("A2", 0.75, "[h]:mm:ss").NumberWithCustomFormat("B2", 0.75, "hh:mm:ss")
+            .NumberWithCustomFormat("A3", 2.0625, "[h]:mm:ss").NumberWithCustomFormat("B3", 2.0625, "hh:mm:ss")));
+
+        var separator = CultureInfo.CurrentCulture.DateTimeFormat.TimeSeparator;
+        var sixPm = new DateTime(2000, 1, 1, 18, 0, 0).ToString("HH:mm:ss");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(Row(dt, 0), Is.EqualTo(new object[] { sixPm, sixPm }));
+            Assert.That(Row(dt, 1), Is.EqualTo(new object[] { $"49{separator}30{separator}00", $"01{separator}30{separator}00" }));
+        });
     }
 }
