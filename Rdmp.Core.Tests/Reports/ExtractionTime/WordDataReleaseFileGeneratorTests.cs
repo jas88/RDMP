@@ -22,5 +22,21 @@ internal class WordDataReleaseFileGeneratorTests : TestsRequiringAnExtractionCon
         report.GenerateWordFile(filename);
 
         Assert.That(File.Exists(filename));
+
+        var contents = DocXContents.Read(filename);
+
+        Assert.Multiple(() =>
+        {
+            contents.AssertValid();
+            Assert.That(contents.Paragraphs, Does.Contain($"Project:{_configuration.Project.Name}"));
+            Assert.That(contents.Paragraphs, Does.Contain(_configuration.Name));
+            Assert.That(contents.PageSize.Orient?.Value,
+                Is.EqualTo(DocumentFormat.OpenXml.Wordprocessing.PageOrientationValues.Landscape));
+            Assert.That(contents.Tables, Has.Count.EqualTo(3));
+            Assert.That(contents.Tables[1][0],
+                Is.EqualTo(new[] { "Version", "Description", "Date Extracted", "Unique Individuals" }));
+            Assert.That(contents.Tables[2][0],
+                Is.EqualTo(new[] { "Data Requirement", "Notes", "Filename", "Records", "Unique Individuals", "Datasets" }));
+        });
     }
 }

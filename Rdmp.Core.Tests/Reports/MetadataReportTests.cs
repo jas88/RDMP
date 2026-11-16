@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Reports;
@@ -54,6 +55,24 @@ internal class MetadataReportTests : UnitTests
             //refreshes the file stream status
             Assert.That(new FileInfo(file.FullName).Length, Is.GreaterThan(0));
         });
+
+        var contents = DocXContents.Read(file.FullName);
+
+        Assert.Multiple(() =>
+        {
+            contents.AssertValid();
+            Assert.That(contents.Paragraphs, Does.Contain(cata.Name));
+            Assert.That(contents.Paragraphs, Does.Contain(cata.Description));
+            Assert.That(contents.Paragraphs, Does.Contain("Aggregates"));
+            Assert.That(contents.Paragraphs, Does.Contain("MyPicture"));
+            Assert.That(contents.Paragraphs, Does.Contain("Something interesting about it"));
+            Assert.That(contents.FontSizes[cata.Name], Is.EqualTo(16));
+            Assert.That(contents.FontSizes[cata.Description], Is.EqualTo(7));
+            Assert.That(contents.ImageCount, Is.EqualTo(1));
+            Assert.That(contents.DrawingCount, Is.EqualTo(1));
+            Assert.That(contents.FooterTexts.Single(), Does.StartWith("Created on "));
+            Assert.That(contents.PageMargin.Left?.Value, Is.EqualTo(292u));
+        });
     }
 
     [Test]
@@ -77,6 +96,19 @@ internal class MetadataReportTests : UnitTests
         {
             Assert.That(file, Is.Not.Null);
             Assert.That(File.Exists(file.FullName));
+        });
+
+        var contents = DocXContents.Read(file.FullName);
+        var columnsTable = contents.Tables.Single(t => t[0][0] == "Column");
+
+        Assert.Multiple(() =>
+        {
+            contents.AssertValid();
+            Assert.That(contents.Paragraphs, Does.Contain("Extractable Columns"));
+            Assert.That(columnsTable[0], Is.EqualTo(new[] { "Column", "Datatype", "Description", "Category" }));
+            Assert.That(columnsTable, Has.Length.EqualTo(2));
+            Assert.That(columnsTable[1][0], Is.EqualTo(ei.GetRuntimeName()));
+            Assert.That(columnsTable[1][1], Is.EqualTo("ORPHAN"));
         });
     }
 }

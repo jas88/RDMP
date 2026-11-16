@@ -8,7 +8,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Spontaneous;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
@@ -29,7 +31,11 @@ public class DocumentationReportDatabaseEntities : DocXHelper
     private CommentStore _commentStore;
     private Dictionary<Type, string> Summaries = new();
 
-    public void GenerateReport(CommentStore commentStore, ICheckNotifier notifier, IIconProvider iconProvider,
+    /// <summary>
+    /// Writes the report to a new .docx file in the temp directory
+    /// </summary>
+    /// <returns>The file written, or null if generation failed</returns>
+    public FileInfo GenerateReport(CommentStore commentStore, ICheckNotifier notifier, IIconProvider iconProvider,
         bool showFile)
     {
         _commentStore = commentStore;
@@ -54,9 +60,9 @@ public class DocumentationReportDatabaseEntities : DocXHelper
 
                 if (bmp != null)
                 {
-                    var para = t.Rows[i * 2 + 1].GetCell(0).Paragraphs.First();
-                    var run = para.Runs.FirstOrDefault() ?? para.CreateRun();
-                    GetPicture(run, bmp);
+                    var para = GetTableCell(t, i * 2 + 1, 0).Elements<Paragraph>().First();
+                    var run = para.Elements<Run>().FirstOrDefault() ?? para.AppendChild(new Run());
+                    GetPicture(document, run, bmp);
                 }
 
                 SetTableCell(t, i * 2 + 1, 0, $" {keys[i].Name}");
@@ -66,11 +72,15 @@ public class DocumentationReportDatabaseEntities : DocXHelper
 
             if (showFile)
                 ShowFile(document);
+
+            return document.FileInfo;
         }
         catch (Exception e)
         {
             notifier.OnCheckPerformed(new CheckEventArgs("Report generation failed", CheckResult.Fail, e));
         }
+
+        return null;
     }
 
     private void Check(ICheckNotifier notifier)

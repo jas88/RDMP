@@ -11,7 +11,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using NPOI.XWPF.UserModel;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode;
@@ -179,7 +178,7 @@ public class MetadataReport : DocXHelper
         return null;
     }
 
-    private void CreateLookupAppendix(XWPFDocument document, IDataLoadEventListener listener)
+    private void CreateLookupAppendix(DocXDocument document, IDataLoadEventListener listener)
     {
         InsertSectionPageBreak(document);
         InsertHeader(document, "Appendix 1 - Lookup Tables");
@@ -269,7 +268,7 @@ public class MetadataReport : DocXHelper
         return dt;
     }
 
-    private static void AddImages(XWPFDocument document, BitmapWithDescription[] onRequestCatalogueImages)
+    private static void AddImages(DocXDocument document, BitmapWithDescription[] onRequestCatalogueImages)
     {
         foreach (var image in onRequestCatalogueImages)
         {
@@ -283,7 +282,7 @@ public class MetadataReport : DocXHelper
         }
     }
 
-    private void CreateDescriptionsTable(XWPFDocument document, Catalogue c)
+    private void CreateDescriptionsTable(DocXDocument document, Catalogue c)
     {
         var extractionInformations = c.GetAllExtractionInformation(ExtractionCategory.Any).Where(Include).ToList();
         extractionInformations.Sort(IsExtractionIdentifiersFirstOrder);
@@ -336,7 +335,7 @@ public class MetadataReport : DocXHelper
         AutoFit(table);
     }
 
-    private static void CreateNonExtractableColumnsTable(XWPFDocument document, Catalogue c)
+    private static void CreateNonExtractableColumnsTable(DocXDocument document, Catalogue c)
     {
         var nonExtractableCatalogueItems = c.CatalogueItems.Where(ci => ci.ExtractionInformation == null).ToList();
 
@@ -389,7 +388,7 @@ public class MetadataReport : DocXHelper
         };
     }
 
-    private void CreateCountTable(XWPFDocument document, int recordCount, int distinctCount, string identifierName)
+    private void CreateCountTable(DocXDocument document, int recordCount, int distinctCount, string identifierName)
     {
         var table = InsertTable(document, 2, identifierName != null && _args.IncludeDistinctIdentifierCounts ? 2 : 1);
 

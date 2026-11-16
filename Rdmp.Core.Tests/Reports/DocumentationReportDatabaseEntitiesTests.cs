@@ -4,6 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using System.Linq;
 using NSubstitute;
 using NUnit.Framework;
 using Rdmp.Core.Reports;
@@ -32,6 +33,22 @@ internal class DocumentationReportDatabaseEntitiesTests : UnitTests
                 var iconProvider = Substitute.For<IIconProvider>();
                 iconProvider.GetImage(Arg.Any<object>(), Arg.Any<OverlayKind>()).Returns(img);
 
-                reporter.GenerateReport(store, ThrowImmediatelyCheckNotifier.Quiet, iconProvider, false);
+                var file = reporter.GenerateReport(store, ThrowImmediatelyCheckNotifier.Quiet, iconProvider, false);
+
+                Assert.That(file, Is.Not.Null);
+                var contents = DocXContents.Read(file.FullName);
+                var table = contents.Tables.Single();
+
+                Assert.Multiple(() =>
+                {
+                        contents.AssertValid();
+                        Assert.That(table[0], Is.EqualTo(new[] { "Tables" }));
+                        Assert.That(table, Has.Length.GreaterThan(1));
+                        Assert.That(table[1][0], Does.StartWith(" "), "Type name row should follow the icon");
+                        // one icon per documented type
+                        Assert.That(contents.DrawingCount, Is.EqualTo((table.Length - 1) / 2));
+                        Assert.That(contents.ImageCount, Is.EqualTo(contents.DrawingCount));
+                });
+                file.Delete();
         }
 }
