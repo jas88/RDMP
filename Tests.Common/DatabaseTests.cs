@@ -912,8 +912,8 @@ delete from {1}..Project
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             Assert.Inconclusive();
 
-        //give the user access to the table
-        var sql = GrantAccessSql(username, dbType, permissions);
+        //give the user access to the database (replacing any rights granted by previous tests)
+        var sql = GrantAccessSql(username, db, permissions);
 
         using (var con = db.Server.GetConnection())
         {
@@ -933,35 +933,61 @@ delete from {1}..Project
     }
 
 
-    private static string GrantAccessSql(string username, DatabaseType type, TestLowPrivilegePermissions permissions)
+    private static string GrantAccessSql(string username, DiscoveredDatabase db, TestLowPrivilegePermissions permissions)
     {
-        switch (type)
+        var reader = permissions.HasFlag(TestLowPrivilegePermissions.Reader);
+        var writer = permissions.HasFlag(TestLowPrivilegePermissions.Writer);
+        var ddl = permissions.HasFlag(TestLowPrivilegePermissions.CreateAndDropTables);
+        var dbName = db.GetRuntimeName();
+
+        switch (db.Server.DatabaseType)
         {
             case DatabaseType.MicrosoftSQLServer:
-                return string.Format(@"
-if exists (select * from sys.sysusers where name = '{0}')
-	drop user [{0}]
+                return $@"
+if exists (select * from sys.sysusers where name = '{username}')
+	drop user [{username}]
 GO
 
-CREATE USER [{0}] FOR LOGIN [{0}]
+CREATE USER [{username}] FOR LOGIN [{username}]
 GO
-{1} ALTER ROLE [db_datareader] ADD MEMBER [{0}]
-{2} ALTER ROLE [db_datawriter] ADD MEMBER [{0}]
-{3} ALTER ROLE [db_ddladmin] ADD MEMBER [{0}]
+{(reader ? "" : "--")} ALTER ROLE [db_datareader] ADD MEMBER [{username}]
+{(writer ? "" : "--")} ALTER ROLE [db_datawriter] ADD MEMBER [{username}]
+{(ddl ? "" : "--")} ALTER ROLE [db_ddladmin] ADD MEMBER [{username}]
 GO
-", username,
-                    permissions.HasFlag(TestLowPrivilegePermissions.Reader) ? "" : "--",
-                    permissions.HasFlag(TestLowPrivilegePermissions.Reader) ? "" : "--",
-                    permissions.HasFlag(TestLowPrivilegePermissions.CreateAndDropTables) ? "" : "--");
+";
             case DatabaseType.MySql:
-                break;
-            case DatabaseType.Oracle:
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type));
-        }
+            {
+                var grants = new List<string>();
+                if (reader) grants.Add("SELECT, SHOW VIEW");
+                if (writer) grants.Add("INSERT, UPDATE, DELETE");
+                if (ddl) grants.Add("CREATE, DROP, ALTER, INDEX, CREATE VIEW, TRIGGER");
 
-        throw new NotImplementedException();
+                var sql = $"REVOKE IF EXISTS ALL PRIVILEGES ON `{dbName}`.* FROM '{username}'@'%';";
+                if (grants.Count > 0)
+                    sql += $"GRANT {string.Join(", ", grants)} ON `{dbName}`.* TO '{username}'@'%';";
+                return sql;
+            }
+            case DatabaseType.PostgreSql:
+            {
+                var tableRights = new List<string>();
+                if (reader) tableRights.Add("SELECT");
+                if (writer) tableRights.Add("INSERT, UPDATE, DELETE");
+
+                var sql = $@"REVOKE ALL ON ALL TABLES IN SCHEMA public FROM ""{username}"";
+GRANT CONNECT ON DATABASE ""{dbName}"" TO ""{username}"";
+GRANT USAGE ON SCHEMA public TO ""{username}"";";
+                if (tableRights.Count > 0)
+                    sql += $@"
+GRANT {string.Join(", ", tableRights)} ON ALL TABLES IN SCHEMA public TO ""{username}"";";
+                if (ddl)
+                    sql += $@"
+GRANT CREATE ON SCHEMA public TO ""{username}"";";
+                return sql;
+            }
+            default:
+                throw new NotSupportedException(
+                    $"Low privilege user setup is not implemented for {db.Server.DatabaseType}");
+        }
     }
 
     protected static void Clear(LoadDirectory loadDirectory)
