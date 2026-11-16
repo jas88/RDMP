@@ -61,6 +61,10 @@ public abstract partial class DatabaseTests
     protected readonly IRDMPPlatformRepositoryServiceLocator RepositoryLocator;
     public static TestDatabasesSettings TestDatabaseSettings;
     private static bool HaveTriedCreatingTestDatabases;
+    private static bool? _testServerExists;
+
+    private const string TestServerMissingMessage =
+        "Test database server does not exist.  You must install SQL Server LocalDb or Sql Server Express to run DatabaseTests. Or update TestDatabases.txt to point to your existing server.";
 
     public ICatalogueRepository CatalogueRepository => RepositoryLocator.CatalogueRepository;
 
@@ -168,6 +172,16 @@ public abstract partial class DatabaseTests
 
             if (!cataRepo.DiscoveredServer.Exists()) DealWithMissingTestDatabases(opts, cataRepo);
         }
+        else
+        {
+            // A file system repository only replaces the Catalogue and DataExport databases. Everything else is
+            // still on the test server, and without it Startup fails whichever fixture happens to run first.
+            _testServerExists ??= new DiscoveredServer(TestDatabaseSettings.ServerName, null,
+                DatabaseType.MicrosoftSQLServer, TestDatabaseSettings.Username, TestDatabaseSettings.Password).Exists();
+
+            if (_testServerExists == false)
+                Assert.Inconclusive(TestServerMissingMessage);
+        }
 
 
         Console.WriteLine("Found Catalogue");
@@ -232,8 +246,7 @@ public abstract partial class DatabaseTests
         var mainDb = cataRepo.DiscoveredServer.ExpectDatabase("master");
 
         if (HaveTriedCreatingTestDatabases || !mainDb.Server.Exists())
-            Assert.Inconclusive(
-                "Test database server does not exist.  You must install SQL Server LocalDb or Sql Server Express to run DatabaseTests. Or update TestDatabases.txt to point to your existing server.");
+            Assert.Inconclusive(TestServerMissingMessage);
 
         // if user is trying to connect to a test database
         // and that server exists (but TEST_ databases don't)
