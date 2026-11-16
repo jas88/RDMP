@@ -28,6 +28,7 @@
         <None Remove="DataLoad\Engine\Unit\TestFile\FreakyBook1.xlsx" />
         <None Remove="DataLoad\Engine\Unit\TestFile\OddFormats.xls" />
         <None Remove="DataLoad\Engine\Unit\TestFile\Date1904.xls" />
+        <None Remove="DataLoad\Engine\Unit\TestFile\LargeDate1904.xls" />
     </ItemGroup>
     <ItemGroup>
         <Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
@@ -64,6 +65,7 @@
         <EmbeddedResource Include="DataLoad\Engine\Unit\TestFile\FreakyBook1.xlsx" />
         <EmbeddedResource Include="DataLoad\Engine\Unit\TestFile\OddFormats.xls" />
         <EmbeddedResource Include="DataLoad\Engine\Unit\TestFile\Date1904.xls" />
+        <EmbeddedResource Include="DataLoad\Engine\Unit\TestFile\LargeDate1904.xls" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" />

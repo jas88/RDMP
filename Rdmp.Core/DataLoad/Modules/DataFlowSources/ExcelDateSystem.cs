@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -26,24 +27,34 @@ public static class ExcelDateSystem
 
     private const ushort BiffDateModeRecord = 0x0022;
     private const ushort BiffEofRecord = 0x000A;
+    private const int BiffRecordHeaderSize = 4;
+
+    /// <summary>
+    /// Reads <paramref name="destination"/>.Length bytes starting <paramref name="offset"/> bytes into a stream within a
+    /// compound file.  Returns false if the stream does not have them.
+    /// </summary>
+    private delegate bool ReadAt(long offset, Span<byte> destination);
 
     /// <summary>
     /// Returns true if the workbook uses the 1904 date system.  Returns false for the 1900 system, for formats it cannot
     /// inspect (e.g. .xlsb) and if the flag cannot be read.
+    /// <para>The workbook is the whole of <paramref name="stream"/> (which must be seekable) wherever it is currently
+    /// positioned and that position is restored before returning.  Only the parts of the file needed to find the flag
+    /// are read.</para>
     /// </summary>
     public static bool IsDate1904(Stream stream)
     {
-        var start = stream.Position;
+        var position = stream.Position;
         try
         {
-            var header = new byte[CompoundFileSignature.Length];
-            var read = stream.Read(header, 0, header.Length);
-            stream.Position = start;
+            stream.Position = 0;
+            var signature = new byte[CompoundFileSignature.Length];
+            var read = stream.ReadAtLeast(signature, signature.Length, false);
 
-            if (read >= ZipSignature.Length && header.Take(ZipSignature.Length).SequenceEqual(ZipSignature))
+            if (read >= ZipSignature.Length && signature.AsSpan(0, ZipSignature.Length).SequenceEqual(ZipSignature))
                 return IsXlsxDate1904(stream);
 
-            if (read == header.Length && header.SequenceEqual(CompoundFileSignature))
+            if (read == signature.Length && signature.AsSpan().SequenceEqual(CompoundFileSignature))
                 return IsXlsDate1904(stream);
 
             return false;
@@ -56,12 +67,13 @@ public static class ExcelDateSystem
         }
         finally
         {
-            stream.Position = start;
+            stream.Position = position;
         }
     }
 
     private static bool IsXlsxDate1904(Stream stream)
     {
+        // a zip archive is read from its end so this too is independent of where the stream is positioned
         using var zip = new ZipArchive(stream, ZipArchiveMode.Read, true);
         var entry = zip.GetEntry("xl/workbook.xml") ??
                     zip.Entries.FirstOrDefault(e =>
@@ -69,7 +81,8 @@ public static class ExcelDateSystem
         if (entry == null)
             return false;
 
-        using var xml = XmlReader.Create(entry.Open(),
+        using var entryStream = entry.Open();
+        using var xml = XmlReader.Create(entryStream,
             new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null });
         while (xml.Read())
         {
@@ -85,23 +98,39 @@ public static class ExcelDateSystem
 
     private static bool IsXlsDate1904(Stream stream)
     {
-        var workbook = CompoundFile.ReadStream(stream, "Workbook") ?? CompoundFile.ReadStream(stream, "Book");
-        if (workbook == null)
-            return false;
+        var file = new CompoundFile(stream);
 
-        // Scan the workbook globals substream (ends at the first EOF record) for DATEMODE
-        var offset = 0;
-        while (offset + 4 <= workbook.Length)
+        // Excel 97 and later keep the workbook in a stream called Workbook, earlier versions in one called Book
+        var workbook = file.OpenStream("Workbook", out var size) ?? file.OpenStream("Book", out size);
+
+        return workbook != null && HasDate1904Record(workbook, size);
+    }
+
+    /// <summary>
+    /// Looks for a DATEMODE record saying the workbook uses the 1904 date system.  A workbook stream is a sequence of
+    /// records, each a 4 byte header (type then length of the body) followed by the body.  Only the headers are read, the
+    /// bodies are skipped, and only as far as the first EOF record: that ends the records describing the workbook as a
+    /// whole, which is where DATEMODE is, and the worksheets follow it.
+    /// </summary>
+    private static bool HasDate1904Record(ReadAt read, long size)
+    {
+        Span<byte> header = stackalloc byte[BiffRecordHeaderSize];
+
+        for (long offset = 0; offset + BiffRecordHeaderSize <= size && read(offset, header);)
         {
-            var type = BitConverter.ToUInt16(workbook, offset);
-            var length = BitConverter.ToUInt16(workbook, offset + 2);
-            offset += 4;
+            var type = BinaryPrimitives.ReadUInt16LittleEndian(header);
+            var length = BinaryPrimitives.ReadUInt16LittleEndian(header[2..]);
+            offset += BiffRecordHeaderSize;
 
             if (type == BiffEofRecord)
                 return false;
 
-            if (type == BiffDateModeRecord && length >= 2 && offset + 2 <= workbook.Length)
-                return BitConverter.ToUInt16(workbook, offset) == 1;
+            if (type == BiffDateModeRecord)
+            {
+                var body = header[..2];
+                return length >= body.Length && offset + body.Length <= size && read(offset, body) &&
+                       BinaryPrimitives.ReadUInt16LittleEndian(body) == 1;
+            }
 
             offset += length;
         }
@@ -110,56 +139,130 @@ public static class ExcelDateSystem
     }
 
     /// <summary>
-    /// Minimal reader for the OLE2 compound file container used by .xls, sufficient to extract a named top level stream.
+    /// Minimal reader for the compound file (OLE2) container used by .xls: a header then sectors of a fixed size which are
+    /// linked into chains by the file allocation table (FAT), itself held in sectors.  A stream is a chain of sectors and a
+    /// directory, also a chain, gives the name, first sector and size of each stream.
     /// </summary>
-    private static class CompoundFile
+    private sealed class CompoundFile
     {
         private const uint EndOfChain = 0xFFFFFFFE;
-        private const uint FreeSector = 0xFFFFFFFF;
+        private const uint MaxRegularSector = 0xFFFFFFFA;
+        private const int HeaderSize = 512;
+        private const int HeaderFatSectors = 109;
         private const int DirectoryEntrySize = 128;
+        private const byte StreamEntry = 2;
+        private const byte RootEntry = 5;
 
-        public static byte[] ReadStream(Stream stream, string name)
+        private readonly Stream _stream;
+        private readonly int _sectorSize;
+        private readonly int _miniSectorSize;
+        private readonly uint _miniStreamCutoff;
+        private readonly uint _firstDirectorySector;
+        private readonly uint _firstMiniFatSector;
+
+        /// <summary>Number of sectors in the file, no chain can have more than this</summary>
+        private readonly long _sectorCount;
+
+        /// <summary>The location of each sector of the FAT</summary>
+        private readonly List<uint> _fatSectors = new();
+
+        /// <summary>The sectors of the FAT read so far, by their position in the FAT</summary>
+        private readonly Dictionary<int, uint[]> _fat = new();
+
+        private byte[] _directory;
+
+        public CompoundFile(Stream stream)
         {
+            _stream = stream;
+
+            var header = new byte[HeaderSize];
             stream.Position = 0;
-            var header = ReadExactly(stream, 512);
-            var sectorSize = 1 << BitConverter.ToUInt16(header, 0x1E);
-            var miniSectorSize = 1 << BitConverter.ToUInt16(header, 0x20);
-            var fatSectorCount = BitConverter.ToUInt32(header, 0x2C);
-            var firstDirectorySector = BitConverter.ToUInt32(header, 0x30);
-            var miniStreamCutoff = BitConverter.ToUInt32(header, 0x38);
-            var firstMiniFatSector = BitConverter.ToUInt32(header, 0x3C);
-            var firstDifatSector = BitConverter.ToUInt32(header, 0x44);
+            stream.ReadExactly(header);
 
-            var fat = ReadFat(stream, header, sectorSize, fatSectorCount, firstDifatSector);
-            var directory = ReadChain(stream, fat, firstDirectorySector, sectorSize);
+            // 512 byte sectors (4096 in the rarely used version 4) and 64 byte mini sectors in every real file
+            var sectorShift = BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(0x1E));
+            var miniSectorShift = BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(0x20));
+            if (sectorShift is < 9 or > 20 || miniSectorShift >= sectorShift)
+                throw new InvalidDataException("Unsupported compound file sector size");
 
-            uint? rootStart = null;
-            long rootSize = 0;
-            for (var offset = 0; offset + DirectoryEntrySize <= directory.Length; offset += DirectoryEntrySize)
+            _sectorSize = 1 << sectorShift;
+            _miniSectorSize = 1 << miniSectorShift;
+            _sectorCount = Math.Max(0, (stream.Length - 1) / _sectorSize); // the header takes the place of the first
+            _firstDirectorySector = ReadUInt32(header, 0x30);
+            _miniStreamCutoff = ReadUInt32(header, 0x38);
+            _firstMiniFatSector = ReadUInt32(header, 0x3C);
+
+            // The header lists the first sectors of the FAT.  A file of more than a few MB continues the list in a chain
+            // of sectors, each ending with the location of the next.
+            var fatSectorCount = ReadUInt32(header, 0x2C);
+            for (var i = 0; i < HeaderFatSectors && _fatSectors.Count < fatSectorCount; i++)
+                _fatSectors.Add(ReadUInt32(header, 0x4C + i * 4));
+
+            var listSector = ReadUInt32(header, 0x44);
+            var entriesPerSector = _sectorSize / 4 - 1;
+            for (long guard = 0; _fatSectors.Count < fatSectorCount && IsSector(listSector) && guard < _sectorCount; guard++)
             {
-                var type = directory[offset + 0x42];
-                var start = BitConverter.ToUInt32(directory, offset + 0x74);
-                var size = (long)BitConverter.ToUInt32(directory, offset + 0x78);
+                var list = ReadSector(listSector);
+                for (var i = 0; i < entriesPerSector && _fatSectors.Count < fatSectorCount; i++)
+                    _fatSectors.Add(ReadUInt32(list, i * 4));
 
-                if (type == 5) // root entry, owns the mini stream
+                listSector = ReadUInt32(list, entriesPerSector * 4);
+            }
+        }
+
+        /// <summary>
+        /// Returns a reader for the first stream called <paramref name="name"/> (the one ExcelDataReader reads) and its
+        /// <paramref name="size"/>, or null if there is no such stream.
+        /// </summary>
+        public ReadAt OpenStream(string name, out long size)
+        {
+            _directory ??= ReadChain(_firstDirectorySector);
+
+            uint? miniStreamStart = null;
+            long miniStreamSize = 0;
+            size = 0;
+
+            for (var offset = 0; offset + DirectoryEntrySize <= _directory.Length; offset += DirectoryEntrySize)
+            {
+                var type = _directory[offset + 0x42];
+                var start = ReadUInt32(_directory, offset + 0x74);
+                long entrySize = ReadUInt32(_directory, offset + 0x78);
+
+                if (type == RootEntry) // always the first entry, its stream holds the mini stream
                 {
-                    rootStart = start;
-                    rootSize = size;
+                    miniStreamStart = start;
+                    miniStreamSize = entrySize;
                     continue;
                 }
 
-                if (type != 2 || !string.Equals(EntryName(directory, offset), name, StringComparison.OrdinalIgnoreCase))
+                if (type != StreamEntry ||
+                    !string.Equals(EntryName(_directory, offset), name, StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                if (size >= miniStreamCutoff)
-                    return Truncate(ReadChain(stream, fat, start, sectorSize), size);
+                if (entrySize >= _miniStreamCutoff)
+                {
+                    size = entrySize;
+                    return new SectorChain(this, start).TryRead;
+                }
 
-                if (rootStart == null)
+                if (miniStreamStart == null)
                     return null;
 
-                var miniFat = ToUInt32s(ReadChain(stream, fat, firstMiniFatSector, sectorSize));
-                var miniStream = Truncate(ReadChain(stream, fat, rootStart.Value, sectorSize), rootSize);
-                return Truncate(ReadMiniChain(miniStream, miniFat, start, miniSectorSize), size);
+                // A stream of under 4096 bytes is stored in 64 byte mini sectors, which have their own FAT and are
+                // themselves held in the root entry's stream.  All of that is a few KB at most so it is simply loaded.
+                var miniFat = ToUInt32s(ReadChain(_firstMiniFatSector));
+                var miniStream = Truncate(ReadChain(miniStreamStart.Value), miniStreamSize);
+                var contents = Truncate(ReadMiniChain(miniStream, miniFat, start), entrySize);
+
+                size = contents.Length;
+                return (position, destination) =>
+                {
+                    if (position + destination.Length > contents.Length)
+                        return false;
+
+                    contents.AsSpan((int)position, destination.Length).CopyTo(destination);
+                    return true;
+                };
             }
 
             return null;
@@ -167,82 +270,147 @@ public static class ExcelDateSystem
 
         private static string EntryName(byte[] directory, int offset)
         {
-            var nameLength = BitConverter.ToUInt16(directory, offset + 0x40);
+            var nameLength = BinaryPrimitives.ReadUInt16LittleEndian(directory.AsSpan(offset + 0x40));
             return nameLength < 2 ? "" : Encoding.Unicode.GetString(directory, offset, Math.Min((int)nameLength, 64) - 2);
         }
 
-        private static uint[] ReadFat(Stream stream, byte[] header, int sectorSize, uint fatSectorCount,
-            uint firstDifatSector)
+        /// <summary>
+        /// True if <paramref name="sector"/> is the number of a sector of the file rather than a marker such as the end of
+        /// a chain
+        /// </summary>
+        private bool IsSector(uint sector) => sector <= MaxRegularSector && sector < _sectorCount;
+
+        /// <summary>
+        /// Returns the sector which follows <paramref name="sector"/> in its chain, reading the sector of the FAT which
+        /// says so if it has not already been read.
+        /// </summary>
+        private uint Next(uint sector)
         {
-            var fatSectors = new List<uint>();
-            for (var i = 0; i < 109 && fatSectors.Count < fatSectorCount; i++)
-                fatSectors.Add(BitConverter.ToUInt32(header, 0x4C + i * 4));
+            var entriesPerSector = _sectorSize / 4;
+            var index = (int)(sector / entriesPerSector);
+            if (index >= _fatSectors.Count || !IsSector(_fatSectors[index]))
+                return EndOfChain;
 
-            var difatSector = firstDifatSector;
-            var guard = 0;
-            while (fatSectors.Count < fatSectorCount && difatSector != EndOfChain && difatSector != FreeSector &&
-                   guard++ < 1_000_000)
-            {
-                var difat = ReadSector(stream, difatSector, sectorSize);
-                var entries = sectorSize / 4 - 1;
-                for (var i = 0; i < entries && fatSectors.Count < fatSectorCount; i++)
-                    fatSectors.Add(BitConverter.ToUInt32(difat, i * 4));
-                difatSector = BitConverter.ToUInt32(difat, entries * 4);
-            }
+            if (!_fat.TryGetValue(index, out var entries))
+                _fat.Add(index, entries = ToUInt32s(ReadSector(_fatSectors[index])));
 
-            using var fat = new MemoryStream();
-            foreach (var sector in fatSectors)
-                fat.Write(ReadSector(stream, sector, sectorSize));
-
-            return ToUInt32s(fat.ToArray());
+            return entries[sector % entriesPerSector];
         }
 
-        private static byte[] ReadChain(Stream stream, uint[] fat, uint start, int sectorSize)
+        /// <summary>
+        /// Loads the whole of a chain of sectors (for the small structures: the directory and the mini stream and its FAT)
+        /// </summary>
+        private byte[] ReadChain(uint start)
         {
             using var result = new MemoryStream();
             var visited = new HashSet<uint>();
-            for (var sector = start; sector < fat.Length && visited.Add(sector); sector = fat[sector])
-                result.Write(ReadSector(stream, sector, sectorSize));
+            for (var sector = start; IsSector(sector) && visited.Add(sector); sector = Next(sector))
+                result.Write(ReadSector(sector));
 
             return result.ToArray();
         }
 
-        private static byte[] ReadMiniChain(byte[] miniStream, uint[] miniFat, uint start, int miniSectorSize)
+        private byte[] ReadMiniChain(byte[] miniStream, uint[] miniFat, uint start)
         {
             using var result = new MemoryStream();
             var visited = new HashSet<uint>();
             for (var sector = start; sector < miniFat.Length && visited.Add(sector); sector = miniFat[sector])
             {
-                var offset = (long)sector * miniSectorSize;
-                if (offset + miniSectorSize > miniStream.Length)
+                var offset = (long)sector * _miniSectorSize;
+                if (offset + _miniSectorSize > miniStream.Length)
                     break;
-                result.Write(miniStream, (int)offset, miniSectorSize);
+
+                result.Write(miniStream, (int)offset, _miniSectorSize);
             }
 
             return result.ToArray();
         }
 
-        private static byte[] ReadSector(Stream stream, uint sector, int sectorSize)
+        private byte[] ReadSector(uint sector)
         {
-            stream.Position = (sector + 1L) * sectorSize;
-            return ReadExactly(stream, sectorSize);
-        }
-
-        private static byte[] ReadExactly(Stream stream, int count)
-        {
-            var buffer = new byte[count];
-            stream.ReadExactly(buffer);
+            var buffer = new byte[_sectorSize];
+            _stream.Position = (sector + 1L) * _sectorSize;
+            _stream.ReadExactly(buffer);
             return buffer;
         }
+
+        private static uint ReadUInt32(byte[] bytes, int offset) =>
+            BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(offset));
 
         private static uint[] ToUInt32s(byte[] bytes)
         {
             var result = new uint[bytes.Length / 4];
-            Buffer.BlockCopy(bytes, 0, result, 0, result.Length * 4);
+            for (var i = 0; i < result.Length; i++)
+                result[i] = ReadUInt32(bytes, i * 4);
+
             return result;
         }
 
         private static byte[] Truncate(byte[] bytes, long size) =>
             size >= bytes.Length ? bytes : bytes[..(int)size];
+
+        /// <summary>
+        /// A stream held as a chain of sectors, read without loading it: the chain is followed only as far as the offset
+        /// asked for and only the bytes asked for are read from the file, so skipping over part of the stream costs
+        /// nothing but looking up the sectors it occupies in the FAT.
+        /// </summary>
+        private sealed class SectorChain
+        {
+            private readonly CompoundFile _file;
+            private readonly uint _start;
+
+            /// <summary>The sector holding the part of the stream at offset <see cref="_index"/> x sector size</summary>
+            private uint _sector;
+
+            private long _index;
+            private long _steps;
+
+            public SectorChain(CompoundFile file, uint start)
+            {
+                _file = file;
+                _start = _sector = start;
+            }
+
+            public bool TryRead(long offset, Span<byte> destination)
+            {
+                while (!destination.IsEmpty)
+                {
+                    // what is asked for can span sectors, which need not be next to each other in the file
+                    if (!MoveTo(offset / _file._sectorSize))
+                        return false;
+
+                    var within = (int)(offset % _file._sectorSize);
+                    var count = Math.Min(destination.Length, _file._sectorSize - within);
+
+                    _file._stream.Position = (_sector + 1L) * _file._sectorSize + within;
+                    _file._stream.ReadExactly(destination[..count]);
+
+                    destination = destination[count..];
+                    offset += count;
+                }
+
+                return true;
+            }
+
+            private bool MoveTo(long index)
+            {
+                if (index < _index)
+                {
+                    _sector = _start;
+                    _index = 0;
+                }
+
+                for (; _index < index && _file.IsSector(_sector); _index++)
+                {
+                    // a chain longer than the file has sectors must loop back on itself
+                    if (++_steps > _file._sectorCount)
+                        return false;
+
+                    _sector = _file.Next(_sector);
+                }
+
+                return _index == index && _file.IsSector(_sector);
+            }
+        }
     }
 }

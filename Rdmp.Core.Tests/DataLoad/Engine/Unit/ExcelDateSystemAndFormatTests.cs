@@ -185,6 +185,7 @@ public class ExcelDateSystemAndFormatTests
     }
 
     [TestCase(Date1904XlsFile, true)]
+    [TestCase(ExcelDateSystemCompoundFileTests.LargeDate1904XlsFile, true)]
     [TestCase(ExcelTests.OddFormatsFile, false)]
     [TestCase(ExcelTests.TestFile, false)]
     public void IsDate1904_Fixtures(string fixture, bool expected)
@@ -194,6 +195,27 @@ public class ExcelDateSystemAndFormatTests
         {
             Assert.That(ExcelDateSystem.IsDate1904(stream), Is.EqualTo(expected));
             Assert.That(stream.Position, Is.Zero, "Stream should be left at its original position");
+        });
+    }
+
+    /// <summary>
+    /// The workbook is the whole stream wherever the stream happens to be positioned, and it is left there
+    /// </summary>
+    [TestCase(Date1904XlsFile)]
+    [TestCase(ExcelDateSystemCompoundFileTests.LargeDate1904XlsFile)]
+    [TestCase("Date1904.xlsx")]
+    public void IsDate1904_StreamNotAtTheStart(string workbook)
+    {
+        var file = workbook.EndsWith(".xlsx") ? Save(DateBook(true), workbook) : Spray(workbook);
+
+        using var stream = File.OpenRead(file.FullName);
+        var middle = stream.Length / 2;
+        stream.Position = middle;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ExcelDateSystem.IsDate1904(stream), Is.True);
+            Assert.That(stream.Position, Is.EqualTo(middle));
         });
     }
 
