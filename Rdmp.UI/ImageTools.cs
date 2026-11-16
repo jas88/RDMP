@@ -95,22 +95,30 @@ public static class ImageTools
                         DrawOverlay(bmp, op.OverlayIcon);
                         break;
                     case RdmpIconOperationKind.Greyscale:
-                        var previous = bmp;
-                        bmp = ToGreyscale(previous);
-                        previous.Dispose();
+                        bmp = ToGreyscaleAndDispose(bmp);
                         break;
                     default:
                         throw new NotSupportedException($"Unknown icon operation {op.Kind}");
                 }
 
-            var result = bmp;
-            bmp = null;
-            return result;
+            return bmp;
         }
-        finally
+        catch
         {
-            bmp?.Dispose();
+            // disposing twice is harmless, which matters if the failure came from ToGreyscaleAndDispose
+            bmp.Dispose();
+            throw;
         }
+    }
+
+    /// <summary>
+    /// Returns a new greyscale copy of <paramref name="source"/>.  <paramref name="source"/> is disposed whether or not
+    /// the copy could be made.
+    /// </summary>
+    private static Bitmap ToGreyscaleAndDispose(Bitmap source)
+    {
+        using (source)
+            return ToGreyscale(source);
     }
 
     /// <summary>

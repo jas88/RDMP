@@ -59,7 +59,9 @@ internal class RdmpIconTests
             Assert.That(linked, Is.Not.EqualTo(CatalogueIcons.Project.WithOverlay(OverlayKind.Link)));
             Assert.That(linked.AsGreyscale(), Is.Not.EqualTo(linked));
             Assert.That(plain.Equals(null), Is.False);
-            Assert.That(plain == null, Is.False);
+
+            // not compared through 'plain': a null comparison would suggest that the variable used above can be null
+            Assert.That(CatalogueIcons.Catalogue == null, Is.False);
             Assert.That((RdmpIcon)null == null);
         });
     }
