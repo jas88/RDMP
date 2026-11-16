@@ -32,3 +32,11 @@ updates:
   directory: "/"
   schedule:
     interval: weekly
+- package-ecosystem: gitsubmodule
+  directory: "/"
+  schedule:
+    interval: weekly
+  # Only build-standards: externals/npoi is pinned to NPOI release tags by
+  # npoi-update-check.yml, whereas Dependabot would track its branch head.
+  allow:
+    - dependency-name: "build-standards"
