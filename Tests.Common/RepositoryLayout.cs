@@ -16,7 +16,10 @@ namespace Tests.Common;
 /// structure and documentation tests.
 /// <para>Enumeration never descends into build output (bin, obj), tool state (.git, .claude, .vs, .idea, node_modules) or any
 /// nested directory which is itself a git checkout (i.e. contains a .git file or directory), so that git worktrees and submodules
-/// inside the repository (e.g. .claude/worktrees/*, externals/npoi, build-standards) are never mistaken for part of this checkout.</para>
+/// inside the repository (e.g. .claude/worktrees/*, externals/npoi, build-standards) are never mistaken for part of this checkout.
+/// Symbolic links and junctions are not followed, so a scan cannot leave the checkout.</para>
+/// <para>Hidden files and directories are otherwise included: directories starting with a dot count as hidden on Linux and macOS
+/// but not on Windows, and content such as the Markdown in .github must be checked identically on every platform.</para>
 /// <para>Optionally it also skips vendored code (the externals and build-standards directories) to which RDMP conventions do not apply.</para>
 /// </summary>
 public static class RepositoryLayout
@@ -38,13 +41,26 @@ public static class RepositoryLayout
         { ".git", ".claude", ".vs", ".idea", "node_modules", "bin", "obj" };
 
     /// <summary>
+    /// Options for listing the immediate content of one directory.  Only reparse points (symbolic links, junctions) are skipped;
+    /// the default of also skipping hidden and system entries is deliberately not used (see the class summary), directories
+    /// which must be skipped are identified by <see cref="IsExcludedDirectory"/> instead.
+    /// </summary>
+    private static readonly EnumerationOptions SingleDirectoryOptions = new()
+    {
+        AttributesToSkip = FileAttributes.ReparsePoint,
+        IgnoreInaccessible = true,
+        MatchCasing = MatchCasing.CaseInsensitive,
+        RecurseSubdirectories = false
+    };
+
+    /// <summary>
     /// Walks up from the test assembly directory to the directory containing <see cref="SolutionFileName"/>
     /// </summary>
     /// <exception cref="DirectoryNotFoundException">If no parent directory contains the solution file</exception>
     public static DirectoryInfo FindRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !File.Exists(Path.Combine(dir.FullName, SolutionFileName)))
+        while (dir != null && !File.Exists(Path.Join(dir.FullName, SolutionFileName)))
             dir = dir.Parent;
 
         return dir ?? throw new DirectoryNotFoundException(
@@ -56,7 +72,7 @@ public static class RepositoryLayout
     /// </summary>
     public static bool IsGitCheckout(DirectoryInfo dir)
     {
-        var dotGit = Path.Combine(dir.FullName, ".git");
+        var dotGit = Path.Join(dir.FullName, ".git");
         return File.Exists(dotGit) || Directory.Exists(dotGit);
     }
 
@@ -66,10 +82,7 @@ public static class RepositoryLayout
     /// </summary>
     public static bool IsVendoredDirectory(DirectoryInfo dir) =>
         VendoredDirectoryNames.Contains(dir.Name, StringComparer.Ordinal) &&
-        dir.Parent != null && File.Exists(Path.Combine(dir.Parent.FullName, SolutionFileName));
-
-    private static readonly EnumerationOptions DirectoryEnumerationOptions = new()
-        { IgnoreInaccessible = true, RecurseSubdirectories = false, AttributesToSkip = FileAttributes.ReparsePoint };
+        dir.Parent != null && File.Exists(Path.Join(dir.Parent.FullName, SolutionFileName));
 
     /// <summary>
     /// True if a recursive scan of the repository should not descend into <paramref name="dir"/>.  Symbolic links and junctions
@@ -88,17 +101,15 @@ public static class RepositoryLayout
     /// skipping inaccessible directories and reparse points (symbolic links, junctions) so a scan cannot escape the checkout
     /// </summary>
     public static IEnumerable<DirectoryInfo> EnumerateDirectories(DirectoryInfo dir, bool excludeVendored) =>
-        dir.EnumerateDirectories("*", DirectoryEnumerationOptions).Where(d => !IsExcludedDirectory(d, excludeVendored));
+        dir.EnumerateDirectories("*", SingleDirectoryOptions).Where(d => !IsExcludedDirectory(d, excludeVendored));
 
     /// <summary>
     /// Recursively enumerates files matching <paramref name="searchPattern"/> (case insensitive) under <paramref name="root"/>,
-    /// without descending into excluded directories, see <see cref="IsExcludedDirectory"/>
+    /// without descending into excluded directories (see <see cref="EnumerateDirectories"/>).  Files which are symbolic links
+    /// are skipped.
     /// </summary>
     public static IEnumerable<FileInfo> EnumerateFiles(DirectoryInfo root, string searchPattern, bool excludeVendored)
     {
-        var options = new EnumerationOptions
-            { MatchCasing = MatchCasing.CaseInsensitive, IgnoreInaccessible = true, RecurseSubdirectories = false };
-
         var pending = new Stack<DirectoryInfo>();
         pending.Push(root);
 
@@ -106,7 +117,7 @@ public static class RepositoryLayout
         {
             var dir = pending.Pop();
 
-            foreach (var file in dir.EnumerateFiles(searchPattern, options))
+            foreach (var file in dir.EnumerateFiles(searchPattern, SingleDirectoryOptions))
                 yield return file;
 
             foreach (var sub in EnumerateDirectories(dir, excludeVendored))

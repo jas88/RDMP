@@ -74,7 +74,7 @@ public class EvaluateNamespacesAndSolutionFoldersTests
 
         _solutionDir = RepositoryLayout.FindRoot();
         _sln = new VisualStudioSolutionFile(_solutionDir,
-            new FileInfo(Path.Combine(_solutionDir.FullName, RepositoryLayout.SolutionFileName)));
+            new FileInfo(Path.Join(_solutionDir.FullName, RepositoryLayout.SolutionFileName)));
 
         ProcessFolderRecursive(_sln.RootFolders, _solutionDir);
 
@@ -195,12 +195,10 @@ public class EvaluateNamespacesAndSolutionFoldersTests
     private void ProcessFolderRecursive(IEnumerable<VisualStudioSolutionFolder> folders,
         DirectoryInfo currentPhysicalDirectory)
     {
-        foreach (var solutionFolder in folders)
+        // Vendored third party source (externals solution folder) is exempt from hygiene rules
+        foreach (var solutionFolder in folders.Where(static f =>
+                     !f.Name.Equals(RepositoryLayout.ExternalsDirectoryName, StringComparison.Ordinal)))
         {
-            // Vendored third party source (externals solution folder) is exempt from hygiene rules
-            if (solutionFolder.Name.Equals(RepositoryLayout.ExternalsDirectoryName, StringComparison.Ordinal))
-                continue;
-
             var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
                 .SingleOrDefault(d => d.Name.Equals(solutionFolder.Name));
 
@@ -270,12 +268,12 @@ public class EvaluateNamespacesAndSolutionFoldersTests
     /// </summary>
     private FileInfo FindConsolidatedPluginProject(VisualStudioProjectReference p, DirectoryInfo physicalSolutionFolder)
     {
-        var pluginsDir = Path.Combine(physicalSolutionFolder.FullName, "Plugins");
+        var pluginsDir = Path.Join(physicalSolutionFolder.FullName, "Plugins");
 
-        var csProjFile = FindCsProj(Path.Combine(pluginsDir, p.Name), p.Name)
+        var csProjFile = FindCsProj(Path.Join(pluginsDir, p.Name), p.Name)
                          ?? FindCsProj(pluginsDir, p.Name)
                          ?? FindCsProj(physicalSolutionFolder.FullName, p.Name)
-                         ?? FindCsProj(Path.Combine(physicalSolutionFolder.FullName, p.Name), p.Name);
+                         ?? FindCsProj(Path.Join(physicalSolutionFolder.FullName, p.Name), p.Name);
 
         if (csProjFile == null)
             _structureErrors.Add(

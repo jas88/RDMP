@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
@@ -24,11 +25,8 @@ public static partial class AutoCommentsEvaluator
     {
         var suggestedNewFileContents = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
-        foreach (var f in csFilesFound)
+        foreach (var f in csFilesFound.Where(static f => !f.Contains(".Designer.cs")))
         {
-            if (f.Contains(".Designer.cs"))
-                continue;
-
             var changes = false;
 
             var sbSuggestedText = new StringBuilder();

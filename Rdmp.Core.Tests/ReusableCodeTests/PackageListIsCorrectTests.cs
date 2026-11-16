@@ -89,7 +89,7 @@ public class PackageListIsCorrectTests
     {
         if (path == null) return RepositoryLayout.FindRoot();
 
-        if (!Path.IsPathRooted(path)) path = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
+        if (!Path.IsPathRooted(path)) path = Path.Join(TestContext.CurrentContext.TestDirectory, path);
         return new DirectoryInfo(path);
     }
 

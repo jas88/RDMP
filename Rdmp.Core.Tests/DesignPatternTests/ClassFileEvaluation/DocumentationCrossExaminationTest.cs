@@ -37,8 +37,6 @@ internal class DocumentationCrossExaminationTest
         Environment.GetEnvironmentVariable(RewriteMarkdownEnvironmentVariable) is { } v &&
         (v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase));
 
-    private const string MarkdownCodeBlocksFile = "Rdmp.UI.Tests/DesignPatternTests/MarkdownCodeBlockTests.cs";
-
     private string _markdownCodeBlocksContent;
 
     //words that are in Pascal case and you can use in comments despite not being in the codebase... this is an ironic variable to be honest
@@ -429,13 +427,9 @@ internal class DocumentationCrossExaminationTest
                 }
         }
 
-        //find all comments in .md tutorials
-        foreach (var mdFile in _mdFiles)
+        //find all comments in .md tutorials (don't look in the packages dir!)
+        foreach (var mdFile in _mdFiles.Where(f => !RepositoryLayout.GetRelativePath(_slndir, f).Contains("packages")))
         {
-            //don't look in the packages dir!
-            if (RepositoryLayout.GetRelativePath(_slndir, mdFile).Contains("packages"))
-                continue;
-
             fileCommentTokens.Add(mdFile, new HashSet<string>());
             var fileContents = File.ReadAllText(mdFile);
 
@@ -474,7 +468,7 @@ internal class DocumentationCrossExaminationTest
 
     private void EnsureCodeBlocksCompile(string mdFile)
     {
-        var codeBlocks = Path.Combine(_slndir.FullName, MarkdownCodeBlocksFile);
+        var codeBlocks = Path.Join(_slndir.FullName, "Rdmp.UI.Tests", "DesignPatternTests", "MarkdownCodeBlockTests.cs");
         var codeBlocksContent = _markdownCodeBlocksContent ??= File.ReadAllText(codeBlocks);
 
         var rGuidComment = new Regex("<!--- (.{32}) --->");
@@ -532,13 +526,11 @@ internal class DocumentationCrossExaminationTest
 
     private void EnsureMaximumGlossaryUse(string mdFile, List<string> problems)
     {
-        const string glossaryRelativePath = "Documentation/CodeTutorials/Glossary.md";
-
         var rGlossary = new Regex("##([A-z ]*)");
         var rWords = new Regex(@"\[?\w*\]?");
         var rGlossaryLink = new Regex(@"^\[\w*\]:");
 
-        var glossaryPath = Path.Combine(_slndir.FullName, glossaryRelativePath);
+        var glossaryPath = Path.Join(_slndir.FullName, "Documentation", "CodeTutorials", "Glossary.md");
 
         //don't evaluate the glossary!
         if (Path.GetFileName(mdFile) == "Glossary.md")
