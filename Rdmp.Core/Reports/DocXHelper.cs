@@ -46,11 +46,17 @@ public class DocXHelper
     /// </summary>
     private const int TableWidth = 10000;
 
+    /// <summary>
+    /// Every kind of line ending.  Text is split on all of them, whatever the operating system, so that the same text
+    /// gives the same document everywhere.  "\r\n" comes first so that it counts as one line ending, not two.
+    /// </summary>
+    private static readonly string[] LineEndings = { "\r\n", "\r", "\n" };
+
     protected static void InsertParagraph(DocXDocument document, string ptext, int textFontSize = -1)
     {
         if (string.IsNullOrWhiteSpace(ptext)) return;
 
-        foreach (var para in ptext.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+        foreach (var para in ptext.Split(LineEndings, StringSplitOptions.RemoveEmptyEntries))
             document.Append(new Paragraph(CreateTextRun(para, textFontSize != -1 ? textFontSize : DefaultFontSize)));
     }
 
@@ -71,9 +77,9 @@ public class DocXHelper
 
     /// <summary>
     /// Creates a run containing <paramref name="text"/> (whitespace preserved) in the given point size (-1 for unspecified).
-    /// As when these documents were written with NPOI, every line feed in <paramref name="text"/> becomes a line break
-    /// (so blank lines and leading or trailing breaks are kept) and a carriage return on its own is white space.
-    /// Characters which cannot be stored in XML are dealt with by <see cref="RemoveInvalidXmlCharacters"/>.
+    /// Every line ending in <paramref name="text"/> becomes a line break, so blank lines and leading or trailing
+    /// breaks are kept (as they were when these documents were written with NPOI).  Characters which cannot be
+    /// stored in XML are dealt with by <see cref="RemoveInvalidXmlCharacters"/>.
     /// </summary>
     private static Run CreateTextRun(string text, int fontSize)
     {
@@ -82,7 +88,7 @@ public class DocXHelper
         if (fontSize != -1)
             run.AppendChild(new RunProperties(new FontSize { Val = (fontSize * 2).ToString() }));
 
-        var lines = RemoveInvalidXmlCharacters(text ?? "").Replace("\r\n", "\n").Replace('\r', ' ').Split('\n');
+        var lines = RemoveInvalidXmlCharacters(text ?? "").Split(LineEndings, StringSplitOptions.None);
 
         for (var i = 0; i < lines.Length; i++)
         {
@@ -146,7 +152,7 @@ public class DocXHelper
         // each line goes in the cell's first paragraph, followed by a line break
         var para = GetTableCell(table, row, col).Elements<Paragraph>().First();
 
-        foreach (var run in value.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+        foreach (var run in value.Split(LineEndings, StringSplitOptions.RemoveEmptyEntries)
                      .Select(bit => CreateTextRun(bit, fontSize)))
         {
             run.AppendChild(new Break());

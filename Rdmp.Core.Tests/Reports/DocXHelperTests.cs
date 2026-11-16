@@ -244,15 +244,15 @@ internal class DocXHelperTests : DocXHelper
     }
 
     [Test]
-    public void Text_LineFeedsInsideARun_BecomeLineBreaks()
+    public void Text_LineEndingsInsideARun_BecomeLineBreaks()
     {
         using (var document = GetNewDocFile(new FileInfo(_path)))
         {
             // InsertHeader does not split its text into paragraphs, so every kind of line ending reaches the run
             InsertHeader(document, "one\ntwo\r\nthree\rfour");
 
-            // as when written with NPOI, each line feed is one break: blank lines, leading and trailing breaks are kept
-            InsertHeader(document, "\nfirst\n\nsecond\n", 2);
+            // each line ending is one break: blank lines, leading and trailing breaks are kept
+            InsertHeader(document, "\nfirst\n\nsecond\r\n", 2);
 
             InsertHeader(document, "", 3);
         }
@@ -268,10 +268,41 @@ internal class DocXHelperTests : DocXHelper
         {
             Assert.That(runs, Has.Length.EqualTo(3));
 
-            // a carriage return on its own is white space, not a line ending
-            Assert.That(ContentOf(runs[0]), Is.EqualTo(new[] { "one", "<br>", "two", "<br>", "three four" }));
+            Assert.That(ContentOf(runs[0]),
+                Is.EqualTo(new[] { "one", "<br>", "two", "<br>", "three", "<br>", "four" }));
             Assert.That(ContentOf(runs[1]), Is.EqualTo(new[] { "<br>", "first", "<br>", "<br>", "second", "<br>" }));
             Assert.That(ContentOf(runs[2]), Is.Empty);
+        });
+    }
+
+    [Test]
+    public void ParagraphsAndCells_SplitOnEveryKindOfLineEnding()
+    {
+        // every kind of line ending, with blank lines, whatever Environment.NewLine is on this machine
+        const string text = "first\r\nsecond\nthird\rfourth\r\n\r\n\nfifth\n";
+
+        using (var document = GetNewDocFile(new FileInfo(_path)))
+        {
+            InsertParagraph(document, text);
+
+            var table = InsertTable(document, 1, 1);
+            SetTableCell(table, 0, 0, text);
+        }
+
+        using var doc = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(_path, false);
+        var body = doc.MainDocumentPart!.Document.Body!;
+        var expected = new[] { "first", "second", "third", "fourth", "fifth" };
+
+        Assert.Multiple(() =>
+        {
+            // one paragraph per line with nothing left over from the line endings (no stray carriage returns or spaces)
+            Assert.That(body.Elements<Paragraph>().Select(p => p.InnerText), Is.EqualTo(expected));
+            Assert.That(body.Elements<Paragraph>().SelectMany(p => p.Descendants<Break>()), Is.Empty);
+
+            // in a cell each line is a run ending in a line break
+            var cellRuns = body.Descendants<TableCell>().Single().Descendants<Run>().ToArray();
+            Assert.That(cellRuns.Select(r => r.InnerText), Is.EqualTo(expected));
+            Assert.That(cellRuns.Select(r => r.Elements<Break>().Count()), Is.All.EqualTo(1));
         });
     }
 
