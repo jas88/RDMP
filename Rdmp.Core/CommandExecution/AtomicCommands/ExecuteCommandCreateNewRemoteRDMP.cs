@@ -7,8 +7,7 @@
 using Rdmp.Core.Curation.Data.Remoting;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -30,6 +29,6 @@ public class ExecuteCommandCreateNewRemoteRDMP : BasicCommandExecution, IAtomicC
     public override string GetCommandHelp() =>
         "Tell RDMP about another instance of RDMP that is available for communication with via a web service";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.RemoteRDMP, OverlayKind.Add);
 }

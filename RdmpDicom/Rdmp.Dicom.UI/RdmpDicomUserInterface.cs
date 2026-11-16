@@ -21,8 +21,7 @@ using Rdmp.Core.CommandExecution;
 using System.Collections.Generic;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using System.Linq;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Dicom.UI;
 
@@ -74,7 +73,7 @@ public class RdmpDicomUserInterface : PluginUserInterface, IRefreshBusSubscriber
         return null;
     }
 
-    public override Image<Rgba32> GetImage(object concept, OverlayKind kind = OverlayKind.None)
+    public override RdmpIcon GetImage(object concept, OverlayKind kind = OverlayKind.None)
     {
         return null;
     }

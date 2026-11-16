@@ -6,19 +6,17 @@
 
 using System;
 using Rdmp.Core.Curation.Data.DataLoad;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public class ProcessTaskStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private readonly Image<Rgba32> _exe;
-    private readonly Image<Rgba32> _sql;
-    private readonly Image<Rgba32> _plugin;
-    private readonly Image<Rgba32> _attacher;
-    private readonly Image<Rgba32> _dataProvider;
-    private readonly Image<Rgba32> _mutilateDataTables;
+    private readonly RdmpIcon _exe;
+    private readonly RdmpIcon _sql;
+    private readonly RdmpIcon _plugin;
+    private readonly RdmpIcon _attacher;
+    private readonly RdmpIcon _dataProvider;
+    private readonly RdmpIcon _mutilateDataTables;
 
     public ProcessTaskStateBasedIconProvider()
     {
@@ -31,7 +29,7 @@ public class ProcessTaskStateBasedIconProvider : IObjectStateBasedIconProvider
         _mutilateDataTables = CatalogueIcons.MutilateDataTables;
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         if (o is Type && o.Equals(typeof(ProcessTask))) return _plugin;
 

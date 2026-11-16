@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: Foreign Key visibility race condition in DB with AUTO_UPDATE_STATISTICS_ASYNC enabled
 - Replace HIC.SynthEHR 2.0.1 with SynthEHR.Core 3.0.2 (jas88 fork); seeded test data differs from 2.x for the same seed
 - Reference CsvHelper 33.0.1 directly (previously only a transitive dependency of HIC.SynthEHR)
+- Remove the SixLabors.ImageSharp dependency: `Rdmp.Core` now describes icons as immutable `RdmpIcon` values (embedded PNG plus overlay/greyscale operations) and `Rdmp.UI` renders them with System.Drawing. API change for plugins: `IIconProvider.GetImage`, `IAtomicCommand.GetImage` etc. return `RdmpIcon` instead of `Image<Rgba32>`; `BitmapWithDescription.Bitmap` is now PNG data (`byte[]`); the uncached variant of `IconOverlayProvider.GetOverlay` is removed (`GetOverlay` is now cheap)
+- FIX: `SqlThenVSNow` and `Blocked` icons were BMP files with a .png extension, converted to real PNGs
 
 
 ## [9.0.1] - 2025-07-31

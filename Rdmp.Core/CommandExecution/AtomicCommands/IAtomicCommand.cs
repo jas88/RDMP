@@ -5,8 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -16,7 +15,7 @@ namespace Rdmp.Core.CommandExecution.AtomicCommands;
 /// </summary>
 public interface IAtomicCommand : ICommandExecution
 {
-    Image<Rgba32> GetImage(IIconProvider iconProvider);
+    RdmpIcon GetImage(IIconProvider iconProvider);
 
 
     /// <summary>

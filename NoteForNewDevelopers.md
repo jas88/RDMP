@@ -5,10 +5,10 @@ Here are things you should know about RDMP!
 ## Contents
 
 1. [Other Docs](#other-docs)
-1. [Commands](#Commands)
-1. [Objects](#Objects)
+1. [Commands](#commands)
+1. [Objects](#objects)
 1. [Windows Forms Designer](#windows-forms-designer)
-1. [Icons and resx files](#icons-and-resx)
+1. [Icons](#icons)
 1. [Release Process](#release-process)
 1. [Database Schema Changes](#database-schema-changes)
 1. [Existing Plugins](#existing-plugins)
@@ -66,11 +66,11 @@ All commands implement `IAtomicCommand` - it's a good place to start when diagno
   - `ConsoleGuiActivator`: TUI user interface (cross platform - great for SSH/headless servers)
   - `TestActivateItems`: Implementation that can be used in UI tests
 
-## Objects 
+## Objects
 
 RDMP objects inherit from `DatabaseEntity`.  There are multiple types of `IRepository` e.g [YamlRepository], [CatalogueRepository].  
 When there is a database backed object store (e.g. [CatalogueRepository], [DataExportRepository], [DQERepository]) then it is important
-to load/save/create with the correct one.  For example you cannot save an `Project` to [CatalogueRepository], only [DataExportRepository].
+to load/save/create with the correct one.  For example you cannot save an [Project] to [CatalogueRepository], only [DataExportRepository].
 If you want to see what repository type it is meant to be then look at the constructor e.g. `public Project(IDataExportRepository repository, string name)`
 
 - In the GUI client if you are ever wondering what an object type is you can right click it and choose 'What is this?'
@@ -95,64 +95,24 @@ public abstract class LoggingTab_Design : RDMPSingleDatabaseObjectControl<YourSi
 }
 ```
 
-## Icons and ResX
+## Icons
 
-In 2001 Microsoft announced the [deprecation of System.Drawing.Common](https://github.com/dotnet/designs/pull/234).  The suggested migration path was to move to alternative libraries e.g. [ImageSharp](https://github.com/SixLabors/ImageSharp).
+In 2001 Microsoft announced the [deprecation of System.Drawing.Common](https://github.com/dotnet/designs/pull/234) on non-Windows platforms.  RDMP therefore keeps `Rdmp.Core` free of any image library: icons are described as data and only the Windows Forms user interface (`Rdmp.UI`) turns them into pixels.
 
-RDMP followed this approach.  The update was merged in [#1355](https://github.com/HicServices/RDMP/pull/1355).  This means that all resx files must store `Byte[]` and code must be manually updated if images are added using the designer.
-
-The approach for adding new icons is:
-
-- Open resx file in designer (e.g. CatalogueIcons.resx)
-- Drop new image into designer and save
-
-This creates a new entry in .resx file for example:
-
-```xml
-<data name="YourImage" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\YourImage.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-```
-
-This must be updated to be a raw `Byte[]`.  Change the `value` tag by replacing everything after the file path (first semicolon) with `;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>`
-
-For example 
-```
-<data name="YourImage" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\YourImage.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-```
-
-Next update the `.Designer.cs` file (e.g. `CatalogueIcons.Designer.cs`).  Add a new entry for the new resx file:
-
-```csharp
-/// <summary>
-///   Looks up a localized resource of type Image.
-/// </summary>
-public static Byte[] YourImage
-{
-    get
-    {
-        object obj = ResourceManager.GetObject("YourImage", resourceCulture);
-        return ((Byte[])(obj));
-    }
-}
-```
-
-This `Byte[]` can then be turned into either a Windows Forms compatible Bitmap (windows only):
+- Icons are PNG files under `Rdmp.Core/Icons/` (or `Rdmp.Core/ReusableLibraryCode/Icons/`) which are embedded into `Rdmp.Core` as resources.  They must be real PNG files (a test checks this).
+- `Rdmp.Core` refers to an icon with an immutable `RdmpIcon` (see `EmbeddedIconHelper.Get`/`GetRequired` and the static classes such as `CatalogueIcons`).  An `RdmpIcon` is the embedded resource name plus an ordered list of operations e.g. `CatalogueIcons.Catalogue.WithOverlay(OverlayKind.Link).AsGreyscale()`.  Icons compare by value so they can be used as dictionary keys.
+- `Rdmp.UI` renders an `RdmpIcon` into a (cached, shared) `System.Drawing.Bitmap` with `ImageToBitmap()`:
 
 ```csharp
  CatalogueIcons.YourImage.ImageToBitmap();
 ```
 
-Or a cross platform ImageSharp `Image` with:
+- Code that needs the raw image data without a user interface (e.g. reports) can use `EmbeddedIconHelper.GetPngBytes`, which returns the base PNG without applying any overlays.
 
-```csharp
-Image.Load<Rgba32>(CatalogueIcons.YourImage);
-```
+To add a new icon drop the PNG into the icons folder and add a field to the relevant static class (e.g. `CatalogueIcons`) or a value to the relevant enum (e.g. `RDMPConcept`) with the same name.
 
 ## Release Process
-RDMP releases are performed by GitHub Actions CI server.  The logic for this is in [build.yml](./.github/workflows/build.yml).
+RDMP releases are performed by GitHub Actions CI server.  The logic for this is in [tests-unified.yml](.github/workflows/tests-unified.yml).
 
 To perform a release merge all branches into `main` then perform the following:
 
@@ -187,10 +147,10 @@ Avoid making changes to the RDMP schema until you are experienced with the codeb
 
 If you need to record new information about an object consider using [ExtendedProperty] instead of writing a patch (especially if you are working within a Plugin).
 
-Do not write patches for the [CohortCachingDatabase](.\Rdmp.Core\Databases\QueryCachingPatcher.cs), [LoggingDatabase](.\Rdmp.Core\Databases\LoggingDatabasePatcher.cs) or [DataQualityEngine](.\Rdmp.Core\Databases\DataQualityEnginePatcher.cs) databases.   These 3 databases are cross [DBMS] (you can create them in MySql / postgresql and/or Oracle).  Patching for cross [DBMS] database schemas is not implemented yet.  If you
+Do not write patches for the [CohortCachingDatabase](Rdmp.Core/Databases/QueryCachingPatcher.cs), [LoggingDatabase](Rdmp.Core/Databases/LoggingDatabasePatcher.cs) or [DataQualityEngine](Rdmp.Core/Databases/DataQualityEnginePatcher.cs) databases.   These 3 databases are cross [DBMS] (you can create them in MySql / postgresql and/or Oracle).  Patching for cross [DBMS] database schemas is not implemented yet.  If you
 want to look into writing such a patch you would start with the `SortedDictionary<string, Patch> GetAllPatchesInAssembly(DiscoveredDatabase db)` method and adjust the patch SQL generated for each [DBMS].
 
-If after considering all the alternatives you are sure that a new patch is required and it is for the [Catalogue or Data Export Databases](.\Rdmp.Core\Databases\PlatformDatabase.cs) then the process is as follows:
+If after considering all the alternatives you are sure that a new patch is required and it is for the [Catalogue or Data Export Databases](Rdmp.Core/Databases/PlatformDatabase.cs) then the process is as follows:
 
 - Within Visual Studio copy and paste the latest patch in the up folder (e.g. [./Rdmp.Core/Databases/CatalogueDatabase/up/076_AddFolders.sql](./Rdmp.Core/Databases/CatalogueDatabase/up/))
 - Rename the file with a higher number and description (e.g. 077BreakRDMP.sql)
@@ -219,3 +179,5 @@ RDMP supports plugins.  The following plugin repositories are used by HIC / EPCC
 [Project]: ./Documentation/CodeTutorials/Glossary.md#Project
 [ExtendedProperty]: ./Rdmp.Core/Curation/Data/ExtendedProperty.cs
 [[DBMS]]: ./Documentation/CodeTutorials/Glossary.md#[DBMS]
+
+[Catalogue]: ./Documentation/CodeTutorials/Glossary.md#Catalogue

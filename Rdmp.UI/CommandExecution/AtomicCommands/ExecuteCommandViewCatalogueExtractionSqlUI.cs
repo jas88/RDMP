@@ -12,8 +12,7 @@ using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ExtractionUIs;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -34,7 +33,7 @@ public class ExecuteCommandViewCatalogueExtractionSqlUI : BasicUICommandExecutio
     public override string GetCommandHelp() =>
         "View the query that would be executed during extraction of the dataset with the current extractable columns/transforms";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.SQL);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.SQL);
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)
     {

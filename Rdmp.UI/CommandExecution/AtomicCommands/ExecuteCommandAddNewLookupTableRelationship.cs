@@ -12,8 +12,7 @@ using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ExtractionUIs.JoinsAndLookups;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.SimpleDialogs;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -77,6 +76,6 @@ public class ExecuteCommandAddNewLookupTableRelationship : BasicUICommandExecuti
         $@"You have chosen to make '{_lookupTableInfoIfKnown}' a Lookup Table (e.g T = Tayside, F=Fife etc).  In order to do this you will need to pick which Catalogue the column
 provides a description for (a given TableInfo can be a Lookup for many columns in many datasets).";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.Lookup, OverlayKind.Add);
 }

@@ -12,8 +12,7 @@ using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ChecksUI;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -57,5 +56,5 @@ internal class ExecuteCommandCheckAsync : BasicUICommandExecution, IAtomicComman
         popupChecksUI.StartChecking(_checkable);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.TinyYellow;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => CatalogueIcons.TinyYellow;
 }

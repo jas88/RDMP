@@ -27,8 +27,6 @@ using Rdmp.UI.Refreshing;
 using Rdmp.UI.ScintillaHelper;
 using Rdmp.UI.TestsAndSetup.ServicePropogation;
 using ScintillaNET;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using WideMessageBox = Rdmp.UI.SimpleDialogs.WideMessageBox;
 
 namespace Rdmp.UI.DataViewing;

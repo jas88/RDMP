@@ -17,7 +17,6 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.Refreshing;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.UI.Menus.MenuItems;
 
@@ -42,13 +41,13 @@ internal class SetDumpServerMenuItem : RDMPToolStripMenuItem
         _availableServers = cataRepo.GetAllDatabases<IdentifierDumpDatabasePatcher>();
 
         var miUseExisting = new ToolStripMenuItem("Use Existing...",
-            IconOverlayProvider.GetOverlayNoCache(img, OverlayKind.Link).ImageToBitmap(), UseExisting)
+            IconOverlayProvider.GetOverlay(img, OverlayKind.Link).ImageToBitmap(), UseExisting)
         {
             Enabled = _availableServers.Any()
         };
 
         DropDownItems.Add(miUseExisting);
-        DropDownItems.Add("Create New...", IconOverlayProvider.GetOverlayNoCache(img, OverlayKind.Add).ImageToBitmap(),
+        DropDownItems.Add("Create New...", IconOverlayProvider.GetOverlay(img, OverlayKind.Add).ImageToBitmap(),
             CreateNewIdentifierDumpServer);
     }
 

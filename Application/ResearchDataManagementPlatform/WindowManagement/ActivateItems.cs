@@ -64,10 +64,8 @@ using Rdmp.UI.Versioning;
 using Rdmp.UI.Wizard;
 using ResearchDataManagementPlatform.WindowManagement.ContentWindowTracking.Persistence;
 using ResearchDataManagementPlatform.WindowManagement.WindowArranging;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 using WeifenLuo.WinFormsUI.Docking;
-using Image = SixLabors.ImageSharp.Image;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace ResearchDataManagementPlatform.WindowManagement;
@@ -393,7 +391,7 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
     }
 
 
-    private T Activate<T, T2>(T2 databaseObject, Image<Rgba32> tabImage)
+    private T Activate<T, T2>(T2 databaseObject, RdmpIcon tabImage)
         where T : RDMPSingleDatabaseObjectControl<T2>, new()
         where T2 : DatabaseEntity
     {

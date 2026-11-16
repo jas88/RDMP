@@ -14,8 +14,7 @@ using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ExtractionUIs.FilterUIs;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.SubComponents.Graphs;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -48,7 +47,7 @@ internal class ExecuteCommandViewFilterMatchGraph : BasicUICommandExecution, IAt
         _compatibleGraphs = compatibleGraphs;
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.AggregateGraph, OverlayKind.Filter);
 
     public override void Execute()

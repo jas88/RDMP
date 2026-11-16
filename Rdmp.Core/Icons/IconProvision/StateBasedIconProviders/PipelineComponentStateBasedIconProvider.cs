@@ -5,16 +5,14 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using Rdmp.Core.Curation.Data.Pipelines;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public class PipelineComponentStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private readonly Image<Rgba32> _component;
-    private readonly Image<Rgba32> _source;
-    private readonly Image<Rgba32> _destination;
+    private readonly RdmpIcon _component;
+    private readonly RdmpIcon _source;
+    private readonly RdmpIcon _destination;
 
     public PipelineComponentStateBasedIconProvider()
     {
@@ -23,7 +21,7 @@ public class PipelineComponentStateBasedIconProvider : IObjectStateBasedIconProv
         _destination = CatalogueIcons.PipelineComponentDestination;
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         if (o is not PipelineComponent pc) return null;
 
