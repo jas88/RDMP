@@ -8,6 +8,7 @@ Writes Markdown to $GITHUB_STEP_SUMMARY when set, otherwise to stdout.
 
 import glob
 import os
+import re
 import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
@@ -32,8 +33,10 @@ def load(results_dir):
         storage = {}
         for definition in root.iterfind("t:TestDefinitions/t:UnitTest", NS):
             method = definition.find("t:TestMethod", NS)
-            assembly = os.path.basename(definition.get("storage") or "")
             class_name = method.get("className") if method is not None else ""
+            # codeBase keeps the original casing ('storage' is lower-cased); either separator may be used
+            path_to_assembly = (method.get("codeBase") if method is not None else None) or definition.get("storage") or ""
+            assembly = re.split(r"[\\/]", path_to_assembly)[-1]
             storage[definition.get("id")] = (assembly, class_name)
         for result in root.iterfind("t:Results/t:UnitTestResult", NS):
             assembly, class_name = storage.get(result.get("testId"), ("unknown", ""))
@@ -64,6 +67,9 @@ def render(title, counts, tests, top):
             f"| {assembly} | {sum(row.values())} | {cells} | {seconds_by_assembly[assembly]:.0f} |"
         )
 
+    if any("NotExecuted" in row for row in counts.values()):
+        lines += ["", "NotExecuted covers both skipped and inconclusive tests; `dotnet test` only counts the skipped ones."]
+
     lines += ["", f"### Slowest {top} tests", "", "| # | Seconds | Assembly | Test |", "|---:|---:|---|---|"]
     for rank, (seconds, assembly, label) in enumerate(sorted(tests, reverse=True)[:top], 1):
         label = label.replace("|", "\\|")
@@ -81,7 +87,8 @@ def main():
     if summary:
         with open(summary, "a", encoding="utf-8") as handle:
             handle.write(markdown)
-    print(markdown)
+    else:
+        print(markdown)
 
 
 if __name__ == "__main__":

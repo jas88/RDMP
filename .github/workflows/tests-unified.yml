@@ -261,7 +261,7 @@ jobs:
           dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release \
             --logger trx \
             --collect:"XPlat Code Coverage" \
-            --results-directory TestResults \
+            --results-directory TestResults/database \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
 
       - name: Re-initialise RDMP (File System)
@@ -270,7 +270,8 @@ jobs:
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
           cp Tests.Common/TestDatabases.txt Rdmp.UI.Tests/bin/Release/net10.0-windows/
 
-      # The repository type only matters to DatabaseTests fixtures (Category "Database")
+      # The repository type only matters to DatabaseTests fixtures (Category "Database").
+      # No coverage here: instrumenting costs far more than these few tests take.
       - name: Test UI (File System Mode)
         timeout-minutes: 30
         shell: bash
@@ -278,14 +279,14 @@ jobs:
           dotnet test Rdmp.UI.Tests/Rdmp.UI.Tests.csproj --no-build -c Release \
             --filter "TestCategory=Database" \
             --logger trx \
-            --collect:"XPlat Code Coverage" \
-            --results-directory TestResults \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            --results-directory TestResults/filesystem
 
       - name: Summarise test results
         if: ${{ !cancelled() }}
         shell: bash
-        run: python .github/scripts/test-timings.py TestResults "Windows UI tests"
+        run: |
+          python .github/scripts/test-timings.py TestResults/database "Windows UI tests (database repository)"
+          python .github/scripts/test-timings.py TestResults/filesystem "Windows UI tests (file system repository)" 10
 
       - name: Upload test results
         if: ${{ !cancelled() }}
@@ -458,10 +459,27 @@ jobs:
       - name: Switch to File System Mode
         if: matrix.repository == 'filesystem'
         run: |
-          # RDMP will auto-create the YAML repository; the build already copied
-          # TestDatabases.txt, so update the test output as well
-          echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
-          cp Tests.Common/TestDatabases.txt Rdmp.Core.Tests/bin/Release/net10.0/
+          # DatabaseTests reads TestDatabases.txt from beside its test assembly, where the
+          # build has already copied it. Flag that copy in the output of every test project
+          # the Test step runs; RDMP then auto-creates a YAML repository.
+          updated=0
+          while IFS= read -r project; do
+            properties=$(dotnet msbuild "$project" -getProperty:IsTestProject -getProperty:TargetDir -p:Configuration=Release)
+            [ "$(jq -r .Properties.IsTestProject <<< "$properties")" = true ] || continue
+            settings="$(jq -r .Properties.TargetDir <<< "$properties")TestDatabases.txt"
+            if [ ! -f "$settings" ]; then
+              echo "$project: no $settings, nothing to switch"
+              continue
+            fi
+            printf '\nUseFileSystemRepo: true\n' >> "$settings"
+            echo "$project: file system mode set in $settings"
+            grep -E '^(ServerName|UseFileSystemRepo):' "$settings" | sed 's/^/    /'
+            updated=$((updated + 1))
+          done < <(jq -r '.solution.projects[] | gsub("\\\\"; "/")' linuxtests.slnf)
+          if [ "$updated" -eq 0 ]; then
+            echo "::error::No test project in linuxtests.slnf has a TestDatabases.txt in its output"
+            exit 1
+          fi
 
       - name: Test
         timeout-minutes: 45
