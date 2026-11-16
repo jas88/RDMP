@@ -11,8 +11,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.DataLoadUIs.LoadMetadataUIs.LoadDiagram;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -28,7 +27,7 @@ internal class ExecuteCommandViewLoadDiagram : BasicUICommandExecution, IAtomicC
             SetImpossible("Load does not have any associated Catalogues (no tables are loaded by the load)");
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.LoadBubble;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => CatalogueIcons.LoadBubble;
 
     public override void Execute()
     {

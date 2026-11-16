@@ -6,17 +6,16 @@
 
 using System.Collections.Concurrent;
 using System.Drawing;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI;
 
 /// <summary>
-/// Creates <see cref="Icon"/> instances based on provided <see cref="Bitmap"/> (with support for caching).
+/// Creates <see cref="Icon"/> instances based on provided <see cref="RdmpIcon"/> (with support for caching).
 /// </summary>
 public class IconFactory
 {
-    private readonly ConcurrentDictionary<Image<Rgba32>, Icon> _iconDictionary =
+    private readonly ConcurrentDictionary<RdmpIcon, Icon> _iconDictionary =
         new();
 
     public static IconFactory Instance = new();
@@ -27,13 +26,13 @@ public class IconFactory
 
     /// <summary>
     /// Returns an <see cref="Icon"/> depicting the provided <paramref name="bmp"/>.  Calling this
-    /// method multiple times with the same <see cref="Icon"/> will return the same <see cref="Icon"/> instance.
+    /// method multiple times with the same (or an equal) <see cref="RdmpIcon"/> will return the same <see cref="Icon"/> instance.
     /// </summary>
     /// <param name="bmp"></param>
     /// <returns></returns>
-    public Icon GetIcon(Image<Rgba32> bmp) => _iconDictionary.GetOrAdd(bmp, CreateIcon);
+    public Icon GetIcon(RdmpIcon bmp) => _iconDictionary.GetOrAdd(bmp, CreateIcon);
 
-    private Icon CreateIcon(Image<Rgba32> bmp)
+    private Icon CreateIcon(RdmpIcon bmp)
     {
         // Get an Hicon for myBitmap.
         var Hicon = bmp.ImageToBitmap().GetHicon();

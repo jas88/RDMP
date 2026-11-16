@@ -7,8 +7,7 @@
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -30,6 +29,6 @@ public class ExecuteCommandCreateNewStandardRegex : BasicCommandExecution, IAtom
     public override string GetCommandHelp() =>
         "Regular Expressions are patterns that match a given text input.  StandardRegex allow a central declaration of a given pattern rather than copying and pasting it everywhere";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.StandardRegex, OverlayKind.Add);
 }

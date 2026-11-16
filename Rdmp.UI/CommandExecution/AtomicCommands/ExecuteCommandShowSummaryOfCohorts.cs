@@ -13,8 +13,7 @@ using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.CohortUI;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -66,6 +65,6 @@ internal class ExecuteCommandShowSummaryOfCohorts : BasicUICommandExecution, IAt
             extractableCohortCollection.SetupForAllCohorts(Activator);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.AllCohortsNode);
 }

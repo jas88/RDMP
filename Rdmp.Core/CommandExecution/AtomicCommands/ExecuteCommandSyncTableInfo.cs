@@ -12,8 +12,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -41,7 +40,7 @@ public class ExecuteCommandSyncTableInfo : BasicCommandExecution
         _autoYes = autoYes;
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.Sync;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => CatalogueIcons.Sync;
 
     public override string GetCommandName() => _alsoSyncAno ? "Sync TableInfo and ANO Configuration" : "Sync TableInfo";
 

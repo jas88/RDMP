@@ -6,14 +6,13 @@
 
 using NSubstitute;
 using NUnit.Framework;
+using Rdmp.Core.Icons;
+using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Reports;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Comments;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Tests.Common;
-using Color = SixLabors.ImageSharp.Color;
 
 namespace Rdmp.Core.Tests.Reports;
 
@@ -27,11 +26,36 @@ internal class DocumentationReportDatabaseEntitiesTests : UnitTests
 
                 var reporter = new DocumentationReportDatabaseEntities();
 
-                Image img = new Image<Rgba32>(19, 19, Color.DarkMagenta.ToPixel<Rgba32>());
+                var img = CatalogueIcons.Catalogue.WithOverlay(OverlayKind.Link);
 
                 var iconProvider = Substitute.For<IIconProvider>();
                 iconProvider.GetImage(Arg.Any<object>(), Arg.Any<OverlayKind>()).Returns(img);
 
+                // without a renderer the base PNG of the icon is used
                 reporter.GenerateReport(store, ThrowImmediatelyCheckNotifier.Quiet, iconProvider, false);
+        }
+
+        [Test]
+        public void Test_DocumentationReportDatabaseEntities_UsesIconRenderer()
+        {
+                var store = new CommentStore();
+                store.ReadComments(TestContext.CurrentContext.TestDirectory);
+
+                var reporter = new DocumentationReportDatabaseEntities();
+
+                var img = CatalogueIcons.Catalogue.WithOverlay(OverlayKind.Link);
+
+                var iconProvider = Substitute.For<IIconProvider>();
+                iconProvider.GetImage(Arg.Any<object>(), Arg.Any<OverlayKind>()).Returns(img);
+
+                var rendered = 0;
+                reporter.GenerateReport(store, ThrowImmediatelyCheckNotifier.Quiet, iconProvider, false, icon =>
+                {
+                        Assert.That(icon, Is.EqualTo(img));
+                        rendered++;
+                        return EmbeddedIconHelper.GetPngBytes(CatalogueIcons.Project);
+                });
+
+                Assert.That(rendered, Is.GreaterThan(0));
         }
 }

@@ -12,8 +12,7 @@ using Rdmp.Core.Curation.Data.ImportExport;
 using Rdmp.Core.Curation.Data.Serialization;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands.Sharing;
 
@@ -38,7 +37,7 @@ public abstract class ExecuteCommandImportShare : BasicCommandExecution, IAtomic
         }
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         FamFamFamIcons.page_white_get;
 
     public sealed override void Execute()

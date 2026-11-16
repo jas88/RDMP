@@ -20,8 +20,7 @@ using Rdmp.Core.ReusableLibraryCode;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Comments;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution;
 
@@ -46,7 +45,7 @@ public abstract class BasicCommandExecution : IAtomicCommand
     public string ReasonCommandImpossible { get; private set; }
     public string OverrideCommandName { get; set; }
 
-    public Image<Rgba32> OverrideIcon { get; set; }
+    public RdmpIcon OverrideIcon { get; set; }
 
     /// <summary>
     /// Set to true to suppress the <see cref="Publish(IMapsDirectlyToDatabaseTable)"/> method.  Only use if you are running multiple commands one after the other and don't want to wait for state updates
@@ -142,7 +141,7 @@ public abstract class BasicCommandExecution : IAtomicCommand
 
     public virtual string GetCommandHelp() => string.Empty;
 
-    public virtual Image<Rgba32> GetImage(IIconProvider iconProvider) => OverrideIcon;
+    public virtual RdmpIcon GetImage(IIconProvider iconProvider) => OverrideIcon;
 
     /// <summary>
     /// disables the command because of the given reason.  This will result in grayed out menu items, crashes when executed programmatically etc.

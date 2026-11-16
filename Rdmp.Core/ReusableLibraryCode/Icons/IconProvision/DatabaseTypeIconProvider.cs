@@ -5,8 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using FAnsi;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 
@@ -15,20 +14,20 @@ namespace Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 /// </summary>
 public class DatabaseTypeIconProvider
 {
-    private readonly Image<Rgba32> _msBig;
-    private readonly Image<Rgba32> _msOverlay;
+    private readonly RdmpIcon _msBig;
+    private readonly RdmpIcon _msOverlay;
 
-    private readonly Image<Rgba32> _oraBig;
-    private readonly Image<Rgba32> _oraOverlay;
+    private readonly RdmpIcon _oraBig;
+    private readonly RdmpIcon _oraOverlay;
 
-    private readonly Image<Rgba32> _mysBig;
-    private readonly Image<Rgba32> _mysOverlay;
+    private readonly RdmpIcon _mysBig;
+    private readonly RdmpIcon _mysOverlay;
 
-    private readonly Image<Rgba32> _postgresBig;
-    private readonly Image<Rgba32> _postgresOverlay;
+    private readonly RdmpIcon _postgresBig;
+    private readonly RdmpIcon _postgresOverlay;
 
-    private readonly Image<Rgba32> _unknownBig;
-    private readonly Image<Rgba32> _unknownOverlay;
+    private readonly RdmpIcon _unknownBig;
+    private readonly RdmpIcon _unknownOverlay;
 
     public DatabaseTypeIconProvider()
     {
@@ -48,7 +47,7 @@ public class DatabaseTypeIconProvider
         _unknownOverlay = DatabaseProviderIcons.UnknownOverlay;
     }
 
-    public Image<Rgba32> GetOverlay(DatabaseType type)
+    public RdmpIcon GetOverlay(DatabaseType type)
     {
         return type switch
         {
@@ -60,7 +59,7 @@ public class DatabaseTypeIconProvider
         };
     }
 
-    public Image<Rgba32> GetImage(DatabaseType type)
+    public RdmpIcon GetImage(DatabaseType type)
     {
         return type switch
         {

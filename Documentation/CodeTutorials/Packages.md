@@ -27,12 +27,11 @@
 | LibArchive.Net | [GitHub](https://github.com/jas88/libarchive.net) | [BSD](https://opensource.org/license/bsd-2-clause/) | Access archive formats without the LZMA bugs of SharpCompress | |
 | [NLog](https://nlog-project.org/) | [GitHub](https://github.com/NLog/NLog) | [BSD 3-Clause](https://github.com/NLog/NLog/blob/dev/LICENSE.txt) | Flexible user configurable logging | |
 | FAnsiSql.Legacy |[GitHub](https://github.com/jas88/FAnsiSql) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | [DBMS] abstraction layer |
-| HIC.SynthEHR | [GitHub](https://github.com/HicServices/SynthEHR) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | Generate Test Datasets for tests/exericses |
+| SynthEHR.Core | [GitHub](https://github.com/jas88/SynthEHR) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | Generate Test Datasets for tests/exericses |
+| CsvHelper | [GitHub](https://github.com/JoshClose/CsvHelper) | [MS-PL or Apache 2.0](https://github.com/JoshClose/CsvHelper/blob/master/LICENSE.txt) | Reading and writing CSV files (flat file loading, exports) | |
 | SSH.NET  | [GitHub](https://github.com/sshnet/SSH.NET)  | [MIT](https://github.com/sshnet/SSH.NET/blob/develop/LICENSE) | Enables fetching files from SFTP servers |
-| Moq 4 | [GitHub](https://github.com/moq/moq4) |[BSD 3](https://github.com/moq/moq4/blob/master/License.txt)  | Mock objects during unit testing |
 | [Newtonsoft.Json](https://www.newtonsoft.com/json) | [GitHub](https://github.com/JamesNK/Newtonsoft.Json) | [MIT](https://opensource.org/licenses/MIT) | Serialization of objects for sharing/transmission |
 | YamlDotNet | [GitHub](https://github.com/aaubry/YamlDotNet)  | [MIT](https://opensource.org/licenses/MIT) |Loading configuration files|
-| SixLabors.ImageSharp | [GitHub](https://github.com/SixLabors/ImageSharp) | [Apache 2.0](https://github.com/SixLabors/ImageSharp/blob/main/LICENSE) | Platform-independent replacement for legacy Windows-only System.Drawing.Common | |
 | [AutoComplete Console](https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications) by Jasper Lammers | Embedded | [CPOL](https://www.codeproject.com/info/cpol10.aspx) | Provides interactive autocomplete in console input | |
 | Spectre.Console | [GitHub](https://github.com/spectreconsole/spectre.console) | [MIT](https://opensource.org/licenses/MIT) | Allows richer command line interactions| |
 | HIC.System.Windows.Forms.DataVisualization | [GitHub](https://github.com/HicServices/winforms-datavisualization) |[MIT](https://opensource.org/licenses/MIT) | Dotnet core support for DQE charts |  |

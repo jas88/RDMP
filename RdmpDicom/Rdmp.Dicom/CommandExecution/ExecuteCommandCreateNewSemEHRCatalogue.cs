@@ -9,8 +9,7 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Dicom.ExternalApis;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Dicom.CommandExecution;
 
@@ -21,7 +20,7 @@ public class ExecuteCommandCreateNewSemEHRCatalogue : BasicCommandExecution
 
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider)
+    public override RdmpIcon GetImage(IIconProvider iconProvider)
     {
         return iconProvider.GetImage(RDMPConcept.Catalogue,OverlayKind.Cloud);
     }

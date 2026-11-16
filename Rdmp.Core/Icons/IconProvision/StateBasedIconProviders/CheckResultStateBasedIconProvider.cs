@@ -6,16 +6,14 @@
 
 using System;
 using Rdmp.Core.ReusableLibraryCode.Checks;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public class CheckResultStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private readonly Image<Rgba32> _exception;
-    private readonly Image<Rgba32> _warning;
-    private readonly Image<Rgba32> _tick;
+    private readonly RdmpIcon _exception;
+    private readonly RdmpIcon _warning;
+    private readonly RdmpIcon _tick;
 
     public CheckResultStateBasedIconProvider()
     {
@@ -24,7 +22,7 @@ public class CheckResultStateBasedIconProvider : IObjectStateBasedIconProvider
         _tick = CatalogueIcons.TinyGreen;
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         return o is not CheckResult result
             ? null

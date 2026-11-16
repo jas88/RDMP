@@ -16,8 +16,7 @@ using Rdmp.Core.Repositories;
 using Rdmp.Core.ReusableLibraryCode;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.Core.Sharing.Dependency.Gathering;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -76,7 +75,7 @@ public class ExecuteCommandExportObjectsToFile : BasicCommandExecution
     public override string GetCommandHelp() =>
         "Creates a share file with definitions for the supplied objects and all children";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         FamFamFamIcons.page_white_put;
 
 

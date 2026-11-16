@@ -19,8 +19,7 @@ using Rdmp.UI.SingleControlForms;
 using Rdmp.UI.TestsAndSetup.ServicePropogation;
 using ResearchDataManagementPlatform.WindowManagement.ContentWindowTracking.Persistence;
 using ResearchDataManagementPlatform.WindowManagement.TabPageContextMenus;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace ResearchDataManagementPlatform.WindowManagement;
@@ -48,7 +47,7 @@ public class WindowFactory
     }
 
     public PersistableToolboxDockContent Create(IActivateItems activator, Control control, string label,
-        Image<Rgba32> image, RDMPCollection collection)
+        RdmpIcon image, RDMPCollection collection)
     {
         var content = new PersistableToolboxDockContent(collection);
 
@@ -58,7 +57,7 @@ public class WindowFactory
     }
 
     public PersistableSingleDatabaseObjectDockContent Create(IActivateItems activator, RefreshBus refreshBus,
-        IRDMPSingleDatabaseObjectControl control, Image<Rgba32> image, IMapsDirectlyToDatabaseTable databaseObject)
+        IRDMPSingleDatabaseObjectControl control, RdmpIcon image, IMapsDirectlyToDatabaseTable databaseObject)
     {
         var content = new PersistableSingleDatabaseObjectDockContent(control, databaseObject, refreshBus);
         _windowManager.AddWindow(content);
@@ -72,7 +71,7 @@ public class WindowFactory
     }
 
     public PersistableObjectCollectionDockContent Create(IActivateItems activator, IObjectCollectionControl control,
-        IPersistableObjectCollection objectCollection, Image<Rgba32> image)
+        IPersistableObjectCollection objectCollection, RdmpIcon image)
     {
         //create a new persistable docking tab
         var content = new PersistableObjectCollectionDockContent(activator, control, objectCollection);
@@ -102,7 +101,7 @@ public class WindowFactory
     }
 
 
-    public DockContent Create(IActivateItems activator, Control control, string label, Image<Rgba32> image)
+    public DockContent Create(IActivateItems activator, Control control, string label, RdmpIcon image)
     {
         DockContent content = new RDMPSingleControlTab(activator.RefreshBus, control);
 
@@ -114,7 +113,7 @@ public class WindowFactory
     }
 
     private void AddControlToDockContent(IActivateItems activator, Control control, DockContent content, string label,
-        Image<Rgba32> image)
+        RdmpIcon image)
     {
         control.Dock = DockStyle.Fill;
         content.Controls.Add(control);

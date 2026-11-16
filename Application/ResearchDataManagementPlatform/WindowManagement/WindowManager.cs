@@ -25,10 +25,8 @@ using Rdmp.UI.Theme;
 using ResearchDataManagementPlatform.WindowManagement.ContentWindowTracking.Persistence;
 using ResearchDataManagementPlatform.WindowManagement.Events;
 using ResearchDataManagementPlatform.WindowManagement.HomePane;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 using WeifenLuo.WinFormsUI.Docking;
-using Image = SixLabors.ImageSharp.Image;
 
 namespace ResearchDataManagementPlatform.WindowManagement;
 
@@ -174,7 +172,7 @@ public class WindowManager
 
 
     private PersistableToolboxDockContent Show(RDMPCollection collection, RDMPCollectionUI control, string label,
-        Image<Rgba32> image)
+        RdmpIcon image)
     {
         var content =
             _windowFactory.Create(ActivateItems, control, label, image,

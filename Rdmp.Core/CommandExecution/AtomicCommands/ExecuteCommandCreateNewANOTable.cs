@@ -10,8 +10,7 @@ using Rdmp.Core.Curation.Data.DataLoad;
 using Rdmp.Core.Curation.Data.Defaults;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -30,7 +29,7 @@ internal sealed class ExecuteCommandCreateNewANOTable : BasicCommandExecution, I
     public override string GetCommandHelp() =>
         "Create a table for storing anonymous identifier mappings for a given type of code e.g. 'PatientId' / 'GP Codes' etc";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.ANOTable, OverlayKind.Add);
 
     public override void Execute()

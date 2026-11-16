@@ -10,8 +10,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.Collections;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -65,6 +64,6 @@ public class ExecuteCommandExpandAllNodes : BasicUICommandExecution, IAtomicComm
         }
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         CatalogueIcons.ExpandAllNodes;
 }

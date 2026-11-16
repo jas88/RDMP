@@ -8,8 +8,7 @@ using Rdmp.Core.CommandExecution.Combining;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -75,6 +74,6 @@ public class ExecuteCommandLinkCatalogueItemToColumnInfo : BasicCommandExecution
     public override string GetCommandName() =>
         $"Set Column Info{(_catalogueItem.ColumnInfo_ID == null ? "(Currently MISSING)" : "")}";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.ColumnInfo, OverlayKind.Problem);
 }

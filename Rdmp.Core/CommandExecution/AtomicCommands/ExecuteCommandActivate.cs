@@ -6,8 +6,7 @@
 
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -37,7 +36,7 @@ public class ExecuteCommandActivate : BasicCommandExecution, IAtomicCommand
         Weight = -99.99999f;
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         _o == null ? null : iconProvider.GetImage(_o, OverlayKind.Edit);
 
     public override string GetCommandName() => OverrideCommandName ?? GlobalStrings.Activate;

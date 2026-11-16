@@ -8,8 +8,7 @@ using System.Linq;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands.CatalogueCreationCommands;
 
@@ -41,6 +40,6 @@ public class ExecuteCommandCreateNewCatalogueFromTableInfo : CatalogueCreationCo
         }
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.Catalogue, OverlayKind.Shortcut);
 }

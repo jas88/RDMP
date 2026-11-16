@@ -5,22 +5,20 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using Rdmp.Core.Curation.Data;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.Core.Icons.IconProvision.StateBasedIconProviders;
 
 public class SupportingObjectStateBasedIconProvider : IObjectStateBasedIconProvider
 {
-    private readonly Image<Rgba32> _supportingDocument;
-    private readonly Image<Rgba32> _supportingDocumentGlobal;
-    private readonly Image<Rgba32> _supportingDocumentExtractable;
-    private readonly Image<Rgba32> _supportingDocumentExtractableGlobal;
+    private readonly RdmpIcon _supportingDocument;
+    private readonly RdmpIcon _supportingDocumentGlobal;
+    private readonly RdmpIcon _supportingDocumentExtractable;
+    private readonly RdmpIcon _supportingDocumentExtractableGlobal;
 
-    private readonly Image<Rgba32> _supportingSql;
-    private readonly Image<Rgba32> _supportingSqlGlobal;
-    private readonly Image<Rgba32> _supportingSqlExtractable;
-    private readonly Image<Rgba32> _supportingSqlExtractableGlobal;
+    private readonly RdmpIcon _supportingSql;
+    private readonly RdmpIcon _supportingSqlGlobal;
+    private readonly RdmpIcon _supportingSqlExtractable;
+    private readonly RdmpIcon _supportingSqlExtractableGlobal;
 
     public SupportingObjectStateBasedIconProvider()
     {
@@ -35,7 +33,7 @@ public class SupportingObjectStateBasedIconProvider : IObjectStateBasedIconProvi
         _supportingSqlExtractableGlobal = CatalogueIcons.SupportingSqlExtractableGlobal;
     }
 
-    public Image<Rgba32> GetImageIfSupportedObject(object o)
+    public RdmpIcon GetImageIfSupportedObject(object o)
     {
         return o switch
         {
