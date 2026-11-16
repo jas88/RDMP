@@ -28,6 +28,7 @@
 | [NLog](https://nlog-project.org/) | [GitHub](https://github.com/NLog/NLog) | [BSD 3-Clause](https://github.com/NLog/NLog/blob/dev/LICENSE.txt) | Flexible user configurable logging | |
 | FAnsiSql.Legacy |[GitHub](https://github.com/jas88/FAnsiSql) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | [DBMS] abstraction layer |
 | SynthEHR.Core | [GitHub](https://github.com/jas88/SynthEHR) | [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html) | Generate Test Datasets for tests/exericses |
+| CsvHelper | [GitHub](https://github.com/JoshClose/CsvHelper) | [MS-PL or Apache 2.0](https://github.com/JoshClose/CsvHelper/blob/master/LICENSE.txt) | Reading and writing CSV files (flat file loading, exports) | |
 | SSH.NET  | [GitHub](https://github.com/sshnet/SSH.NET)  | [MIT](https://github.com/sshnet/SSH.NET/blob/develop/LICENSE) | Enables fetching files from SFTP servers |
 | [Newtonsoft.Json](https://www.newtonsoft.com/json) | [GitHub](https://github.com/JamesNK/Newtonsoft.Json) | [MIT](https://opensource.org/licenses/MIT) | Serialization of objects for sharing/transmission |
 | YamlDotNet | [GitHub](https://github.com/aaubry/YamlDotNet)  | [MIT](https://opensource.org/licenses/MIT) |Loading configuration files|
