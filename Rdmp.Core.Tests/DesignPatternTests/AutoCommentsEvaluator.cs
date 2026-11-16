@@ -47,7 +47,7 @@ public static partial class AutoCommentsEvaluator
                     var t = MEF.GetType(currentClassName);
 
                     //if the previous line isn't a summary comment
-                    if (!text[i - 1].Trim().StartsWith("///"))
+                    if (i > 0 && i + 1 < text.Length && !text[i - 1].Trim().StartsWith("///"))
                     {
                         var next = text[i + 1];
 
@@ -89,7 +89,7 @@ public static partial class AutoCommentsEvaluator
                     if (paraOpened)
                     {
                         //
-                        sbSuggestedText.Insert(sbSuggestedText.Length - 2, "</para>");
+                        sbSuggestedText.Insert(sbSuggestedText.Length - Environment.NewLine.Length, "</para>");
                         paraOpened = false;
                     }
 
@@ -97,11 +97,11 @@ public static partial class AutoCommentsEvaluator
                 }
 
                 //if we have a paragraph break in the summary comments and the next line isn't an end summary
-                if (areInSummary && text[i].Trim().Equals("///") && !text[i + 1].Trim().Equals("/// </summary>"))
+                if (areInSummary && i + 1 < text.Length && text[i].Trim().Equals("///") && !text[i + 1].Trim().Equals("/// </summary>"))
                 {
                     if (paraOpened)
                     {
-                        sbSuggestedText.Insert(sbSuggestedText.Length - 2, "</para>");
+                        sbSuggestedText.Insert(sbSuggestedText.Length - Environment.NewLine.Length, "</para>");
                         paraOpened = false;
                     }
 

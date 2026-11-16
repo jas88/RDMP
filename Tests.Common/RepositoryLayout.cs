@@ -61,13 +61,19 @@ public static class RepositoryLayout
     }
 
     /// <summary>
-    /// True if <paramref name="dir"/> is vendored code (externals or build-standards) to which RDMP conventions do not apply
+    /// True if <paramref name="dir"/> is vendored code (externals or build-standards at the repository root) to which RDMP
+    /// conventions do not apply
     /// </summary>
     public static bool IsVendoredDirectory(DirectoryInfo dir) =>
-        VendoredDirectoryNames.Contains(dir.Name, StringComparer.Ordinal);
+        VendoredDirectoryNames.Contains(dir.Name, StringComparer.Ordinal) &&
+        dir.Parent != null && File.Exists(Path.Combine(dir.Parent.FullName, SolutionFileName));
+
+    private static readonly EnumerationOptions DirectoryEnumerationOptions = new()
+        { IgnoreInaccessible = true, RecurseSubdirectories = false, AttributesToSkip = FileAttributes.ReparsePoint };
 
     /// <summary>
-    /// True if a recursive scan of the repository should not descend into <paramref name="dir"/>.  The repository root
+    /// True if a recursive scan of the repository should not descend into <paramref name="dir"/>.  Symbolic links and junctions
+    /// are never followed (see <see cref="EnumerateDirectories"/>).  The repository root
     /// itself should not be passed in (it is a git checkout).
     /// </summary>
     /// <param name="dir">A directory below the repository root</param>
@@ -78,10 +84,11 @@ public static class RepositoryLayout
         IsGitCheckout(dir);
 
     /// <summary>
-    /// Returns the immediate subdirectories of <paramref name="dir"/> which are not excluded, see <see cref="IsExcludedDirectory"/>
+    /// Returns the immediate subdirectories of <paramref name="dir"/> which are not excluded (see <see cref="IsExcludedDirectory"/>),
+    /// skipping inaccessible directories and reparse points (symbolic links, junctions) so a scan cannot escape the checkout
     /// </summary>
     public static IEnumerable<DirectoryInfo> EnumerateDirectories(DirectoryInfo dir, bool excludeVendored) =>
-        dir.EnumerateDirectories().Where(d => !IsExcludedDirectory(d, excludeVendored));
+        dir.EnumerateDirectories("*", DirectoryEnumerationOptions).Where(d => !IsExcludedDirectory(d, excludeVendored));
 
     /// <summary>
     /// Recursively enumerates files matching <paramref name="searchPattern"/> (case insensitive) under <paramref name="root"/>,
