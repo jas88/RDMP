@@ -25,7 +25,8 @@ internal class ExternalCohortTableTests : UnitTests
     public void Create_ExternalCohortTable_Manually()
     {
         var repository = new MemoryDataExportRepository();
-        var table = new ExternalCohortTable(repository, "My Cohort Database", DatabaseType.MicrosoftSQLServer)
+        // MySQL fails at once on an unresolvable host, whereas SqlClient keeps retrying until the 10s check timeout
+        var table = new ExternalCohortTable(repository, "My Cohort Database", DatabaseType.MySql)
         {
             Database = "mydb",
             PrivateIdentifierField = "chi",
@@ -33,7 +34,7 @@ internal class ExternalCohortTableTests : UnitTests
             DefinitionTableForeignKeyField = "c_id",
             TableName = "Cohorts",
             DefinitionTableName = "InventoryTable",
-            Server = "superfastdatabaseserver\\sqlexpress"
+            Server = "superfastdatabaseserver.invalid"
         };
         table.SaveToDatabase();
 

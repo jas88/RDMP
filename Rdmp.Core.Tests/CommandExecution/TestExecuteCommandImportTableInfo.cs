@@ -36,8 +36,10 @@ internal class TestExecuteCommandImportTableInfo : CommandCliTests
     [Test]
     public void Test_ImportTableInfo_NoTable()
     {
+        // MySQL fails at once on an unresolvable host, whereas SqlClient retries until FAnsi's 10s TestConnection
+        // timeout (the importer rebuilds the server from its name, so a Connect Timeout keyword would be dropped)
         var tbl =
-            "Table:MyTable:DatabaseType:MicrosoftSQLServer:Server=myServerAddress;Database=myDataBase;Trusted_Connection=True";
+            "Table:MyTable:DatabaseType:MySql:Server=myServerAddress.invalid;Database=myDataBase";
 
         var ex = Assert.Catch<Exception>(() => GetInvoker().ExecuteCommand(typeof(ExecuteCommandImportTableInfo),
             new CommandLineObjectPicker(new string[] { tbl, "true" }, GetActivator())));
