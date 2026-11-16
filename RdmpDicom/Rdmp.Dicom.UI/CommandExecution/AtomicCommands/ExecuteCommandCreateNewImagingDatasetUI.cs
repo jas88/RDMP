@@ -8,8 +8,7 @@
 using Rdmp.UI.CommandExecution.AtomicCommands;
 using Rdmp.UI.ItemActivation;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Dicom.UI.CommandExecution.AtomicCommands;
 
@@ -25,7 +24,7 @@ public class ExecuteCommandCreateNewImagingDatasetUI : BasicUICommandExecution
         return "Create New Imaging Table";
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider)
+    public override RdmpIcon GetImage(IIconProvider iconProvider)
     {
         return iconProvider.GetImage(RDMPConcept.TableInfo,OverlayKind.Add);
     }

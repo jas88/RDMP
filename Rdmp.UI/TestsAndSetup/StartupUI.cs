@@ -19,8 +19,6 @@ using Rdmp.Core.Startup.Events;
 using Rdmp.UI.LocationsMenu;
 using Rdmp.UI.SimpleDialogs;
 using Rdmp.UI.Versioning;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using WideMessageBox = Rdmp.UI.SimpleDialogs.WideMessageBox;
 
 namespace Rdmp.UI.TestsAndSetup;

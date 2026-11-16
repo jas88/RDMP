@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.Build.Traversal/2.0.24">
+<Project Sdk="Microsoft.Build.Traversal/4.1.82">
   <ItemGroup>
     <ProjectReference Include="..\Rdmp.Core.Tests\Rdmp.Core.Tests.csproj" />
-    <ProjectReference Include="..\Plugins\HicPlugin\HICPluginTests\HICPluginTests.csproj" />
-    <ProjectReference Include="..\Plugins\RdmpExtensions\LoadModules.Extensions.Tests\LoadModules.Extensions.Tests.csproj" />
-    <ProjectReference Include="..\Plugins\RdmpDicom\Rdmp.Dicom.Tests\Rdmp.Dicom.Tests.csproj" />
+    <ProjectReference Include="..\RdmpDicom\Rdmp.Dicom.Tests\Rdmp.Dicom.Tests.csproj" />
+    <!-- UI tests need WinForms, so they only run on Windows -->
+    <ProjectReference Include="..\Rdmp.UI.Tests\Rdmp.UI.Tests.csproj" Condition="'$(OS)' == 'Windows_NT'" />
   </ItemGroup>
 </Project>

@@ -397,7 +397,7 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
     private void FindProjectInFolder(VisualStudioProjectReference p, DirectoryInfo physicalSolutionFolder)
     {
         // Special handling for consolidated plugin structure
-        // All plugin projects (Plugins, Plugins.UI, Plugins.Tests, Plugins.UI.Tests) are in the same Plugins directory
+        // All plugin projects (Plugins, Plugins.UI) are in the same Plugins directory
         if (IsConsolidatedPluginProject(p.Name))
         {
             // For plugin projects, look in the Plugins directory structure
@@ -460,7 +460,7 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
                 // Only collect files from the base Plugins project
                 _csFilesFound.AddRange(tidy.csFilesFound);
             }
-            // For other plugin projects (Plugins.UI, Plugins.Tests, etc.), don't collect files again
+            // For the other plugin project (Plugins.UI), don't collect files again
             // since they're in the same directory and would cause duplicates
 
             return;
@@ -505,8 +505,6 @@ public class EvaluateNamespacesAndSolutionFoldersTestsSeparated
         {
             "Plugins" => true,
             "Plugins.UI" => true,
-            "Plugins.Tests" => true,
-            "Plugins.UI.Tests" => true,
             _ => false
         };
     }

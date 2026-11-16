@@ -12,9 +12,8 @@ using System.Xml;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Rdmp.Core.Icons;
 using Rdmp.Core.ReusableLibraryCode;
-using SixLabors.ImageSharp;
-using Image = SixLabors.ImageSharp.Image;
 using A = DocumentFormat.OpenXml.Drawing;
 using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
@@ -161,34 +160,39 @@ public class DocXHelper
     }
 
     /// <summary>
-    /// Adds a new paragraph to the end of <paramref name="document"/> containing <paramref name="bmp"/>
+    /// Adds a new paragraph to the end of <paramref name="document"/> containing the image <paramref name="png"/>
     /// </summary>
-    protected static Drawing GetPicture(DocXDocument document, Image bmp)
+    /// <param name="document"></param>
+    /// <param name="png">PNG file data</param>
+    protected static Drawing GetPicture(DocXDocument document, byte[] png)
     {
         var run = document.Append(new Paragraph()).AppendChild(new Run());
-        return GetPicture(document, run, bmp);
+        return GetPicture(document, run, png);
     }
 
     /// <summary>
-    /// Embeds <paramref name="bmp"/> (as PNG) in <paramref name="document"/> and adds it inline to <paramref name="run"/>
+    /// Embeds the image <paramref name="png"/> in <paramref name="document"/> unchanged and adds it inline to
+    /// <paramref name="run"/> at its natural pixel size
     /// </summary>
-    protected static Drawing GetPicture(DocXDocument document, Run run, Image bmp)
+    /// <param name="document"></param>
+    /// <param name="run"></param>
+    /// <param name="png">PNG file data</param>
+    protected static Drawing GetPicture(DocXDocument document, Run run, byte[] png)
     {
+        ArgumentNullException.ThrowIfNull(png);
+        var (width, height) = PngHeader.GetDimensions(png);
+
         var imagePart = document.MainDocumentPart.AddImagePart(ImagePartType.Png);
 
-        using (var ms = new MemoryStream())
-        {
-            bmp.SaveAsPng(ms);
-            ms.Seek(0, SeekOrigin.Begin);
+        using (var ms = new MemoryStream(png, false))
             imagePart.FeedData(ms);
-        }
 
         var relationshipId = document.MainDocumentPart.GetIdOfPart(imagePart);
         var pictureId = (uint)document.MainDocumentPart.ImageParts.Count();
         var name = $"Picture {pictureId}";
 
-        var drawing = CreateInlineDrawing(relationshipId, pictureId, name, bmp.Width * EmuPerPixel,
-            bmp.Height * EmuPerPixel);
+        var drawing = CreateInlineDrawing(relationshipId, pictureId, name, width * EmuPerPixel,
+            height * EmuPerPixel);
         run.AppendChild(drawing);
         return drawing;
     }

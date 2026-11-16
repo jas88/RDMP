@@ -17,8 +17,15 @@ namespace Rdmp.UI.Tests.CommandExecution.Alter;
 
 internal class ExecuteCommandAlterColumnTypeTests : DatabaseTests
 {
+    /// <summary>
+    /// These tests run real DDL (cleaning the scratch database, creating tables, importing and altering) inside the
+    /// UI timeout, which is only there to catch a test stuck behind a modal dialog.  10s was intermittently too short
+    /// for MySQL on the Windows CI runner.
+    /// </summary>
+    private const int DatabaseUITimeout = 60000;
+
     [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
-    [UITimeout(10000)]
+    [UITimeout(DatabaseUITimeout)]
     public void AlterColumnType_NoArchive(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);
@@ -58,7 +65,7 @@ internal class ExecuteCommandAlterColumnTypeTests : DatabaseTests
     [TestCase(DatabaseType.MicrosoftSQLServer)]
     [TestCase(DatabaseType.MySql)]
     [TestCase(DatabaseType.Oracle)]
-    [UITimeout(10000)]
+    [UITimeout(DatabaseUITimeout)]
     public void AlterColumnType_WithArchive(DatabaseType dbType)
     {
         var db = GetCleanedServer(dbType);

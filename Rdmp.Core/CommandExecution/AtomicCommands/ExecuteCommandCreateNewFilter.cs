@@ -17,8 +17,7 @@ using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -173,7 +172,7 @@ where    Optional SQL to set for the filter.  If <basedOn> is not null this will
 
     private ICatalogue GetCatalogue() => _host?.GetCatalogue() ?? _container?.GetCatalogueIfAny();
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         OfferCatalogueFilters
             ? iconProvider.GetImage(RDMPConcept.Filter, OverlayKind.Import)
             : iconProvider.GetImage(RDMPConcept.Filter, OverlayKind.Add);

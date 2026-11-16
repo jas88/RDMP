@@ -12,8 +12,7 @@ using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ANOEngineeringUIs;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -32,7 +31,7 @@ public class ExecuteCommandCreateANOVersion : BasicUICommandExecution, IAtomicCo
         UseTripleDotSuffix = true;
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.ANOTable);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.ANOTable);
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)
     {

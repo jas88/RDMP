@@ -9,10 +9,8 @@ using System.IO;
 using System.Linq;
 using DocumentFormat.OpenXml.Wordprocessing;
 using NUnit.Framework;
+using Rdmp.Core.Icons;
 using Rdmp.Core.Reports;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using Color = SixLabors.ImageSharp.Color;
 
 namespace Rdmp.Core.Tests.Reports;
 
@@ -21,6 +19,9 @@ namespace Rdmp.Core.Tests.Reports;
 /// </summary>
 internal class DocXHelperTests : DocXHelper
 {
+    /// <summary>A 40 by 20 pixel red PNG</summary>
+    private static readonly byte[] Picture = TestPng.Create(40, 20);
+
     private string _path;
 
     [SetUp]
@@ -52,11 +53,10 @@ internal class DocXHelperTests : DocXHelper
 
             InsertSectionPageBreak(document);
 
-            using var img = new Image<Rgba32>(40, 20, Color.Red.ToPixel<Rgba32>());
-            GetPicture(document, img);
+            GetPicture(document, Picture);
 
             var cellRun = GetTableCell(table, 1, 1).Elements<Paragraph>().First().AppendChild(new Run());
-            GetPicture(document, cellRun, img);
+            GetPicture(document, cellRun, Picture);
 
             SetLandscape(document);
             SetMargins(document, 20);
@@ -83,7 +83,8 @@ internal class DocXHelperTests : DocXHelper
             Assert.That(contents.Tables[0][1], Is.EqualTo(new[] { "", "", "multiline" }));
 
             Assert.That(contents.PageBreakCount, Is.EqualTo(1));
-            Assert.That(contents.ImageCount, Is.EqualTo(2));
+            // both pictures are embedded exactly as supplied
+            Assert.That(contents.Images, Is.EqualTo(new[] { Picture, Picture }));
             Assert.That(contents.DrawingCount, Is.EqualTo(2));
             Assert.That(contents.FooterTexts, Is.EqualTo(new[] { "My Footer" }));
 
@@ -324,13 +325,26 @@ internal class DocXHelperTests : DocXHelper
     }
 
     [Test]
+    public void TestPng_IsAPngOfTheRequestedSize() =>
+        Assert.That(PngHeader.GetDimensions(TestPng.Create(100, 50)), Is.EqualTo((100, 50)));
+
+    [Test]
+    public void Picture_ThatIsNotAPng_IsRejected()
+    {
+        using var document = GetNewDocFile(new FileInfo(_path));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(() => GetPicture(document, new byte[] { 1, 2, 3 }), Throws.ArgumentException);
+            Assert.That(() => GetPicture(document, (byte[])null), Throws.ArgumentNullException);
+        });
+    }
+
+    [Test]
     public void Picture_IsSizedFromPixels()
     {
         using (var document = GetNewDocFile(new FileInfo(_path)))
-        {
-            using var img = new Image<Rgba32>(100, 50);
-            GetPicture(document, img);
-        }
+            GetPicture(document, TestPng.Create(100, 50));
 
         using var doc = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(_path, false);
         var extent = doc.MainDocumentPart!.Document.Body!

@@ -9,8 +9,7 @@ using Rdmp.Core.Curation.Data.Cache;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.DataLoadUIs.LoadMetadataUIs.LoadProgressAndCacheUIs;
 using Rdmp.UI.ItemActivation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -29,7 +28,7 @@ internal class ExecuteCommandEditCacheProgress : BasicUICommandExecution, IAtomi
         Activator.Activate<CacheProgressUI, CacheProgress>(_cacheProgress);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(_cacheProgress);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(_cacheProgress);
 
     public override string GetCommandHelp() =>
         "Change which pipeline is used to fetch data, what date the cache has progressed to etc";

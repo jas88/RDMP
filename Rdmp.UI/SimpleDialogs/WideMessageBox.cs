@@ -215,15 +215,16 @@ public partial class WideMessageBox : Form
 
     private void ApplyTheme(WideMessageBoxTheme theme)
     {
-        pbIcon.Image = theme switch
+        var icon = theme switch
         {
-            WideMessageBoxTheme.Exception => CatalogueIcons.ErrorIcon.ImageToBitmap(),
-            WideMessageBoxTheme.Warning => CatalogueIcons.WarningIcon.ImageToBitmap(),
-            WideMessageBoxTheme.Help => CatalogueIcons.InformationIcon.ImageToBitmap(),
+            WideMessageBoxTheme.Exception => CatalogueIcons.ErrorIcon,
+            WideMessageBoxTheme.Warning => CatalogueIcons.WarningIcon,
+            WideMessageBoxTheme.Help => CatalogueIcons.InformationIcon,
             _ => throw new ArgumentOutOfRangeException(nameof(theme))
         };
 
-        Icon = IconFactory.Instance.GetIcon(pbIcon.Image.LegacyToImage());
+        pbIcon.Image = icon.ImageToBitmap();
+        Icon = IconFactory.Instance.GetIcon(icon);
     }
 
     private void btnOk_Click(object sender, EventArgs e)

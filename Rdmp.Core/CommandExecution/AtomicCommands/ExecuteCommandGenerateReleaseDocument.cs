@@ -12,8 +12,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Reports.ExtractionTime;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
@@ -78,6 +77,6 @@ internal class ExecuteCommandGenerateReleaseDocument : BasicCommandExecution, IA
         }
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         FamFamFamIcons.page_white_word;
 }

@@ -8,10 +8,10 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
+using Rdmp.Core.Icons;
+using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Reports;
 using Rdmp.Core.ReusableLibraryCode.Progress;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Tests.Common;
 
 namespace Rdmp.Core.Tests.Reports;
@@ -25,24 +25,12 @@ internal class MetadataReportTests : UnitTests
         var reporter = new MetadataReport(Repository, new MetadataReportArgs(new[] { cata }));
         cata.Description = "The Quick Brown Fox Was Quicker Than The slow tortoise";
 
-        //setup delegate for returning images
-        var bmp = new Image<Rgba32>(200, 200);
-
-        // paint a 50x50 black square at (10,10) so the image is non-uniform
-        var black = Color.Black.ToPixel<Rgba32>();
-        bmp.ProcessPixelRows(accessor =>
-        {
-            for (var y = 10; y < 60; y++)
-            {
-                var row = accessor.GetRowSpan(y);
-                for (var x = 10; x < 60; x++)
-                    row[x] = black;
-            }
-        });
+        //setup delegate for returning images (any non-uniform PNG will do, so use one of the embedded icons)
+        var png = EmbeddedIconHelper.GetPngBytes(CatalogueIcons.Catalogue);
 
         reporter.RequestCatalogueImages += s =>
         {
-            return new BitmapWithDescription[] { new(bmp, "MyPicture", "Something interesting about it") };
+            return new BitmapWithDescription[] { new(png, "MyPicture", "Something interesting about it") };
         };
 
         var file = reporter.GenerateWordFile(ThrowImmediatelyDataLoadEventListener.Quiet, false);
@@ -68,7 +56,10 @@ internal class MetadataReportTests : UnitTests
             Assert.That(contents.Paragraphs, Does.Contain("Something interesting about it"));
             Assert.That(contents.FontSizeOf(cata.Name), Is.EqualTo(16));
             Assert.That(contents.FontSizeOf(cata.Description), Is.EqualTo(7));
-            Assert.That(contents.ImageCount, Is.EqualTo(1));
+
+            // the PNG should have been embedded unchanged
+            Assert.That(contents.Images, Has.Count.EqualTo(1));
+            Assert.That(contents.Images, Has.One.EqualTo(png));
             Assert.That(contents.DrawingCount, Is.EqualTo(1));
             Assert.That(contents.FooterTexts.Single(), Does.StartWith("Created on "));
             Assert.That(contents.PageMargin.Left?.Value, Is.EqualTo(292u));

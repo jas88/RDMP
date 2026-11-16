@@ -11,8 +11,7 @@ using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Providers;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -89,7 +88,7 @@ public sealed class ExecuteCommandAssociateCohortIdentificationConfigurationWith
         Emphasise(_cic);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         //if we know the cic the context is 'pick a project'
         _cic != null
             ? iconProvider.GetImage(RDMPConcept.Project, OverlayKind.Add)

@@ -10,8 +10,7 @@ using Rdmp.Core.DataExport.DataExtraction;
 using Rdmp.Core.DataViewing;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -50,5 +49,5 @@ public class ExecuteCommandExecuteAggregateGraph : BasicCommandExecution, IAtomi
         }
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => CatalogueIcons.Graph;
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => CatalogueIcons.Graph;
 }

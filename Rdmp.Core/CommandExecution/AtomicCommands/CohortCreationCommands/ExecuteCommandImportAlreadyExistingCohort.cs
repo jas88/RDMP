@@ -10,8 +10,7 @@ using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands.CohortCreationCommands;
 
@@ -95,6 +94,6 @@ public class ExecuteCommandImportAlreadyExistingCohort : BasicCommandExecution, 
         return BasicActivator.SelectObject("Import Cohort", available, out var cd) ? cd.ID : null;
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.CohortAggregate, OverlayKind.Import);
 }

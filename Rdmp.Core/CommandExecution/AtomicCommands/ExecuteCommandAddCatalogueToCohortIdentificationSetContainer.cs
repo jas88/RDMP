@@ -14,8 +14,7 @@ using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -103,7 +102,7 @@ public class ExecuteCommandAddCatalogueToCohortIdentificationSetContainer : Basi
                 $"Catalogue {catalogueCombineable.Catalogue} does not contain any IsExtractionIdentifier columns");
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.Catalogue, OverlayKind.Add);
 
     public override void Execute()

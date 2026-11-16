@@ -10,8 +10,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.Validation;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
 
@@ -28,7 +27,7 @@ public class ExecuteCommandConfigureCatalogueValidationRules : BasicUICommandExe
 
     public override string GetCommandName() => "Validation Rules...";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         iconProvider.GetImage(RDMPConcept.DQE, OverlayKind.Edit);
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)

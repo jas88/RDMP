@@ -11,8 +11,8 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Aggregation;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
+using Rdmp.Core.Icons;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Rdmp.UI.Tests;
 
@@ -93,19 +93,22 @@ internal class CatalogueIconProviderTests : UITests
     }
 
 
-    private static bool IsBlackAndWhite(SixLabors.ImageSharp.Image<Rgba32> img)
+    /// <summary>
+    /// Renders <paramref name="icon"/> and returns true if every visible (non transparent) pixel is grey (R=G=B)
+    /// </summary>
+    private static bool IsBlackAndWhite(RdmpIcon icon)
     {
-        var foundColoured = false;
-        img.ProcessPixelRows(pixels =>
+        var bmp = icon.ImageToBitmap();
+        for (var y = 0; y < bmp.Height; y++)
         {
-            for (var y = 0; y < pixels.Height; y++)
-                foreach (ref var pixel in pixels.GetRowSpan(y))
-                    if (pixel.R != pixel.G || pixel.G != pixel.B)
-                    {
-                        foundColoured = true;
-                        return;
-                    }
-        });
-        return !foundColoured;
+            for (var x = 0; x < bmp.Width; x++)
+            {
+                var pixel = bmp.GetPixel(x, y);
+                if (pixel.A != 0 && (pixel.R != pixel.G || pixel.G != pixel.B))
+                    return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -4,9 +4,13 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Validation;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -29,7 +33,12 @@ internal sealed class DocXContents
     /// </summary>
     public List<string[][]> Tables { get; }
 
-    public int ImageCount { get; }
+    /// <summary>
+    /// The file data of each image embedded in the document
+    /// </summary>
+    public List<byte[]> Images { get; }
+
+    public int ImageCount => Images.Count;
 
     /// <summary>
     /// Number of inline drawings referencing an embedded image
@@ -59,7 +68,13 @@ internal sealed class DocXContents
         Paragraphs = body.Elements<Paragraph>().Select(p => p.InnerText).ToList();
         Tables = body.Elements<Table>().Select(t => t.Elements<TableRow>()
             .Select(r => r.Elements<TableCell>().Select(c => c.InnerText).ToArray()).ToArray()).ToList();
-        ImageCount = main.ImageParts.Count();
+        Images = main.ImageParts.Select(static part =>
+        {
+            using var stream = part.GetStream(FileMode.Open, FileAccess.Read);
+            using var copy = new MemoryStream();
+            stream.CopyTo(copy);
+            return copy.ToArray();
+        }).ToList();
         DrawingCount = body.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().Count();
         FooterTexts = main.FooterParts.Select(f => f.Footer.InnerText).ToList();
 
@@ -108,4 +123,76 @@ internal sealed class DocXContents
     public void AssertValid() =>
         Assert.That(ValidationErrors.Select(e => $"{e.Path?.XPath}: {e.Description}"), Is.Empty,
             "Generated document failed OpenXml schema validation");
+}
+
+/// <summary>
+/// Builds PNG images for tests without needing an imaging library
+/// </summary>
+internal static class TestPng
+{
+    /// <summary>
+    /// Returns the file data of a valid PNG image of the given size in pixels, filled with a single colour
+    /// </summary>
+    public static byte[] Create(int width, int height, byte red = 255, byte green = 0, byte blue = 0)
+    {
+        using var png = new MemoryStream();
+        png.Write([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+
+        var header = new byte[13];
+        BinaryPrimitives.WriteInt32BigEndian(header, width);
+        BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(4), height);
+        header[8] = 8; // bits per channel
+        header[9] = 2; // red, green and blue channels
+        WriteChunk(png, "IHDR", header);
+
+        // each row is a filter type (0 for none) followed by its pixels
+        var row = new byte[1 + width * 3];
+        for (var x = 0; x < width; x++)
+        {
+            row[1 + x * 3] = red;
+            row[2 + x * 3] = green;
+            row[3 + x * 3] = blue;
+        }
+
+        using var pixels = new MemoryStream();
+        using (var zlib = new ZLibStream(pixels, CompressionLevel.Optimal, true))
+        {
+            for (var y = 0; y < height; y++)
+                zlib.Write(row);
+        }
+
+        WriteChunk(png, "IDAT", pixels.ToArray());
+        WriteChunk(png, "IEND", []);
+
+        return png.ToArray();
+    }
+
+    /// <summary>
+    /// A chunk is its data length, its type and data, then a checksum of the type and data
+    /// </summary>
+    private static void WriteChunk(Stream png, string type, byte[] data)
+    {
+        Span<byte> number = stackalloc byte[4];
+        byte[] typeAndData = [.. Encoding.ASCII.GetBytes(type), .. data];
+
+        BinaryPrimitives.WriteInt32BigEndian(number, data.Length);
+        png.Write(number);
+        png.Write(typeAndData);
+        BinaryPrimitives.WriteUInt32BigEndian(number, Crc32(typeAndData));
+        png.Write(number);
+    }
+
+    private static uint Crc32(ReadOnlySpan<byte> data)
+    {
+        var crc = 0xFFFFFFFFu;
+
+        foreach (var b in data)
+        {
+            crc ^= b;
+            for (var bit = 0; bit < 8; bit++)
+                crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB88320u : crc >> 1;
+        }
+
+        return ~crc;
+    }
 }

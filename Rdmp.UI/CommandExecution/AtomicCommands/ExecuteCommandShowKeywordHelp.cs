@@ -13,8 +13,7 @@ using Rdmp.Core.ReusableLibraryCode;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.Menus;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 using WideMessageBox = Rdmp.UI.SimpleDialogs.WideMessageBox;
 
 namespace Rdmp.UI.CommandExecution.AtomicCommands;
@@ -32,7 +31,7 @@ public class ExecuteCommandShowKeywordHelp : BasicUICommandExecution, IAtomicCom
 
     public override string GetCommandName() => "What is this?";
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.Help);
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => iconProvider.GetImage(RDMPConcept.Help);
 
     public override string GetCommandHelp() =>
         "Displays the code documentation for the menu object or the Type name of the object if it has none";

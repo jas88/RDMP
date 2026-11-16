@@ -10,8 +10,7 @@ using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Providers;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,7 +67,7 @@ public class ExecuteCommandMakeCatalogueProjectSpecific : BasicCommandExecution,
         Publish(_catalogue);
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) =>
+    public override RdmpIcon GetImage(IIconProvider iconProvider) =>
         CatalogueIcons.ProjectCatalogue;
 
     public IAtomicCommandWithTarget SetTarget(DatabaseEntity target)

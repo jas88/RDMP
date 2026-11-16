@@ -11,8 +11,7 @@ using Rdmp.UI.CommandExecution.AtomicCommands;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.SimpleDialogs.SqlDialogs;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
+using Rdmp.Core.Icons;
 using System.IO;
 using System.Windows.Forms;
 
@@ -35,7 +34,7 @@ class ExecuteCommandCompareImagingSchemas : BasicUICommandExecution
             _tableInfo = tis[0];
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider)
+    public override RdmpIcon GetImage(IIconProvider iconProvider)
     {
         return iconProvider.GetImage(RDMPConcept.Diff);
     }

@@ -58,11 +58,9 @@ public partial class ForwardEngineerANOCatalogueUI : ForwardEngineerANOCatalogue
 
         olvMigrationPlan.AspectGetter += MigrationPlanAspectGetter;
 
-        olvPickedANOTable.HeaderImageKey = "ANOTable";
         olvPickedANOTable.AspectGetter += PickedANOTableAspectGetter;
         olvPickedANOTable.ImageGetter += PickedANOTable_ImageGetter;
 
-        olvDilution.HeaderImageKey = "PreLoadDiscardedColumn";
         olvDilution.AspectGetter += DilutionAspectGetter;
         olvDilution.ImageGetter += Dilution_ImageGetter;
 
@@ -95,7 +93,7 @@ public partial class ForwardEngineerANOCatalogueUI : ForwardEngineerANOCatalogue
 
     private Image PickedANOTable_ImageGetter(object rowObject) =>
         rowObject is ColumnInfo ci && _planManager.GetPlanForColumnInfo(ci).ANOTable != null
-            ? imageList1.Images["ANOTable"]
+            ? CatalogueIcons.ANOTable.ImageToBitmap()
             : null;
 
     private object PickedANOTableAspectGetter(object rowobject)
@@ -130,18 +128,10 @@ public partial class ForwardEngineerANOCatalogueUI : ForwardEngineerANOCatalogue
         return null;
     }
 
-    private string Dilution_ImageGetter(object rowobject)
-    {
-        if (rowobject is ColumnInfo col)
-        {
-            var plan = _planManager.GetPlanForColumnInfo(col);
-
-            if (plan.Dilution != null)
-                return "PreLoadDiscardedColumn";
-        }
-
-        return null;
-    }
+    private Image Dilution_ImageGetter(object rowobject) =>
+        rowobject is ColumnInfo col && _planManager.GetPlanForColumnInfo(col).Dilution != null
+            ? CatalogueIcons.PreLoadDiscardedColumn.ImageToBitmap()
+            : null;
 
     private object DestinationTypeAspectGetter(object rowobject)
     {

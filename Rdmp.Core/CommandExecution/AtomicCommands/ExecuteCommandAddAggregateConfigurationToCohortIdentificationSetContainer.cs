@@ -13,8 +13,7 @@ using Rdmp.Core.Curation.Data.Cohort;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.Repositories.Construction;
 using Rdmp.Core.ReusableLibraryCode.Icons.IconProvision;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using Rdmp.Core.Icons;
 
 namespace Rdmp.Core.CommandExecution.AtomicCommands;
 
@@ -98,7 +97,7 @@ public class ExecuteCommandAddAggregateConfigurationToCohortIdentificationSetCon
         SetCommandWeight();
     }
 
-    public override Image<Rgba32> GetImage(IIconProvider iconProvider) => _offerCohortAggregates
+    public override RdmpIcon GetImage(IIconProvider iconProvider) => _offerCohortAggregates
         ? iconProvider.GetImage(RDMPConcept.CohortAggregate, OverlayKind.Add)
         : iconProvider.GetImage(RDMPConcept.AggregateGraph, OverlayKind.Add);
 
