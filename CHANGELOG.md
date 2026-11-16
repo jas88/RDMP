@@ -20,6 +20,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reference CsvHelper 33.0.1 directly (previously only a transitive dependency of HIC.SynthEHR)
 - Remove the SixLabors.ImageSharp dependency: `Rdmp.Core` now describes icons as immutable `RdmpIcon` values (embedded PNG plus overlay/greyscale operations) and `Rdmp.UI` renders them with System.Drawing. API change for plugins: `IIconProvider.GetImage`, `IAtomicCommand.GetImage` etc. return `RdmpIcon` instead of `Image<Rgba32>`; `BitmapWithDescription.Bitmap` is now PNG data (`byte[]`); the uncached variant of `IconOverlayProvider.GetOverlay` is removed (`GetOverlay` is now cheap)
 - FIX: `SqlThenVSNow` and `Blocked` icons were BMP files with a .png extension, converted to real PNGs
+- Read Excel files (ExcelDataFlowSource, ExcelAttacher, ExcelToCSVFilesConverter) with ExcelDataReader instead of NPOI. The data loaded is the same except that:
+  - Workbooks are opened read-only, so a read-only file can be loaded (it failed with UnauthorizedAccessException)
+  - Whether a workbook is .xls or .xlsx is detected from its content not its extension, so a file with the other extension or an upper case one (`.XLS`) loads. .xls files saved by Excel 95 and earlier can also be read (NPOI rejected them)
+  - Chart sheets in .xls workbooks are not worksheets: ExcelToCSVFilesConverter no longer writes a CSV file for them and they cannot be chosen with WorkSheetName
+  - An error cell (e.g. `#REF!`) in the header row is treated as an empty cell, so its column has no header and is ignored, and a boolean cell gives a column called `True` or `False`; either used to fail the load with InvalidOperationException. A first row containing only error cells and formulas whose result is an error or empty is skipped as blank; it used to be taken as the header row and the load failed
+  - Cells with formatting but no value no longer count as cells. This only matters in the header row, where it changes the number and position of the headers ForceReplacementHeaders must supply and the count in the 'Excel sheet ... contains' message
+  - A number with a date and time format used as a column header is still named after the raw number but its last decimal places may differ
+  - ExcelDataFlowSource.GetAllData takes an ExcelWorkbook instead of an NPOI ISheet
+- Excel number formats are now classified by their date/time tokens (d, m, y, h and s in either case); quoted text, backslash escaped characters and bracketed sections such as colours and locales are ignored. As a result:
+  - Formats which only contain a backslash, `/` or `:` (e.g. `"£"#,##0.00;\-"£"#,##0.00` or `0.00\ "kg"`) or text with a y or an h in it (e.g. `0 "days"` or `0.0 "kWh"`) are loaded as the formatted number e.g. `£11.00`. They were loaded as a date or time (`01/11/1900 00:00:00`) and a negative value failed the load. This includes the currency formats which Excel defines in every .xls workbook
+  - Fraction formats (e.g. `# ?/?`) are loaded as the raw number, like 'General'. They were loaded as a date
+  - Upper case date and time formats (e.g. `DD/MM/YYYY` or `H:MM`) are loaded like lower case ones e.g. `1902-09-26`. They were loaded as displayed e.g. `26/09/1902`
+  - Elapsed hours (e.g. `[h]:mm:ss`) are loaded as the total e.g. `49:30:00`, not the hour of the day (`01:30:00`). Durations of less than 24 hours are unchanged
+  - Elapsed minutes (`[mm]:ss`) are loaded as displayed e.g. `720:00`. They were loaded as a date and time
+  - A format with an hour and a day but no year (e.g. `m/d h:mm`) is loaded as a date and time e.g. `1902-09-26 12:00:00`, not only the time
+  - Other formats with neither a year nor an hour (e.g. `d-mmm`, `d/m` or `mm:ss`) are still loaded as displayed, but a number below 1 in one containing a `/` or a backslash is now day 0 of January as in Excel (`0/1`, it was `31/12`)
+- Excel dates and times:
+  - Negative numbers in date or time formats, which Excel cannot display, are loaded as null. The load used to fail with ArgumentException, or for a few formats such as `d-mmm` a meaningless date was loaded. A negative duration in elapsed minutes or seconds is loaded as displayed e.g. `-720:00`
+  - Serial number 60, which Excel displays as the non-existent 29th of February 1900, is loaded as 1900-02-28. It was 1900-03-01, or `29-Feb` in a format without a year
+  - The 1904 date system is applied to every date and time format in .xls and .xlsx workbooks. Some formats without a year (e.g. `d-mmm`) used the 1900 system
 
 
 ## [9.0.1] - 2025-07-31
