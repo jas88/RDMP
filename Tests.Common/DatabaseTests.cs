@@ -921,6 +921,18 @@ delete from {1}..Project
             UsefulStuff.ExecuteBatchNonQuery(sql, con);
         }
 
+        // Pooled sessions keep the rights they had when they logged in or selected the database (MySQL re-reads
+        // database level grants only on USE, SQL Server role membership is fixed at login), so discard them
+        switch (dbType)
+        {
+            case DatabaseType.MicrosoftSQLServer:
+                SqlConnection.ClearAllPools();
+                break;
+            case DatabaseType.MySql:
+                MySqlConnection.ClearAllPools();
+                break;
+        }
+
         if (ti != null)
         {
             //remove any existing credentials
