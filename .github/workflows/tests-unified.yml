@@ -282,62 +282,65 @@ jobs:
           execute_install_scripts: true
 
       - name: Configure and start databases
-        continue-on-error: true
+        env:
+          DB_PASSWORD: "YourStrong!Passw0rd"
+          PG_PASSWORD: "pgpass4291"
+          # Account used by the low privilege tests (see DatabaseTests.SetupLowPrivilegeUserRightsFor)
+          LOW_PRIV_USER: "minion"
+          LOW_PRIV_PASSWORD: "minionPass"
         run: |
-          # Configure SQL Server for performance
+          set -euo pipefail
+
+          # Poll a command until it succeeds; fail the step if it never does
+          wait_for() {
+            local name=$1; shift
+            for i in {1..60}; do
+              if "$@" >/dev/null 2>&1; then echo "$name is ready"; return 0; fi
+              sleep 2
+            done
+            echo "::error::$name did not become ready"
+            return 1
+          }
+          sqlcmd() { /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -b "$@"; }
+
+          # SQL Server
           sudo -E /opt/mssql/bin/mssql-conf -n setup accept-eula
-
-          # Performance optimizations (only supported settings)
-          sudo -E /opt/mssql/bin/mssql-conf set sqlagent.enabled false  # Disable SQL Agent
-          # Note: telemetry and memory settings not supported on this version
-
-          # Create performance tuning configuration
+          sudo -E /opt/mssql/bin/mssql-conf set sqlagent.enabled false
           sudo mkdir -p /var/opt/mssql/data
           sudo chown mssql:mssql /var/opt/mssql/data
-
-          # Start databases (PostgreSQL disabled - tests are commented out)
-          sudo systemctl start mysql.service
           sudo systemctl start mssql-server
+          wait_for "SQL Server" sqlcmd -Q "SELECT 1"
 
-          echo "Waiting for MySQL..."
-          for i in {1..30}; do
-            mysqladmin ping -h127.0.0.1 --silent && echo "MySQL is ready!" && break
-            sleep 2
-          done
-
-          echo "Waiting for SQL Server..."
-          for i in {1..30}; do
-            if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -C -Q "SELECT 1" &>/dev/null; then
-              echo "SQL Server is ready!"
-              break
-            fi
-            sleep 2
-          done
-
-          # Oracle disabled - no wait needed
-
-          # Apply SQL Server performance settings after startup
-          /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -C -Q "
-            -- Set traceflags for performance (disable ForceFlush)
-            DBCC TRACEON(3422, -1) WITH NO_INFOMSGS;
-
-            -- Set simple recovery mode for model database
-            ALTER MODEL SET RECOVERY SIMPLE;
-          " || echo "SQL Server performance tuning completed with some errors"
-
-          # Restart SQL Server to apply traceflag settings (required for traceflags)
-          echo "Restarting SQL Server to apply traceflags..."
+          # Disable ForceFlush (trace flag 3422) and use simple recovery for new databases;
+          # trace flags need a restart to apply
+          sqlcmd -Q "DBCC TRACEON(3422, -1) WITH NO_INFOMSGS; ALTER DATABASE model SET RECOVERY SIMPLE;"
           sudo systemctl restart mssql-server
+          wait_for "SQL Server (restarted)" sqlcmd -Q "SELECT 1"
+          sqlcmd -Q "IF SUSER_ID('$LOW_PRIV_USER') IS NULL CREATE LOGIN [$LOW_PRIV_USER] WITH PASSWORD = '$LOW_PRIV_PASSWORD', CHECK_POLICY = OFF;"
 
-          # Wait for SQL Server to restart
-          echo "Waiting for SQL Server restart..."
-          for i in {1..60}; do
-            if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -C -Q "SELECT 1" &>/dev/null; then
-              echo "SQL Server restarted successfully!"
-              break
-            fi
-            sleep 2
-          done
+          # MySQL: root may use auth_socket (fresh package install) or the runner image's
+          # default password; either way give it the password TestDatabases.txt expects
+          sudo systemctl start mysql.service
+          wait_for "MySQL" mysqladmin ping -h127.0.0.1 --silent
+          if sudo mysql -uroot -e "SELECT 1" >/dev/null 2>&1; then
+            mysql_admin=(sudo mysql -uroot)
+          else
+            mysql_admin=(mysql -h127.0.0.1 -uroot -proot)
+          fi
+          "${mysql_admin[@]}" <<SQL
+          ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '$DB_PASSWORD';
+          CREATE USER IF NOT EXISTS '$LOW_PRIV_USER'@'%' IDENTIFIED WITH caching_sha2_password BY '$LOW_PRIV_PASSWORD';
+          FLUSH PRIVILEGES;
+          SQL
+          # Fails the step unless the test credentials actually authenticate over TCP
+          mysql -h127.0.0.1 -uroot -p"$DB_PASSWORD" -e "SELECT VERSION();"
+
+          # PostgreSQL (preinstalled on the runner image, service disabled by default)
+          sudo systemctl start postgresql.service
+          wait_for "PostgreSQL" pg_isready -h 127.0.0.1
+          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER USER postgres PASSWORD '$PG_PASSWORD';"
+          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "DROP ROLE IF EXISTS $LOW_PRIV_USER; CREATE ROLE $LOW_PRIV_USER LOGIN PASSWORD '$LOW_PRIV_PASSWORD';"
+          PGPASSWORD="$PG_PASSWORD" psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -c "SELECT version();"
 
       - name: Populate Databases.yaml and TestDatabases.txt
         run: |
@@ -352,8 +355,14 @@ jobs:
           Username: SA
           Password: YourStrong!Passw0rd
           MySql: server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;AllowPublicKeyRetrieval=True
-          #PostgreSql: User ID=postgres;Password=pgpass4291;Host=127.0.0.1;Port=5432
+          PostgreSql: User ID=postgres;Password=pgpass4291;Host=127.0.0.1;Port=5432
           #Oracle: Data Source=localhost:1521/XEPDB1;User Id=system;Password=oracle
+          SqlServerLowPrivilegeUsername: minion
+          SqlServerLowPrivilegePassword: minionPass
+          MySqlLowPrivilegeUsername: minion
+          MySqlLowPrivilegePassword: minionPass
+          PostgreSqlLowPrivilegeUsername: minion
+          PostgreSqlLowPrivilegePassword: minionPass
           EOF
 
       - name: Build
@@ -403,7 +412,12 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --verbosity minimal \
             --results-directory coverage \
+            --logger "trx;LogFilePrefix=db" \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+      - name: Check for Inconclusive tests (Database Mode)
+        if: ${{ !cancelled() }}
+        run: python3 .github/scripts/inconclusive-report.py --fail coverage/db*.trx
 
       - name: Switch to File System Mode
         run: |
@@ -423,7 +437,12 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --verbosity minimal \
             --results-directory coverage \
+            --logger "trx;LogFilePrefix=fs" \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+
+      - name: Report Inconclusive tests (File System Mode)
+        if: ${{ !cancelled() }}
+        run: python3 .github/scripts/inconclusive-report.py coverage/fs*.trx
 
       - name: Upload coverage
         uses: codecov/codecov-action@v7
