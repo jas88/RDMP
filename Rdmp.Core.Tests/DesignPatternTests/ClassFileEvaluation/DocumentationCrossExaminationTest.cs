@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Tests.Common;
 
 namespace Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 
@@ -26,7 +27,17 @@ internal class DocumentationCrossExaminationTest
     private static readonly Regex MatchMdReferences =
         new(@"`(.*)`", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private const bool ReWriteMarkdownToReferenceGlossary = true;
+    /// <summary>
+    /// Set this environment variable to 1 (or true) to have the test rewrite Markdown files in place, adding links to
+    /// Glossary terms which should be links.  Off by default so that running the tests never modifies the repository.
+    /// </summary>
+    public const string RewriteMarkdownEnvironmentVariable = "RDMP_REWRITE_MARKDOWN_GLOSSARY_LINKS";
+
+    private static bool ReWriteMarkdownToReferenceGlossary =>
+        Environment.GetEnvironmentVariable(RewriteMarkdownEnvironmentVariable) is { } v &&
+        (v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase));
+
+    private string _markdownCodeBlocksContent;
 
     //words that are in Pascal case and you can use in comments despite not being in the codebase... this is an ironic variable to be honest
     //since the very fact that you add something to Ignorelist means that it is in the codebase after all!
@@ -356,10 +367,11 @@ internal class DocumentationCrossExaminationTest
     {
         _slndir = slndir;
 
-        // Skip vendored third party content (e.g. the Apache-2.0 NPOI submodule under externals/);
-        // RDMP documentation rules such as Glossary linking do not apply there
-        _mdFiles = Directory.GetFiles(slndir.FullName, "*.md", SearchOption.AllDirectories)
-            .Where(static f => !VendoredCode.IsVendored(f))
+        // Skip vendored third party content (e.g. the Apache-2.0 NPOI submodule under externals/), build output and
+        // nested git checkouts (e.g. worktrees under .claude/worktrees); RDMP documentation rules such as Glossary
+        // linking do not apply there, and links computed for files outside this checkout would be wrong
+        _mdFiles = RepositoryLayout.EnumerateFiles(slndir, "*.md", true)
+            .Select(static f => f.FullName)
             .ToArray();
     }
 
@@ -384,12 +396,13 @@ internal class DocumentationCrossExaminationTest
         foreach (var file in csFilesFound)
         {
             var isDesignerFile = file.Contains(".Designer.cs");
+            var relativePath = RepositoryLayout.GetRelativePath(_slndir, file);
 
-            if (file.Contains("CodeTutorials"))
+            if (relativePath.Contains("CodeTutorials"))
                 continue;
 
             //don't look in the packages dir!
-            if (file.Contains("packages"))
+            if (relativePath.Contains("packages"))
                 continue;
 
             foreach (var line in File.ReadLines(file))
@@ -414,13 +427,9 @@ internal class DocumentationCrossExaminationTest
                 }
         }
 
-        //find all comments in .md tutorials
-        foreach (var mdFile in _mdFiles)
+        //find all comments in .md tutorials (don't look in the packages dir!)
+        foreach (var mdFile in _mdFiles.Where(f => !RepositoryLayout.GetRelativePath(_slndir, f).Contains("packages")))
         {
-            //don't look in the packages dir!
-            if (mdFile.Contains("packages"))
-                continue;
-
             fileCommentTokens.Add(mdFile, new HashSet<string>());
             var fileContents = File.ReadAllText(mdFile);
 
@@ -430,7 +439,7 @@ internal class DocumentationCrossExaminationTest
 
             EnsureMaximumGlossaryUse(mdFile, problems);
 
-            EnsureCodeBlocksCompile(mdFile, problems);
+            EnsureCodeBlocksCompile(mdFile);
         }
 
 
@@ -457,21 +466,10 @@ internal class DocumentationCrossExaminationTest
         }
     }
 
-    private static void EnsureCodeBlocksCompile(string mdFile, List<string> problems)
+    private void EnsureCodeBlocksCompile(string mdFile)
     {
-        // Find solution root and build absolute path to MarkdownCodeBlockTests
-        var testDir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
-        while (testDir != null && !testDir.GetFiles("*.sln").Any())
-            testDir = testDir.Parent;
-
-        if (testDir == null)
-            throw new DirectoryNotFoundException("Could not find solution root from test directory");
-
-        var codeBlocks = Path.Combine(testDir.FullName, "Rdmp.UI.Tests", "DesignPatternTests", "MarkdownCodeBlockTests.cs");
-
-        // Removed: Console.WriteLine($"Starting {mdFile}"); - floods CI logs
-
-        var codeBlocksContent = File.ReadAllText(codeBlocks);
+        var codeBlocks = Path.Join(_slndir.FullName, "Rdmp.UI.Tests", "DesignPatternTests", "MarkdownCodeBlockTests.cs");
+        var codeBlocksContent = _markdownCodeBlocksContent ??= File.ReadAllText(codeBlocks);
 
         var rGuidComment = new Regex("<!--- (.{32}) --->");
         var rStartCodeBlock = new Regex("```csharp");
@@ -528,13 +526,11 @@ internal class DocumentationCrossExaminationTest
 
     private void EnsureMaximumGlossaryUse(string mdFile, List<string> problems)
     {
-        const string glossaryRelativePath = "./Documentation/CodeTutorials/Glossary.md";
-
         var rGlossary = new Regex("##([A-z ]*)");
         var rWords = new Regex(@"\[?\w*\]?");
         var rGlossaryLink = new Regex(@"^\[\w*\]:");
 
-        var glossaryPath = Path.Combine(_slndir.FullName, glossaryRelativePath);
+        var glossaryPath = Path.Join(_slndir.FullName, "Documentation", "CodeTutorials", "Glossary.md");
 
         //don't evaluate the glossary!
         if (Path.GetFileName(mdFile) == "Glossary.md")
@@ -553,7 +549,7 @@ internal class DocumentationCrossExaminationTest
         var lineNumber = 0;
 
         var allLines = File.ReadAllLines(mdFile);
-        var allLinesRevised = allLines;
+        var allLinesRevised = (string[])allLines.Clone();
 
         var suggestedLinks = new Dictionary<string, string>();
 
@@ -583,10 +579,8 @@ internal class DocumentationCrossExaminationTest
                             continue;
 
 
-                        var path1 = new Uri(mdFile);
-                        var path2 = new Uri(glossaryPath);
-                        var diff = path1.MakeRelativeUri(path2);
-                        var relPath = diff.OriginalString;
+                        var relPath = Path.GetRelativePath(Path.GetDirectoryName(mdFile), glossaryPath)
+                            .Replace('\\', '/');
 
                         if (!relPath.StartsWith("."))
                             relPath = $"./{relPath}";
@@ -600,10 +594,12 @@ internal class DocumentationCrossExaminationTest
                                                                               match.Index + match.Length)] == ' '
                                                                       //don't mess with lines that contain an image
                                                                       && !line.Contains("!["))
-                            allLinesRevised[lineNumber - 1] = line.Replace($" {match.Value} ", $" [{match.Value}] ");
+                            allLinesRevised[lineNumber - 1] =
+                                allLinesRevised[lineNumber - 1].Replace($" {match.Value} ", $" [{match.Value}] ");
 
                         //also if we have a name like `Catalogue` it should probably be [Catalogue] instead so it works as a link
-                        allLinesRevised[lineNumber - 1] = line.Replace($"`{match.Value}`", $"[{match.Value}]");
+                        allLinesRevised[lineNumber - 1] =
+                            allLinesRevised[lineNumber - 1].Replace($"`{match.Value}`", $"[{match.Value}]");
 
                         //if it is a novel occurrence
                         if (!allLines.Contains(suggestedLine) && !suggestedLinks.ContainsValue(suggestedLine) && !allLines.Contains(markdownLink) && !suggestedLinks.ContainsValue(markdownLink))
@@ -615,8 +611,6 @@ internal class DocumentationCrossExaminationTest
                     }
         }
 
-        // ReSharper disable once RedundantLogicalConditionalExpressionOperand
-        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         if (suggestedLinks.Any() && ReWriteMarkdownToReferenceGlossary)
         {
             File.WriteAllLines(mdFile, allLinesRevised);
