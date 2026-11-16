@@ -11,18 +11,16 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using Tests.Common;
 
 namespace Rdmp.Core.Tests.ReusableCodeTests;
 
 /// <summary>
 /// Tests to confirm that the dependencies in csproj files (NuGet packages) match those in the .nuspec files and that packages.md
-/// lists the correct versions (in documentation)
+/// lists the correct versions (in documentation).  This covers every project in the repository, including RdmpDicom.
 /// </summary>
 public class PackageListIsCorrectTests
 {
-    private static readonly EnumerationOptions EnumerationOptions = new()
-        { RecurseSubdirectories = true, MatchCasing = MatchCasing.CaseInsensitive, IgnoreInaccessible = true };
-
     //<PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     private static readonly Regex RPackageRefNoVersion =
         new(@"<PackageReference\s+Include=""([^""]+)""",
@@ -89,38 +87,25 @@ public class PackageListIsCorrectTests
     /// <returns></returns>
     private static DirectoryInfo FindRoot(string path = null)
     {
-        if (path != null)
-        {
-            if (!Path.IsPathRooted(path)) path = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
-            return new DirectoryInfo(path);
-        }
+        if (path == null) return RepositoryLayout.FindRoot();
 
-        var root = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
-        while (!root.EnumerateFiles("*.sln", SearchOption.TopDirectoryOnly).Any() && root.Parent != null)
-            root = root.Parent;
-        Assert.That(root.Parent, Is.Not.Null, "Could not find root of repository");
-        return root;
+        if (!Path.IsPathRooted(path)) path = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
+        return new DirectoryInfo(path);
     }
 
     /// <summary>
-    /// Path fragment of the vendored NPOI submodule, whose own csproj files are not part of the RDMP build
-    /// (RDMP compiles its sources via the wrapper projects in externals/NPOI.*)
-    /// </summary>
-    private static readonly string VendoredNpoiPath =
-        $"{Path.DirectorySeparatorChar}externals{Path.DirectorySeparatorChar}npoi{Path.DirectorySeparatorChar}";
-
-    /// <summary>
-    /// Returns all csproj files in the repository, except those containing the string 'tests'
-    /// and those belonging to the vendored NPOI submodule
+    /// Returns all csproj files in the repository, except test projects (those whose path contains 'tests').
+    /// Nested git checkouts are skipped, which excludes the vendored NPOI submodule (whose own csproj files are not
+    /// part of the RDMP build, RDMP compiles its sources via the wrapper projects in externals/NPOI.*) as well as any
+    /// worktrees inside the repository.
     /// </summary>
     /// <param name="root"></param>
     /// <returns></returns>
-    private static IEnumerable<string> GetCsprojFiles(DirectoryInfo root)
-    {
-        return root.EnumerateFiles("*.csproj", EnumerationOptions).Select(f => f.FullName)
-            .Where(f => !f.Contains("tests", StringComparison.InvariantCultureIgnoreCase) &&
-                        !f.Contains(VendoredNpoiPath, StringComparison.InvariantCultureIgnoreCase));
-    }
+    private static IEnumerable<string> GetCsprojFiles(DirectoryInfo root) =>
+        RepositoryLayout.EnumerateFiles(root, "*.csproj", false)
+            .Select(static f => f.FullName)
+            .Where(f => !RepositoryLayout.GetRelativePath(root, f)
+                .Contains("tests", StringComparison.InvariantCultureIgnoreCase));
 
     /// <summary>
     /// Find the sole packages.md file wherever in the repo it lives. Error if multiple or none.

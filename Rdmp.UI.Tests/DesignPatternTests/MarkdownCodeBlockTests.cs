@@ -25,14 +25,13 @@ using Rdmp.UI.CommandExecution;
 using Rdmp.UI.CommandExecution.Proposals;
 using Rdmp.UI.ItemActivation;
 using Rdmp.UI.Menus;
-using Rdmp.Core.Tests.DesignPatternTests.ClassFileEvaluation;
 using Rdmp.UI.TestsAndSetup.ServicePropogation;
 
 namespace Rdmp.UI.Tests.DesignPatternTests;
 
 /// <summary>
 /// This class exists to ensure that code blocks in the markdown documentation compile (at least!).  The guid matches the guid in the markdown file.  The method
-/// <see cref="DocumentationCrossExaminationTest.EnsureCodeBlocksCompile"/> checks that the code in the markdown matches the code here within the same guid region.
+/// <c>DocumentationCrossExaminationTest.EnsureCodeBlocksCompile</c> (in Rdmp.Core.Tests) checks that the code in the markdown matches the code here within the same guid region.
 /// </summary>
 internal class MarkdownCodeBlockTests
 {
