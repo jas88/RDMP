@@ -193,8 +193,9 @@ public static class ExcelDateSystem
             _firstMiniFatSector = ReadUInt32(header, 0x3C);
 
             // The header lists the first sectors of the FAT.  A file of more than a few MB continues the list in a chain
-            // of sectors, each ending with the location of the next.
-            var fatSectorCount = ReadUInt32(header, 0x2C);
+            // of sectors, each ending with the location of the next.  The FAT cannot take up more sectors than the file
+            // has, whatever the header claims, which bounds how long the list can grow for a corrupt file.
+            var fatSectorCount = Math.Min(ReadUInt32(header, 0x2C), _sectorCount);
             for (var i = 0; i < HeaderFatSectors && _fatSectors.Count < fatSectorCount; i++)
                 _fatSectors.Add(ReadUInt32(header, 0x4C + i * 4));
 
