@@ -95,14 +95,12 @@ public class PackageListIsCorrectTests
 
     /// <summary>
     /// Returns all csproj files in the repository, except test projects (those whose path contains 'tests').
-    /// Nested git checkouts are skipped, which excludes the vendored NPOI submodule (whose own csproj files are not
-    /// part of the RDMP build, RDMP compiles its sources via the wrapper projects in externals/NPOI.*) as well as any
-    /// worktrees inside the repository.
+    /// Vendored code and nested git checkouts (submodules and any worktrees inside the repository) are skipped.
     /// </summary>
     /// <param name="root"></param>
     /// <returns></returns>
     private static IEnumerable<string> GetCsprojFiles(DirectoryInfo root) =>
-        RepositoryLayout.EnumerateFiles(root, "*.csproj", false)
+        RepositoryLayout.EnumerateFiles(root, "*.csproj")
             .Select(static f => f.FullName)
             .Where(f => !RepositoryLayout.GetRelativePath(root, f)
                 .Contains("tests", StringComparison.InvariantCultureIgnoreCase));
