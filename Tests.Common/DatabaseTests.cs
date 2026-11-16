@@ -992,9 +992,11 @@ GRANT USAGE ON SCHEMA public TO ""{username}"";";
                 if (tableRights.Count > 0)
                     sql += $@"
 GRANT {string.Join(", ", tableRights)} ON ALL TABLES IN SCHEMA public TO ""{username}"";";
-                if (ddl)
-                    sql += $@"
-GRANT CREATE ON SCHEMA public TO ""{username}"";";
+                sql += ddl
+                    ? $@"
+GRANT CREATE ON SCHEMA public TO ""{username}"";"
+                    : $@"
+REVOKE CREATE ON SCHEMA public FROM ""{username}"";";
                 return sql;
             }
             default:
