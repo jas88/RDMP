@@ -124,7 +124,6 @@ generate_single_target_props "Rdmp.Core.Tests"
 generate_single_target_props "RdmpDicom/Rdmp.Dicom.Tests"
 
 generate_single_target_windows_props "Rdmp.UI.Tests"
-generate_single_target_windows_props "Plugins/Plugins.UI.Tests"
 
 # Tools
 generate_single_target_props "Tools/rdmp"
@@ -134,7 +133,6 @@ generate_single_target_windows_props "Application/ResearchDataManagementPlatform
 
 # Metadata/placeholder projects
 generate_single_target_props "Plugins/Plugins"
-generate_single_target_props "Plugins/Plugins.Tests"
 
 # If changes were made and we're in CI, commit and push
 if [ "$CHANGES_MADE" = true ]; then

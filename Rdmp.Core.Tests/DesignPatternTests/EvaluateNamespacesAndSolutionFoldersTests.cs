@@ -229,8 +229,8 @@ public class EvaluateNamespacesAndSolutionFoldersTests
         _projectFileErrors.AddRange(tidy.ProjectFileProblems);
         _classNamingErrors.AddRange(tidy.SourceFileProblems);
 
-        // Plugin projects (Plugins, Plugins.UI, Plugins.Tests...) legitimately share one directory, so only collect
-        // their files once (from the base Plugins project).  Other projects only add files not already collected.
+        // The plugin projects (Plugins, Plugins.UI) are in the same Plugins directory, so only collect their files
+        // once (from the base Plugins project).  Other projects only add files not already collected.
         if (IsConsolidatedPluginProject(p.Name))
         {
             if (p.Name == "Plugins")
@@ -262,8 +262,8 @@ public class EvaluateNamespacesAndSolutionFoldersTests
     }
 
     /// <summary>
-    /// The consolidated plugin projects live under a Plugins directory, i.e. Plugins\Plugins\Plugins.csproj,
-    /// Plugins\Plugins.UI\Plugins.UI.csproj etc.  Also tolerates the csproj directly in Plugins, in the solution
+    /// The consolidated plugin projects live under a Plugins directory, i.e. Plugins\Plugins\Plugins.csproj and
+    /// Plugins\Plugins.UI\Plugins.UI.csproj.  Also tolerates the csproj directly in Plugins, in the solution
     /// folder or in a subdirectory of the solution folder named after the project.
     /// </summary>
     private FileInfo FindConsolidatedPluginProject(VisualStudioProjectReference p, DirectoryInfo physicalSolutionFolder)
@@ -289,5 +289,5 @@ public class EvaluateNamespacesAndSolutionFoldersTests
             : null;
 
     private static bool IsConsolidatedPluginProject(string projectName) =>
-        projectName is "Plugins" or "Plugins.UI" or "Plugins.Tests" or "Plugins.UI.Tests";
+        projectName is "Plugins" or "Plugins.UI";
 }
