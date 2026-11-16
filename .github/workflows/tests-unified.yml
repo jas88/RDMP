@@ -412,20 +412,22 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --verbosity minimal \
             --results-directory coverage \
-            --logger "trx;LogFilePrefix=db" \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov \
+            NUnit.OutputXmlFolderMode=AsSpecified NUnit.TestOutputXml=${{ github.workspace }}/nunit-results/db
 
       - name: Check for Inconclusive tests (Database Mode)
         if: ${{ !cancelled() }}
-        run: python3 .github/scripts/inconclusive-report.py --fail coverage/db*.trx
+        run: python3 .github/scripts/inconclusive-report.py --fail nunit-results/db
 
       - name: Switch to File System Mode
+        if: ${{ !cancelled() }}
         run: |
           echo "=== Switching to File System Mode ==="
           # Add filesystem flag to TestDatabases.txt - RDMP will auto-create YAML repo
           echo "UseFileSystemRepo: true" >> Tests.Common/TestDatabases.txt
 
       - name: Test Core (File System Mode)
+        if: ${{ !cancelled() }}
         timeout-minutes: 45
         env:
           AWS_ENDPOINT_URL: http://127.0.0.1:9000
@@ -437,12 +439,12 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --verbosity minimal \
             --results-directory coverage \
-            --logger "trx;LogFilePrefix=fs" \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov \
+            NUnit.OutputXmlFolderMode=AsSpecified NUnit.TestOutputXml=${{ github.workspace }}/nunit-results/fs
 
       - name: Report Inconclusive tests (File System Mode)
         if: ${{ !cancelled() }}
-        run: python3 .github/scripts/inconclusive-report.py coverage/fs*.trx
+        run: python3 .github/scripts/inconclusive-report.py nunit-results/fs
 
       - name: Upload coverage
         uses: codecov/codecov-action@v7
