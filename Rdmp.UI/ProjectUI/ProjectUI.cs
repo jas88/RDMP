@@ -200,14 +200,10 @@ public partial class ProjectUI : ProjectUI_Design, ISaveableUI
         if (toSetDescriptionOn.IsReleased)
             return;
 
-        using var dialog = new TypeTextOrCancelDialog("Description", "Enter a Description for the Extraction:", 1000,
-            toSetDescriptionOn.Description);
-
-        dialog.ShowDialog(this);
-
-        if (dialog.DialogResult == DialogResult.OK)
+        if (Activator.TypeText("Description", "Enter a Description for the Extraction:", 1000,
+                toSetDescriptionOn.Description, out var description, false))
         {
-            toSetDescriptionOn.Description = dialog.ResultText;
+            toSetDescriptionOn.Description = description;
             toSetDescriptionOn.SaveToDatabase();
             RefreshLists();
         }
@@ -222,14 +218,10 @@ public partial class ProjectUI : ProjectUI_Design, ISaveableUI
         if (toSetDescriptionOn.IsReleased)
             return;
 
-        using var dialog = new TypeTextOrCancelDialog("Separator", "Choose a character(s) separator", 3,
-            toSetDescriptionOn.Separator);
-
-        dialog.ShowDialog(this);
-
-        if (dialog.DialogResult == DialogResult.OK)
+        if (Activator.TypeText("Separator", "Choose a character(s) separator", 3, toSetDescriptionOn.Separator,
+                out var separator, false))
         {
-            toSetDescriptionOn.Separator = dialog.ResultText;
+            toSetDescriptionOn.Separator = separator;
             toSetDescriptionOn.SaveToDatabase();
             RefreshLists();
         }

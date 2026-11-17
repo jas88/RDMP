@@ -218,9 +218,21 @@ public class TestActivateItems : BasicActivateItems, IActivateItems, ITheme
     /// </summary>
     public string TypeTextResponse { get; set; }
 
+    /// <summary>
+    /// What the last call to <see cref="TypeText(DialogArgs, int, string, out string, bool)"/> asked for (null if it has
+    /// not been called since the last launch), so that tests can check the title, prompt, maximum length and initial text
+    /// the user would see
+    /// </summary>
+    public (DialogArgs Args, int MaxLength, string InitialText, bool RequireSaneHeaderText)? LastTypeTextRequest
+    {
+        get;
+        set;
+    }
+
     public override bool TypeText(DialogArgs args, int maxLength, string initialText, out string text,
         bool requireSaneHeaderText)
     {
+        LastTypeTextRequest = (args, maxLength, initialText, requireSaneHeaderText);
         text = TypeTextResponse;
         return !string.IsNullOrWhiteSpace(TypeTextResponse);
     }
