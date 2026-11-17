@@ -618,7 +618,7 @@ There are 4 ways to export/import dataset descriptions from RDMP
 
 #### Metadata Report
 
-This report is accessed through the 'Reports' menu.  It uses [DocX](https://github.com/xceedsoftware/DocX) to write a Microsoft Word file containing the dataset description, row count, unique patient count as well as any graphs that are marked extractable.
+This report is accessed through the 'Reports' menu.  It uses [DocumentFormat.OpenXml](https://github.com/dotnet/Open-XML-SDK) (the Open XML SDK) to write a Microsoft Word file containing the dataset description, row count, unique patient count as well as any graphs that are marked extractable.
 
 This report can be generated for a specific dataset only or all datasets.  A variant of this report is produced when performing a project extraction which shows only the subset of data extracted for the given project/cohort.
 
@@ -638,7 +638,7 @@ Share Definition files include JSON serialization of values and are not designed
 
 #### Dublin Core
 
-[Catalogue] descriptive metadata can be serialized into an xml file which follows the [Dublin Core guidelines]( http://dublincore.org/documents/dc-xml-guidelines/).  RDMP can load dataset descriptions from `<metadata>` `XElements` which follow this xmlns.
+[Catalogue] descriptive metadata can be serialized into an xml file which follows the [Dublin Core guidelines](https://www.dublincore.org/specifications/dublin-core/dc-xml-guidelines/).  RDMP can load dataset descriptions from `<metadata>` `XElements` which follow this xmlns.
 
 An example can be seen below:
 
