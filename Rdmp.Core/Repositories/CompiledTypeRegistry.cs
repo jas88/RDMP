@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 
 namespace Rdmp.Core.Repositories;
 
@@ -23,6 +24,9 @@ namespace Rdmp.Core.Repositories;
 ///
 /// <para>Types of other assemblies (the .NET runtime, NuGet packages) are not registered.  <see cref="MEF"/> finds them by
 /// their exact full name only.</para>
+///
+/// <para>The registration of an assembly in a collectible AssemblyLoadContext is forgotten when the context starts to
+/// unload, so that the registry does not stop it unloading.</para>
 /// </summary>
 public static class CompiledTypeRegistry
 {
@@ -50,6 +54,19 @@ public static class CompiledTypeRegistry
             Registrations.Add(registration);
             RegistrationsByAssembly.Add(assembly, registration);
         }
+
+        // The registration refers to the assembly and its Types, which would otherwise never be collected
+        if (AssemblyLoadContext.GetLoadContext(assembly) is { IsCollectible: true } context)
+            context.Unloading += _ => Unregister(assembly);
+    }
+
+    private static void Unregister(Assembly assembly)
+    {
+        lock (Lock)
+        {
+            if (RegistrationsByAssembly.Remove(assembly, out var registration))
+                Registrations.Remove(registration);
+        }
     }
 
     /// <summary>
@@ -62,10 +79,22 @@ public static class CompiledTypeRegistry
     /// <summary>
     /// Makes sure that <paramref name="assembly"/> (one built with the type registry generator) has registered its Types,
     /// by running its module initializer if that has not run yet.  Module initializers normally run when the assembly's
-    /// code is first used, so an assembly can be loaded (e.g. by reflection) without having registered.
+    /// code is first used, so an assembly can be loaded (e.g. by reflection) without having registered.  Throws
+    /// <see cref="CompiledTypeRegistryException"/> if the module initializer fails.
     /// </summary>
-    internal static void EnsureRegistered(Assembly assembly) =>
-        RuntimeHelpers.RunModuleConstructor(assembly.ManifestModule.ModuleHandle);
+    internal static void EnsureRegistered(Assembly assembly)
+    {
+        try
+        {
+            RuntimeHelpers.RunModuleConstructor(assembly.ManifestModule.ModuleHandle);
+        }
+        catch (Exception e)
+        {
+            throw new CompiledTypeRegistryException(
+                $"The module initializer of assembly '{assembly.FullName}', which registers its Types, failed: {e.GetBaseException().Message}",
+                e);
+        }
+    }
 
     /// <summary>
     /// Returns the Types registered by <paramref name="assembly"/> (every Type declared in it, in metadata order), or null if

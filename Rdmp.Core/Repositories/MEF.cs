@@ -41,7 +41,10 @@ namespace Rdmp.Core.Repositories;
 ///
 /// <para>This class is AssemblyLoadContext-aware: each context gets its own type cache containing only types
 /// accessible from that context (the context itself + the default context). This ensures correct type identity
-/// in test scenarios where assemblies may be loaded in multiple contexts.</para>
+/// in test scenarios where assemblies may be loaded in multiple contexts.  The index built when MEF is first used is
+/// shared by all contexts and holds the Types of the assemblies loaded then (in any context, as the index reflection
+/// built did); the Types of assemblies loaded later go in the cache of their own context.  The cache of a collectible
+/// context is dropped when it starts to unload, so that MEF does not stop it unloading.</para>
 /// </summary>
 public static class MEF
 {
@@ -58,8 +61,14 @@ public static class MEF
     /// </summary>
     private static readonly Lazy<TypeIndex> Primary = new(BuildPrimary, LazyThreadSafetyMode.ExecutionAndPublication);
 
-    // Per-context caches - automatically cleaned up when context is unloaded
+    // Per-context caches.  The cache of a collectible context is dropped when the context starts to unload: it holds the
+    // context's Types, which would otherwise keep it loaded (the runtime keeps the context alive until its Types are gone)
     private static readonly ConditionalWeakTable<AssemblyLoadContext, ContextCache> _contextCaches = new();
+
+    /// <summary>
+    /// The collectible contexts MEF has seen, each with whether it has started to unload
+    /// </summary>
+    private static readonly ConditionalWeakTable<AssemblyLoadContext, StrongBox<bool>> CollectibleContexts = new();
 
     // Cache for the default context (used when CurrentContextualReflectionContext is null)
     private static readonly ContextCache _defaultContextCache = new();
@@ -113,6 +122,9 @@ public static class MEF
     /// </summary>
     internal sealed class TypeIndex
     {
+        /// <summary>
+        /// Indexes <paramref name="types"/> by name (see <see cref="IndexByName"/>)
+        /// </summary>
         /// <param name="types">The Types to index, in assembly load order and then metadata order</param>
         /// <param name="fromCompiledTypeRegistry">True if the Types came from the registry, false if from reflection</param>
         /// <param name="assemblies">The assemblies whose Types are listed</param>
@@ -171,11 +183,13 @@ public static class MEF
         if (context == null)
             return _defaultContextCache;
 
-        return _contextCaches.GetOrCreateValue(context);
+        // A context which is unloading gets an empty cache which is not kept
+        return IsUnloading(context) ? new ContextCache() : GetCache(context);
     }
 
     /// <summary>
-    /// Gets the cache for the context <paramref name="assembly"/> is loaded in, or null if it is in none
+    /// Gets the cache for the context <paramref name="assembly"/> is loaded in, or null if it is in none or its context is
+    /// unloading (so its Types are not to be added)
     /// </summary>
     private static ContextCache GetCacheFor(Assembly assembly)
     {
@@ -184,8 +198,34 @@ public static class MEF
         if (context == AssemblyLoadContext.Default)
             return _defaultContextCache;
 
-        return context == null ? null : _contextCaches.GetOrCreateValue(context);
+        return context == null || IsUnloading(context) ? null : GetCache(context);
     }
+
+    private static ContextCache GetCache(AssemblyLoadContext context)
+    {
+        WatchForUnloading(context);
+        return _contextCaches.GetOrCreateValue(context);
+    }
+
+    /// <summary>
+    /// If <paramref name="context"/> is collectible, arranges for its cache to be dropped when it starts to unload
+    /// </summary>
+    private static void WatchForUnloading(AssemblyLoadContext context)
+    {
+        if (!context.IsCollectible)
+            return;
+
+        var unloading = new StrongBox<bool>();
+        if (CollectibleContexts.TryAdd(context, unloading))
+            context.Unloading += unloadingContext =>
+            {
+                unloading.Value = true;
+                _contextCaches.Remove(unloadingContext);
+            };
+    }
+
+    private static bool IsUnloading(AssemblyLoadContext context) =>
+        context.IsCollectible && CollectibleContexts.TryGetValue(context, out var unloading) && unloading.Value;
 
     /// <summary>
     /// Gets assemblies accessible from the current context (current + default)
@@ -208,6 +248,10 @@ public static class MEF
         var loadedAssembly = ale?.LoadedAssembly;
         if (loadedAssembly == null)
             return;
+
+        // So that an assembly whose collectible context starts to unload before MEF next runs is skipped
+        if (AssemblyLoadContext.GetLoadContext(loadedAssembly) is { } context)
+            WatchForUnloading(context);
 
         PendingAssemblies.Enqueue(loadedAssembly);
         Interlocked.Increment(ref _pendingCount);
@@ -292,15 +336,11 @@ public static class MEF
     private static TypeIndex BuildPrimary()
     {
         var sw = Stopwatch.StartNew();
-
-        // RDMP assemblies register when their code is first used, so may not have yet (e.g. if they were loaded by reflection)
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            if (IsRdmpAssembly(assembly) && CompiledTypeRegistry.IsRegisteringAssembly(assembly))
-                CompiledTypeRegistry.EnsureRegistered(assembly);
-
-        var loadOrder = AppDomain.CurrentDomain.GetAssemblies();
         var problems = new List<KeyValuePair<string, Exception>>();
 
+        EnsureRegistered(AppDomain.CurrentDomain.GetAssemblies(), problems);
+
+        var loadOrder = AppDomain.CurrentDomain.GetAssemblies();
         var index = BuildFromCompiledTypeRegistry(CompiledTypeRegistry.GetRegistrations(), loadOrder, problems);
 
         if (index == null)
@@ -315,29 +355,53 @@ public static class MEF
     }
 
     /// <summary>
-    /// Indexes the Types listed by <paramref name="registrations"/>, ordering the assemblies as in <paramref name="loadOrder"/>
-    /// (as reflection does).  Returns null (having added the reasons to <paramref name="problems"/>) if any registration
-    /// cannot list its Types, or an RDMP assembly in <paramref name="loadOrder"/> (one which is or references Rdmp.Core) has
-    /// not registered, since its Types would then be missing.
+    /// Makes sure that each of the RDMP <paramref name="assemblies"/> built with the type registry generator has registered
+    /// its Types (see <see cref="CompiledTypeRegistry.EnsureRegistered"/>).  An assembly whose module initializer fails is
+    /// added to <paramref name="problems"/> rather than thrown, so that MEF can still fall back on reflection.
+    /// </summary>
+    internal static void EnsureRegistered(IEnumerable<Assembly> assemblies, List<KeyValuePair<string, Exception>> problems)
+    {
+        foreach (var assembly in assemblies.Where(static a => IsRdmpAssembly(a) && CompiledTypeRegistry.IsRegisteringAssembly(a)))
+            try
+            {
+                CompiledTypeRegistry.EnsureRegistered(assembly);
+            }
+            catch (CompiledTypeRegistryException e)
+            {
+                problems.Add(new KeyValuePair<string, Exception>(assembly.FullName, e));
+            }
+    }
+
+    /// <summary>
+    /// Indexes the Types listed by the <paramref name="registrations"/> of the assemblies in <paramref name="loadOrder"/>,
+    /// ordering the assemblies as in <paramref name="loadOrder"/> (as reflection does).  Returns null (having added the
+    /// reasons to <paramref name="problems"/>) if there were already problems, any registration cannot list its Types, or an
+    /// RDMP assembly in <paramref name="loadOrder"/> (one which is or references Rdmp.Core) has not registered, since its
+    /// Types would then be missing.
     /// </summary>
     internal static TypeIndex BuildFromCompiledTypeRegistry(IReadOnlyList<CompiledTypeRegistration> registrations,
         IReadOnlyList<Assembly> loadOrder, List<KeyValuePair<string, Exception>> problems)
     {
-        var registered = registrations.Select(static r => r.Assembly).ToHashSet();
-        var rdmpCoreContext = AssemblyLoadContext.GetLoadContext(RdmpCoreAssembly);
-
-        foreach (var assembly in loadOrder)
-            if (!registered.Contains(assembly) && AssemblyLoadContext.GetLoadContext(assembly) == rdmpCoreContext &&
-                IsRdmpAssembly(assembly))
-                problems.Add(new KeyValuePair<string, Exception>(assembly.FullName, GetNotRegisteredException(assembly)));
-
         var position = new Dictionary<Assembly, int>();
         for (var i = 0; i < loadOrder.Count; i++)
             position.TryAdd(loadOrder[i], i);
 
+        // Like reflection, only index assemblies which are loaded (not one whose context has since been unloaded)
+        var present = registrations.Where(r => position.ContainsKey(r.Assembly))
+            .OrderBy(r => position[r.Assembly]).ToArray();
+        var registered = present.Select(static r => r.Assembly).ToHashSet();
+
+        var rdmpCoreContext = AssemblyLoadContext.GetLoadContext(RdmpCoreAssembly);
+        var alreadyReported = problems.Select(static p => p.Key).ToHashSet();
+
+        foreach (var assembly in loadOrder.Where(a =>
+                     !registered.Contains(a) && !alreadyReported.Contains(a.FullName) &&
+                     AssemblyLoadContext.GetLoadContext(a) == rdmpCoreContext && IsRdmpAssembly(a)))
+            problems.Add(new KeyValuePair<string, Exception>(assembly.FullName, GetNotRegisteredException(assembly)));
+
         var types = new List<Type>();
 
-        foreach (var registration in registrations.OrderBy(r => position.GetValueOrDefault(r.Assembly, int.MaxValue)))
+        foreach (var registration in present)
             try
             {
                 types.AddRange(registration.GetTypes());
@@ -424,24 +488,27 @@ public static class MEF
         if (primary.Assemblies.Contains(assembly) || !IsRdmpAssembly(assembly))
             return;
 
-        if (CompiledTypeRegistry.IsRegisteringAssembly(assembly))
-            CompiledTypeRegistry.EnsureRegistered(assembly);
-
-        var registration = CompiledTypeRegistry.GetRegistration(assembly);
         Exception problem;
 
-        if (registration != null)
-            try
+        try
+        {
+            if (CompiledTypeRegistry.IsRegisteringAssembly(assembly))
+                CompiledTypeRegistry.EnsureRegistered(assembly);
+
+            var registration = CompiledTypeRegistry.GetRegistration(assembly);
+
+            if (registration != null)
             {
                 AddTypesToCache(primary, assembly, registration.GetTypes(), cache);
                 return;
             }
-            catch (CompiledTypeRegistryException e)
-            {
-                problem = e;
-            }
-        else
+
             problem = GetNotRegisteredException(assembly);
+        }
+        catch (CompiledTypeRegistryException e)
+        {
+            problem = e;
+        }
 
         ReportProblems(new[] { new KeyValuePair<string, Exception>(assembly.FullName, problem) },
             $"MEF is finding the Types of assembly '{assembly.GetName().Name}' with reflection");
