@@ -37,7 +37,7 @@ public class CatalogueConstraintReportTests : TestsRequiringAnExtractionConfigur
         return new DQERepository(CatalogueRepository, db);
     }
 
-    [TestCaseSource(typeof(All), nameof(All.DatabaseTypesWithBoolFlags))]
+    [TestCaseSource(typeof(All), nameof(All.PlatformDatabaseTypesWithBoolFlags))]
     public void ValidateBulkTestData(DatabaseType dbType, bool testCancellingValidationEarly)
     {
         var numberOfRecordsToGenerate = 10000;

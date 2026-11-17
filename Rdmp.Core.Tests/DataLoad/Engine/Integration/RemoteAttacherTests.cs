@@ -9,6 +9,11 @@ using Rdmp.Core.Curation.Data.DataLoad;
 using Rdmp.Core.DataLoad.Modules.Attachers;
 using System;
 using FAnsi;
+using FAnsi.Discovery.QuerySyntax;
+using FAnsi.Implementations.MicrosoftSQL;
+using FAnsi.Implementations.MySql;
+using FAnsi.Implementations.Oracle;
+using FAnsi.Implementations.PostgreSql;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
@@ -182,5 +187,56 @@ public class RemoteAttacherTests
         };
         var lmd = new LoadMetadata();
         Assert.That(attacher.SqlHistoricalDataFilter(lmd, DatabaseType.MicrosoftSQLServer, attacher.RemoteTableDateColumn), Is.EqualTo(""));
+    }
+
+    private static IQuerySyntaxHelper Syntax(DatabaseType type) => type switch
+    {
+        DatabaseType.MicrosoftSQLServer => MicrosoftQuerySyntaxHelper.Instance,
+        DatabaseType.MySql => MySqlQuerySyntaxHelper.Instance,
+        DatabaseType.Oracle => OracleQuerySyntaxHelper.Instance,
+        DatabaseType.PostgreSql => PostgreSqlSyntaxHelper.Instance,
+        _ => throw new ArgumentOutOfRangeException(nameof(type))
+    };
+
+    // A bare name is replaced by the real column name, wrapped, so case-folding DBMS find it
+    [TestCase(DatabaseType.MicrosoftSQLServer, "dateColumn", "dateColumn", "[dateColumn]")]
+    [TestCase(DatabaseType.MySql, "dateColumn", "dateColumn", "`dateColumn`")]
+    [TestCase(DatabaseType.PostgreSql, "dateColumn", "dateColumn", "\"dateColumn\"")]
+    [TestCase(DatabaseType.PostgreSql, "DateColumn", "datecolumn", "\"datecolumn\"")]
+    [TestCase(DatabaseType.Oracle, "date", "DATE", "\"DATE\"")]
+    [TestCase(DatabaseType.Oracle, "MyDate", "MYDATE", "\"MYDATE\"")]
+    public void ResolveColumnSql_BareName_UsesRealColumnName(DatabaseType type, string configured, string actual,
+        string expected)
+    {
+        Assert.That(RemoteAttacher.ResolveColumnSql(Syntax(type), configured, new[] { "id", actual }),
+            Is.EqualTo(expected));
+    }
+
+    // Wrapped or qualified names, expressions, unknown and ambiguous names are left exactly as configured
+    [TestCase(DatabaseType.PostgreSql, "dateColumn::timestamp")]
+    [TestCase(DatabaseType.PostgreSql, "\"dateColumn\"")]
+    [TestCase(DatabaseType.PostgreSql, "t.dateColumn")]
+    [TestCase(DatabaseType.PostgreSql, "CAST(dateColumn AS date)")]
+    [TestCase(DatabaseType.MicrosoftSQLServer, "[dateColumn]")]
+    [TestCase(DatabaseType.MicrosoftSQLServer, "date column")]
+    [TestCase(DatabaseType.MySql, "`dateColumn`")]
+    [TestCase(DatabaseType.Oracle, "otherColumn")]
+    public void ResolveColumnSql_NotABareKnownName_Unchanged(DatabaseType type, string configured)
+    {
+        Assert.That(RemoteAttacher.ResolveColumnSql(Syntax(type), configured, new[] { "dateColumn", "date column" }),
+            Is.EqualTo(configured));
+    }
+
+    [Test]
+    public void ResolveColumnSql_CaseOnlyDifferences_PrefersExactThenGivesUp()
+    {
+        var columns = new[] { "DateColumn", "datecolumn" };
+        var syntax = PostgreSqlSyntaxHelper.Instance;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(RemoteAttacher.ResolveColumnSql(syntax, "datecolumn", columns), Is.EqualTo("\"datecolumn\""));
+            Assert.That(RemoteAttacher.ResolveColumnSql(syntax, "DATECOLUMN", columns), Is.EqualTo("DATECOLUMN"));
+        });
     }
 }
