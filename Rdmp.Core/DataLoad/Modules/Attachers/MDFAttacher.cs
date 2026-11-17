@@ -272,7 +272,7 @@ There are a number of variables for use within this override path:
     /// <param name="pathB"></param>
     /// <param name="job"></param>
     /// <returns></returns>
-    private bool FilesSimilar(string pathA, string pathB, IDataLoadEventListener job)
+    internal bool FilesSimilar(string pathA, string pathB, IDataLoadEventListener job)
     {
         try
         {
