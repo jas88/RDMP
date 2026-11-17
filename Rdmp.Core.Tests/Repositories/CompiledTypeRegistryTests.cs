@@ -35,7 +35,9 @@ namespace Rdmp.Core.Tests.Repositories;
 /// Tests that <see cref="MEF"/> takes its Types from the <see cref="CompiledTypeRegistry"/> and finds the same Types, by
 /// the same names, as reflection did.  The comparisons build both indexes from the assemblies loaded in the test process
 /// with the code MEF itself uses (<see cref="MEF.BuildFromCompiledTypeRegistry"/> and <see cref="MEF.BuildFromReflection"/>)
-/// and look every name up in each with <see cref="MEF.Resolve"/>.
+/// and look every name up in each with <see cref="MEF.Resolve"/>.  Types which were added to an assembly after it was
+/// compiled (by code coverage instrumentation) are not part of the comparisons, see
+/// <see cref="CompiledTypeRegistryChecks.IsAddedAfterCompilation"/>.
 /// </summary>
 public class CompiledTypeRegistryTests
 {
@@ -61,6 +63,13 @@ public class CompiledTypeRegistryTests
 
         _reflection = MEF.BuildFromReflection(loadOrder, new Dictionary<string, Exception>());
         _rdmpAssemblies = loadOrder.Where(_registry.Assemblies.Contains).ToArray();
+
+        // So that the comparisons cannot pass by comparing nothing
+        Assert.That(_rdmpAssemblies, Is.SupersetOf(new[]
+        {
+            typeof(MEF).Assembly, typeof(CompiledTypeRegistryTests).Assembly, typeof(UnitTests).Assembly
+        }));
+        Assert.That(CompiledTypeRegistry.GetRegisteredTypes(typeof(MEF).Assembly), Has.Count.GreaterThan(1000));
     }
 
     [Test]
@@ -79,6 +88,9 @@ public class CompiledTypeRegistryTests
             Assert.That(MEF.GetAllTypes().Where(static t => CompiledTypeRegistry.GetRegistration(t.Assembly) == null),
                 Is.Empty);
             Assert.That(MEF.GetAllTypes(), Does.Not.Contain(typeof(string)));
+
+            // Nor Types added to RDMP's assemblies after they were compiled (e.g. by code coverage)
+            Assert.That(MEF.GetAllTypes().Where(CompiledTypeRegistryChecks.IsAddedAfterCompilation), Is.Empty);
         });
     }
 
@@ -90,7 +102,7 @@ public class CompiledTypeRegistryTests
     public void Registrations_ListTheSameTypesAsReflection_InTheSameOrder()
     {
         TestContext.Out.WriteLine(
-            $"Comparing the Types of {string.Join(", ", _rdmpAssemblies.Select(static a => $"{a.GetName().Name} ({CompiledTypeRegistry.GetRegisteredTypes(a).Count})"))}");
+            $"Comparing the Types of {string.Join(", ", _rdmpAssemblies.Select(static a => $"{a.GetName().Name} ({CompiledTypeRegistry.GetRegisteredTypes(a).Count}{(CompiledTypeRegistryChecks.IsInstrumentedByCoverlet(a) ? ", instrumented by Coverlet" : "")})"))}");
 
         Assert.Multiple(() =>
         {
@@ -107,8 +119,13 @@ public class CompiledTypeRegistryTests
     public void Types_AreListedInTheSameOrderAsWithReflection()
     {
         var registered = _registry.Types.ToHashSet();
-        var withReflection = _reflection.Types.Where(t => IsRdmp(t) && (!IsSynthesized(t) || registered.Contains(t)));
+        var withReflection = _reflection.Types
+            .Where(t => IsRdmp(t) && !CompiledTypeRegistryChecks.IsAddedAfterCompilation(t) &&
+                        (!IsSynthesized(t) || registered.Contains(t)))
+            .GroupBy(static t => t.Assembly)
+            .SelectMany(static g => CompiledTypeRegistryChecks.InCompilerOrder(g, g.Key));
 
+        Assert.That(_registry.Types, Has.Length.GreaterThan(1500));
         Assert.That(_registry.Types, Is.EqualTo(withReflection));
     }
 
@@ -121,37 +138,49 @@ public class CompiledTypeRegistryTests
     /// Every name of every Type reflection finds in the RDMP assemblies (full and short names, in their own, upper and lower
     /// case) resolves to the same Type through the registry as through reflection.  The only exceptions are Types which the
     /// compiler generates (closures, iterators etc.), which are not registered: they are found by their exact full name,
-    /// like Types of other assemblies, but not by other names.
+    /// like Types of other assemblies, but not by other names; and Types added to an assembly after it was compiled.
     /// </summary>
     [Test]
     public void GetType_FindsTheSameTypeAsReflection_ForEveryNameOfEveryRdmpType()
     {
         var compared = 0;
         var synthesizedNotFound = 0;
+        var addedAfterCompilationNotFound = 0;
         var divergences = new List<string>();
 
         foreach (var type in _rdmpAssemblies.SelectMany(static a => a.GetTypes()))
-        foreach (var name in GetNames(type))
         {
-            compared++;
-            var viaRegistry = MEF.Resolve(_registry, new MEF.ContextCache(), name);
-            var viaReflection = MEF.Resolve(_reflection, new MEF.ContextCache(), name);
-
-            if (viaRegistry == viaReflection)
-                continue;
-
-            if (IsSynthesized(type) && viaRegistry == null && name != type.FullName)
+            foreach (var name in GetNames(type))
             {
-                synthesizedNotFound++;
-                continue;
-            }
+                compared++;
+                var viaRegistry = MEF.Resolve(_registry, new MEF.ContextCache(), name);
+                var viaReflection = MEF.Resolve(_reflection, new MEF.ContextCache(), name);
 
-            divergences.Add($"'{name}' found {Describe(viaRegistry)} with the registry but {Describe(viaReflection)} with reflection");
+                if (viaRegistry == viaReflection)
+                    continue;
+
+                if (IsSynthesized(type) && viaRegistry == null && name != type.FullName)
+                {
+                    synthesizedNotFound++;
+                    continue;
+                }
+
+                // Coverlet's Types have a '.' in their name, so not even Assembly.GetType finds them by their full name
+                if (CompiledTypeRegistryChecks.IsAddedAfterCompilation(type) && viaRegistry == null)
+                {
+                    addedAfterCompilationNotFound++;
+                    continue;
+                }
+
+                divergences.Add($"'{name}' found {Describe(viaRegistry)} with the registry but {Describe(viaReflection)} with reflection");
+            }
         }
 
         TestContext.Out.WriteLine(
             $"Compared {compared} lookups of the names of {_rdmpAssemblies.Sum(static a => a.GetTypes().Length)} Types: " +
-            $"{divergences.Count} differ, {synthesizedNotFound} names of compiler generated Types are only found with reflection");
+            $"{divergences.Count} differ, {synthesizedNotFound} names of compiler generated Types are only found with reflection, " +
+            $"{addedAfterCompilationNotFound} names of Types added after compilation are only found with reflection");
+        Assert.That(compared, Is.GreaterThan(20000));
         Assert.That(divergences, Is.Empty);
     }
 
@@ -168,12 +197,12 @@ public class CompiledTypeRegistryTests
         var compared = 0;
         var divergences = new List<string>();
 
-        foreach (var type in _rdmpAssemblies.SelectMany(static a => a.GetTypes()).Where(static t => !IsSynthesized(t)))
+        foreach (var type in _rdmpAssemblies.SelectMany(static a => a.GetTypes()).Where(static t => !IsNotFromCompilation(t)))
         {
             compared++;
             var registry = viaRegistry.GetValueOrDefault(type, new HashSet<Type>());
             var reflection = viaReflection.GetValueOrDefault(type, new HashSet<Type>());
-            var reflectionRdmp = reflection.Where(IsRdmp).ToHashSet();
+            var reflectionRdmp = reflection.Where(t => IsRdmp(t) && !IsNotFromCompilation(t)).ToHashSet();
 
             if (!registry.SetEquals(reflectionRdmp))
                 divergences.Add(
@@ -185,6 +214,7 @@ public class CompiledTypeRegistryTests
         }
 
         TestContext.Out.WriteLine($"Compared the implementations of {compared} Types: {divergences.Count} differ");
+        Assert.That(compared, Is.GreaterThan(2000));
         Assert.That(divergences, Is.Empty);
     }
 
@@ -200,8 +230,10 @@ public class CompiledTypeRegistryTests
     [TestCase(typeof(IPipelineRequirement<DataTable>))]
     public void GetTypes_FindsTheRdmpTypesReflectionFinds(Type type)
     {
-        var expected = _reflection.Types.Where(IsRdmp).Where(t => !t.IsInterface && !t.IsAbstract && type.IsAssignableFrom(t));
+        var expected = _reflection.Types.Where(IsRdmp).Where(t => !t.IsInterface && !t.IsAbstract && type.IsAssignableFrom(t))
+            .ToArray();
 
+        Assert.That(expected, Is.Not.Empty);
         Assert.That(MEF.GetTypes(type), Is.EquivalentTo(expected));
     }
 
@@ -232,8 +264,9 @@ public class CompiledTypeRegistryTests
             .Where(t => !t.IsAbstract && !t.IsGenericType && target.IsAssignableFrom(t)).ToArray();
 
         // Iterators are compiler generated classes implementing IEnumerable<T>, which the registry does not list
+        Assert.That(expected, Is.Not.Empty);
         Assert.That(MEF.GetGenericTypes(genericType, typeOfT),
-            Is.EquivalentTo(expected.Where(t => !IsSynthesized(t) || _registry.Types.Contains(t))));
+            Is.EquivalentTo(expected.Where(t => !IsNotFromCompilation(t) || _registry.Types.Contains(t))));
     }
 
     /// <summary>
@@ -253,45 +286,38 @@ public class CompiledTypeRegistryTests
     public void GetType_FindsTheSameTypeAsReflection_ForTheFullNameOfEveryTypeInOtherAssemblies()
     {
         var compared = 0;
-        var caseOnly = 0;
-        var shortNameOfOther = 0;
+        var foundByShortName = 0;
         var divergences = new List<string>();
 
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies().Where(a =>
                      !a.IsDynamic && !_registry.Assemblies.Contains(a) && _reflection.Assemblies.Contains(a)))
-        foreach (var type in GetTypesSafely(assembly).Where(static t => t.FullName != null && !IsSynthesized(t)))
         {
-            compared++;
-            var viaRegistry = MEF.Resolve(_registry, new MEF.ContextCache(), type.FullName);
-            var viaReflection = MEF.Resolve(_reflection, new MEF.ContextCache(), type.FullName);
-
-            if (viaRegistry == viaReflection)
-                continue;
-
-            if (viaRegistry == type && viaReflection != null && !IsRdmp(viaReflection))
+            foreach (var type in GetTypesSafely(assembly).Where(static t => t.FullName != null && !IsNotFromCompilation(t)))
             {
-                // Reflection ignored case so may have found a different Type whose name only differs in case
-                if (string.Equals(viaReflection.FullName, type.FullName, StringComparison.OrdinalIgnoreCase))
+                compared++;
+                var viaRegistry = MEF.Resolve(_registry, new MEF.ContextCache(), type.FullName);
+                var viaReflection = MEF.Resolve(_reflection, new MEF.ContextCache(), type.FullName);
+
+                if (viaRegistry == viaReflection)
+                    continue;
+
+                // Reflection's index held short names and full names (ignoring case) together, so a Type of another
+                // assembly could be found through its short name (or its name in another case) before one whose full name
+                // this is.  The registry finds the Type called exactly that, as short names of other assemblies' Types
+                // are not used.
+                if (viaRegistry?.FullName == type.FullName && viaReflection != null && !IsRdmp(viaReflection) &&
+                    viaReflection.FullName != type.FullName)
                 {
-                    caseOnly++;
+                    foundByShortName++;
                     continue;
                 }
 
-                // The name of a Type in the global namespace is also the short name of Types in other namespaces, one
-                // of which reflection found first.  Short names of other assemblies' Types are not used with the registry.
-                if (type.Namespace == null && viaReflection.Name.Equals(type.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    shortNameOfOther++;
-                    continue;
-                }
+                divergences.Add($"'{type.FullName}' [{assembly.GetName().Name}] found {Describe(viaRegistry)} with the registry but {Describe(viaReflection)} with reflection");
             }
-
-            divergences.Add($"'{type.FullName}' [{assembly.GetName().Name}] found {Describe(viaRegistry)} with the registry but {Describe(viaReflection)} with reflection");
         }
 
         TestContext.Out.WriteLine(
-            $"Compared {compared} full names: {divergences.Count} differ, {caseOnly} resolved by reflection to a Type whose name differs only in case, " +
-            $"{shortNameOfOther} resolved by reflection to another Type with that short name");
+            $"Compared {compared} full names: {divergences.Count} differ, {foundByShortName} resolved by reflection to another assembly's Type with that short name, or that name in another case");
         Assert.That(compared, Is.GreaterThan(1000));
         Assert.That(divergences, Is.Empty);
     }
@@ -299,19 +325,27 @@ public class CompiledTypeRegistryTests
     [Test]
     public void GetType_FindsOtherAssemblies_TypesByFullNameOnly()
     {
+        // MEF only finds the Types of other assemblies which are loaded, so load each one first
+        var yamlValue = typeof(YamlDotNet.Core.Tokens.Value);
+        var dataSet = typeof(DataSet);
+        var databaseType = typeof(FAnsi.DatabaseType);
+        var nlogLogManager = typeof(NLog.LogManager);
+        Assert.That(new[] { yamlValue, dataSet, databaseType, nlogLogManager }.Select(static t => t.Assembly),
+            Is.All.Not.Null);
+
         Assert.Multiple(() =>
         {
             // YamlDotNet.Core.Tokens.Value used to be found for 'Value' (e.g. a word on the command line)
             Assert.That(MEF.GetType("Value"), Is.Null);
-            Assert.That(MEF.GetType("YamlDotNet.Core.Tokens.Value"), Is.EqualTo(typeof(YamlDotNet.Core.Tokens.Value)));
+            Assert.That(MEF.GetType("YamlDotNet.Core.Tokens.Value"), Is.EqualTo(yamlValue));
 
             // A full name is looked for before a short name (Rdmp.Core's Dataset has the same short name, ignoring case)
-            Assert.That(MEF.GetType("System.Data.DataSet"), Is.EqualTo(typeof(DataSet)));
-            Assert.That(MEF.GetType("FAnsi.DatabaseType"), Is.EqualTo(typeof(FAnsi.DatabaseType)));
+            Assert.That(MEF.GetType("System.Data.DataSet"), Is.EqualTo(dataSet));
+            Assert.That(MEF.GetType("FAnsi.DatabaseType"), Is.EqualTo(databaseType));
             Assert.That(MEF.GetType("System.String"), Is.EqualTo(typeof(string)));
 
             // Finding a Type by its full name does not make its short name find it
-            Assert.That(MEF.GetType("NLog.LogManager"), Is.EqualTo(typeof(NLog.LogManager)));
+            Assert.That(MEF.GetType("NLog.LogManager"), Is.EqualTo(nlogLogManager));
             Assert.That(MEF.GetType("LogManager"), Is.EqualTo(typeof(Rdmp.Core.Logging.LogManager)));
             Assert.That(MEF.GetType("Rdmp.Core.Logging.LogManager"), Is.EqualTo(typeof(Rdmp.Core.Logging.LogManager)));
 
@@ -327,6 +361,12 @@ public class CompiledTypeRegistryTests
     [Test]
     public void GetType_FindsEveryKindOfType()
     {
+        // An internal Type whose short name is also that of a public .NET Type (loaded here), which the old registry did not
+        // list, so a lookup of its full name fell through to the other Type's short name
+        var mailAttachment = typeof(System.Net.Mail.Attachment);
+        var attachment = typeof(MEF).Assembly.GetType("Rdmp.Core.CommandExecution.AtomicCommands.Attachment", true);
+        Assert.That(attachment.IsVisible, Is.False);
+
         Assert.Multiple(() =>
         {
             Assert.That(MEF.GetType("ICacheLayout"), Is.EqualTo(typeof(ICacheLayout)));
@@ -338,10 +378,9 @@ public class CompiledTypeRegistryTests
             Assert.That(MEF.GetType(typeof(ProtectedNested).FullName), Is.EqualTo(typeof(ProtectedNested)));
             Assert.That(MEF.GetType(typeof(PrivateNestedGeneric<>).FullName), Is.EqualTo(typeof(PrivateNestedGeneric<>)));
 
-            // Internal, and shares its short name (ignoring case) with Terminal.Gui.Autocomplete
-            var autoComplete = typeof(MEF).Assembly.GetType("Rdmp.Core.CommandLine.Interactive.AutoComplete", true);
-            Assert.That(MEF.GetType("Rdmp.Core.CommandLine.Interactive.AutoComplete"), Is.EqualTo(autoComplete));
-            Assert.That(MEF.GetType("AutoComplete"), Is.EqualTo(autoComplete));
+            Assert.That(MEF.GetType("Rdmp.Core.CommandExecution.AtomicCommands.Attachment"), Is.EqualTo(attachment));
+            Assert.That(MEF.GetType("Attachment"), Is.EqualTo(attachment));
+            Assert.That(MEF.GetType("System.Net.Mail.Attachment"), Is.EqualTo(mailAttachment));
 
             // Short names shared with Types of other assemblies: RDMP's wins
             Assert.That(MEF.GetType("DataTableExtensions"),
@@ -608,6 +647,9 @@ public class CompiledTypeRegistryTests
             "The test projects should set the switch (see Directory.Build.props) so that registry problems fail tests");
 
     private static bool IsSynthesized(Type type) => CompiledTypeRegistryChecks.IsSynthesized(type);
+
+    private static bool IsNotFromCompilation(Type type) =>
+        CompiledTypeRegistryChecks.IsSynthesized(type) || CompiledTypeRegistryChecks.IsAddedAfterCompilation(type);
 
     private bool IsRdmp(Type type) => _registry.Assemblies.Contains(type.Assembly);
 
