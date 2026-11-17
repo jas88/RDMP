@@ -30,11 +30,11 @@ public class LicenseAcceptanceTests
     [SetUp]
     public void SetUp()
     {
-        _licenseFolder = Path.Combine(TestContext.CurrentContext.WorkDirectory,
+        _licenseFolder = Path.Join(TestContext.CurrentContext.WorkDirectory,
             $"{nameof(LicenseAcceptanceTests)}_{Guid.NewGuid():N}");
         Directory.CreateDirectory(_licenseFolder);
-        File.WriteAllText(Path.Combine(_licenseFolder, License.RdmpLicense), "rdmp license");
-        File.WriteAllText(Path.Combine(_licenseFolder, License.ThirdPartyLicenses), "third party licenses");
+        File.WriteAllText(Path.Join(_licenseFolder, License.RdmpLicense), "rdmp license");
+        File.WriteAllText(Path.Join(_licenseFolder, License.ThirdPartyLicenses), "third party licenses");
 
         _storedHash = null;
         _savedHashes = new List<string>();
@@ -140,8 +140,8 @@ public class LicenseAcceptanceTests
         {
             Assert.That(accepted, Is.True);
             Assert.That(_savedHashes, Is.EqualTo(new[] { CurrentHash }));
-            Assert.That(_output.ToString(), Does.Contain(Path.Combine(_licenseFolder, License.RdmpLicense)));
-            Assert.That(_output.ToString(), Does.Contain(Path.Combine(_licenseFolder, License.ThirdPartyLicenses)));
+            Assert.That(_output.ToString(), Does.Contain(Path.Join(_licenseFolder, License.RdmpLicense)));
+            Assert.That(_output.ToString(), Does.Contain(Path.Join(_licenseFolder, License.ThirdPartyLicenses)));
         });
 
         // So the next run does not ask
@@ -266,8 +266,8 @@ public class LicenseAcceptanceTests
     [Test]
     public void EnsureAccepted_LicenseFilesMissing_ShowsTheEmbeddedLicenses()
     {
-        File.Delete(Path.Combine(_licenseFolder, License.RdmpLicense));
-        File.Delete(Path.Combine(_licenseFolder, License.ThirdPartyLicenses));
+        File.Delete(Path.Join(_licenseFolder, License.RdmpLicense));
+        File.Delete(Path.Join(_licenseFolder, License.ThirdPartyLicenses));
 
         Create(new StringReader($"n{Environment.NewLine}"), false).EnsureAccepted(Array.Empty<string>(), null);
 

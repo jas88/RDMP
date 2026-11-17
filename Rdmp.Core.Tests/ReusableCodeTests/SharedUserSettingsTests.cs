@@ -23,7 +23,7 @@ public class SharedUserSettingsTests
     [SetUp]
     public void SetUp()
     {
-        _folder = Path.Combine(TestContext.CurrentContext.WorkDirectory,
+        _folder = Path.Join(TestContext.CurrentContext.WorkDirectory,
             $"{nameof(SharedUserSettingsTests)}_{Guid.NewGuid():N}");
     }
 
@@ -47,7 +47,7 @@ public class SharedUserSettingsTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(File.ReadAllText(Path.Combine(_folder, Key)), Is.EqualTo("AA-BB"));
+            Assert.That(File.ReadAllText(Path.Join(_folder, Key)), Is.EqualTo("AA-BB"));
             Assert.That(new SharedUserSettings(_folder).Get(Key), Is.EqualTo("AA-BB"));
         });
     }

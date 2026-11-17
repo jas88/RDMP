@@ -23,7 +23,7 @@ public class LicenseTests
     [TestCase(License.ThirdPartyLicenses)]
     public void EmbeddedLicense_IsTheFileInTheRepository(string fileName)
     {
-        var path = Path.Combine(RepositoryLayout.FindRoot().FullName, fileName);
+        var path = Path.Join(RepositoryLayout.FindRoot().FullName, fileName);
         var license = new License(fileName);
 
         Assert.Multiple(() =>

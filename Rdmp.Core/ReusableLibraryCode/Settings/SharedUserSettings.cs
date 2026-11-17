@@ -41,7 +41,7 @@ internal sealed class SharedUserSettings
 
         return new SharedUserSettings(string.IsNullOrEmpty(localApplicationData)
             ? null
-            : Path.Combine(localApplicationData, "RDMP"));
+            : Path.Join(localApplicationData, "RDMP"));
     }
 
     /// <summary>
@@ -56,7 +56,7 @@ internal sealed class SharedUserSettings
 
         try
         {
-            var path = Path.Combine(Folder, key);
+            var path = Path.Join(Folder, key);
             return File.Exists(path) ? File.ReadAllText(path) : null;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -77,7 +77,7 @@ internal sealed class SharedUserSettings
         if (Folder == null)
             throw new IOException("The current user has no local application data folder to store settings in");
 
-        var path = Path.Combine(Folder, key);
+        var path = Path.Join(Folder, key);
 
         if (value == null)
         {

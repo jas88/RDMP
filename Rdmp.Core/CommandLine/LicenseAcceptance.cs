@@ -224,7 +224,7 @@ public sealed class LicenseAcceptance
 
     private void DescribeLicense(string fileName, string description)
     {
-        var path = Path.Combine(_licenseFolder, fileName);
+        var path = Path.Join(_licenseFolder, fileName);
 
         if (File.Exists(path))
         {
