@@ -231,7 +231,7 @@ public partial class RDMPTaskBarUI : UserControl
     {
         var xml = _manager.MainForm.GetCurrentLayoutXml();
 
-        var dialog = new TypeTextOrCancelDialog("Layout Name", "Name", 100, null, false);
+        using var dialog = new TypeTextOrCancelDialog("Layout Name", "Name", 100, null, false);
         if (dialog.ShowDialog() == DialogResult.OK)
         {
             var layout = new WindowLayout(_manager.RepositoryLocator.CatalogueRepository, dialog.ResultText, xml);

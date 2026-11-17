@@ -200,7 +200,7 @@ public partial class ProjectUI : ProjectUI_Design, ISaveableUI
         if (toSetDescriptionOn.IsReleased)
             return;
 
-        var dialog = new TypeTextOrCancelDialog("Description", "Enter a Description for the Extraction:", 1000,
+        using var dialog = new TypeTextOrCancelDialog("Description", "Enter a Description for the Extraction:", 1000,
             toSetDescriptionOn.Description);
 
         dialog.ShowDialog(this);
@@ -222,7 +222,7 @@ public partial class ProjectUI : ProjectUI_Design, ISaveableUI
         if (toSetDescriptionOn.IsReleased)
             return;
 
-        var dialog = new TypeTextOrCancelDialog("Separator", "Choose a character(s) separator", 3,
+        using var dialog = new TypeTextOrCancelDialog("Separator", "Choose a character(s) separator", 3,
             toSetDescriptionOn.Separator);
 
         dialog.ShowDialog(this);
