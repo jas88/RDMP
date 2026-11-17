@@ -104,7 +104,7 @@ Create a nuspec file called `MyPlugin.nuspec` that describes your plugin:
         <description>My RDMP Plugin</description>
         <dependencies>
             <!-- Make sure this matches your running RDMP major/minor versions-->
-            <dependency id="Rdmp.Core" version="7.0" />
+            <dependency id="Rdmp.Core" version="9.0" />
         </dependencies>
     </metadata>
     <files>
@@ -124,10 +124,10 @@ This should produce a file called `MyPlugin.0.0.1.nupkg`.  Open RDMP and click t
 
  ![Adding a plugin via the RDMP user interface](Images/AddPluginContextMenu.png)
 
-Make sure that you have listed the correct RDMP Major/Minor version in the nuspec file (7.0 in the xml example above).  Otherwise when you add it you will get an error:
+Make sure that you have listed the correct RDMP Major/Minor version in the nuspec file (9.0 in the xml example above).  Otherwise when you add it you will get an error:
 
 ```
-Plugin version 0.0.1 is incompatible with current running version of RDMP (7.0.0).
+Plugin version 0.0.1 is incompatible with current running version of RDMP (9.0.2).
 ```
 
 Restart RDMP and right click a Catalogue

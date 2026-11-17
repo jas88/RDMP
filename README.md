@@ -23,7 +23,7 @@ Release binaries for the RDMP client and Command Line Interface (CLI) are availa
 
 ### Windows Install Guide
 
-Download and unzip `rdmp-client.zip` from the [GitHub releases section](https://github.com/jas88/RDMP/releases) and run `ResearchDataManagementPlatform.exe`.  This will take you to an installation/setup screen which will guide you through the rest of the initial setup process.
+Download and unzip `rdmp-<version>-client.zip` (e.g. `rdmp-9.0.2-client.zip`) from the [GitHub releases section](https://github.com/jas88/RDMP/releases) and run `ResearchDataManagementPlatform.exe`.  This will take you to an installation/setup screen which will guide you through the rest of the initial setup process.
 
 ### Linux CLI Install Guide
 

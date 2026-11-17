@@ -158,7 +158,7 @@ During application startup (following installing an update) you will be prompted
 
 ### Updating the CLI
 
-Download the [latest release binary](https://github.com/jas88/RDMP/releases) (e.g. rdmp-cli-win-x64.zip) and unzip into a new empty folder (e.g. c:\temp\latest).  Locate your current CLI deployment folder (e.g. c:\rdmpcli\).
+Download the [latest release binary](https://github.com/jas88/RDMP/releases) (e.g. rdmp-9.0.2-cli-win-x64.zip) and unzip into a new empty folder (e.g. c:\temp\latest).  Locate your current CLI deployment folder (e.g. c:\rdmpcli\).
 
 Copy all files from the new release into your current CLI directory __EXCEPT__:
 
