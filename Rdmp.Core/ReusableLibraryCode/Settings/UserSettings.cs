@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using FAnsi.Discovery;
 using Rdmp.Core.ReusableLibraryCode.Checks;
+using Rdmp.Core.ReusableLibraryCode.Licenses;
 
 namespace Rdmp.Core.ReusableLibraryCode.Settings;
 
@@ -28,11 +29,18 @@ public static class UserSettings
                                                               "Isolated Storage does not work in this environment...");
 
     /// <summary>
-    /// Settings which every RDMP program the user runs shares, unlike <see cref="AppSettings"/>
+    /// Settings which every RDMP program the user runs shares, unlike <see cref="AppSettings"/>.  Tests replace them, so that they never
+    /// change the settings of the user running them.
     /// </summary>
-    private static readonly SharedUserSettings SharedSettings = SharedUserSettings.ForCurrentUser();
+    internal static SharedUserSettings SharedSettings { get; set; } = SharedUserSettings.ForCurrentUser();
 
     private const string LicenseAcceptedKey = "LicenseAccepted";
+
+    /// <summary>
+    /// The hash of the third party licenses which this version of RDMP includes
+    /// </summary>
+    private static readonly Lazy<string> CurrentLicenseHash =
+        new(static () => new License(License.ThirdPartyLicenses).GetHashOfLicense());
 
 
     public static bool UseLocalFileSystem
@@ -57,30 +65,52 @@ public static class UserSettings
     }
 
     /// <summary>
-    /// The hash (see <see cref="Rdmp.Core.ReusableLibraryCode.Licenses.License.GetHashOfLicense"/>) of the third party licenses
-    /// (LIBRARYLICENSES) which the user last accepted along with the license of RDMP, or null if they have not accepted them.  Unlike
-    /// the other settings, which each RDMP program keeps separately, this is stored in a folder of the user which every RDMP program
-    /// shares, so accepting the licenses in the Windows client or the rdmp command line counts for both.
+    /// The hash (see <see cref="License.GetHashOfLicense"/>) of the third party licenses (LIBRARYLICENSES) which the user last accepted
+    /// along with the license of RDMP, or null if they have not accepted them.  Unlike the other settings, which each RDMP program keeps
+    /// separately, this is stored in a folder of the user which every RDMP program shares, so accepting the licenses in the Windows client
+    /// or the rdmp command line counts for both.  A program which cannot write to that folder keeps the hash in its own settings instead.
     /// </summary>
     public static string LicenseAccepted
     {
-        get => SharedSettings.Get(LicenseAcceptedKey) ?? AppSettings.GetValueOrDefault(LicenseAcceptedKey, null);
-        set
-        {
-            try
-            {
-                SharedSettings.Set(LicenseAcceptedKey, value);
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                // Keep it in this program's own settings instead
-                AppSettings.AddOrUpdateValue(LicenseAcceptedKey, value);
-                return;
-            }
+        get => ChooseLicenseAccepted(SharedSettings.Get(LicenseAcceptedKey),
+            AppSettings.GetValueOrDefault(LicenseAcceptedKey, null), CurrentLicenseHash.Value);
+        set => RecordLicenseAccepted(value, static hash => SharedSettings.Set(LicenseAcceptedKey, hash),
+            static hash => AppSettings.AddOrUpdateValue(LicenseAcceptedKey, hash));
+    }
 
-            // Forget any value which earlier versions kept in this program's own settings
-            AppSettings.Remove(LicenseAcceptedKey);
+    /// <summary>
+    /// Returns the hash of the licenses which the user accepted, from what the shared settings and this program's own settings recorded
+    /// </summary>
+    /// <param name="shared">The hash recorded in the shared settings, or null</param>
+    /// <param name="own">The hash recorded in this program's own settings, or null.  It is only recorded there when the shared settings
+    /// could not be written, so it can be newer than the shared one</param>
+    /// <param name="currentHash">The hash of the licenses which this version of RDMP includes</param>
+    /// <returns><paramref name="currentHash"/> if either recorded it, otherwise the hash which the shared settings or else this program's
+    /// own settings recorded</returns>
+    internal static string ChooseLicenseAccepted(string shared, string own, string currentHash) =>
+        shared == currentHash || own == currentHash ? currentHash : shared ?? own;
+
+    /// <summary>
+    /// Records the hash of the licenses which the user accepted in the shared settings and forgets this program's own copy, or records it
+    /// in this program's own settings if the shared settings cannot be written
+    /// </summary>
+    /// <param name="hash">The hash to record, or null to forget that the licenses were accepted</param>
+    /// <param name="setShared">Records a hash in the shared settings</param>
+    /// <param name="setOwn">Records a hash in this program's own settings</param>
+    internal static void RecordLicenseAccepted(string hash, Action<string> setShared, Action<string> setOwn)
+    {
+        try
+        {
+            setShared(hash);
         }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            setOwn(hash);
+            return;
+        }
+
+        // Forget any hash which earlier versions, or a failed write to the shared settings, kept in this program's own settings
+        setOwn(null);
     }
 
     /// <summary>
@@ -641,5 +671,15 @@ public static class UserSettings
     public static void ClearUserSettings()
     {
         AppSettings.Clear();
+
+        // Including the acceptance of the licenses, which is in the shared settings
+        try
+        {
+            SharedSettings.Set(LicenseAcceptedKey, null);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Console.WriteLine($"Unable to clear the acceptance of the licenses. Message: {e.Message}");
+        }
     }
 }

@@ -81,11 +81,20 @@ public class SharedUserSettingsTests
     [Test]
     public void ForCurrentUser_DoesNotDependOnWhereTheProgramIs()
     {
+        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData,
+            Environment.SpecialFolderOption.DoNotVerify);
         var folder = SharedUserSettings.ForCurrentUser().Folder;
+
+        if (string.IsNullOrEmpty(localApplicationData))
+        {
+            // A user with no local application data folder has nowhere to store shared settings
+            Assert.That(folder, Is.Null);
+            return;
+        }
 
         Assert.Multiple(() =>
         {
-            Assert.That(Path.GetFileName(folder), Is.EqualTo("RDMP"));
+            Assert.That(folder, Is.EqualTo(Path.Join(localApplicationData, "RDMP")));
             Assert.That(Path.IsPathRooted(folder));
             Assert.That(folder, Does.Not.StartWith(AppContext.BaseDirectory));
         });
