@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <PackageId>HIC.RDMP.Plugin.Test</PackageId>
+        <PackageId>Rdmp.Tests.Common</PackageId>
         <version>$(version)</version>
-        <title>HIC.RDMP.Plugin.Test</title>
+        <title>Rdmp.Tests.Common</title>
         <authors>Health Informatics Centre, University of Dundee</authors>
         <owners>Health Informatics Centre, University of Dundee</owners>
         <licenseUrl>https://raw.githubusercontent.com/HicServices/RDMP/master/LICENSE</licenseUrl>

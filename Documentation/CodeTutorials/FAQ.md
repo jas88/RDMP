@@ -132,9 +132,9 @@ In addition core and plugin commands can be accessed through the cmd verb e.g.
 <a name="api"></a>
 ### Does RDMP have an API?
 Yes, RDMP can be controlled programmatically through its API which is available as 3 NuGet packages 
-- [HIC.RDMP.Plugin](https://www.nuget.org/packages/HIC.RDMP.Plugin): All core objects, engines etc
-- [HIC.RDMP.Plugin.UI](https://www.nuget.org/packages/HIC.RDMP.Plugin.UI): All definitions for writing user interface plugins that run in the main RDMP client application.
-- [HIC.RDMP.Plugin.Test](https://www.nuget.org/packages/HIC.RDMP.Plugin.Test/): Classes to simplify writing Unit/Integration Tests for RDMP plugins
+- `Rdmp.Core`: All core objects, engines etc
+- `Rdmp.UI`: All definitions for writing user interface plugins that run in the main RDMP client application.
+- `Rdmp.Tests.Common`: Classes to simplify writing Unit/Integration Tests for RDMP plugins
 
 <a name="plugins"></a>
 ### Does RDMP Support Plugins?
