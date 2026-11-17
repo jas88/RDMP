@@ -15,8 +15,11 @@ find . -type f \( -name '*.cs' -o -name '*.xml' \) ! -path './obj/*' ! -path '*/
 
 # Package applications
 echo "Publishing applications..."
-dotnet publish Application/ResearchDataManagementPlatform/ResearchDataManagementPlatform.csproj \
-  -r win-x64 --self-contained -c Release -o PublishWinForms \
+GUI_PROJECT=Application/ResearchDataManagementPlatform/ResearchDataManagementPlatform.csproj
+GUI_CONFIGURATION=Release
+GUI_RUNTIME=win-x64
+dotnet publish "$GUI_PROJECT" \
+  -r "$GUI_RUNTIME" --self-contained -c "$GUI_CONFIGURATION" -o PublishWinForms \
   -p:GenerateDocumentationFile=false -p:PublishSingleFile=true \
   -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true \
   --verbosity minimal --nologo
@@ -34,16 +37,24 @@ dotnet publish Tools/rdmp/rdmp.csproj \
 
 # Bundle WinForms dependencies
 echo "Bundling WinForms dependencies..."
-BINDIR=Application/ResearchDataManagementPlatform/bin/Release/net9.0-windows/win-x64
+# The client publish above built into bin/<configuration>/<target framework>/<runtime>/.
+# Ask MSBuild for that directory, so it follows the project's target framework.
+BINDIR=$(dotnet msbuild "$GUI_PROJECT" -getProperty:TargetDir \
+  -p:Configuration="$GUI_CONFIGURATION" -p:RuntimeIdentifier="$GUI_RUNTIME" -p:SelfContained=true)
+BINDIR=${BINDIR%/}
+if [[ ! -d "$BINDIR" ]]; then
+  echo "Client build output not found at '$BINDIR'" >&2
+  exit 1
+fi
+echo "Copying native libraries from $BINDIR"
 cp -rt ./PublishWinForms \
-  $BINDIR/runtimes \
-  $BINDIR/x64 \
-  $BINDIR/D3DCompiler_47_cor3.dll \
-  $BINDIR/PenImc_cor3.dll \
-  $BINDIR/PresentationNative_cor3.dll \
-  $BINDIR/vcruntime140_cor3.dll \
-  $BINDIR/WebView2Loader.dll \
-  $BINDIR/wpfgfx_cor3.dll
+  "$BINDIR/runtimes" \
+  "$BINDIR/D3DCompiler_47_cor3.dll" \
+  "$BINDIR/PenImc_cor3.dll" \
+  "$BINDIR/PresentationNative_cor3.dll" \
+  "$BINDIR/vcruntime140_cor3.dll" \
+  "$BINDIR/WebView2Loader.dll" \
+  "$BINDIR/wpfgfx_cor3.dll"
 
 # All plugins (HicPlugin, RdmpExtensions, RdmpDicom) are now embedded components
 # and compile as part of the main solution - no plugin downloads needed
@@ -106,7 +117,7 @@ if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
   # Calculate checksums
   echo "Calculating SHA256SUMS..."
   cd dist
-  sha256sum * 2>/dev/null | grep -v 'SHA256SUMS' > SHA256SUMS || true
+  sha256sum -- * 2>/dev/null | grep -v 'SHA256SUMS' > SHA256SUMS || true
   cd ..
 fi
 
