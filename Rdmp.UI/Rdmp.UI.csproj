@@ -11,6 +11,9 @@
 		<iconUrl>https://raw.githubusercontent.com/HicServices/RDMP/master/Application/ResearchDataManagementPlatform/Icon/main.png</iconUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>UI package for plugin development</description>
+		<!-- Scintilla5.NET's build targets add its native DLLs (runtimes\win-*\native) as Content items.
+		     Packing them fails with NU5118 and NU5100; consumers get them from the Scintilla5.NET dependency. -->
+		<IncludeContentInPack>false</IncludeContentInPack>
 		<copyright>Copyright 2018-2019</copyright>
 		<ProjectGuid>60721bce-e328-45cf-b6d2-b627364fbbfa</ProjectGuid>
 		<Copyright>Copyright ©  2019</Copyright>
