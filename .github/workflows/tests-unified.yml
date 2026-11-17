@@ -601,9 +601,6 @@ jobs:
           name: dist
           path: dist
 
-      - name: Upload NuGet packages
-        run: dotnet nuget push dist/HIC.RDMP.Plugin*.nupkg -s https://api.nuget.org/v3/index.json --skip-duplicate -k ${{ secrets.NUGET_KEY }}
-
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@2.11.5
         with:
@@ -612,3 +609,40 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
+
+      # Only the NuGet packages, for the publish job
+      - name: Store NuGet packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: dist/*.nupkg
+          if-no-files-found: error
+          retention-days: 1
+
+  # Pushes the packages to nuget.org with Trusted Publishing: NuGet/login exchanges the
+  # job's GitHub OIDC token for a short-lived API key. A separate job, so that only it
+  # (not the build) can mint OIDC tokens, and so that it runs after the bundle job has
+  # uploaded the release assets: a NuGet failure cannot stop them being uploaded.
+  publish:
+    name: Publish NuGet packages
+    needs: bundle
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # required for NuGet trusted publishing (OIDC)
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: nuget-packages
+
+      - name: NuGet login (OIDC)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: jas88
+
+      - name: NuGet push
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push "*.nupkg" -s https://api.nuget.org/v3/index.json -k "$NUGET_API_KEY" --skip-duplicate

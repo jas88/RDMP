@@ -106,12 +106,14 @@ fi
 mv PublishLinux "rdmp-${RDMP_VERSION}-cli-linux"
 (cd "rdmp-${RDMP_VERSION}-cli-linux" && tar -cf - .) | pixz $PIXZ_OPTS > "dist/rdmp-${RDMP_VERSION}-cli-linux-x64.tar.xz"
 
-# Build NuGet packages (tagged builds only)
+# Build NuGet packages (tagged builds only) into dist, so that they are uploaded to the
+# release and the workflow pushes them to NuGet from there. No symbol packages: the PDBs
+# are embedded in the DLLs, so a .symbols.nupkg would be a copy of the package.
 if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
   echo "Building NuGet packages..."
   for i in Rdmp.Core/Rdmp.Core.csproj Rdmp.UI/Rdmp.UI.csproj Tests.Common/Tests.Common.csproj
   do
-    dotnet pack "$i" -c Release --include-symbols --nologo -o . -v:m -p:Version="$RDMP_VERSION"
+    dotnet pack "$i" -c Release --nologo -o dist -v:m -p:Version="$RDMP_VERSION"
   done
 
   # Calculate checksums
