@@ -1,8 +1,36 @@
 ﻿--------------------------------------------------------------------------------
 
-AutoCompleteMenu-ScintillaNET by Ahmed Mamdouh
-GNU Lesser General Public License version 3
-https://opensource.org/licenses/lgpl-3.0.html
+AutoComplete Console by Jasper Lammers
+The Code Project Open License (CPOL) 1.02
+https://www.codeproject.com/info/cpol10.aspx
+The autocompletion in RDMP's command line is adapted from
+https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications
+
+--------------------------------------------------------------------------------
+
+AutoUpdater.NET by RBSoft
+The MIT License (MIT)
+https://github.com/ravibpatel/AutoUpdater.NET/blob/master/LICENSE
+
+--------------------------------------------------------------------------------
+
+AWS SDK for .NET (AWSSDK.*) by Amazon Web Services
+Apache License 2.0
+https://github.com/aws/aws-sdk-net/blob/main/License.txt
+https://github.com/aws/aws-sdk-net/blob/main/Notice.txt
+
+--------------------------------------------------------------------------------
+
+Bouncy Castle Cryptography Library for .NET by The Legion of the Bouncy Castle Inc.
+The MIT License (MIT)
+https://github.com/bcgit/bc-csharp/blob/master/LICENSE.md
+
+--------------------------------------------------------------------------------
+
+British English (en_GB) Hunspell dictionary by David Bartlett, Brian Kelk, Andrew Brown and
+Marco A.G. Pinto, based on the word list by Kevin Atkinson
+GNU Lesser General Public License (LGPL)
+https://github.com/LibreOffice/dictionaries/blob/master/en/README_en_GB.txt
 
 --------------------------------------------------------------------------------
 
@@ -13,7 +41,7 @@ The MIT License (MIT)
 Author:
   Giacomo Stelluti Scala (gsscoder@gmail.com)
 
-Copyright (c) 2005 - 2013 Giacomo Stelluti Scala & Contributors
+Copyright (c) 2005 - 2015 Giacomo Stelluti Scala & Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -34,14 +62,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-Read and Write Settings Plugin for Xamarin and Windows 
-https://github.com/jamesmontemagno/SettingsPlugin/blob/master/LICENSE
-
---------------------------------------------------------------------------------
 
 CsvHelper by Josh Close
 Dual licensing under MS-PL and Apache 2.0
 https://raw.githubusercontent.com/JoshClose/CsvHelper/master/LICENSE.txt
+
+--------------------------------------------------------------------------------
+
+Diff, a C# implementation of "An O(ND) Difference Algorithm and its Variations" (Eugene Myers)
+by Matthias Hertel, http://www.mathertel.de/Diff/
+Creative Commons Attribution 2.0 Germany License
+https://creativecommons.org/licenses/by/2.0/de/
 
 --------------------------------------------------------------------------------
 
@@ -50,9 +81,69 @@ https://opensource.org/licenses/mit-license.php
 
 --------------------------------------------------------------------------------
 
-GraphX by panthernet
-Apache License 2.0
-https://github.com/panthernet/GraphX/blob/master/LICENSE
+DocumentFormat.OpenXml (Open XML SDK) by the .NET Foundation and Contributors
+The MIT License (MIT)
+https://github.com/dotnet/Open-XML-SDK/blob/main/LICENSE
+
+--------------------------------------------------------------------------------
+
+ExcelDataReader by the ExcelDataReader contributors
+The MIT License (MIT)
+https://github.com/ExcelDataReader/ExcelDataReader/blob/develop/LICENSE
+
+--------------------------------------------------------------------------------
+
+ExcelNumberFormat (https://github.com/andersnm/ExcelNumberFormat)
+
+The MIT License (MIT)
+
+Copyright (c) 2017 andersnm
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+
+Some icons from FAM FAM FAM are used under the Creative Commons Attribution 2.5 License. 
+
+http://creativecommons.org/licenses/by/2.5/
+
+FAM FAM FAM Icons are hosted at
+https://web.archive.org/web/20070824000227/http://www.famfamfam.com/lab/icons/silk/
+
+--------------------------------------------------------------------------------
+
+FAnsiSql (FAnsiSql.*) by the Health Informatics Centre, University of Dundee
+GNU General Public License version 3 or later
+https://github.com/jas88/FAnsiSql/blob/main/LICENSE
+
+--------------------------------------------------------------------------------
+
+FluentFTP by Robin Rodricks and FluentFTP Contributors
+The MIT License (MIT)
+https://github.com/robinrodricks/FluentFTP/blob/master/LICENSE.TXT
+
+--------------------------------------------------------------------------------
+
+Interactive Extensions for .NET (System.Interactive.Async, System.Linq.Async) by the .NET Foundation
+and Contributors
+The MIT License (MIT)
+https://github.com/dotnet/reactive/blob/main/LICENSE
 
 --------------------------------------------------------------------------------
 
@@ -81,6 +172,139 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 
+LibArchive.Net by James A Sutherland
+The 2-Clause BSD License
+https://github.com/jas88/libarchive.net/blob/main/LICENSE.md
+
+LibArchive.Net includes a native build of libarchive which contains the following libraries:
+
+  libarchive by Tim Kientzle and contributors
+  The 2-Clause BSD License (a few files are under other permissive terms, see COPYING)
+  https://github.com/libarchive/libarchive/blob/master/COPYING
+
+  bzip2 by Julian R Seward
+  bzip2 and libbzip2 License (BSD-style)
+  https://gitlab.com/bzip2/bzip2/-/blob/master/COPYING
+
+  libxml2 by Daniel Veillard and the libxml2 contributors
+  The MIT License (MIT)
+  https://github.com/GNOME/libxml2/blob/master/Copyright
+
+  LZ4 by Yann Collet
+  The 2-Clause BSD License
+  https://github.com/lz4/lz4/blob/dev/lib/LICENSE
+
+  LZO by Markus F.X.J. Oberhumer
+  GNU General Public License version 2 or later
+  https://www.oberhumer.com/opensource/lzo/
+
+  XZ Utils (liblzma) by Lasse Collin and the XZ Utils contributors
+  BSD Zero Clause License
+  https://github.com/tukaani-project/xz/blob/master/COPYING
+
+  zlib by Jean-loup Gailly and Mark Adler
+  zlib License
+  https://zlib.net/zlib_license.html
+
+  Zstandard by Meta Platforms, Inc. and affiliates
+  The 3-Clause BSD License (Zstandard is dual licensed under BSD or GPLv2)
+  https://github.com/meta/zstd/blob/dev/LICENSE
+
+--------------------------------------------------------------------------------
+
+Microsoft .NET runtime and libraries by the .NET Foundation and Contributors
+The MIT License (MIT)
+https://github.com/dotnet/runtime/blob/main/LICENSE.TXT
+https://github.com/dotnet/runtime/blob/main/THIRD-PARTY-NOTICES.TXT
+The RDMP releases include the .NET runtime and, in the Windows client, the Windows Desktop
+runtime (Windows Forms and WPF). This also covers the System.*, Microsoft.Bcl.* and
+Microsoft.Extensions.* packages that are part of .NET.
+
+--------------------------------------------------------------------------------
+
+Microsoft Edge WebView2 SDK (Microsoft.Web.WebView2) by Microsoft Corporation
+The 3-Clause BSD License
+https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.4078.44/License
+
+--------------------------------------------------------------------------------
+
+Microsoft IdentityModel Extensions for .NET (Microsoft.IdentityModel.*,
+System.IdentityModel.Tokens.Jwt) by Microsoft Corporation
+The MIT License (MIT)
+https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/blob/dev/LICENSE.txt
+
+--------------------------------------------------------------------------------
+
+Microsoft.Data.SqlClient (and Microsoft.Data.SqlClient.Extensions.Abstractions,
+Microsoft.Data.SqlClient.Internal.Logging and Microsoft.SqlServer.Server) by the .NET Foundation
+The MIT License (MIT)
+https://github.com/dotnet/SqlClient/blob/main/LICENSE
+
+--------------------------------------------------------------------------------
+
+Microsoft.Data.SqlClient.SNI (included on Windows) by Microsoft Corporation
+
+MICROSOFT SOFTWARE LICENSE TERMS
+
+MICROSOFT.DATA.SQLCLIENT.SNI LIBRARY
+
+These license terms are an agreement between you and Microsoft Corporation (or based on where you live, one of its affiliates). They apply to the software named above. The terms also apply to any Microsoft services or updates for the software, except to the extent those have different terms.
+
+IF YOU COMPLY WITH THESE LICENSE TERMS, YOU HAVE THE RIGHTS BELOW.
+
+1.  INSTALLATION AND USE RIGHTS.
+    You may install and use any number of copies of the software to develop and test your applications.
+2.  THIRD PARTY COMPONENTS. The software may include third party components with separate legal notices or governed by other agreements, as may be described in the ThirdPartyNotices file(s) accompanying the software.
+3.  ADDITIONAL LICENSING REQUIREMENTS AND/OR USE RIGHTS.
+    a. DISTRIBUTABLE CODE.  The software is comprised of Distributable Code. "Distributable Code" is code that you are permitted to distribute in applications you develop if you comply with the terms below.
+       i. Right to Use and Distribute.
+          * You may copy and distribute the object code form of the software.
+          * Third Party Distribution. You may permit distributors of your applications to copy and distribute the Distributable Code as part of those applications.
+      ii. Distribution Requirements. For any Distributable Code you distribute, you must
+          * use the Distributable Code in your applications and not as a standalone distribution;
+          * require distributors and external end users to agree to terms that protect it at least as much as this agreement; and
+          * indemnify, defend, and hold harmless Microsoft from any claims, including attorneys' fees, related to the distribution or use of your applications, except to the extent that any claim is based solely on the unmodified Distributable Code.
+     iii. Distribution Restrictions. You may not
+          * use Microsoft's trademarks in your applications' names or in a way that suggests your applications come from or are endorsed by Microsoft; or
+          * modify or distribute the source code of any Distributable Code so that any part of it becomes subject to an Excluded License. An "Excluded License" is one that requires, as a condition of use, modification or distribution of code, that (i) it be disclosed or distributed in source code form; or (ii) others have the right to modify it.
+4.  DATA.
+    a. Data Collection. Some features in the software may enable collection of data from users of your applications that access or use the software. If you use these features to enable data collection in your applications, you must comply with applicable law, including getting any required user consent, and maintain a prominent privacy policy that accurately informs users about how you use, collect, and share their data. You agree to comply with all applicable provisions of the Microsoft Privacy Statement at [https://go.microsoft.com/fwlink/?LinkId=521839].
+5.  SCOPE OF LICENSE. The software is licensed, not sold. This agreement only gives you some rights to use the software. Microsoft reserves all other rights. Unless applicable law gives you more rights despite this limitation, you may use the software only as expressly permitted in this agreement. In doing so, you must comply with any technical limitations in the software that only allow you to use it in certain ways. You may not
+    * work around any technical limitations in the software;
+    * reverse engineer, decompile or disassemble the software, or otherwise attempt to derive the source code for the software, except and to the extent required by third party licensing terms governing use of certain open source components that may be included in the software;
+    * remove, minimize, block or modify any notices of Microsoft or its suppliers in the software;
+    * use the software in any way that is against the law; or
+    * share, publish, rent or lease the software, provide the software as a stand-alone offering for others to use, or transfer the software or this agreement to any third party.
+6.  EXPORT RESTRICTIONS. You must comply with all domestic and international export laws and regulations that apply to the software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit www.microsoft.com/exporting.
+7.  SUPPORT SERVICES. Because this software is "as is," we may not provide support services for it.
+8.  ENTIRE AGREEMENT. This agreement, and the terms for supplements, updates, Internet-based services and support services that you use, are the entire agreement for the software and support services.
+9.  APPLICABLE LAW.  If you acquired the software in the United States, Washington law applies to interpretation of and claims for breach of this agreement, and the laws of the state where you live apply to all other claims. If you acquired the software in any other country, its laws apply.
+10. CONSUMER RIGHTS; REGIONAL VARIATIONS. This agreement describes certain legal rights. You may have other rights, including consumer rights, under the laws of your state or country. Separate and apart from your relationship with Microsoft, you may also have rights with respect to the party from which you acquired the software. This agreement does not change those other rights if the laws of your state or country do not permit it to do so. For example, if you acquired the software in one of the below regions, or mandatory country law applies, then the following provisions apply to you:
+    a) Australia. You have statutory guarantees under the Australian Consumer Law and nothing in this agreement is intended to affect those rights.
+    b) Canada. If you acquired this software in Canada, you may stop receiving updates by turning off the automatic update feature, disconnecting your device from the Internet (if and when you re-connect to the Internet, however, the software will resume checking for and installing updates), or uninstalling the software. The product documentation, if any, may also specify how to turn off updates for your specific device or software.
+    c) Germany and Austria.
+       (i) Warranty. The software will perform substantially as described in any Microsoft materials that accompany it. However, Microsoft gives no contractual guarantee in relation to the software.
+       (ii) Limitation of Liability. In case of intentional conduct, gross negligence, claims based on the Product Liability Act, as well as in case of death or personal or physical injury, Microsoft is liable according to the statutory law.
+    Subject to the foregoing clause (ii), Microsoft will only be liable for slight negligence if Microsoft is in breach of such material contractual obligations, the fulfillment of which facilitate the due performance of this agreement, the breach of which would endanger the purpose of this agreement and the compliance with which a party may constantly trust in (so-called "cardinal obligations"). In other cases of slight negligence, Microsoft will not be liable for slight negligence
+11. DISCLAIMER OF WARRANTY. THE SOFTWARE IS LICENSED "AS-IS." YOU BEAR THE RISK OF USING IT. MICROSOFT GIVES NO EXPRESS WARRANTIES, GUARANTEES OR CONDITIONS. TO THE EXTENT PERMITTED UNDER YOUR LOCAL LAWS, MICROSOFT EXCLUDES THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+12. LIMITATION ON AND EXCLUSION OF REMEDIES AND DAMAGES. YOU CAN RECOVER FROM MICROSOFT AND ITS SUPPLIERS ONLY DIRECT DAMAGES UP TO U.S. $5.00. YOU CANNOT RECOVER ANY OTHER DAMAGES, INCLUDING CONSEQUENTIAL, LOST PROFITS, SPECIAL, INDIRECT OR INCIDENTAL DAMAGES.
+    This limitation applies to (a) anything related to the software, services, content (including code) on third party Internet sites, or third party applications; and (b) claims for breach of contract, breach of warranty, guarantee or condition, strict liability, negligence, or other tort to the extent permitted by applicable law.
+    It also applies even if Microsoft knew or should have known about the possibility of the damages. The above limitation or exclusion may not apply to you because your state or country may not allow the exclusion or limitation of incidental, consequential or other damages.
+
+--------------------------------------------------------------------------------
+
+Microsoft.Data.Sqlite by the .NET Foundation and Contributors
+The MIT License (MIT)
+https://github.com/dotnet/efcore/blob/main/LICENSE.txt
+
+--------------------------------------------------------------------------------
+
+MySqlConnector by Bradley Grainger
+The MIT License (MIT)
+https://github.com/mysql-net/MySqlConnector/blob/master/LICENSE
+
+--------------------------------------------------------------------------------
+
 Newtonsoft.Json
 The MIT License (MIT)
 
@@ -105,104 +329,89 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 
-Mono.Reflection by Jb Evain
-Copyright <YEAR> <COPYRIGHT HOLDER>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+NLog by Jaroslaw Kowalski, Kim Christensen and Julian Verdurmen
+The 3-Clause BSD License
+https://github.com/NLog/NLog/blob/main/LICENSE.txt
 
 --------------------------------------------------------------------------------
 
-MySql.Data
-GNU General Public License, version 2
-https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+Npgsql by the Npgsql Development Team
+The PostgreSQL License
+https://github.com/npgsql/npgsql/blob/main/LICENSE
 
 --------------------------------------------------------------------------------
 
-
-Nunit.Runners, NUnit
-NUnit License
-
-Copyright © 2002-2015 Charlie Poole
-Copyright © 2002-2004 James W. Newkirk, Michael C. Two, Alexei A. Vorontsov
-Copyright © 2000-2002 Philip A. Craig
-
-This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
-
-    The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment (see the following) in the product documentation is required.
-
-    Portions Copyright © 2002-2012 Charlie Poole or Copyright © 2002-2004 James W. Newkirk, Michael C. Two, Alexei A. Vorontsov or Copyright © 2000-2002 Philip A. Craig
-
-    Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
-
-    This notice may not be removed or altered from any source distribution. 
-
-License Note
-
-This license is based on the open source zlib/libpng license. The idea was to keep the license as simple as possible to encourage use of NUnit in free and commercial applications and libraries, but to keep the source code together and to give credit to the NUnit contributors for their efforts. While this license allows shipping NUnit in source and binary form, if shipping a NUnit variant is the sole purpose of your product, please let us know.
+NStack by Microsoft and The Go Authors
+The 3-Clause BSD License
+https://github.com/tui-cs/NStack/blob/develop/LICENSE.md
 
 --------------------------------------------------------------------------------
 
-ObjectListView by Charlie Poole
-GNU General Public License V3
+ObjectListView by Phillip Piper (Bright Ideas Software), repackaged as ObjectListView.Repack.NET6Plus
+GNU General Public License version 3 or later
 https://www.gnu.org/licenses/gpl.html
 
 --------------------------------------------------------------------------------
 
-QuickGraphPCL
-     
+Oracle Data Provider for .NET, Managed Driver (Oracle.ManagedDataAccess.Core) by Oracle
 
-Microsoft Public License (Ms-PL)
+Your use of this Program is governed by the Oracle Free Distribution, Hosting, and Use Terms and Conditions set forth below, unless you have received this Program (alone or as part of another Oracle product) under an Oracle license agreement (including but not limited to the Oracle Master Agreement), in which case your use of this Program is governed solely by such license agreement with Oracle.
 
-Microsoft Public License (Ms-PL)
+Oracle Free Distribution, Hosting, and Use Terms and Conditions
+Definitions
+"Oracle" refers to Oracle America, Inc. "You" and "Your" refers to (a) a company or organization (each an "Entity") accessing the Programs, if use of the Programs will be on behalf of such Entity; or (b) an individual accessing the Programs, if use of the Programs will not be on behalf of an Entity. "Program(s)" refers to Oracle software provided by Oracle pursuant to the following terms and any updates, error corrections, and/or Program Documentation provided by Oracle. "Program Documentation" refers to Program user manuals and Program installation manuals, if any. If available, Program Documentation may be delivered with the Programs and/or may be accessed from www.oracle.com/documentation. "Separate Terms" refers to separate license terms that are specified in the Program Documentation, readmes or notice files and that apply to Separately Licensed Technology. "Separately Licensed Technology" refers to Oracle or third party technology that is licensed under Separate Terms and not under the terms of this license.
 
-This license governs use of the accompanying software. If you use the software, you accept this license. If you do not accept the license, do not use the software.
+Separately Licensed Technology
+Oracle may provide certain notices to You in Program Documentation, readmes or notice files in connection with Oracle or third party technology provided as or with the Programs. If specified in the Program Documentation, readmes or notice files, such technology will be licensed to You under Separate Terms. Your rights to use Separately Licensed Technology under Separate Terms are not restricted in any way by the terms herein. For clarity, notwithstanding the existence of a notice, third party technology that is not Separately Licensed Technology shall be deemed part of the Programs licensed to You under the terms of this license.
 
-1. Definitions
+Source Code for Open Source Software
+For software that You receive from Oracle in binary form that is licensed under an open source license that gives You the right to receive the source code for that binary, You can obtain a copy of the applicable source code from https://oss.oracle.com/sources/ or http://www.oracle.com/goto/opensourcecode. If the source code for such software was not provided to You with the binary, You can also receive a copy of the source code on physical media by submitting a written request pursuant to the instructions in the "Written Offer for Source Code" section of the latter website.
 
-The terms "reproduce," "reproduction," "derivative works," and "distribution" have the same meaning here as under U.S. copyright law.
+-------------------------------------------------------------------------------
+The following license terms apply to those Programs that are not provided to You under Separate Terms.
+License Rights and Restrictions
+Oracle grants to You, as a recipient of this Program, a nonexclusive, nontransferable, limited license to, subject to the conditions stated herein, use the unmodified Programs, including, without limitation, for the purposes of:
+•	developing, testing, prototyping and demonstrating applications;
+•	running the unmodified Programs for training, personal use, your business operations, and the business operations of third parties;
+•	making the unmodified Programs available for use by third parties in your hosted environment and in cloud services;
+•	redistributing unmodified Programs and Programs Documentation under the terms of this License; and
+•	copying the unmodified Programs and Program Documentation to the extent reasonably necessary to exercise the license rights granted herein and for backup purposes.
+For the purposes of this license, compiling, interpreting or configuring an otherwise unmodified Program as necessary to run the Program shall not be considered modification.
 
-A "contribution" is the original software, or any additions or changes to the software.
+Your license is contingent on Your compliance with the following conditions:
+- You include a copy of this license with any distribution by You of the Programs;
+- You do not charge your customers, end users, distributees or other third parties any additional fees for the distribution or use of the Programs; however, for clarity, if you comply with the foregoing condition, distribution or use of the Program as part of your for-fee product or service that adds substantial additional value is permitted;
+- You do not remove markings or notices of either Oracle's or a licensor's proprietary rights from the Programs or Program Documentation;
+- You comply with all U.S. and applicable export control and economic sanctions laws and regulations that govern Your use of the Programs (including technical data); and
+- You do not cause or permit reverse engineering, disassembly or decompilation of the Programs (except as allowed by law) by You nor allow an associated party to do so.
+Any source code that may be included in the distribution with the Programs may not be modified, unless such source code is under Separate Terms permitting modification.
+Ownership
+Oracle or its licensors retain all ownership and intellectual property rights to the Programs.
 
-A "contributor" is any person that distributes its contribution under this license.
+Information Collection
+The Programs' installation and/or auto-update processes, if any, may transmit a limited amount of data to Oracle or its service provider about those processes to help Oracle understand and optimize them. Oracle does not associate the data with personally identifiable information. Refer to Oracle's Privacy Policy at www.oracle.com/privacy.
 
-"Licensed patents" are a contributor's patent claims that read directly on its contribution.
+Disclaimer of Warranties; Limitation of Liability
+THE PROGRAMS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. ORACLE FURTHER DISCLAIMS ALL WARRANTIES, EXPRESS AND IMPLIED, INCLUDING WITHOUT LIMITATION, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NONINFRINGEMENT.
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW WILL ORACLE BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
-2. Grant of Rights
-
-(A) Copyright Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free copyright license to reproduce its contribution, prepare derivative works of its contribution, and distribute its contribution or any derivative works that you create.
-
-(B) Patent Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free license under its licensed patents to make, have made, use, sell, offer for sale, import, and/or otherwise dispose of its contribution in the software or derivative works of the contribution in the software.
-
-3. Conditions and Limitations
-
-(A) No Trademark License- This license does not grant you rights to use any contributors' name, logo, or trademarks.
-
-(B) If you bring a patent claim against any contributor over patents that you claim are infringed by the software, your patent license from such contributor to the software ends automatically.
-
-(C) If you distribute any portion of the software, you must retain all copyright, patent, trademark, and attribution notices that are present in the software.
-
-(D) If you distribute any portion of the software in source code form, you may do so only under this license by including a complete copy of this license with your distribution. If you distribute any portion of the software in compiled or object code form, you may only do so under a license that complies with this license.
-
-(E) The software is licensed "as-is." You bear the risk of using it. The contributors give no express warranties, guarantees or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the contributors exclude the implied warranties of merchantability, fitness for a particular purpose and non-infringement.
+Version 1.0
+Last updated:  28 June 2022
 
 --------------------------------------------------------------------------------
 
-RhinoMocks by ayende
-The 2-Clause BSD License
-https://opensource.org/licenses/bsd-license.php
- 
+Read and Write Settings Plugin for Xamarin and Windows by James Montemagno
+The MIT License (MIT)
+https://github.com/jamesmontemagno/SettingsPlugin/blob/master/LICENSE
+
 --------------------------------------------------------------------------------
 
-ScintillaNET Source Editing Component by Jacob Slusser
+Scintilla.NET Source Editing Component (Scintilla5.NET) by Jacob Slusser, VPKSoft and desjarlais
 The MIT License (MIT)
 
-Copyright (c) 2017, Jacob Slusser, https://github.com/jacobslusser
+Copyright (c) 2017, Jacob Slusser, https://github.com/jacobslusser,
+Copyright (c) 2020-2022 VPKSoft
+Copyright (c) 2023 desjarlais
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -221,81 +430,55 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Scintilla.NET includes the native Scintilla and Lexilla libraries:
+
+License for Lexilla, Scintilla, and SciTE
+
+Copyright 1998-2021 by Neil Hodgson <neilh@scintilla.org>
+
+All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.
+
+NEIL HODGSON DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS, IN NO EVENT SHALL NEIL HODGSON BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
+OR PERFORMANCE OF THIS SOFTWARE.
+
+--------------------------------------------------------------------------------
+
+Spectre.Console by Patrik Svensson, Phil Scott and Nils Andresen
+The MIT License (MIT)
+https://github.com/spectreconsole/spectre.console/blob/main/LICENSE.md
+
+--------------------------------------------------------------------------------
+
+SQLite
+Public domain
+https://sqlite.org/copyright.html
+
+--------------------------------------------------------------------------------
+
+SQLitePCLRaw by Eric Sink (SourceGear)
+Apache License 2.0
+https://github.com/ericsink/SQLitePCL.raw/blob/main/LICENSE.TXT
 
 --------------------------------------------------------------------------------
 
 SSH.NET by Renci
 
-New BSD License (BSD)
-
-Copyright (c) 2010, RENCI
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-* Neither the name of RENCI nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
---------------------------------------------------------------------------------
-
-Official Oracle ODP.NET Managed Driver
-http://www.oracle.com/technetwork/licenses/distribution-license-152002.html
-
---------------------------------------------------------------------------------
-
-Some icons from FAM FAM FAM are used under the Creative Commons Attribution 2.5 License. 
-
-http://creativecommons.org/licenses/by/2.5/
-
-FAM FAM FAM Icons are hosted at
-https://web.archive.org/web/20070824000227/http://www.famfamfam.com/lab/icons/silk/
-
---------------------------------------------------------------------------------
-
-DocX library license (https://github.com/xceedsoftware/docx/blob/master/license.md)
-
-Microsoft Public License (Ms-PL)
-
-This license governs use of the accompanying software. If you use the software, you accept this license. If you do not accept the license, do not use the software.
-1. Definitions
-
-The terms "reproduce," "reproduction," "derivative works," and "distribution" have the same meaning here as under U.S. copyright law.
-
-A "contribution" is the original software, or any additions or changes to the software.
-
-A "contributor" is any person that distributes its contribution under this license.
-
-"Licensed patents" are a contributor's patent claims that read directly on its contribution.
-2. Grant of Rights
-
-(A) Copyright Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free copyright license to reproduce its contribution, prepare derivative works of its contribution, and distribute its contribution or any derivative works that you create.
-
-(B) Patent Grant- Subject to the terms of this license, including the license conditions and limitations in section 3, each contributor grants you a non-exclusive, worldwide, royalty-free license under its licensed patents to make, have made, use, sell, offer for sale, import, and/or otherwise dispose of its contribution in the software or derivative works of the contribution in the software.
-3. Conditions and Limitations
-
-(A) No Trademark License- This license does not grant you rights to use any contributors' name, logo, or trademarks.
-
-(B) If you bring a patent claim against any contributor over patents that you claim are infringed by the software, your patent license from such contributor to the software ends automatically.
-
-(C) If you distribute any portion of the software, you must retain all copyright, patent, trademark, and attribution notices that are present in the software.
-
-(D) If you distribute any portion of the software in source code form, you may do so only under this license by including a complete copy of this license with your distribution. If you distribute any portion of the software in compiled or object code form, you may only do so under a license that complies with this license.
-
-(E) The software is licensed "as-is." You bear the risk of using it. The contributors give no express warranties, guarantees or conditions. You may have additional consumer rights under your local laws which this license cannot change. To the extent permitted under your local laws, the contributors exclude the implied warranties of merchantability, fitness for a particular purpose and non-infringement.
-
---------------------------------------------------------------------------------
-
-ExcelNumberFormat (https://github.com/andersnm/ExcelNumberFormat)
-
 The MIT License (MIT)
 
-Copyright (c) 2017 andersnm
+Copyright (c) Renci, Oleg Kapeljushnik, Gert Driesen and contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -315,65 +498,95 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+--------------------------------------------------------------------------------
+
+SynthEHR by the Health Informatics Centre, University of Dundee
+GNU General Public License version 3 or later
+https://github.com/jas88/SynthEHR/blob/main/LICENSE
 
 --------------------------------------------------------------------------------
 
-Hunspell (https://github.com/hunspell/hunspell/blob/master/license.hunspell)
+System.Windows.Forms.DataVisualization (HIC.System.Windows.Forms.DataVisualization) by the
+.NET Foundation and Contributors, adapted by the Health Informatics Centre
+The MIT License (MIT)
+https://github.com/HicServices/winforms-datavisualization/blob/main/LICENSE.TXT
 
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * Copyright (C) 2002-2017 Németh László
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * Hunspell is based on MySpell which is Copyright (C) 2002 Kevin Hendricks.
- *
- * Contributor(s):
- * David Einstein 
- * Davide Prina
- * Giuseppe Modugno 
- * Gianluca Turconi
- * Simon Brouwer
- * Noll János
- * Bíró Árpád
- * Goldman Eleonóra
- * Sarlós Tamás
- * Bencsáth Boldizsár
- * Halácsy Péter
- * Dvornik László
- * Gefferth András
- * Nagy Viktor
- * Varga Dániel
- * Chris Halls
- * Rene Engelhard
- * Bram Moolenaar
- * Dafydd Jones
- * Harri Pitkänen
- * Andras Timar
- * Tor Lillqvist
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
-* ***** END LICENSE BLOCK ***** */
+--------------------------------------------------------------------------------
 
+Terminal.Gui by Miguel de Icaza, Charlie Kindel and contributors
+The MIT License (MIT)
+https://github.com/tui-cs/Terminal.Gui/blob/v1_release/LICENSE
+
+--------------------------------------------------------------------------------
+
+TypeGuesser by the Health Informatics Centre, University of Dundee
+The MIT License (MIT)
+https://github.com/HicServices/TypeGuesser/blob/main/LICENSE
+
+--------------------------------------------------------------------------------
+
+WeCantSpell.Hunspell by Aaron Dandy, a port of Hunspell (https://github.com/aarondandy/WeCantSpell.Hunspell)
+
+Note that this license is inherited from the original Hunspell project
+as this is derived from that work. Original license:
+
+Version: MPL 1.1/GPL 2.0/LGPL 2.1
+
+The contents of this file are subject to the Mozilla Public License Version
+1.1 (the "License"); you may not use this file except in compliance with
+the License. You may obtain a copy of the License at
+http://www.mozilla.org/MPL/
+
+Software distributed under the License is distributed on an "AS IS" basis,
+WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+for the specific language governing rights and limitations under the
+License.
+
+The Original Code is Hunspell, based on MySpell.
+
+The Initial Developers of the Original Code are
+Kevin Hendricks (MySpell) and Németh László (Hunspell).
+Portions created by the Initial Developers are Copyright (C) 2002-2005
+the Initial Developers. All Rights Reserved.
+
+Contributor(s):
+David Einstein
+Davide Prina
+Giuseppe Modugno
+Gianluca Turconi
+Simon Brouwer
+Noll János
+Bíró Árpád
+Goldman Eleonóra
+Sarlós Tamás
+Bencsáth Boldizsár
+Halácsy Péter
+Dvornik László
+Gefferth András
+Nagy Viktor
+Varga Dániel
+Chris Halls
+Rene Engelhard
+Bram Moolenaar
+Dafydd Jones
+Harri Pitkänen
+
+Alternatively, the contents of this file may be used under the terms of
+either the GNU General Public License Version 2 or later (the "GPL"), or
+the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+in which case the provisions of the GPL or the LGPL are applicable instead
+of those above. If you wish to allow use of your version of this file only
+under the terms of either the GPL or the LGPL, and not to allow others to
+use your version of this file under the terms of the MPL, indicate your
+decision by deleting the provisions above and replace them with the notice
+and other provisions required by the GPL or the LGPL. If you do not delete
+the provisions above, a recipient may use your version of this file under
+the terms of any one of the MPL, the GPL or the LGPL.
+
+--------------------------------------------------------------------------------
+
+YamlDotNet by Antoine Aubry and contributors
+The MIT License (MIT)
+https://github.com/aaubry/YamlDotNet/blob/master/LICENSE.txt
 
 --------------------------------------------------------------------------------
