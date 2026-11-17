@@ -402,6 +402,33 @@ internal class CompileTimeTypeRegistryTests
         Assert.DoesNotThrow(() => MEF.GetCSharpNameForType(typeof(List<string>)));
     }
 
+    [Test]
+    public void TryLoadCompiledRegistry_ListsTypes_ReturnsThemLookedUpCaseInsensitively()
+    {
+        var types = MEF.TryLoadCompiledRegistry(typeof(RegistryListingTypes));
+
+        Assert.That(types, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(types, Has.Count.EqualTo(2));
+            Assert.That(types["MEF"], Is.EqualTo(typeof(MEF)));
+            Assert.That(types["mef"], Is.EqualTo(typeof(MEF)));
+            Assert.That(types["RDMP.CORE.REPOSITORIES.CONSTRUCTION.OBJECTCONSTRUCTOR"], Is.EqualTo(typeof(ObjectConstructor)));
+        });
+    }
+
+    [Test]
+    public void TryLoadCompiledRegistry_GetAllTypesThrows_ReturnsNull() =>
+        Assert.That(MEF.TryLoadCompiledRegistry(typeof(RegistryThatFails)), Is.Null);
+
+    [Test]
+    public void TryLoadCompiledRegistry_NoGetAllTypes_ReturnsNull() =>
+        Assert.That(MEF.TryLoadCompiledRegistry(typeof(RegistryWithoutGetAllTypes)), Is.Null);
+
+    [Test]
+    public void TryLoadCompiledRegistry_GetAllTypesListsSomethingElse_ReturnsNull() =>
+        Assert.That(MEF.TryLoadCompiledRegistry(typeof(RegistryListingNames)), Is.Null);
+
     #region Test Helper Classes
 
     public interface ITestInterface { }
@@ -414,6 +441,33 @@ internal class CompileTimeTypeRegistryTests
         {
             ParameterValue = parameter;
         }
+    }
+
+    // Stand ins for the generated CompiledTypeRegistry.  None of them is called Rdmp.Core.Repositories.CompiledTypeRegistry,
+    // so MEF's name lookup never finds them.  The tests pass them directly to MEF.TryLoadCompiledRegistry.
+
+    private static class RegistryListingTypes
+    {
+        public static IEnumerable<KeyValuePair<string, Type>> GetAllTypes() => new Dictionary<string, Type>
+        {
+            { "MEF", typeof(MEF) },
+            { "Rdmp.Core.Repositories.Construction.ObjectConstructor", typeof(ObjectConstructor) }
+        };
+    }
+
+    private static class RegistryThatFails
+    {
+        public static IEnumerable<KeyValuePair<string, Type>> GetAllTypes() =>
+            throw new InvalidOperationException("The registry could not be initialised");
+    }
+
+    private static class RegistryWithoutGetAllTypes
+    {
+    }
+
+    private static class RegistryListingNames
+    {
+        public static IEnumerable<string> GetAllTypes() => new[] { "MEF" };
     }
 
     #endregion

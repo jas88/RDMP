@@ -80,7 +80,7 @@ internal class CsProjFileTidy
             ConfirmClassNameAndNamespaces(enumerateFile);
 
         // Skips bin/obj and any nested git checkout (worktree or submodule)
-        foreach (var dir in RepositoryLayout.EnumerateDirectories(directory, true))
+        foreach (var dir in RepositoryLayout.EnumerateDirectories(directory))
             RecursivelyProcessSubfolders(dir);
     }
 

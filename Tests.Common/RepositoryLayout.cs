@@ -16,11 +16,11 @@ namespace Tests.Common;
 /// structure and documentation tests.
 /// <para>Enumeration never descends into build output (bin, obj), tool state (.git, .claude, .vs, .idea, node_modules) or any
 /// nested directory which is itself a git checkout (i.e. contains a .git file or directory), so that git worktrees and submodules
-/// inside the repository (e.g. .claude/worktrees/*, externals/npoi, build-standards) are never mistaken for part of this checkout.
+/// inside the repository (e.g. .claude/worktrees/*, build-standards) are never mistaken for part of this checkout.
 /// Symbolic links and junctions are not followed, so a scan cannot leave the checkout.</para>
 /// <para>Hidden files and directories are otherwise included: directories starting with a dot count as hidden on Linux and macOS
 /// but not on Windows, and content such as the Markdown in .github must be checked identically on every platform.</para>
-/// <para>Optionally it also skips vendored code (the externals and build-standards directories) to which RDMP conventions do not apply.</para>
+/// <para>It also skips vendored code (the build-standards directory) to which RDMP conventions do not apply.</para>
 /// </summary>
 public static class RepositoryLayout
 {
@@ -29,13 +29,7 @@ public static class RepositoryLayout
     /// </summary>
     public const string SolutionFileName = "DataManagementPlatform.sln";
 
-    /// <summary>
-    /// Name of the directory (at the repository root) which holds vendored third party source and the wrapper
-    /// projects that build it (e.g. the Apache 2.0 licensed NPOI library)
-    /// </summary>
-    public const string ExternalsDirectoryName = "externals";
-
-    private static readonly string[] VendoredDirectoryNames = { ExternalsDirectoryName, "build-standards" };
+    private static readonly string[] VendoredDirectoryNames = { "build-standards" };
 
     private static readonly string[] IgnoredDirectoryNames =
         { ".git", ".claude", ".vs", ".idea", "node_modules", "bin", "obj" };
@@ -77,7 +71,7 @@ public static class RepositoryLayout
     }
 
     /// <summary>
-    /// True if <paramref name="dir"/> is vendored code (externals or build-standards at the repository root) to which RDMP
+    /// True if <paramref name="dir"/> is vendored code (build-standards at the repository root) to which RDMP
     /// conventions do not apply
     /// </summary>
     public static bool IsVendoredDirectory(DirectoryInfo dir) =>
@@ -90,25 +84,24 @@ public static class RepositoryLayout
     /// itself should not be passed in (it is a git checkout).
     /// </summary>
     /// <param name="dir">A directory below the repository root</param>
-    /// <param name="excludeVendored">True to also skip vendored code, see <see cref="IsVendoredDirectory"/></param>
-    public static bool IsExcludedDirectory(DirectoryInfo dir, bool excludeVendored) =>
+    public static bool IsExcludedDirectory(DirectoryInfo dir) =>
         IgnoredDirectoryNames.Contains(dir.Name, StringComparer.OrdinalIgnoreCase) ||
-        (excludeVendored && IsVendoredDirectory(dir)) ||
+        IsVendoredDirectory(dir) ||
         IsGitCheckout(dir);
 
     /// <summary>
     /// Returns the immediate subdirectories of <paramref name="dir"/> which are not excluded (see <see cref="IsExcludedDirectory"/>),
     /// skipping inaccessible directories and reparse points (symbolic links, junctions) so a scan cannot escape the checkout
     /// </summary>
-    public static IEnumerable<DirectoryInfo> EnumerateDirectories(DirectoryInfo dir, bool excludeVendored) =>
-        dir.EnumerateDirectories("*", SingleDirectoryOptions).Where(d => !IsExcludedDirectory(d, excludeVendored));
+    public static IEnumerable<DirectoryInfo> EnumerateDirectories(DirectoryInfo dir) =>
+        dir.EnumerateDirectories("*", SingleDirectoryOptions).Where(static d => !IsExcludedDirectory(d));
 
     /// <summary>
     /// Recursively enumerates files matching <paramref name="searchPattern"/> (case insensitive) under <paramref name="root"/>,
     /// without descending into excluded directories (see <see cref="EnumerateDirectories"/>).  Files which are symbolic links
     /// are skipped.
     /// </summary>
-    public static IEnumerable<FileInfo> EnumerateFiles(DirectoryInfo root, string searchPattern, bool excludeVendored)
+    public static IEnumerable<FileInfo> EnumerateFiles(DirectoryInfo root, string searchPattern)
     {
         var pending = new Stack<DirectoryInfo>();
         pending.Push(root);
@@ -120,7 +113,7 @@ public static class RepositoryLayout
             foreach (var file in dir.EnumerateFiles(searchPattern, SingleDirectoryOptions))
                 yield return file;
 
-            foreach (var sub in EnumerateDirectories(dir, excludeVendored))
+            foreach (var sub in EnumerateDirectories(dir))
                 pending.Push(sub);
         }
     }
@@ -130,10 +123,4 @@ public static class RepositoryLayout
     /// </summary>
     public static string GetRelativePath(DirectoryInfo root, string fullPath) =>
         Path.GetRelativePath(root.FullName, fullPath).Replace('\\', '/');
-
-    /// <summary>
-    /// True if the given solution relative csproj path (as written in the sln file) points into the externals directory
-    /// </summary>
-    public static bool IsExternalsProject(string slnRelativePath) =>
-        slnRelativePath.Replace('\\', '/').StartsWith($"{ExternalsDirectoryName}/", StringComparison.Ordinal);
 }
