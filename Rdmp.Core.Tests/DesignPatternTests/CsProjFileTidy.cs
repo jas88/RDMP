@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
+using Tests.Common;
 
 namespace Rdmp.Core.Tests.DesignPatternTests;
 
@@ -17,7 +18,15 @@ internal class CsProjFileTidy
 {
     public List<string> csFilesFound = new();
 
-    public List<string> UntidyMessages { get; set; }
+    /// <summary>
+    /// Problems with the csproj file itself
+    /// </summary>
+    public List<string> ProjectFileProblems { get; } = new();
+
+    /// <summary>
+    /// Problems with namespaces and class names in the .cs files of the project
+    /// </summary>
+    public List<string> SourceFileProblems { get; } = new();
 
     private string _expectedRootNamespace;
     private DirectoryInfo _root;
@@ -47,8 +56,6 @@ internal class CsProjFileTidy
 
     public CsProjFileTidy(FileInfo csProjFile)
     {
-        UntidyMessages = new List<string>();
-
         _root = csProjFile.Directory;
         _expectedRootNamespace = csProjFile.Name.Replace(".csproj", "");
 
@@ -56,7 +63,7 @@ internal class CsProjFileTidy
         var allText = File.ReadAllText(csProjFile.FullName);
 
         if (allText.Contains("<CopyToOutputDirectory>Always</CopyToOutputDirectory>"))
-            UntidyMessages.Add($"Csproj '{csProjFile}' contains CopyAlways");
+            ProjectFileProblems.Add($"Csproj '{csProjFile}' contains CopyAlways");
 
         var doc = new XmlDocument();
         doc.LoadXml(allText);
@@ -72,13 +79,9 @@ internal class CsProjFileTidy
         foreach (var enumerateFile in directory.EnumerateFiles("*.cs"))
             ConfirmClassNameAndNamespaces(enumerateFile);
 
-        foreach (var dir in directory.EnumerateDirectories())
-        {
-            if (dir.Name.Equals("bin") || dir.Name.Equals("obj"))
-                continue;
-
+        // Skips bin/obj and any nested git checkout (worktree or submodule)
+        foreach (var dir in RepositoryLayout.EnumerateDirectories(directory, true))
             RecursivelyProcessSubfolders(dir);
-        }
     }
 
     private void ConfirmClassNameAndNamespaces(FileInfo csFile)
@@ -98,11 +101,11 @@ internal class CsProjFileTidy
 
         if (namespaces.Count == 0)
         {
-            UntidyMessages.Add($"FAIL: .cs file does not have any namespaces listed in it:{csFile.FullName}");
+            SourceFileProblems.Add($"FAIL: .cs file does not have any namespaces listed in it:{csFile.FullName}");
         }
         else if (namespaces.Count > 1)
         {
-            UntidyMessages.Add($"FAIL: .cs file has more than 1 namespaces listed in it!:{csFile.FullName}");
+            SourceFileProblems.Add($"FAIL: .cs file has more than 1 namespaces listed in it!:{csFile.FullName}");
         }
         else
         {
@@ -115,7 +118,7 @@ internal class CsProjFileTidy
             var actualNamespace = namespaces[0].Groups[1].Value;
 
             if (!actualNamespace.Equals(expectedNamespace))
-                UntidyMessages.Add(
+                SourceFileProblems.Add(
                     $"Expected file {csFile.FullName} to have namespace {expectedNamespace} but its listed namespace is {actualNamespace}");
         }
 
@@ -137,7 +140,7 @@ internal class CsProjFileTidy
             if (csFile.Name.Contains("Test") || csFile.Name.Contains("Factory"))
                 return;
 
-            UntidyMessages.Add($"FAIL: .cs file contains 2+ classes/interfaces {csFile.FullName}");
+            SourceFileProblems.Add($"FAIL: .cs file contains 2+ classes/interfaces {csFile.FullName}");
         }
         else
         {
@@ -147,7 +150,7 @@ internal class CsProjFileTidy
                 return;
 
             if (!csFile.Name.Equals($"{firstClassNameInFile}.cs", StringComparison.CurrentCultureIgnoreCase))
-                UntidyMessages.Add(
+                SourceFileProblems.Add(
                     $"File {csFile.FullName} contains a class is called {firstClassNameInFile} (does not match file name of file)");
         }
     }

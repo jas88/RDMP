@@ -5,115 +5,53 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using Tests.Common;
 
 namespace Rdmp.Core.Tests.DesignPatternTests;
 
 /// <summary>
-/// Tests that verify all C# source files have proper copyright headers.
+/// Tests that verify all C# source files in the repository (except build output, vendored code and nested git checkouts
+/// such as worktrees) have proper copyright headers.
 /// </summary>
 [TestFixture]
 [Category("Unit")]
 public class CopyrightHeaderTests
 {
-    private static readonly HashSet<string> IgnoreList = new()
-    {
-        "Program.cs",
-        "Settings.Designer.cs",
-        "Class1.cs",
-        "Images.Designer.cs",
-        "ToolTips.Designer.cs",
-        "Resources.Designer.cs",
-        "ProjectInstaller.cs",
-        "ProjectInstaller.Designer.cs",
-        "TableView.cs",
-        "TreeView.cs"
-    };
+    private const string ExpectedPrefix = "// Copyright (c) The University of Dundee 2018-20";
+
+    private const string AdaptedCodeHeader =
+        "// This code is adapted from https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications";
 
     [Test]
     public void AllSourceFiles_HaveCopyrightHeaders()
     {
-        var solutionDir = FindSolutionDirectory();
-        var csFiles = FindAllCSharpFiles(solutionDir);
+        var root = RepositoryLayout.FindRoot();
 
-        var suggestedNewFileContents = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-        var copyrightIssues = new Dictionary<string, (string actual, string expected)>(StringComparer.CurrentCultureIgnoreCase);
+        var missingHeaders = RepositoryLayout.EnumerateFiles(root, "*.cs", true)
+            .Where(static f => !f.Name.Contains(".Designer.cs"))
+            .Where(static f => !HasCopyrightHeader(f.FullName))
+            .Select(f => RepositoryLayout.GetRelativePath(root, f.FullName))
+            .OrderBy(static f => f, StringComparer.Ordinal)
+            .ToList();
 
-        foreach (var file in csFiles)
-        {
-            if (file.Contains(".Designer.cs") || IgnoreList.Contains(Path.GetFileName(file)))
-                continue;
-
-            var changes = false;
-            var sbSuggestedText = new StringBuilder();
-
-            var firstLine = File.ReadLines(file).FirstOrDefault() ?? string.Empty;
-
-            if (!firstLine.StartsWith("// Copyright (c) The University of Dundee 2018-20")
-                && firstLine != @"// This code is adapted from https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications")
-            {
-                changes = true;
-                var expectedCopyright = $"// Copyright (c) The University of Dundee 2018-{DateTime.Now.Year}";
-                copyrightIssues.Add(file, (firstLine, expectedCopyright));
-
-                sbSuggestedText.AppendLine(expectedCopyright);
-                sbSuggestedText.AppendLine(@"// This file is part of the Research Data Management Platform (RDMP).");
-                sbSuggestedText.AppendLine(
-                    @"// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.");
-                sbSuggestedText.AppendLine(
-                    @"// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.");
-                sbSuggestedText.AppendLine(
-                    @"// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.");
-                sbSuggestedText.AppendLine();
-                sbSuggestedText.AppendLine(firstLine);
-                sbSuggestedText.Append(string.Join(Environment.NewLine, File.ReadLines(file).Skip(1)));
-            }
-
-            if (changes)
-                suggestedNewFileContents.Add(file, sbSuggestedText.ToString());
-        }
-
-        // Assert
-        foreach (var kvp in suggestedNewFileContents)
-        {
-            var actualContents = File.ReadAllText(kvp.Key);
-            var suggestedContents = kvp.Value;
-            Assert.That(actualContents, Is.EqualTo(suggestedContents),
-                $"Copyright header missing or incorrect in {kvp.Key}");
-        }
+        Assert.That(missingHeaders, Is.Empty,
+            $"The following files do not start with the RDMP copyright header:{Environment.NewLine}{ExpectedHeader()}");
     }
 
-    private static DirectoryInfo FindSolutionDirectory()
+    private static bool HasCopyrightHeader(string file)
     {
-        var solutionDir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
-        while (solutionDir?.GetFiles("*.sln").Any() != true)
-            solutionDir = solutionDir?.Parent;
-
-        Assert.That(solutionDir, Is.Not.Null, "Failed to find solution directory");
-        return solutionDir;
+        var firstLine = File.ReadLines(file).FirstOrDefault() ?? string.Empty;
+        return firstLine.StartsWith(ExpectedPrefix, StringComparison.Ordinal) || firstLine == AdaptedCodeHeader;
     }
 
-    private static List<string> FindAllCSharpFiles(DirectoryInfo solutionDir)
-    {
-        var csFiles = new List<string>();
-
-        foreach (var file in solutionDir.EnumerateFiles("*.cs", SearchOption.AllDirectories))
-        {
-            // Skip obj/bin directories and vendored third party source (e.g. the Apache-2.0
-            // NPOI submodule under externals/); RDMP copyright headers do not apply there
-            if (file.FullName.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") ||
-                file.FullName.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") ||
-                VendoredCode.IsVendored(file.FullName))
-                continue;
-
-            csFiles.Add(file.FullName);
-        }
-
-        return csFiles;
-    }
+    private static string ExpectedHeader() =>
+        string.Join(Environment.NewLine,
+            $"// Copyright (c) The University of Dundee 2018-{DateTime.Now.Year}",
+            "// This file is part of the Research Data Management Platform (RDMP).",
+            "// RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.",
+            "// RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.",
+            "// You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.");
 }

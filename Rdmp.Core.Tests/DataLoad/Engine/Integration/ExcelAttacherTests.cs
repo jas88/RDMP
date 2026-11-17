@@ -1,4 +1,4 @@
-﻿// Copyright (c) The University of Dundee 2018-2025
+﻿// Copyright (c) The University of Dundee 2018-2026
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -6,8 +6,6 @@
 
 using FAnsi;
 using FAnsi.Discovery;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
 using NUnit.Framework;
 using Rdmp.Core.Curation;
 using Rdmp.Core.DataFlowPipeline;
@@ -15,6 +13,7 @@ using Rdmp.Core.DataLoad;
 using Rdmp.Core.DataLoad.Engine.Job;
 using Rdmp.Core.DataLoad.Modules.Attachers;
 using Rdmp.Core.ReusableLibraryCode.Progress;
+using Rdmp.Core.Tests.DataLoad.Engine.Unit;
 using System;
 using System.IO;
 using System.Linq;
@@ -24,7 +23,6 @@ namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
 public class ExcelAttacherTests : DatabaseTests
 {
-    private IWorkbook _workbook;
     private LoadDirectory _loadDirectory;
     private DirectoryInfo _parentDir;
     private DiscoveredDatabase _database;
@@ -60,27 +58,21 @@ public class ExcelAttacherTests : DatabaseTests
     [TearDown]
     public void CleanUp()
     {
-        _workbook.Dispose();
         File.Delete(_filename);
     }
 
     [Test]
     public void Test_BasicExcelAttacher()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(0);
-        row.CreateCell(0).SetCellValue("chi");
-        row.CreateCell(1).SetCellValue("value");
-        row = sheet.CreateRow(1);
-        row.CreateCell(0).SetCellValue("1111111111");
-        row.CreateCell(1).SetCellValue("some value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(0).SetCellValue("2222222222");
-        row.CreateCell(1).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("A1", "chi")
+            .Text("B1", "value")
+            .Text("A2", "1111111111")
+            .Text("B2", "some value")
+            .Text("A3", "2222222222")
+            .Text("B3", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);
@@ -110,20 +102,15 @@ public class ExcelAttacherTests : DatabaseTests
     [Test]
     public void Test_BasicExcelAttacherWithBlankFirstColumn()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(0);
-        row.CreateCell(1).SetCellValue("chi");
-        row.CreateCell(2).SetCellValue("value");
-        row = sheet.CreateRow(1);
-        row.CreateCell(1).SetCellValue("1111111111");
-        row.CreateCell(2).SetCellValue("some value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(1).SetCellValue("2222222222");
-        row.CreateCell(2).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("B1", "chi")
+            .Text("C1", "value")
+            .Text("B2", "1111111111")
+            .Text("C2", "some value")
+            .Text("B3", "2222222222")
+            .Text("C3", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);
@@ -153,20 +140,15 @@ public class ExcelAttacherTests : DatabaseTests
     [Test]
     public void Test_BasicExcelAttacherWithBlankFirstColumnAndRow()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(1);
-        row.CreateCell(1).SetCellValue("chi");
-        row.CreateCell(2).SetCellValue("value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(1).SetCellValue("1111111111");
-        row.CreateCell(2).SetCellValue("some value");
-        row = sheet.CreateRow(3);
-        row.CreateCell(1).SetCellValue("2222222222");
-        row.CreateCell(2).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("B2", "chi")
+            .Text("C2", "value")
+            .Text("B3", "1111111111")
+            .Text("C3", "some value")
+            .Text("B4", "2222222222")
+            .Text("C4", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);
@@ -196,20 +178,15 @@ public class ExcelAttacherTests : DatabaseTests
     [Test]
     public void Test_BasicExcelAttacherWithBlankFirstColumnAndRowAndUnnecessaryOverwrite_ColumnOnly_Number()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(1);
-        row.CreateCell(1).SetCellValue("chi");
-        row.CreateCell(2).SetCellValue("value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(1).SetCellValue("1111111111");
-        row.CreateCell(2).SetCellValue("some value");
-        row = sheet.CreateRow(3);
-        row.CreateCell(1).SetCellValue("2222222222");
-        row.CreateCell(2).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("B2", "chi")
+            .Text("C2", "value")
+            .Text("B3", "1111111111")
+            .Text("C3", "some value")
+            .Text("B4", "2222222222")
+            .Text("C4", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);
@@ -241,20 +218,15 @@ public class ExcelAttacherTests : DatabaseTests
     [Test]
     public void Test_BasicExcelAttacherWithBlankFirstColumnAndRowAndUnnecessaryOverwrite_ColumnOnly_Letter()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(1);
-        row.CreateCell(1).SetCellValue("chi");
-        row.CreateCell(2).SetCellValue("value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(1).SetCellValue("1111111111");
-        row.CreateCell(2).SetCellValue("some value");
-        row = sheet.CreateRow(3);
-        row.CreateCell(1).SetCellValue("2222222222");
-        row.CreateCell(2).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("B2", "chi")
+            .Text("C2", "value")
+            .Text("B3", "1111111111")
+            .Text("C3", "some value")
+            .Text("B4", "2222222222")
+            .Text("C4", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);
@@ -285,23 +257,18 @@ public class ExcelAttacherTests : DatabaseTests
     [Test]
     public void Test_ExcelAttacherSkipFirstColumn_Letter()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(0);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("chi");
-        row.CreateCell(3).SetCellValue("value");
-        row = sheet.CreateRow(1);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("1111111111");
-        row.CreateCell(3).SetCellValue("some value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("2222222222");
-        row.CreateCell(3).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("B1", "junk_data")
+            .Text("C1", "chi")
+            .Text("D1", "value")
+            .Text("B2", "junk_data")
+            .Text("C2", "1111111111")
+            .Text("D2", "some value")
+            .Text("B3", "junk_data")
+            .Text("C3", "2222222222")
+            .Text("D3", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);
@@ -333,23 +300,18 @@ public class ExcelAttacherTests : DatabaseTests
     [Test]
     public void Test_ExcelAttacherSkipFirstColumn_Number()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(0);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("chi");
-        row.CreateCell(3).SetCellValue("value");
-        row = sheet.CreateRow(1);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("1111111111");
-        row.CreateCell(3).SetCellValue("some value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("2222222222");
-        row.CreateCell(3).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("B1", "junk_data")
+            .Text("C1", "chi")
+            .Text("D1", "value")
+            .Text("B2", "junk_data")
+            .Text("C2", "1111111111")
+            .Text("D2", "some value")
+            .Text("B3", "junk_data")
+            .Text("C3", "2222222222")
+            .Text("D3", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);
@@ -381,28 +343,21 @@ public class ExcelAttacherTests : DatabaseTests
     [Test]
     public void Test_ExcelAttacherSkipFirstColumnAndRow()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(0);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("junk_data");
-        row.CreateCell(3).SetCellValue("junk_data");
-        row = sheet.CreateRow(1);
-
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("chi");
-        row.CreateCell(3).SetCellValue("value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("1111111111");
-        row.CreateCell(3).SetCellValue("some value");
-        row = sheet.CreateRow(3);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("2222222222");
-        row.CreateCell(3).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("B1", "junk_data")
+            .Text("C1", "junk_data")
+            .Text("D1", "junk_data")
+            .Text("B2", "junk_data")
+            .Text("C2", "chi")
+            .Text("D2", "value")
+            .Text("B3", "junk_data")
+            .Text("C3", "1111111111")
+            .Text("D3", "some value")
+            .Text("B4", "junk_data")
+            .Text("C4", "2222222222")
+            .Text("D4", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);
@@ -434,28 +389,21 @@ public class ExcelAttacherTests : DatabaseTests
     [Test]
     public void Test_ExcelAttacherBadColumnOffset()
     {
-        _workbook = new XSSFWorkbook();
-        ISheet sheet = _workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(0);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("junk_data");
-        row.CreateCell(3).SetCellValue("junk_data");
-        row = sheet.CreateRow(1);
-
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("chi");
-        row.CreateCell(3).SetCellValue("value");
-        row = sheet.CreateRow(2);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("1111111111");
-        row.CreateCell(3).SetCellValue("some value");
-        row = sheet.CreateRow(3);
-        row.CreateCell(1).SetCellValue("junk_data");
-        row.CreateCell(2).SetCellValue("2222222222");
-        row.CreateCell(3).SetCellValue("some other value");
-        _filename = Path.Combine(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
-        using var fs = new FileStream(_filename, FileMode.Create, FileAccess.Write);
-        _workbook.Write(fs);
+        var builder = new MinimalXlsxBuilder().Sheet("Sheet1")
+            .Text("B1", "junk_data")
+            .Text("C1", "junk_data")
+            .Text("D1", "junk_data")
+            .Text("B2", "junk_data")
+            .Text("C2", "chi")
+            .Text("D2", "value")
+            .Text("B3", "junk_data")
+            .Text("C3", "1111111111")
+            .Text("D3", "some value")
+            .Text("B4", "junk_data")
+            .Text("C4", "2222222222")
+            .Text("D4", "some other value");
+        _filename = Path.Join(_loadDirectory.ForLoading.FullName, "ExcelAttacher.xlsx");
+        builder.Save(_filename);
 
         var attacher = new ExcelAttacher();
         attacher.Initialize(_loadDirectory, _database);

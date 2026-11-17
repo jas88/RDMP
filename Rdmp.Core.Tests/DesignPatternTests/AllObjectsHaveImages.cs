@@ -14,7 +14,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DesignPatternTests;
 
-public class AllObjectsHaveImages : DatabaseTests
+public class AllObjectsHaveImages : UnitTests
 {
     [Test]
     public void AllIHasDependenciesHaveIcons()

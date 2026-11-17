@@ -296,13 +296,20 @@ jobs:
           path: TestResults/**/*.trx
           retention-days: 14
 
+      # A failed upload fails this step, so that the next one can say so, but not the job
       - name: Upload coverage
+        id: upload_coverage
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./TestResults
-          fail_ci_if_error: false
+          fail_ci_if_error: true
         continue-on-error: true
+
+      - name: Warn that coverage was not uploaded
+        if: steps.upload_coverage.outcome == 'failure'
+        shell: bash
+        run: echo "::warning title=Coverage not uploaded::The coverage upload from this job failed. Codecov waits for all three uploads (see codecov.yml), so it will not report on this commit."
 
   # Linux tests, one job per repository type. The file system pass only re-runs
   # DatabaseTests fixtures (Category "Database"): nothing else reads UseFileSystemRepo.
@@ -528,13 +535,20 @@ jobs:
           path: TestResults/**/*.trx
           retention-days: 14
 
+      # A failed upload fails this step, so that the next one can say so, but not the job
       - name: Upload coverage
+        id: upload_coverage
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./TestResults
-          fail_ci_if_error: false
+          fail_ci_if_error: true
         continue-on-error: true
+
+      - name: Warn that coverage was not uploaded
+        if: steps.upload_coverage.outcome == 'failure'
+        shell: bash
+        run: echo "::warning title=Coverage not uploaded::The coverage upload from this job failed. Codecov waits for all three uploads (see codecov.yml), so it will not report on this commit."
 
   # Single status for branch protection, which requires "Linux Database Tests"
   tests_linux_db:

@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using NPOI.XWPF.UserModel;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.ReusableLibraryCode;
 
@@ -67,10 +67,10 @@ public class WordCatalogueExtractor : DocXHelper
         "Name"
     };
 
-    private XWPFDocument _document;
+    private readonly DocXDocument _document;
 
 
-    public WordCatalogueExtractor(ICatalogue catalogue, XWPFDocument document)
+    public WordCatalogueExtractor(ICatalogue catalogue, DocXDocument document)
     {
         Catalogue = catalogue;
         _document = document;
@@ -129,7 +129,7 @@ public class WordCatalogueExtractor : DocXHelper
                 property.PropertyType == typeof(string));
     }
 
-    private static void GenerateObjectPropertiesAsRowUsingReflection(XWPFTable table, object o,
+    private static void GenerateObjectPropertiesAsRowUsingReflection(Table table, object o,
         Tuple<string, string>[] supplementalData)
     {
         var propertyInfo =

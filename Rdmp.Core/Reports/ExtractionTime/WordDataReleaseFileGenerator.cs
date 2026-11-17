@@ -8,7 +8,6 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using NPOI.XWPF.UserModel;
 using Rdmp.Core.DataExport.Data;
 using Rdmp.Core.Repositories;
 using Rdmp.Core.Repositories.Managers;
@@ -78,12 +77,15 @@ public class WordDataReleaseFileGenerator : DocXHelper
 
         CreateFileSummary(document);
 
+        //save and close the file before showing it to the user
+        document.Dispose();
+
         //interactive mode, user didn't ask us to save to a specific location so we created it in temp and so we can now show them where that file is
         if (string.IsNullOrWhiteSpace(saveAsFilename))
             ShowFile(f);
     }
 
-    private void CreateTopTable1(XWPFDocument document)
+    private void CreateTopTable1(DocXDocument document)
     {
         var hasTicket = !string.IsNullOrWhiteSpace(Project.MasterTicket);
         var hasProchi = Cohort.GetReleaseIdentifier().ToLower().Contains("prochi");
@@ -136,7 +138,7 @@ public class WordDataReleaseFileGenerator : DocXHelper
         return (string)cmd.ExecuteScalar();
     }
 
-    private void CreateCohortDetailsTable(XWPFDocument document)
+    private void CreateCohortDetailsTable(DocXDocument document)
     {
         var table = InsertTable(document, 2, 4);
 
@@ -167,7 +169,7 @@ public class WordDataReleaseFileGenerator : DocXHelper
         return !string.IsNullOrWhiteSpace(ds.DigitalObjectIdentifier) ? $" (DOI: {ds.DigitalObjectIdentifier})" : "";
     }
 
-    private void CreateFileSummary(XWPFDocument document)
+    private void CreateFileSummary(DocXDocument document)
     {
         var table = InsertTable(document, ExtractionResults.Length + 1, 6);
 

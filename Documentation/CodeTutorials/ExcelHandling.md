@@ -14,7 +14,7 @@ Microsoft Excel Workbooks (xls and xlsx) are file formats in which one or more W
 - Cells can contain formulas
 
 ## Implementation
-Excel files are read using the [NPOI](https://github.com/tonyqus/npoi) library.  Support for number formats is added by the [ExcelNumberFormat](#https://github.com/andersnm/ExcelNumberFormat) library.
+Excel files are read using the [ExcelDataReader](https://github.com/ExcelDataReader/ExcelDataReader) library.  Support for number formats is added by the [ExcelNumberFormat](https://github.com/andersnm/ExcelNumberFormat) library.  Whether a file is xls or xlsx is determined from its content and it is opened read-only.  Formulas are not evaluated: the result stored in the file alongside each formula is used.  Error cells (e.g. `#DIV/0!`) are treated as blank.
 
 Data read from the file is converted to a string (textual) representation and then treated exactly like other untyped inputs (See [Type Determination](https://github.com/HicServices/FAnsiSql/blob/master/Documentation/TypeTranslation.md))
 
@@ -36,14 +36,24 @@ In Excel all Date/Time fields are stored only as a number.  You can see this num
 
 | Rule  | Behaviour | Example Range|
 | ------------- | ------------- | ------------- |
-| Date And Time Format | If the Cell Formatting includes both a date component (y) and a time component (h) it will be translated in an unambiguous format e.g. "2001-01-01 10:30:00" | E4 |
+| Date And Time Format | If the Cell Formatting includes both a date component (y) and a time component (h) it will be translated in an unambiguous format e.g. "2001-01-01 10:30:00".  A day (d) with a time component but no year (e.g. `m/d h:mm`) is treated the same way | E4 |
 | Date Only Format | If the Cell Formatting includes a date component (y) but no time component (h) it will be translated into a date only format e.g. "2015-09-18" |E8|
-| Time Only Format | If the Cell Formatting includes a time component (h) but no date component (y) it will be translated into a time only format e.g. "15:09:00" |F8|
+| Time Only Format | If the Cell Formatting includes a time component (h) but no date component (y or d) it will be translated into a time only format e.g. "15:09:00" |F8|
+| Elapsed Hours Format | If the time component counts hours beyond 24 (`[h]`, e.g. `[h]:mm:ss`) the total is given in the same layout as a time e.g. "49:30:00" for 49.5 hours | |
+
+Only genuine date/time tokens count, in upper or lower case: quoted text (e.g. `"hrs"`), backslash escaped characters and bracketed sections such as colours, locales and conditions (e.g. `[Red]`, `[$-409]`) are ignored, except for elapsed time (e.g. `[h]`).  A format containing `/` but no date/time tokens is a fraction (e.g. `# ?/?`) and is loaded as the raw number, just like "General".  Other date/time formats (e.g. `d-mmm` or `[mm]:ss`) and other number formats (e.g. currencies and percentages) are loaded as the format displays them e.g. "26-Sep", "720:00" and "£11.00".  The format is applied without regard to the regional settings of the computer, so month names are in English and the decimal separator is `.` where Excel might show something else.
+
+Excel cannot display a negative number as a date or time, so one in a date or time format is loaded as null.  The exception is elapsed minutes or seconds (e.g. `[mm]:ss`), where a negative duration is loaded as the format displays it e.g. "-720:00".  Excel's calendar also has a 29th of February 1900 (serial number 60) which never existed: that is loaded as "1900-02-28".
+
+Workbooks using the 1904 date system (serial number 0 is 1904-01-01) are supported for both .xls and .xlsx.
 
 ## Tests
 
 Tests confirming the above behaviour are included in the following tests:
 
 - [ExcelTests.cs](./../../Rdmp.Core.Tests/DataLoad/Engine/Unit/ExcelTests.cs)
+- [ExcelSourceCellHandlingTests.cs](./../../Rdmp.Core.Tests/DataLoad/Engine/Unit/ExcelSourceCellHandlingTests.cs)
+- [ExcelDateSystemAndFormatTests.cs](./../../Rdmp.Core.Tests/DataLoad/Engine/Unit/ExcelDateSystemAndFormatTests.cs)
+- [ExcelDateSystemCompoundFileTests.cs](./../../Rdmp.Core.Tests/DataLoad/Engine/Unit/ExcelDateSystemCompoundFileTests.cs)
 - [ExcelConversionTest](./../../Rdmp.Core.Tests/DataLoad/Engine/Integration/ExcelConversionTest.cs)
 
