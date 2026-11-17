@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - MySQL: string columns created without a width are `text` instead of `varchar(4000)`, so a table can have more than 4 of them. This includes the `ItemValidatorXML` and `ValidatorXML` columns of a new DQE database on MySQL
   - Columns are discovered in the order they are in the table (MySQL 8 could return them in alphabetical order)
   - Oracle: Unicode string columns created without a width are `nvarchar2(2000)` instead of `nvarchar2(4000)`, and those of 2001 to 4000 characters `NCLOB` instead of `nvarchar2`; both used to fail with ORA-00910
+- The line diff used by the before/after dialogs (then vs now SQL, commit history, the prompt to save changes and propagating a column description) is a new implementation, and the unused CLI autocomplete code is removed. API change for plugins: `Diff` is now a static class with only the two-argument `DiffText`, and the members of `Diff.Item` are read-only
 
 
 ## [9.0.1] - 2025-07-31
