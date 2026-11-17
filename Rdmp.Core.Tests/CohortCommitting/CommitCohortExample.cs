@@ -22,11 +22,11 @@ namespace Rdmp.Core.Tests.CohortCommitting;
 
 internal class CommitCohortExample : DatabaseTests
 {
-    [TestCase(DatabaseType.MicrosoftSQLServer, "varchar(10)")]
-    [TestCase(DatabaseType.MySql, "varchar(10)")]
-    [TestCase(DatabaseType.Oracle, "varchar2(10)")]
-    public void CommitCohortExampleTest(DatabaseType dbType, string privateDataType)
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
+    public void CommitCohortExampleTest(DatabaseType dbType)
     {
+        var privateDataType = dbType == DatabaseType.Oracle ? "varchar2(10)" : "varchar(10)";
+
         RunBlitzDatabases(RepositoryLocator);
 
         //find the test server (where we will create the store schema)

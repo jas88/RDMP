@@ -732,13 +732,10 @@ ALTER TABLE DroppedColumnsTable add color varchar(1)
         Assert.That(table.DiscoverColumn("StringNotNull").DataType.GetLengthIfString(), Is.EqualTo(14));
     }
 
-    [TestCase(DatabaseType.MicrosoftSQLServer, "didn�t")]
-    [TestCase(DatabaseType.MySql, "didn�t")]
-    [TestCase(DatabaseType.Oracle, "didn�t")]
-    [TestCase(DatabaseType.MicrosoftSQLServer, "didn't")]
-    [TestCase(DatabaseType.MySql, "didn't")]
-    [TestCase(DatabaseType.Oracle, "didn't")]
-    public void Test_SingleQuote_InText(DatabaseType dbType, string testValue)
+    [Test, Combinatorial]
+    public void Test_SingleQuote_InText(
+        [ValueSource(typeof(All), nameof(All.DatabaseTypes))] DatabaseType dbType,
+        [Values("didn�t", "didn't")] string testValue)
     {
         var db = GetCleanedServer(dbType);
 

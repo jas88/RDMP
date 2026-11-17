@@ -51,9 +51,4 @@
     </PackageReference>
     <PackageReference Include="NUnit3TestAdapter" />
   </ItemGroup>
-  <ItemGroup>
-    <None Update="TestDatabases.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>

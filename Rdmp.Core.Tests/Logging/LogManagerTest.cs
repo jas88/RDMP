@@ -195,7 +195,7 @@ public class LogManagerTest : DatabaseTests
         Assert.That(lm.ListDataSets().Count(s => s.Equals("ff", StringComparison.CurrentCultureIgnoreCase)), Is.EqualTo(1));
     }
 
-    [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
+    [TestCaseSource(typeof(All), nameof(All.PlatformDatabaseTypes))]
     public void LoggingDatabase_TestActuallyCreatingIt(DatabaseType type)
     {
         var db = GetCleanedServer(type);

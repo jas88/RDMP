@@ -585,7 +585,7 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
             return rtn;
         }
 
-        var textTyper =
+        using var textTyper =
             new TypeTextOrCancelDialog(args, maxLength, initialText, false, maxLength > MultiLineLengthThreshold)
             {
                 RequireSaneHeaderText = requireSaneHeaderText
@@ -789,7 +789,7 @@ public class ActivateItems : BasicActivateItems, IActivateItems, IRefreshBusSubs
         }
 
         //whatever else it is use string
-        var typeTextDialog = new TypeTextOrCancelDialog(args, 1000, initialValue?.ToString());
+        using var typeTextDialog = new TypeTextOrCancelDialog(args, 1000, initialValue?.ToString());
 
         if (typeTextDialog.ShowDialog() == DialogResult.OK)
         {
