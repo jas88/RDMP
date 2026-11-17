@@ -529,6 +529,9 @@ public class CompiledTypeRegistryTests
         Assert.That(CompiledTypeRegistry.GetRegisteredTypes(assembly).Select(static t => t.FullName),
             Is.EqualTo(new[] { "RegistryTest.Marker" }));
 
+        // The checks used by the tests cache what they find out about assemblies
+        CompiledTypeRegistryChecks.AssertRegistersTheTypesReflectionFinds(assembly);
+
         context.Unload();
         Assert.That(CompiledTypeRegistry.GetRegistration(assembly), Is.Null);
 
@@ -685,6 +688,35 @@ public class CompiledTypeRegistryTests
         il.Emit(OpCodes.Newobj, typeof(Func<Type[]>).GetConstructor(new[] { typeof(object), typeof(IntPtr) })!);
         il.Emit(OpCodes.Call, typeof(CompiledTypeRegistry).GetMethod(nameof(CompiledTypeRegistry.Register))!);
         il.Emit(OpCodes.Ret);
+    }
+
+    /// <summary>
+    /// The checks work for a Type whose assembly has no EmbeddedAttribute (as the compiler only embeds one when it needs it)
+    /// </summary>
+    [Test]
+    public void IsSynthesized_AssemblyWithoutEmbeddedAttribute_IsFalse()
+    {
+        var context = new AssemblyLoadContext(nameof(IsSynthesized_AssemblyWithoutEmbeddedAttribute_IsFalse), true);
+
+        try
+        {
+            var assembly = context.LoadFromStream(EmitAssembly("RegistryTestNoEmbeddedAttribute", ModuleInitializer.None));
+            var marker = assembly.GetType("RegistryTest.Marker", true);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(assembly.GetType("Microsoft.CodeAnalysis.EmbeddedAttribute"), Is.Null);
+
+                // The second time from the cache
+                Assert.That(CompiledTypeRegistryChecks.IsSynthesized(marker), Is.False);
+                Assert.That(CompiledTypeRegistryChecks.IsSynthesized(marker), Is.False);
+                Assert.That(CompiledTypeRegistryChecks.IsInstrumentedByCoverlet(assembly), Is.False);
+            });
+        }
+        finally
+        {
+            context.Unload();
+        }
     }
 
     [Test]

@@ -6,10 +6,10 @@
 
 using System;
 using System.CodeDom.Compiler;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using Rdmp.Core.Repositories;
 
@@ -27,8 +27,10 @@ public static class CompiledTypeRegistryChecks
     /// </summary>
     private const string CoverletTrackerNamespace = "Coverlet.Core.Instrumentation.Tracker";
 
-    private static readonly ConcurrentDictionary<Assembly, Type> EmbeddedAttributes = new();
-    private static readonly ConcurrentDictionary<Assembly, bool> InstrumentedByCoverlet = new();
+    // Weakly keyed, so that seeing an assembly in a collectible context does not stop the context unloading.  Null (an
+    // assembly without an EmbeddedAttribute) is cached like any other value; a bool is boxed as values must be objects.
+    private static readonly ConditionalWeakTable<Assembly, Type> EmbeddedAttributes = new();
+    private static readonly ConditionalWeakTable<Assembly, StrongBox<bool>> InstrumentedByCoverlet = new();
 
     /// <summary>
     /// Asserts that <paramref name="assembly"/> registers exactly the Types which reflection finds in it, in the order
@@ -69,7 +71,7 @@ public static class CompiledTypeRegistryChecks
     {
         // The compiler embeds its own copy of EmbeddedAttribute in each assembly which needs one, and marks with it the
         // attributes it embeds
-        var embedded = EmbeddedAttributes.GetOrAdd(type.Assembly,
+        var embedded = EmbeddedAttributes.GetValue(type.Assembly,
             static a => a.GetType("Microsoft.CodeAnalysis.EmbeddedAttribute", false));
 
         for (var t = type; t != null; t = t.DeclaringType)
@@ -93,7 +95,8 @@ public static class CompiledTypeRegistryChecks
     /// True if Coverlet has instrumented (rewritten) <paramref name="assembly"/>
     /// </summary>
     public static bool IsInstrumentedByCoverlet(Assembly assembly) =>
-        InstrumentedByCoverlet.GetOrAdd(assembly, static a => a.GetTypes().Any(IsAddedAfterCompilation));
+        InstrumentedByCoverlet.GetValue(assembly,
+            static a => new StrongBox<bool>(a.GetTypes().Any(IsAddedAfterCompilation))).Value;
 
     /// <summary>
     /// Returns <paramref name="types"/> (Types of <paramref name="assembly"/> in the order reflection lists them) in the order
