@@ -98,6 +98,9 @@ public class UITests : UnitTests
     {
         _itemActivator?.Results.Clear();
 
+        if (_itemActivator != null)
+            _itemActivator.LastTypeTextRequest = null;
+
         _checkResults = null;
 
         LastUserInterfaceLaunched = null;

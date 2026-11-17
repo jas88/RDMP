@@ -30,6 +30,7 @@ using Rdmp.Core.DataLoad.Triggers;
 using Rdmp.Core.Logging;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
+using Tests.Common;
 using TypeGuesser;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration.CrossDatabaseTypeTests;
@@ -66,15 +67,16 @@ internal class CrossDatabaseDataLoadTests : DataLoadEngineTestsBase
         WithDiffColumnIgnoreRegex //tests ability of the system to skip a given column when doing the DLE diff section
     }
 
-    [TestCase(DatabaseType.Oracle, TestCase.Normal)]
-    [TestCase(DatabaseType.MicrosoftSQLServer, TestCase.Normal)]
+    private static IEnumerable<object[]> NormalLoadCases =>
+        All.DatabaseTypes.Select(static t => new object[] { t, TestCase.Normal });
+
+    [TestCaseSource(nameof(NormalLoadCases))]
     [TestCase(DatabaseType.MicrosoftSQLServer, TestCase.NoTrigger)]
     [TestCase(DatabaseType.MicrosoftSQLServer, TestCase.WithCustomTableNamer)]
     [TestCase(DatabaseType.MicrosoftSQLServer, TestCase.WithNonPrimaryKeyIdentityColumn)]
     [TestCase(DatabaseType.MicrosoftSQLServer, TestCase.DodgyCollation)]
     [TestCase(DatabaseType.MicrosoftSQLServer, TestCase.LowPrivilegeLoaderAccount)]
     [TestCase(DatabaseType.MicrosoftSQLServer, TestCase.AllPrimaryKeys)]
-    [TestCase(DatabaseType.MySql, TestCase.Normal)]
     //[TestCase(DatabaseType.MySql, TestCase.WithNonPrimaryKeyIdentityColumn)] //Not supported by MySql:Incorrect table definition; there can be only one auto column and it must be defined as a key
     [TestCase(DatabaseType.MySql, TestCase.DodgyCollation)]
     [TestCase(DatabaseType.MySql, TestCase.WithCustomTableNamer)]

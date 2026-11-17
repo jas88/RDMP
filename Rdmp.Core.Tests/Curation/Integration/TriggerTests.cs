@@ -24,6 +24,10 @@ namespace Rdmp.Core.Tests.Curation.Integration;
 
 public class TriggerTests : DatabaseTests
 {
+    // MySQL's now() has one second resolution, so archive rows written less than a second apart share hic_validFrom
+    // and the most recent one cannot be identified
+    private const int SleepLongerThanTimestampResolution = 1100;
+
     private DiscoveredTable _table;
     private DiscoveredTable _archiveTable;
     private DiscoveredDatabase _database;
@@ -198,19 +202,19 @@ public class TriggerTests : DatabaseTests
             { "hic_dataLoadRunID", 7 }
         });
 
-        Thread.Sleep(200);
+        Thread.Sleep(SleepLongerThanTimestampResolution);
         RunSQL("UPDATE {0} SET bubbles=1", _table.GetFullyQualifiedName());
 
-        Thread.Sleep(200);
+        Thread.Sleep(SleepLongerThanTimestampResolution);
         RunSQL("UPDATE {0} SET bubbles=2", _table.GetFullyQualifiedName());
 
-        Thread.Sleep(200);
+        Thread.Sleep(SleepLongerThanTimestampResolution);
         RunSQL("UPDATE {0} SET bubbles=3", _table.GetFullyQualifiedName());
 
-        Thread.Sleep(200);
+        Thread.Sleep(SleepLongerThanTimestampResolution);
         RunSQL("UPDATE {0} SET bubbles=4", _table.GetFullyQualifiedName());
 
-        Thread.Sleep(200);
+        Thread.Sleep(SleepLongerThanTimestampResolution);
 
         Assert.Multiple(() =>
         {

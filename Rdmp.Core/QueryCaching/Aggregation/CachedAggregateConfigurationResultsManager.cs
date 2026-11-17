@@ -208,8 +208,9 @@ WHERE
             _database.ExpectTable(table.GetRuntimeName()).Drop();
 
             //delete the record!
+            var syntax = _database.Server.GetQuerySyntaxHelper();
             using var cmd = DatabaseCommandHelper.GetCommand(
-                $"DELETE FROM {mgrTable.GetFullyQualifiedName()} WHERE AggregateConfiguration_ID = {configuration.ID} AND Operation = '{operation}'",
+                $"DELETE FROM {mgrTable.GetFullyQualifiedName()} WHERE {syntax.EnsureWrapped("AggregateConfiguration_ID")} = {configuration.ID} AND {syntax.EnsureWrapped("Operation")} = '{operation}'",
                 con);
             var deletedRows = cmd.ExecuteNonQuery();
             return deletedRows != 1

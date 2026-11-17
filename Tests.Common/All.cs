@@ -37,6 +37,21 @@ public class All
     }
 
     /// <summary>
+    /// <see cref="TestCaseSourceAttribute"/> for tests that host an RDMP logging or DQE database on the test server.
+    /// Returns the configured DBMS except PostgreSQL: the logging and DQE code (LogManager, DataLoadInfo,
+    /// TableRepository) issues unquoted mixed-case identifiers and @@IDENTITY, which PostgreSQL does not support.
+    /// </summary>
+    public static DatabaseType[] PlatformDatabaseTypes =>
+        DatabaseTypes.Where(static t => t != DatabaseType.PostgreSql).ToArray();
+
+    /// <summary>
+    /// <see cref="PlatformDatabaseTypes"/> with both permutations of true/false, for signature (DatabaseType,bool)
+    /// </summary>
+    public static object[] PlatformDatabaseTypesWithBoolFlags =>
+        PlatformDatabaseTypes.SelectMany(static t => new object[] { new object[] { t, true }, new object[] { t, false } })
+            .ToArray();
+
+    /// <summary>
     /// <see cref="TestCaseSourceAttribute"/> for tests that should run on all configured DBMS
     /// with both permutations of true/false.  Matches exhaustively method signature (DatabaseType,bool)
     /// </summary>

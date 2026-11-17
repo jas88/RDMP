@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using SynthEHR;
@@ -28,11 +29,11 @@ namespace Rdmp.Core.Tests.QueryCaching;
 
 internal class QueryCachingCrossServerTests : TestsRequiringA
 {
-    [TestCase(DatabaseType.MicrosoftSQLServer, typeof(QueryCachingPatcher))]
-    [TestCase(DatabaseType.MySql, typeof(QueryCachingPatcher))]
-    [TestCase(DatabaseType.Oracle, typeof(QueryCachingPatcher))]
-    [TestCase(DatabaseType.PostgreSql, typeof(QueryCachingPatcher))]
-    [TestCase(DatabaseType.MicrosoftSQLServer, typeof(DataQualityEnginePatcher))]
+    private static IEnumerable<object[]> CreateQueryCacheCases =>
+        All.DatabaseTypes.Select(static t => new object[] { t, typeof(QueryCachingPatcher) })
+            .Append(new object[] { DatabaseType.MicrosoftSQLServer, typeof(DataQualityEnginePatcher) });
+
+    [TestCaseSource(nameof(CreateQueryCacheCases))]
     public void Create_QueryCache(DatabaseType dbType, Type patcherType)
     {
         var db = GetCleanedServer(dbType);
@@ -325,12 +326,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
     /// </summary>
     /// <param name="dbType"></param>
     /// <param name="createQueryCache"></param>
-    [TestCase(DatabaseType.Oracle, true)]
-    [TestCase(DatabaseType.MySql, true)]
-    [TestCase(DatabaseType.MicrosoftSQLServer, true)]
-    [TestCase(DatabaseType.Oracle, false)]
-    [TestCase(DatabaseType.MySql, false)]
-    [TestCase(DatabaseType.MicrosoftSQLServer, false)]
+    [TestCaseSource(typeof(All), nameof(All.DatabaseTypesWithBoolFlags))]
     public void Join_PatientIndexTable_OptionalCacheOnSameServer(DatabaseType dbType, bool createQueryCache)
     {
         /*
@@ -514,9 +510,15 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
          *
          */
 
+        // the cache can be any configured DBMS other than the two holding the data
+        var cacheTypes = All.DatabaseTypes
+            .Where(static t => t is not (DatabaseType.MySql or DatabaseType.MicrosoftSQLServer)).ToArray();
+        if (cacheTypes.Length == 0)
+            Assert.Inconclusive("Requires a third configured DBMS (Oracle or PostgreSql) to host the cache");
+
         var server1 = GetCleanedServer(DatabaseType.MySql);
         var server2 = GetCleanedServer(DatabaseType.MicrosoftSQLServer);
-        var server3 = GetCleanedServer(DatabaseType.Oracle);
+        var server3 = GetCleanedServer(cacheTypes[0]);
 
         var cache = CreateCache(server3);
 
@@ -572,10 +574,12 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
         //get the data database
         var db = GetCleanedServer(dbType);
 
-        //create the cache on the other server type (either Sql Server or Oracle) since  MySql can't do EXCEPT or UNION etc)
-        var dbCache =
-            GetCleanedServer(Enum.GetValues(typeof(DatabaseType)).Cast<DatabaseType>().First(t =>
-                t != dbType && t != DatabaseType.MySql));
+        //create the cache on another configured server type (not MySql, which can't do EXCEPT or UNION etc)
+        var cacheTypes = All.DatabaseTypes.Where(t => t != dbType && t != DatabaseType.MySql).ToArray();
+        if (cacheTypes.Length == 0)
+            Assert.Inconclusive($"Requires a second configured DBMS other than {dbType} and MySql to host the cache");
+
+        var dbCache = GetCleanedServer(cacheTypes[0]);
 
         var cache = CreateCache(dbCache);
 
