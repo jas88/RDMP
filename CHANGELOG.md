@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Negative numbers in date or time formats, which Excel cannot display, are loaded as null. The load used to fail with ArgumentException, or for a few formats such as `d-mmm` a meaningless date was loaded. A negative duration in elapsed minutes or seconds is loaded as displayed e.g. `-720:00`
   - Serial number 60, which Excel displays as the non-existent 29th of February 1900, is loaded as 1900-02-28. It was 1900-03-01, or `29-Feb` in a format without a year
   - The 1904 date system is applied to every date and time format in .xls and .xlsx workbooks. Some formats without a year (e.g. `d-mmm`) used the 1900 system
+- Bump FAnsiSql.Legacy from 3.7.0 to 3.8.0, which brings MySqlConnector 3.0.0 (from 2.6.2) and Microsoft.Data.SqlClient 7.1.2 (from 7.1.1). Its fixes change what RDMP does:
+  - PostgreSQL: a `DateTime` inserted into a `timestamp` column is stored as given whatever its `DateTimeKind` (anything but a UTC value used to fail), and bulk inserts such as those of RemoteTableAttacher write each value as the type of the destination column (e.g. a date loaded into a `varchar` column used to fail)
+  - MySQL: string columns created without a width are `text` instead of `varchar(4000)`, so a table can have more than 4 of them. This includes the `ItemValidatorXML` and `ValidatorXML` columns of a new DQE database on MySQL
+  - Columns are discovered in the order they are in the table (MySQL 8 could return them in alphabetical order)
+  - Oracle: Unicode string columns created without a width are `nvarchar2(2000)` instead of `nvarchar2(4000)`, and those of 2001 to 4000 characters `NCLOB` instead of `nvarchar2`; both used to fail with ORA-00910
 
 
 ## [9.0.1] - 2025-07-31
