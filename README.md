@@ -2,7 +2,7 @@
 
 [![Build status](https://github.com/jas88/RDMP/workflows/Tests/badge.svg)](https://github.com/jas88/RDMP/actions?query=workflow%3ATests) [![NuGet Badge](https://img.shields.io/nuget/v/Rdmp.Core)](https://www.nuget.org/profiles/jas88) [![codecov](https://codecov.io/gh/jas88/RDMP/graph/badge.svg)](https://codecov.io/gh/jas88/RDMP) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jas88_RDMP&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jas88_RDMP)
 - [Demo Video](https://www.youtube.com/watch?v=Fgi9-Sdup-Y)
-- [Releases](https://github.com/HicServices/RDMP/releases)
+- [Releases](https://github.com/jas88/RDMP/releases)
 - [Quickstart](Documentation/Quickstart.md)
 - [FAQ](Documentation/CodeTutorials/FAQ.md)
 - [User Manual](./Documentation/CodeTutorials/UserManual.md)
@@ -19,20 +19,20 @@ RDMP does not require your data be moved or transformed prior to processing and 
 
 ## Install
 
-Signed release binaries for the RDMP client and Command Line Interface (CLI) are in the available in the [GitHub releases section](https://github.com/HicServices/RDMP/releases).
+Release binaries for the RDMP client and Command Line Interface (CLI) are available in the [GitHub releases section](https://github.com/jas88/RDMP/releases).
 
 ### Windows Install Guide
 
-Download and unzip `rdmp-client.zip` from the [GitHub releases section](https://github.com/HicServices/RDMP/releases) and run `ResearchDataManagementPlatform.exe`.  This will take you to an installation/setup screen which will guide you through the rest of the initial setup process.
+Download and unzip `rdmp-client.zip` from the [GitHub releases section](https://github.com/jas88/RDMP/releases) and run `ResearchDataManagementPlatform.exe`.  This will take you to an installation/setup screen which will guide you through the rest of the initial setup process.
 
 ### Linux CLI Install Guide
 
-The following steps can be used to install the RDMP CLI and start an SqlServer docker container to install into. __Make sure to set the version (e.g. 7.0.14) to the latest and set a custom password if desired__.
+The following steps can be used to install the RDMP CLI and start an SqlServer docker container to install into. __Make sure to set the version (e.g. 9.0.2) to the latest and set a custom password if desired__.
 
 ```
-wget https://github.com/HicServices/RDMP/releases/download/v7.0.14/rdmp-cli-linux-x64.zip
+wget https://github.com/jas88/RDMP/releases/download/v9.0.2/rdmp-9.0.2-cli-linux-x64.zip
 
-unzip -d rdmp-cli ./rdmp-cli-linux-x64.zip
+unzip -d rdmp-cli ./rdmp-9.0.2-cli-linux-x64.zip
 
 sudo docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=<YourStrong@Passw0rd>" \
    -p 1433:1433 --name sql1 --hostname sql1 \

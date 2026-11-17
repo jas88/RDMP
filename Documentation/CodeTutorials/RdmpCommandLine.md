@@ -14,7 +14,7 @@
 
 Command line programs run in a terminal window (e.g. DOS).  In Windows these files usually have the extension `.exe` (e.g. `rdmp.exe`), in Linux these often have no extension (e.g. `rdmp`).
 
-The binaries (runnable files) for the RDMP command line are included in the [Releases](https://github.com/HicServices/RDMP/releases) section of GitHub.  Download and unzip the file that matches your operating system e.g. `rdmp-cli-win-x64.zip` for Windows or `rdmp-cli-linux-x64.zip` for linux.
+The binaries (runnable files) for the RDMP command line are included in the [Releases](https://github.com/jas88/RDMP/releases) section of GitHub.  Download and unzip the file that matches your operating system e.g. `rdmp-cli-win-x64.zip` for Windows or `rdmp-cli-linux-x64.zip` for linux.
 
 Unzip the package and edit `Databases.yaml` so that it points to your RDMP databases.  If you do not have any platform databases yet then you can run `./rdmp install "(localdb)\MSSQLLocalDB" TEST_ -e` (use your own server name and/or different prefix if desired).
 

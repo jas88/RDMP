@@ -102,7 +102,7 @@ Yes, read all about it in [CommandLine](./RdmpCommandLine.md)
 
 The [RDMP CLI](./RdmpCommandLine.md) runs natively under linux.
 
-Download the [RDMP CLI release binary for linux-x64](https://github.com/HicServices/RDMP/releases)
+Download the [RDMP CLI release binary for linux-x64](https://github.com/jas88/RDMP/releases)
 
 For example to create test databases run:
 
@@ -158,7 +158,7 @@ During application startup (following installing an update) you will be prompted
 
 ### Updating the CLI
 
-Download the [latest release binary](https://github.com/HicServices/RDMP/releases) (e.g. rdmp-cli-win-x64.zip) and unzip into a new empty folder (e.g. c:\temp\latest).  Locate your current CLI deployment folder (e.g. c:\rdmpcli\).
+Download the [latest release binary](https://github.com/jas88/RDMP/releases) (e.g. rdmp-cli-win-x64.zip) and unzip into a new empty folder (e.g. c:\temp\latest).  Locate your current CLI deployment folder (e.g. c:\rdmpcli\).
 
 Copy all files from the new release into your current CLI directory __EXCEPT__:
 

@@ -94,7 +94,7 @@ The first time you run `dotnet test` RDMP will create the testing databases list
 - The server exists and can be connected to
 - The Prefix listed contains 'TEST' (case insensitive).
 
-If this process fails or you need to manually recreate them then this can be done with the [RDMP command line](./RdmpCommandLine.md).  You can either run it from the repository or fetch the binary from [Github Releases](https://github.com/HicServices/RDMP/releases).
+If this process fails or you need to manually recreate them then this can be done with the [RDMP command line](./RdmpCommandLine.md).  You can either run it from the repository or fetch the binary from [Github Releases](https://github.com/jas88/RDMP/releases).
 
 ```
 cd ./Tools/rdmp/

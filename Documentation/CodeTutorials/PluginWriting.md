@@ -22,7 +22,7 @@
 
 <a name="binary"></a>
 # RDMP Binary and Documentation
-The Research Data Management Platform Binaries are available on [Releases section of Github](https://github.com/HicServices/RDMP/releases).  In order to use RDMP you will also need access to a Microsoft Sql Server (or Sql Express).  After completing the setup process the main UI will launch.
+The Research Data Management Platform Binaries are available on [Releases section of Github](https://github.com/jas88/RDMP/releases).  In order to use RDMP you will also need access to a Microsoft Sql Server (or Sql Express).  After completing the setup process the main UI will launch.
 
 From here you can access several resources that help understand RDMP classes / patterns etc.  
 
