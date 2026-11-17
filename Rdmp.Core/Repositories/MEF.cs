@@ -264,9 +264,8 @@ public static class MEF
 #if DEBUG
         catch (Exception ex)
         {
-            // Silent failure - fall back to reflection
-            if (ex.Message.Contains("CompiledTypeRegistry"))
-                Console.WriteLine($"MEF: Error loading CompiledTypeRegistry: {ex.Message}");
+            // Fall back to reflection.  A failure in GetAllTypes arrives wrapped in a TargetInvocationException.
+            Console.WriteLine($"MEF: Error loading CompiledTypeRegistry: {ex.GetBaseException().Message}");
         }
 #else
         catch (Exception)

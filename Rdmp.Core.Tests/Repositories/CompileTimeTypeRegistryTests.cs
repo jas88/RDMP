@@ -444,7 +444,7 @@ internal class CompileTimeTypeRegistryTests
     }
 
     // Stand ins for the generated CompiledTypeRegistry.  None of them is called Rdmp.Core.Repositories.CompiledTypeRegistry,
-    // so MEF never finds them in the loaded assemblies and uses them in place of reflection.
+    // so MEF's name lookup never finds them.  The tests pass them directly to MEF.TryLoadCompiledRegistry.
 
     private static class RegistryListingTypes
     {
