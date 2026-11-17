@@ -15,12 +15,13 @@ namespace Rdmp.Core.CohortCommitting;
 /// Decides whether a column of a given SQL data type can be part of a primary key on a given DBMS, so that a table which
 /// needs such a key (e.g. the cohort table created by <see cref="CreateNewCohortDatabaseWizard"/>) can be refused before
 /// anything is created.
-/// <para>Refuses (max) types, the large object, JSON and XML types of each DBMS and, on MySQL, string types too wide for
-/// the key length limit.</para>
+/// <para>Refuses (max) types, the large object, JSON and XML types of each DBMS and, on MySQL, string and binary types too
+/// wide for the key length limit.</para>
 /// <para>The FAnsi type translater reports whether a string type has a maximum width, but that does not say whether it can be
 /// in a key: PostgreSQL can key text, which FAnsi reports as unbounded, MySQL cannot key text, which FAnsi reports as
 /// 65,536 wide, and FAnsi reports MySQL enum and set as unbounded, though they can be keyed.  So the types which cannot be
-/// keyed are listed for each DBMS and the translater is only used for the declared width of a string type.</para>
+/// keyed are listed for each DBMS and the translater is only used for the declared width of a string type.  It has no
+/// width for binary types, so theirs is read from the type.</para>
 /// <para>Only MySQL has its key length limit checked, because it counts the declared width of every column in a key and so
 /// will not create a key which could be too long.  SQL Server creates a key whose variable width columns could exceed its
 /// 900 byte limit and only refuses the values which do, PostgreSQL only refuses values too long for an index, and an Oracle
@@ -72,7 +73,7 @@ internal static partial class PrimaryKeyDataTypes
                     or "mediumblob" or "longblob" or "long" or "json" =>
                 "MySQL can only index text and blob columns by a prefix, and json columns not at all, so cannot use them in a primary key",
 
-            DatabaseType.MySql => GetReasonTooWideForMySqlKey(sqlType, otherKeyColumnBytes),
+            DatabaseType.MySql => GetReasonTooWideForMySqlKey(name, sqlType, otherKeyColumnBytes),
 
             // "long" includes "long raw"
             DatabaseType.Oracle when name is "clob" or "nclob" or "blob" or "bfile" or "long" or "xmltype" =>
@@ -86,26 +87,41 @@ internal static partial class PrimaryKeyDataTypes
     }
 
     /// <summary>
-    /// Returns why a MySQL key containing a string column of type <paramref name="sqlType"/> could be longer than
-    /// <see cref="MySqlMaxKeyBytes"/>, or null if it cannot be (or the type is not a string type with a width)
+    /// Returns why a MySQL key containing a column of type <paramref name="sqlType"/> (whose name is
+    /// <paramref name="name"/>) could be longer than <see cref="MySqlMaxKeyBytes"/>, or null if it cannot be (or the type
+    /// is not a string or binary type with a width)
     /// </summary>
-    private static string GetReasonTooWideForMySqlKey(string sqlType, int otherKeyColumnBytes)
+    private static string GetReasonTooWideForMySqlKey(string name, string sqlType, int otherKeyColumnBytes)
     {
+        var room = Math.Max(0, MySqlMaxKeyBytes - otherKeyColumnBytes);
+        var besideOtherColumns = otherKeyColumnBytes > 0 ? $" beside the other {otherKeyColumnBytes} bytes of the key" : "";
+
+        // A binary type takes a byte for each of its declared width
+        if (name is "binary" or "varbinary")
+            return GetDeclaredWidth(sqlType) > room
+                ? $"MySQL limits a primary key to {MySqlMaxKeyBytes} bytes, which leaves room for at most varbinary({room}){besideOtherColumns}"
+                : null;
+
         var width = QuerySyntaxHelperFactory.Create(DatabaseType.MySql).TypeTranslater.GetLengthIfString(sqlType);
 
         // -1 is not a string type and int.MaxValue a string type FAnsi has no width for (e.g. enum and set, as the
         // unbounded types have been refused already)
-        if (width <= 0 || width == int.MaxValue)
+        if (width <= 0 || width == int.MaxValue || (long)width * MySqlMaxBytesPerCharacter <= room)
             return null;
-
-        if ((long)width * MySqlMaxBytesPerCharacter + otherKeyColumnBytes <= MySqlMaxKeyBytes)
-            return null;
-
-        var widest = Math.Max(0, MySqlMaxKeyBytes - otherKeyColumnBytes) / MySqlMaxBytesPerCharacter;
-        var besideOtherColumns = otherKeyColumnBytes > 0 ? $" beside the other {otherKeyColumnBytes} bytes of the key" : "";
 
         return
-            $"MySQL limits a primary key to {MySqlMaxKeyBytes} bytes and a character can take {MySqlMaxBytesPerCharacter} bytes (in utf8mb4, MySQL's default character set), which leaves room for at most varchar({widest}){besideOtherColumns}";
+            $"MySQL limits a primary key to {MySqlMaxKeyBytes} bytes and a character can take {MySqlMaxBytesPerCharacter} bytes (in utf8mb4, MySQL's default character set), which leaves room for at most varchar({room / MySqlMaxBytesPerCharacter}){besideOtherColumns}";
+    }
+
+    /// <summary>
+    /// Returns the width declared in brackets in <paramref name="sqlType"/> e.g. 16 for "varbinary(16)", or -1 if it has
+    /// none
+    /// </summary>
+    private static long GetDeclaredWidth(string sqlType)
+    {
+        var match = DeclaredWidthRegex().Match(sqlType);
+
+        return match.Success && long.TryParse(match.Groups[1].ValueSpan, out var width) ? width : -1;
     }
 
     /// <summary>
@@ -122,4 +138,7 @@ internal static partial class PrimaryKeyDataTypes
 
     [GeneratedRegex(@"\(\s*max\s*\)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex MaxWidthRegex();
+
+    [GeneratedRegex(@"\(\s*(\d+)\s*\)", RegexOptions.CultureInvariant)]
+    private static partial Regex DeclaredWidthRegex();
 }

@@ -118,6 +118,31 @@ public class PrimaryKeyDataTypesTests : UnitTests
                 .And.Contain($"at most varchar({(3072 - otherKeyColumnBytes) / 4})"));
     }
 
+    /// <summary>
+    /// MySQL counts a byte for each of the declared width of a binary column in a key.  It does not allow binary columns
+    /// wider than 255 bytes, so only varbinary can be too wide in practice, but binary is counted the same way
+    /// </summary>
+    [TestCase("varbinary(3068)", 4, true)]
+    [TestCase("varbinary(3069)", 4, false)]
+    [TestCase("VARBINARY(3072)", 0, true)]
+    [TestCase("varbinary( 3073 )", 0, false)]
+    [TestCase("varbinary(65535)", 4, false)]
+    [TestCase("binary(3068)", 4, true)]
+    [TestCase("binary(3069)", 4, false)]
+    [TestCase("binary(255)", 4, true)]
+    [TestCase("binary", 4, true)]
+    public void GetReasonCannotBePrimaryKey_MySqlKeyLengthLimit_Binary(string sqlType, int otherKeyColumnBytes,
+        bool expectCanBeKeyed)
+    {
+        var reason = PrimaryKeyDataTypes.GetReasonCannotBePrimaryKey(DatabaseType.MySql, sqlType, otherKeyColumnBytes);
+
+        if (expectCanBeKeyed)
+            Assert.That(reason, Is.Null);
+        else
+            Assert.That(reason, Does.Contain("3072 bytes")
+                .And.Contain($"at most varbinary({3072 - otherKeyColumnBytes})"));
+    }
+
     [Test]
     public void GetReasonCannotBePrimaryKey_MySqlKeyLengthLimit_CountsTheOtherKeyColumns() =>
         Assert.That(PrimaryKeyDataTypes.GetReasonCannotBePrimaryKey(DatabaseType.MySql, "varchar(4000)", 4),
@@ -152,6 +177,7 @@ public class PrimaryKeyDataTypesTests : UnitTests
     [TestCase(DatabaseType.MySql, "text")]
     [TestCase(DatabaseType.MySql, "varchar(4000)")]
     [TestCase(DatabaseType.MySql, "varchar(768)")]
+    [TestCase(DatabaseType.MySql, "varbinary(3069)")]
     [TestCase(DatabaseType.Oracle, "CLOB")]
     [TestCase(DatabaseType.PostgreSql, "json")]
     public void CreateDatabase_IdentifierCannotBeKeyed_RefusedBeforeConnecting(DatabaseType databaseType,
@@ -166,7 +192,8 @@ public class PrimaryKeyDataTypesTests : UnitTests
         var ex = Assert.Throws<Exception>(() =>
             wizard.CreateDatabase(new PrivateIdentifierPrototype("chi", sqlType), ThrowImmediatelyCheckNotifier.Quiet));
 
-        // the cohort definition id (an int) is the rest of the key, which is why varchar(768) is too wide on MySQL
+        // the cohort definition id (an int) is the rest of the key, which is why varchar(768) and varbinary(3069) are too
+        // wide on MySQL
         var reason = PrimaryKeyDataTypes.GetReasonCannotBePrimaryKey(databaseType, sqlType, 4);
 
         Assert.That(ex.Message, Is.EqualTo(
