@@ -14,7 +14,6 @@ using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Settings;
 using Rdmp.UI;
-using Rdmp.UI.SimpleDialogs;
 using Rdmp.UI.Theme;
 
 namespace ResearchDataManagementPlatform.WindowManagement.TopBar;
@@ -231,10 +230,9 @@ public partial class RDMPTaskBarUI : UserControl
     {
         var xml = _manager.MainForm.GetCurrentLayoutXml();
 
-        var dialog = new TypeTextOrCancelDialog("Layout Name", "Name", 100, null, false);
-        if (dialog.ShowDialog() == DialogResult.OK)
+        if (_manager.ActivateItems.TypeText("Layout Name", "Name", 100, null, out var name, false))
         {
-            var layout = new WindowLayout(_manager.RepositoryLocator.CatalogueRepository, dialog.ResultText, xml);
+            var layout = new WindowLayout(_manager.RepositoryLocator.CatalogueRepository, name, xml);
 
             var cmd = new ExecuteCommandActivate(_manager.ActivateItems, layout);
             cmd.Execute();

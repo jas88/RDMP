@@ -302,7 +302,7 @@ There are a number of variables for use within this override path:
         }
     }
 
-    private void CopyIfNeeded(string src, string dest, IDataLoadEventListener job)
+    internal void CopyIfNeeded(string src, string dest, IDataLoadEventListener job)
     {
         if (FilesSimilar(src, dest, job))
         {
@@ -313,7 +313,7 @@ There are a number of variables for use within this override path:
         {
             if (File.Exists(dest))
                 job.OnNotify(this,
-                    new NotifyEventArgs(ProgressEventType.Warning, "Overwriting existing database file '{dest}'"));
+                    new NotifyEventArgs(ProgressEventType.Warning, $"Overwriting existing database file '{dest}'"));
             File.Copy(src, dest, true);
             job.OnNotify(this, new NotifyEventArgs(ProgressEventType.Information, $"Copied {src} to {dest}"));
         }
