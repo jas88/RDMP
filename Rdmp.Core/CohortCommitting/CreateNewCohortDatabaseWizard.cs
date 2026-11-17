@@ -39,6 +39,12 @@ public class CreateNewCohortDatabaseWizard
     private const string ReleaseIdentifierFieldName = "ReleaseId";
     private const string DefinitionTableForeignKeyField = "cohortDefinition_id";
 
+    /// <summary>
+    /// The bytes taken by <see cref="DefinitionTableForeignKeyField"/> (an int), which is part of the primary key of the
+    /// cohort table along with the private identifier
+    /// </summary>
+    private const int DefinitionTableForeignKeyFieldBytes = 4;
+
 
     public CreateNewCohortDatabaseWizard(DiscoveredDatabase targetDatabase, ICatalogueRepository catalogueRepository,
         IDataExportRepository dataExportRepository, bool allowNullReleaseIdentifiers)
@@ -79,12 +85,14 @@ public class CreateNewCohortDatabaseWizard
     public ExternalCohortTable CreateDatabase(PrivateIdentifierPrototype privateIdentifierPrototype,
         ICheckNotifier notifier)
     {
-        var tt = _targetDatabase.Server.GetQuerySyntaxHelper().TypeTranslater;
+        // The private identifier is part of the primary key of the cohort table, so refuse a type which cannot be part of a
+        // primary key before anything is created (otherwise the database and its CohortDefinition table are left behind)
+        var reason = PrimaryKeyDataTypes.GetReasonCannotBePrimaryKey(_targetDatabase.Server.DatabaseType,
+            privateIdentifierPrototype.DataType, DefinitionTableForeignKeyFieldBytes);
 
-
-        if (tt.GetLengthIfString(privateIdentifierPrototype.DataType) == int.MaxValue)
+        if (reason != null)
             throw new Exception(
-                "Private identifier datatype cannot be varchar(max) style as this prevents Primary Key creation on the table");
+                $"Private identifier datatype '{privateIdentifierPrototype.DataType}' cannot be used for a cohort store, because the private identifier is part of the primary key of the cohort table and {reason}. Choose a type which can be part of a primary key and is no wider than the identifiers need, e.g. varchar(10)");
 
         if (!_targetDatabase.Exists())
         {
