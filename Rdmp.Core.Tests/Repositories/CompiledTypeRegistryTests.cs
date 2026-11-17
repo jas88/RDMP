@@ -96,6 +96,19 @@ public class CompiledTypeRegistryTests
         });
     }
 
+    /// <summary>
+    /// MEF lists RDMP's Types (in <see cref="MEF.GetTypes{T}"/>, <see cref="MEF.GetGenericTypes"/> and
+    /// <see cref="MEF.GetAllTypes"/>) in the same order whether they come from the registry or reflection
+    /// </summary>
+    [Test]
+    public void Types_AreListedInTheSameOrderAsWithReflection()
+    {
+        var registered = _registry.Types.ToHashSet();
+        var withReflection = _reflection.Types.Where(t => IsRdmp(t) && (!IsSynthesized(t) || registered.Contains(t)));
+
+        Assert.That(_registry.Types, Is.EqualTo(withReflection));
+    }
+
     [Test]
     public void Registrations_IncludeFileLocalTypes() =>
         Assert.That(CompiledTypeRegistry.GetRegisteredTypes(typeof(CompiledTypeRegistryTests).Assembly),

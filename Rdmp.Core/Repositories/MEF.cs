@@ -34,7 +34,8 @@ namespace Rdmp.Core.Repositories;
 /// <para>Types are found by full or short name, ignoring case.  When several Types have the same name one whose full name
 /// starts with Rdmp.Core wins (the last listed if several do), otherwise the first listed wins.  Types are listed in
 /// assembly load order and then metadata order, the order reflection lists them in, so the registry resolves names
-/// exactly as reflection did.  Types of other assemblies (the .NET runtime, NuGet packages) are found by their exact full
+/// exactly as reflection did, and <see cref="GetTypes{T}"/>, <see cref="GetGenericTypes"/> and <see cref="GetAllTypes"/>
+/// return Types in that order.  Types of other assemblies (the .NET runtime, NuGet packages) are found by their exact full
 /// name, as Type.GetType would find them, but not by short name, and are not listed by <see cref="GetTypes{T}"/>,
 /// <see cref="GetGenericTypes"/> or <see cref="GetAllTypes"/> (unless MEF has fallen back on reflection).</para>
 ///
@@ -112,11 +113,17 @@ public static class MEF
     /// </summary>
     internal sealed class TypeIndex
     {
-        public TypeIndex(FrozenDictionary<string, Type> typesByName, bool fromCompiledTypeRegistry,
-            IReadOnlySet<Assembly> assemblies)
+        /// <param name="types">The Types to index, in assembly load order and then metadata order</param>
+        /// <param name="fromCompiledTypeRegistry">True if the Types came from the registry, false if from reflection</param>
+        /// <param name="assemblies">The assemblies whose Types are listed</param>
+        public TypeIndex(IReadOnlyList<Type> types, bool fromCompiledTypeRegistry, IReadOnlySet<Assembly> assemblies)
         {
-            TypesByName = typesByName;
-            Types = typesByName.Values.Distinct().ToArray();
+            TypesByName = IndexByName(types);
+
+            // Each Type found by at least one name, once, in the order listed
+            var found = new HashSet<Type>(TypesByName.Values);
+            Types = types.Where(t => found.Remove(t)).ToArray();
+
             FromCompiledTypeRegistry = fromCompiledTypeRegistry;
             Assemblies = assemblies;
         }
@@ -124,7 +131,10 @@ public static class MEF
         public FrozenDictionary<string, Type> TypesByName { get; }
 
         /// <summary>
-        /// Every Type which can be found by at least one name
+        /// Every Type which can be found by at least one name, in the order listed (assembly load order and then metadata
+        /// order), which is the order <see cref="GetTypes{T}"/>, <see cref="GetGenericTypes"/> and <see cref="GetAllTypes"/>
+        /// list them in.  So the order does not depend on which other Types are loaded, and is the same for RDMP's Types
+        /// whether they come from the registry or reflection.
         /// </summary>
         public Type[] Types { get; }
 
@@ -337,7 +347,7 @@ public static class MEF
                 problems.Add(new KeyValuePair<string, Exception>(registration.Assembly.FullName, e));
             }
 
-        return problems.Count > 0 ? null : new TypeIndex(IndexByName(types), true, registered);
+        return problems.Count > 0 ? null : new TypeIndex(types, true, registered);
     }
 
     /// <summary>
@@ -360,7 +370,7 @@ public static class MEF
             types.AddRange(AssemblyTypeLoader.GetTypesSafely(assembly, failures));
         }
 
-        return new TypeIndex(IndexByName(types), false, indexed);
+        return new TypeIndex(types, false, indexed);
     }
 
     /// <summary>

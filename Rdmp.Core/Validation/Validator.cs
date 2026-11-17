@@ -1,4 +1,4 @@
-// Copyright (c) The University of Dundee 2018-2019
+// Copyright (c) The University of Dundee 2018-2026
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -179,9 +179,6 @@ public class Validator
         public readonly object Lock = new();
     }
 
-    private static AssemblyLoadContext CurrentContext =>
-        AssemblyLoadContext.CurrentContextualReflectionContext ?? AssemblyLoadContext.Default;
-
     private static ContextCache GetCurrentCache()
     {
         var context = AssemblyLoadContext.CurrentContextualReflectionContext;
@@ -191,22 +188,6 @@ public class Validator
             return _defaultContextCache;
         }
         return _contextCaches.GetOrCreateValue(context);
-    }
-
-    /// <summary>
-    /// Gets assemblies accessible from the current context (current + default)
-    /// </summary>
-    private static IEnumerable<System.Reflection.Assembly> GetAccessibleAssemblies()
-    {
-        var current = CurrentContext;
-        var defaultCtx = AssemblyLoadContext.Default;
-
-        return AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a =>
-            {
-                var ctx = AssemblyLoadContext.GetLoadContext(a);
-                return ctx == current || ctx == defaultCtx;
-            });
     }
 
     /// <summary>
@@ -250,23 +231,22 @@ public class Validator
         return sb.ToString();
     }
 
-    private static List<Type> RefreshExtraTypes()
-    {
-        // Only scan assemblies accessible from the current context.  Types which do not load are skipped, as are
-        // assemblies whose Types cannot be listed at all (without recording them anywhere).
-        return GetAccessibleAssemblies().SelectMany(static a => AssemblyTypeLoader.GetTypesSafely(a)).Where(
-            type =>
-                type != null &&
-                (typeof(IConstraint).IsAssignableFrom(type) ||
-                 typeof(PredictionRule).IsAssignableFrom(type))
-                &&
-                !type.IsAbstract
-                &&
-                !type.IsInterface
-                &&
-                type.IsClass
-        ).DistinctBy(t => t.FullName).ToList();
-    }
+    /// <summary>
+    /// Returns the classes which can appear in the XML of a Validator (constraints and prediction rules), which its
+    /// XmlSerializer must be told about.  <see cref="MEF"/> finds them (in the compiled type registry) for the current
+    /// context, in the order it lists Types: assembly load order, then metadata order.
+    /// </summary>
+    private static List<Type> RefreshExtraTypes() =>
+        MEF.GetAllTypes().Where(static type =>
+            (typeof(IConstraint).IsAssignableFrom(type) ||
+             typeof(PredictionRule).IsAssignableFrom(type))
+            &&
+            !type.IsAbstract
+            &&
+            !type.IsInterface
+            &&
+            type.IsClass
+        ).DistinctBy(static t => t.FullName).ToList();
 
     public static List<Type> GetExtraTypes()
     {
