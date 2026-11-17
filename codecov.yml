@@ -12,9 +12,8 @@ codecov:
 comment:
   after_n_builds: 3
 
-# Not product code: third party source built from a submodule, and the test projects themselves
+# Not product code: the test projects themselves
 ignore:
-  - "externals"
   - "Rdmp.Core.Tests"
   - "Rdmp.UI.Tests"
   - "RdmpDicom/Rdmp.Dicom.Tests"

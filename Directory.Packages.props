@@ -18,15 +18,6 @@
     <!-- Used directly; previously only available transitively via HIC.SynthEHR -->
     <PackageVersion Include="CsvHelper" Version="33.0.1" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-    <!-- Dependencies of NPOI, built from source in externals/ (see externals/npoi submodule) -->
-    <PackageVersion Include="BouncyCastle.Cryptography" Version="2.7.0" />
-    <PackageVersion Include="Enums.NET" Version="5.0.0" />
-    <PackageVersion Include="ExtendedNumerics.BigDecimal" Version="2025.1005.0.264" />
-    <PackageVersion Include="MathNet.Numerics.Signed" Version="5.0.0" />
-    <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="4.0.1" />
-    <PackageVersion Include="SharpZipLib" Version="1.4.2" />
-    <PackageVersion Include="SkiaSharp" Version="3.119.2" />
-    <PackageVersion Include="ZString" Version="2.6.0" />
     <PackageVersion Include="NLog" Version="6.2.2" />
     <PackageVersion Include="Spectre.Console" Version="0.57.2" />
     <PackageVersion Include="SSH.NET" Version="2026.0.1" />
@@ -47,7 +38,5 @@
     <PackageVersion Include="DicomTypeTranslation" Version="5.0.1" />
     <PackageVersion Include="fo-dicom" Version="5.2.6" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="11.0.0" />
-    <!-- Pin transitive dependency to fix GHSA-37gx-xxp4-5rgx and later advisories (GHSA-23rf-6693-g89p etc) -->
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="11.0.0" />
   </ItemGroup>
 </Project>

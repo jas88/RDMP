@@ -367,10 +367,10 @@ internal class DocumentationCrossExaminationTest
     {
         _slndir = slndir;
 
-        // Skip vendored third party content (e.g. the Apache-2.0 NPOI submodule under externals/), build output and
+        // Skip vendored third party content (the build-standards submodule), build output and
         // nested git checkouts (e.g. worktrees under .claude/worktrees); RDMP documentation rules such as Glossary
         // linking do not apply there, and links computed for files outside this checkout would be wrong
-        _mdFiles = RepositoryLayout.EnumerateFiles(slndir, "*.md", true)
+        _mdFiles = RepositoryLayout.EnumerateFiles(slndir, "*.md")
             .Select(static f => f.FullName)
             .ToArray();
     }

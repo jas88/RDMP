@@ -169,23 +169,13 @@ public static class MEF
                 var compiledRegistryType = assembly.GetType("Rdmp.Core.Repositories.CompiledTypeRegistry");
                 if (compiledRegistryType != null)
                 {
-                    var getTypeMethod = compiledRegistryType.GetMethod("GetAllTypes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                    if (getTypeMethod != null)
+                    var frozen = TryLoadCompiledRegistry(compiledRegistryType);
+                    if (frozen != null)
                     {
-                        var compiledTypes = getTypeMethod.Invoke(null, null) as IEnumerable<KeyValuePair<string, Type>>;
-                        if (compiledTypes != null)
-                        {
-                            // Use FrozenDictionary from CompiledTypeRegistry for optimal lookup performance
-                            var frozen = compiledTypes.ToFrozenDictionary(
-                                kvp => kvp.Key,
-                                kvp => kvp.Value,
-                                StringComparer.OrdinalIgnoreCase);
-
 #if DEBUG
-                            Console.WriteLine($"MEF: Using CompiledTypeRegistry with {frozen.Count} types (loaded in {sw.ElapsedMilliseconds}ms)");
+                        Console.WriteLine($"MEF: Using CompiledTypeRegistry with {frozen.Count} types (loaded in {sw.ElapsedMilliseconds}ms)");
 #endif
-                            return frozen; // Early return - use compile-time registry
-                        }
+                        return frozen; // Early return - use compile-time registry
                     }
                 }
             }
@@ -221,7 +211,7 @@ public static class MEF
             }
 
             assembliesProcessed++;
-            foreach (var type in GetTypesSafely(assembly))
+            foreach (var type in AssemblyTypeLoader.GetTypesSafely(assembly, badAssemblies))
             {
                 foreach (var alias in new[]
                          {
@@ -247,6 +237,47 @@ public static class MEF
     }
 
     /// <summary>
+    /// Returns the Types listed by the public static GetAllTypes method of <paramref name="registryType"/> (a compile
+    /// time generated CompiledTypeRegistry), keyed case insensitively by name.  Returns null if there is no such
+    /// method, it does not return name/Type pairs or it fails, in which case <see cref="PopulatePrimary"/> carries on
+    /// looking and eventually falls back on reflection.
+    /// </summary>
+    /// <param name="registryType">A Type called CompiledTypeRegistry found in one of the loaded assemblies</param>
+    internal static IReadOnlyDictionary<string, Type> TryLoadCompiledRegistry(Type registryType)
+    {
+        try
+        {
+            var getTypeMethod = registryType.GetMethod("GetAllTypes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (getTypeMethod != null)
+            {
+                var compiledTypes = getTypeMethod.Invoke(null, null) as IEnumerable<KeyValuePair<string, Type>>;
+                if (compiledTypes != null)
+                {
+                    // Use FrozenDictionary from CompiledTypeRegistry for optimal lookup performance
+                    return compiledTypes.ToFrozenDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value,
+                        StringComparer.OrdinalIgnoreCase);
+                }
+            }
+        }
+#if DEBUG
+        catch (Exception ex)
+        {
+            // Fall back to reflection.  A failure in GetAllTypes arrives wrapped in a TargetInvocationException.
+            Console.WriteLine($"MEF: Error loading CompiledTypeRegistry: {ex.GetBaseException().Message}");
+        }
+#else
+        catch (Exception)
+        {
+            // Silent failure - fall back to reflection
+        }
+#endif
+
+        return null;
+    }
+
+    /// <summary>
     /// Add types from a runtime-loaded assembly to the specified context cache
     /// </summary>
     private static void AddAssemblyToCache(System.Reflection.Assembly assembly, ContextCache cache)
@@ -262,7 +293,7 @@ public static class MEF
         if (IsExcludedFromTypeLookup(assembly))
             return;
 
-        foreach (var type in GetTypesSafely(assembly))
+        foreach (var type in AssemblyTypeLoader.GetTypesSafely(assembly, badAssemblies))
         {
             // Only add if not in primary dictionary
             var primaryDict = _primaryTypes?.Value;
@@ -308,32 +339,6 @@ public static class MEF
         var off = full.LastIndexOf(".", StringComparison.Ordinal) + 1;
         return off == 0 ? full : full[off..];
     }
-
-    /// <summary>
-    /// Gets types from an assembly safely, handling ReflectionTypeLoadException to preserve
-    /// partially loaded types rather than discarding everything.
-    /// </summary>
-    private static IEnumerable<Type> GetTypesSafely(System.Reflection.Assembly assembly)
-    {
-        try
-        {
-            return assembly.GetTypes();
-        }
-        catch (System.Reflection.ReflectionTypeLoadException ex)
-        {
-            // Return the types that did load successfully (filtering out nulls)
-            return ex.Types.Where(t => t != null);
-        }
-        catch (Exception e)
-        {
-            lock (badAssemblies)
-            {
-                badAssemblies.TryAdd(assembly.FullName, e);
-            }
-            return Array.Empty<Type>();
-        }
-    }
-
 
     /// <summary>
     /// Looks up the given Type in all loaded assemblies (during <see cref="Startup.Startup"/>).  Returns null
