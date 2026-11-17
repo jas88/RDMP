@@ -27,6 +27,13 @@ public static class UserSettings
                                                           throw new NotImplementedException(
                                                               "Isolated Storage does not work in this environment...");
 
+    /// <summary>
+    /// Settings which every RDMP program the user runs shares, unlike <see cref="AppSettings"/>
+    /// </summary>
+    private static readonly SharedUserSettings SharedSettings = SharedUserSettings.ForCurrentUser();
+
+    private const string LicenseAcceptedKey = "LicenseAccepted";
+
 
     public static bool UseLocalFileSystem
     {
@@ -50,13 +57,30 @@ public static class UserSettings
     }
 
     /// <summary>
-    /// True if the user has accepted the open source license agreements for RDMP and
-    /// dependencies used in the software (i.e. MIT and GNU licenses).
+    /// The hash (see <see cref="Rdmp.Core.ReusableLibraryCode.Licenses.License.GetHashOfLicense"/>) of the third party licenses
+    /// (LIBRARYLICENSES) which the user last accepted along with the license of RDMP, or null if they have not accepted them.  Unlike
+    /// the other settings, which each RDMP program keeps separately, this is stored in a folder of the user which every RDMP program
+    /// shares, so accepting the licenses in the Windows client or the rdmp command line counts for both.
     /// </summary>
     public static string LicenseAccepted
     {
-        get => AppSettings.GetValueOrDefault("LicenseAccepted", null);
-        set => AppSettings.AddOrUpdateValue("LicenseAccepted", value);
+        get => SharedSettings.Get(LicenseAcceptedKey) ?? AppSettings.GetValueOrDefault(LicenseAcceptedKey, null);
+        set
+        {
+            try
+            {
+                SharedSettings.Set(LicenseAcceptedKey, value);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // Keep it in this program's own settings instead
+                AppSettings.AddOrUpdateValue(LicenseAcceptedKey, value);
+                return;
+            }
+
+            // Forget any value which earlier versions kept in this program's own settings
+            AppSettings.Remove(LicenseAcceptedKey);
+        }
     }
 
     /// <summary>

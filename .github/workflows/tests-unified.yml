@@ -221,7 +221,7 @@ jobs:
 
       - name: Initialise RDMP (Database)
         run: |
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" "(localdb)\MSSQLLocalDB" TEST_ -e
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --accept-licenses --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" "(localdb)\MSSQLLocalDB" TEST_ -e
 
       - name: Run integration test scripts
         timeout-minutes: 10
@@ -233,7 +233,7 @@ jobs:
             echo "  - createnewexternaldatabaseserver DQE \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_dqe\""
             echo "  - createnewexternaldatabaseserver CohortIdentificationQueryCachingServer_ID \"DatabaseType:MySQL:Server=127.0.0.1;Uid=root;Pwd=YourStrong!Passw0rd;Database=rdmp_cache\""
           } > /tmp/db.yaml
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/db.yaml --dir ~/rdmp/rdmp-yaml/
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- --accept-licenses -f /tmp/db.yaml --dir ~/rdmp/rdmp-yaml/
 
           # Create combined YAML with external database setup first
           {
@@ -246,7 +246,7 @@ jobs:
           } > /tmp/combined-tests.yaml
 
           # Run all commands in a single invocation
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- -f /tmp/combined-tests.yaml
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- --accept-licenses -f /tmp/combined-tests.yaml
 
       - name: Copy TestDatabases.txt to UI test output
         shell: bash
@@ -443,7 +443,7 @@ jobs:
 
       - name: Initialise RDMP
         run: |
-          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" -u SA -p "$MSSQL_SA_PASSWORD" localhost TEST_ -e
+          dotnet run -c Release --no-build --project Tools/rdmp/rdmp.csproj -- install --accept-licenses --createdatabasetimeout 180 --collation "Latin1_General_CS_AI" -u SA -p "$MSSQL_SA_PASSWORD" localhost TEST_ -e
 
       # Only S3BucketReleaseDestinationTests use this. MinIO no longer publishes
       # community binaries (dl.min.io returns 410) or images, so use Bitnami's

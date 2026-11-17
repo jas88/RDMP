@@ -82,7 +82,8 @@ public partial class RDMPMainForm : RDMPForm
         WindowState = FormWindowState.Maximized;
         CloseOnEscape = false;
 
-        if (UserSettings.LicenseAccepted != new WindowManagement.Licenses.License("LIBRARYLICENSES").GetHashOfLicense())
+        if (UserSettings.LicenseAccepted != new Rdmp.Core.ReusableLibraryCode.Licenses.License(
+                Rdmp.Core.ReusableLibraryCode.Licenses.License.ThirdPartyLicenses).GetHashOfLicense())
             new LicenseUI().ShowDialog();
     }
 

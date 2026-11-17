@@ -59,10 +59,25 @@ internal class Program
         logger.Info($"Dotnet Version:{Environment.Version}");
         logger.Info($"RDMP Version:{typeof(Catalogue).Assembly.GetName().Version}");
 
+        // Nothing runs until the user has accepted the licenses, except asking for help
+        if (!IsHelpRequest(args) && !LicenseAcceptance.ForConsole().EnsureAccepted(args,
+                Environment.GetEnvironmentVariable(LicenseAcceptance.AcceptEnvironmentVariable)))
+        {
+            logger.Info($"Exiting with code {LicenseAcceptance.NotAcceptedExitCode}");
+            return LicenseAcceptance.NotAcceptedExitCode;
+        }
+
         Startup.Startup.PreStartup();
 
         return HandleArguments(args, logger);
     }
+
+    /// <summary>
+    /// True if the arguments only ask for help or the version, e.g. --help or help dle
+    /// </summary>
+    private static bool IsHelpRequest(string[] args) =>
+        HasHelpArguments(args) ||
+        (args.Length > 0 && args[0].Equals("help", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Disables all log targets that contain the word 'Console'.  This prevents logging output

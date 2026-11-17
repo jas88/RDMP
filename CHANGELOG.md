@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The command line releases (the win-x64 and linux-x64 archives and the Docker image) include RDMP's licence (LICENSE) and the third-party licences (LIBRARYLICENSES) next to the rdmp executable
 - The NuGet packages are published as `Rdmp.Core`, `Rdmp.UI` and `Rdmp.Tests.Common`, replacing HIC.RDMP.Plugin, HIC.RDMP.Plugin.UI and HIC.RDMP.Plugin.Test
 - The command line Docker image is published as `ghcr.io/jas88/rdmpcli`, replacing `ghcr.io/hicservices/rdmpcli`
+- The rdmp command line asks you to accept RDMP's licence (LICENSE) and the third-party licences (LIBRARYLICENSES) before it runs, as the Windows client does, and again when they change. Accepting them in either counts for both. Scripts and containers can accept them for a single run with `--accept-licenses` or by setting `RDMP_ACCEPT_LICENSES=1` (the Docker image does not set it); without either, a run with redirected input that has not accepted them stops with exit code 8 instead of waiting for an answer
 
 
 ## [9.0.1] - 2025-07-31

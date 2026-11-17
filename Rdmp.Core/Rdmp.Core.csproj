@@ -356,6 +356,11 @@
 		</EmbeddedResource>
 	</ItemGroup>
 	<ItemGroup>
+		<!-- The licenses that the Windows client and the rdmp command line ask users to accept (see ReusableLibraryCode\Licenses\License.cs) -->
+		<EmbeddedResource Include="..\LICENSE" LogicalName="Rdmp.Core.Licenses.LICENSE" Visible="false" />
+		<EmbeddedResource Include="..\LIBRARYLICENSES" LogicalName="Rdmp.Core.Licenses.LIBRARYLICENSES" Visible="false" />
+	</ItemGroup>
+	<ItemGroup>
 		<Folder Include="Resources\" />
 	</ItemGroup>
 	<ItemGroup>

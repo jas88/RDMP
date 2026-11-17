@@ -7,6 +7,7 @@
 using System;
 using System.Diagnostics;
 using System.Windows.Forms;
+using Rdmp.Core.ReusableLibraryCode.Licenses;
 using Rdmp.Core.ReusableLibraryCode.Settings;
 using Rdmp.UI.SimpleDialogs;
 
@@ -25,8 +26,8 @@ public partial class LicenseUI : Form
 
         try
         {
-            var main = new License("LICENSE");
-            _thirdParth = new License("LIBRARYLICENSES");
+            var main = new License(License.RdmpLicense);
+            _thirdParth = new License(License.ThirdPartyLicenses);
 
             rtLicense.Text = main.GetLicenseText();
             rtLicense.KeyDown += (s, e) =>

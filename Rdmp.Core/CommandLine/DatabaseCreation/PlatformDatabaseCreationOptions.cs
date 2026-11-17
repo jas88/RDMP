@@ -78,6 +78,13 @@ public class PlatformDatabaseCreationOptions
         HelpText = "Timeout in seconds for CREATE DATABASE SQL commands.  Defaults to 30")]
     public int CreateDatabaseTimeout { get; set; } = 30;
 
+    /// <summary>
+    /// Accepts the licenses for this run of the rdmp command line, which checks for the option (see <see cref="LicenseAcceptance"/>)
+    /// before it parses its arguments
+    /// </summary>
+    [Option(LicenseAcceptance.AcceptOptionName, Required = false, HelpText = LicenseAcceptance.AcceptOptionHelpText)]
+    public bool AcceptLicenses { get; set; }
+
     [Option(Required = false,
         HelpText =
             "Optional connection string keywords to use e.g. \"Key1=Value1; Key2=Value2\".  When using this option you must manually specify IntegratedSecurity if required.")]
