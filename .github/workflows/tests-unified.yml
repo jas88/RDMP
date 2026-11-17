@@ -367,7 +367,7 @@ jobs:
           # Poll a command until it succeeds; fail the step if it never does
           wait_for() {
             local name=$1; shift
-            for i in {1..60}; do
+            for _ in {1..60}; do
               if "$@" >/dev/null 2>&1; then echo "$name is ready"; return 0; fi
               sleep 2
             done
