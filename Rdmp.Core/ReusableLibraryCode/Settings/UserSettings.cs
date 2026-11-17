@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using FAnsi.Discovery;
 using Rdmp.Core.ReusableLibraryCode.Checks;
@@ -73,7 +74,8 @@ public static class UserSettings
     public static string LicenseAccepted
     {
         get => ChooseLicenseAccepted(SharedSettings.Get(LicenseAcceptedKey),
-            AppSettings.GetValueOrDefault(LicenseAcceptedKey, null), CurrentLicenseHash.Value);
+            static () => ReadOwnSetting(static () => AppSettings.GetValueOrDefault(LicenseAcceptedKey, null)),
+            CurrentLicenseHash.Value);
         set => RecordLicenseAccepted(value, static hash => SharedSettings.Set(LicenseAcceptedKey, hash),
             static hash => AppSettings.AddOrUpdateValue(LicenseAcceptedKey, hash));
     }
@@ -82,13 +84,44 @@ public static class UserSettings
     /// Returns the hash of the licenses which the user accepted, from what the shared settings and this program's own settings recorded
     /// </summary>
     /// <param name="shared">The hash recorded in the shared settings, or null</param>
-    /// <param name="own">The hash recorded in this program's own settings, or null.  It is only recorded there when the shared settings
-    /// could not be written, so it can be newer than the shared one</param>
+    /// <param name="readOwn">Reads the hash recorded in this program's own settings, or null.  It is only recorded there when the shared
+    /// settings could not be written, so it can be newer than the shared one.  It is not read if the shared settings have the current hash</param>
     /// <param name="currentHash">The hash of the licenses which this version of RDMP includes</param>
     /// <returns><paramref name="currentHash"/> if either recorded it, otherwise the hash which the shared settings or else this program's
     /// own settings recorded</returns>
-    internal static string ChooseLicenseAccepted(string shared, string own, string currentHash) =>
-        shared == currentHash || own == currentHash ? currentHash : shared ?? own;
+    internal static string ChooseLicenseAccepted(string shared, Func<string> readOwn, string currentHash)
+    {
+        if (shared == currentHash)
+            return shared;
+
+        var own = readOwn();
+        return own == currentHash ? own : shared ?? own;
+    }
+
+    /// <summary>
+    /// Reads one of this program's own settings, treating settings which cannot be opened or read as having no value, so that they cannot
+    /// stop RDMP from starting.  Other errors are not hidden.
+    /// </summary>
+    /// <param name="read">Reads the setting</param>
+    /// <returns>The value, or null if the settings could not be read</returns>
+    internal static string ReadOwnSetting(Func<string> read)
+    {
+        try
+        {
+            return read();
+        }
+        catch (Exception e) when (IsStorageError(e))
+        {
+            NLog.LogManager.GetCurrentClassLogger().Warn(e, "Could not read this program's own settings, so ignoring them");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Returns true for the errors of settings which cannot be opened, read or written
+    /// </summary>
+    private static bool IsStorageError(Exception e) =>
+        e is IsolatedStorageException or IOException or UnauthorizedAccessException;
 
     /// <summary>
     /// Records the hash of the licenses which the user accepted in the shared settings and forgets this program's own copy, or records it
@@ -105,12 +138,21 @@ public static class UserSettings
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
+            // Throws if this program's own settings cannot be written either, so that the caller knows nothing was recorded
             setOwn(hash);
             return;
         }
 
-        // Forget any hash which earlier versions, or a failed write to the shared settings, kept in this program's own settings
-        setOwn(null);
+        // Forget any hash which earlier versions, or a failed write to the shared settings, kept in this program's own settings.  The hash
+        // is recorded, so own settings which cannot be written must not stop RDMP
+        try
+        {
+            setOwn(null);
+        }
+        catch (Exception e) when (IsStorageError(e))
+        {
+            NLog.LogManager.GetCurrentClassLogger().Warn(e, "Could not remove the license acceptance from this program's own settings");
+        }
     }
 
     /// <summary>

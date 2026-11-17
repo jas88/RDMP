@@ -6,6 +6,7 @@
 
 using System;
 using System.IO;
+using System.IO.IsolatedStorage;
 using NUnit.Framework;
 using Rdmp.Core.ReusableLibraryCode.Licenses;
 using Rdmp.Core.ReusableLibraryCode.Settings;
@@ -55,7 +56,62 @@ public class UserSettingsLicenseAcceptedTests
     [TestCase(null, null, null)]
     public void ChooseLicenseAccepted_EitherStoreCanHaveTheCurrentAcceptance(string shared, string own, string expected)
     {
-        Assert.That(UserSettings.ChooseLicenseAccepted(shared, own, Current), Is.EqualTo(expected));
+        Assert.That(UserSettings.ChooseLicenseAccepted(shared, () => own, Current), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void ChooseLicenseAccepted_SharedAcceptanceIsCurrent_DoesNotReadTheOwnSettings()
+    {
+        string accepted = null;
+
+        Assert.Multiple(() =>
+        {
+            Assert.DoesNotThrow(() => accepted = UserSettings.ChooseLicenseAccepted(Current,
+                static () => throw new AssertionException("The program's own settings were read"), Current));
+            Assert.That(accepted, Is.EqualTo(Current));
+        });
+    }
+
+    [TestCase(typeof(IsolatedStorageException))]
+    [TestCase(typeof(IOException))]
+    [TestCase(typeof(UnauthorizedAccessException))]
+    public void ValidSharedAcceptance_OwnSettingsUnreadable_IsAcceptedWithoutThrowing(Type error)
+    {
+        // As another RDMP program recorded it
+        var currentHash = new License(License.ThirdPartyLicenses).GetHashOfLicense();
+        new SharedUserSettings(_folder).Set("LicenseAccepted", currentHash);
+        string accepted = null;
+
+        Assert.Multiple(() =>
+        {
+            Assert.DoesNotThrow(() => accepted = UserSettings.ChooseLicenseAccepted(
+                new SharedUserSettings(_folder).Get("LicenseAccepted"),
+                () => UserSettings.ReadOwnSetting(() => throw (Exception)Activator.CreateInstance(error)),
+                currentHash));
+            Assert.That(accepted, Is.EqualTo(currentHash));
+        });
+    }
+
+    [TestCase(typeof(IsolatedStorageException))]
+    [TestCase(typeof(IOException))]
+    [TestCase(typeof(UnauthorizedAccessException))]
+    public void StaleSharedAcceptance_OwnSettingsUnreadable_IsNotAcceptedWithoutThrowing(Type error)
+    {
+        string accepted = null;
+
+        Assert.Multiple(() =>
+        {
+            Assert.DoesNotThrow(() => accepted = UserSettings.ChooseLicenseAccepted(Old,
+                () => UserSettings.ReadOwnSetting(() => throw (Exception)Activator.CreateInstance(error)), Current));
+            Assert.That(accepted, Is.EqualTo(Old));
+        });
+    }
+
+    [Test]
+    public void ReadOwnSetting_OtherErrors_AreNotHidden()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            UserSettings.ReadOwnSetting(static () => throw new InvalidOperationException()));
     }
 
     [Test]
@@ -87,8 +143,29 @@ public class UserSettingsLicenseAcceptedTests
         Assert.Multiple(() =>
         {
             Assert.That(own, Is.EqualTo(Current));
-            Assert.That(UserSettings.ChooseLicenseAccepted(shared, own, Current), Is.EqualTo(Current));
+            Assert.That(UserSettings.ChooseLicenseAccepted(shared, () => own, Current), Is.EqualTo(Current));
         });
+    }
+
+    [Test]
+    public void RecordLicenseAccepted_OwnSettingsUnwritable_StillRecordsTheSharedAcceptance()
+    {
+        string shared = null;
+
+        Assert.Multiple(() =>
+        {
+            Assert.DoesNotThrow(() => UserSettings.RecordLicenseAccepted(Current, hash => shared = hash,
+                static _ => throw new IsolatedStorageException("damaged")));
+            Assert.That(shared, Is.EqualTo(Current));
+        });
+    }
+
+    [Test]
+    public void RecordLicenseAccepted_NeitherSettingsWritable_Throws()
+    {
+        // So that the caller can say the acceptance was not recorded
+        Assert.Throws<IsolatedStorageException>(() => UserSettings.RecordLicenseAccepted(Current,
+            static _ => throw new IOException("read only"), static _ => throw new IsolatedStorageException("damaged")));
     }
 
     [Test]
