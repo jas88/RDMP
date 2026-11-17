@@ -149,14 +149,12 @@ public class EvaluateNamespacesAndSolutionFoldersTests
     public void EvaluateAutoComments() => AutoCommentsEvaluator.FindProblems(_csFilesFound);
 
     /// <summary>
-    /// Every project in the solution (except the externals/ wrappers around vendored source) is found exactly once
-    /// when traversing the repository, and there are no csproj files which are not in the solution
+    /// Every project in the solution is found exactly once when traversing the repository, and there are no csproj
+    /// files which are not in the solution
     /// </summary>
     private void ValidateProjectsOnDisk(List<string> errors)
     {
-        var foundProjects = _sln.Projects
-            .Where(project => !RepositoryLayout.IsExternalsProject(project.Path))
-            .ToDictionary(project => project, _ => new List<string>());
+        var foundProjects = _sln.Projects.ToDictionary(project => project, _ => new List<string>());
 
         FindProjectsRecursively(foundProjects, _solutionDir, errors);
 
@@ -188,16 +186,14 @@ public class EvaluateNamespacesAndSolutionFoldersTests
             }
 
         // Skips build output, nested git checkouts (worktrees, submodules) and vendored third party source
-        foreach (var subdir in RepositoryLayout.EnumerateDirectories(dir, true))
+        foreach (var subdir in RepositoryLayout.EnumerateDirectories(dir))
             FindProjectsRecursively(projects, subdir, errors);
     }
 
     private void ProcessFolderRecursive(IEnumerable<VisualStudioSolutionFolder> folders,
         DirectoryInfo currentPhysicalDirectory)
     {
-        // Vendored third party source (externals solution folder) is exempt from hygiene rules
-        foreach (var solutionFolder in folders.Where(static f =>
-                     !f.Name.Equals(RepositoryLayout.ExternalsDirectoryName, StringComparison.Ordinal)))
+        foreach (var solutionFolder in folders)
         {
             var physicalSolutionFolder = currentPhysicalDirectory.EnumerateDirectories()
                 .SingleOrDefault(d => d.Name.Equals(solutionFolder.Name));

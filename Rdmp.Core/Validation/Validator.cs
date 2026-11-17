@@ -252,23 +252,9 @@ public class Validator
 
     private static List<Type> RefreshExtraTypes()
     {
-        // Only scan assemblies accessible from the current context
-        return GetAccessibleAssemblies().SelectMany(a =>
-        {
-            try
-            {
-                return a.GetTypes();
-            }
-            catch (System.Reflection.ReflectionTypeLoadException ex)
-            {
-                // Return the types that did load successfully (filtering out nulls)
-                return ex.Types.Where(t => t != null);
-            }
-            catch
-            {
-                return Array.Empty<Type>();
-            }
-        }).Where(
+        // Only scan assemblies accessible from the current context.  Types which do not load are skipped, as are
+        // assemblies whose Types cannot be listed at all (without recording them anywhere).
+        return GetAccessibleAssemblies().SelectMany(static a => AssemblyTypeLoader.GetTypesSafely(a)).Where(
             type =>
                 type != null &&
                 (typeof(IConstraint).IsAssignableFrom(type) ||

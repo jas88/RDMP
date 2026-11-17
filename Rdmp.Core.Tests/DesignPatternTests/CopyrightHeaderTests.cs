@@ -30,7 +30,7 @@ public class CopyrightHeaderTests
     {
         var root = RepositoryLayout.FindRoot();
 
-        var missingHeaders = RepositoryLayout.EnumerateFiles(root, "*.cs", true)
+        var missingHeaders = RepositoryLayout.EnumerateFiles(root, "*.cs")
             .Where(static f => !f.Name.Contains(".Designer.cs"))
             .Where(static f => !HasCopyrightHeader(f.FullName))
             .Select(f => RepositoryLayout.GetRelativePath(root, f.FullName))

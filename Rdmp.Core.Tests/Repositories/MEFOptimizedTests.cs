@@ -214,6 +214,15 @@ internal class MEFOptimizedTests : DatabaseTests
         Assert.That(derivedTypes.Contains(typeof(TestIntegrationClass)), Is.True);
     }
 
+    /// <summary>
+    /// A concrete implementation of <see cref="IList{T}"/> of string that is always loaded with this test, so that
+    /// <see cref="Integration_MEFGenerics_HandlesGenericTypes"/> does not depend on which other assemblies happen to have
+    /// been loaded (it used to rely on one from NPOI)
+    /// </summary>
+    private sealed class KnownStringList : List<string>
+    {
+    }
+
     [Test]
     public void Integration_MEFGenerics_HandlesGenericTypes()
     {
@@ -225,7 +234,7 @@ internal class MEFOptimizedTests : DatabaseTests
         var concreteTypes = MEF.GetGenericTypes(genericInterface, elementType).ToList();
 
         // Assert
-        Assert.That(concreteTypes, Is.Not.Empty);
+        Assert.That(concreteTypes, Does.Contain(typeof(KnownStringList)));
         var expectedInterface = genericInterface.MakeGenericType(elementType);
         Assert.That(concreteTypes.All(t => expectedInterface.IsAssignableFrom(t)), Is.True);
     }

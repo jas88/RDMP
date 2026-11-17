@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Negative numbers in date or time formats, which Excel cannot display, are loaded as null. The load used to fail with ArgumentException, or for a few formats such as `d-mmm` a meaningless date was loaded. A negative duration in elapsed minutes or seconds is loaded as displayed e.g. `-720:00`
   - Serial number 60, which Excel displays as the non-existent 29th of February 1900, is loaded as 1900-02-28. It was 1900-03-01, or `29-Feb` in a format without a year
   - The 1904 date system is applied to every date and time format in .xls and .xlsx workbooks. Some formats without a year (e.g. `d-mmm`) used the 1900 system
+- Remove NPOI, which nothing in RDMP used any more: Excel files are read with ExcelDataReader and Word reports are written with DocumentFormat.OpenXml. The `externals/npoi` git submodule and the projects which compiled it from source are gone, so RDMP can be built from a clone without submodules. RDMP no longer includes the NPOI assemblies or the packages that only NPOI needed (Enums.NET, ExtendedNumerics.BigDecimal, MathNet.Numerics.Signed, Microsoft.IO.RecyclableMemoryStream, SharpZipLib, SkiaSharp, System.Security.Cryptography.Xml and ZString); a plugin which uses any of these must now include its own copy. BouncyCastle.Cryptography is still included, as a dependency of SSH.NET
 
 
 ## [9.0.1] - 2025-07-31
