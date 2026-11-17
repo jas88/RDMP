@@ -15,7 +15,8 @@ namespace Rdmp.Core.Tests.ReusableCodeTests;
 
 /// <summary>
 /// Tests that the results of <see cref="Diff.DiffText"/> follow all the rules (see
-/// <see cref="DiffTestHelpers.FindViolations"/>) for inputs with several minimal results and for random inputs
+/// <see cref="DiffTestHelpers.FindViolations"/>) for inputs with several minimal results, for every pair of short texts
+/// made of two different lines, and for random inputs
 /// </summary>
 public class DiffPropertyTests
 {
@@ -39,6 +40,21 @@ public class DiffPropertyTests
             Assert.That(items.Sum(static i => i.deletedA + i.insertedB), Is.EqualTo(edits));
             Assert.That(FindViolations(before, after, items), Is.Empty);
         }
+    }
+
+    [Test]
+    public void DiffText_EveryPairOfShortTwoLetterTexts_FollowsTheRules()
+    {
+        // Every text of 1 to 6 lines, each of them "a" or "b", against every other: 126 texts and 15,876 pairs
+        var texts = new List<string>();
+        for (var lines = 1; lines <= 6; lines++)
+            for (var bits = 0; bits < 1 << lines; bits++)
+                texts.Add(TwoLetterText(lines, bits));
+
+        AssertAllFollowTheRules(texts.SelectMany(_ => texts, static (before, after) => (before, after)));
+
+        // Line i is "b" if bit i of bits is set, otherwise "a"
+        static string TwoLetterText(int lines, int bits) => Text(lines, i => ((bits >> i) & 1) == 0 ? "a" : "b");
     }
 
     [Test]
