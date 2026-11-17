@@ -11,7 +11,7 @@ using System.Security.Cryptography;
 namespace ResearchDataManagementPlatform.WindowManagement.Licenses;
 
 /// <summary>
-/// Facilitates reading from the embedded license files for RDMP and third party libraries.  Also generates MD5 for tracking when a user has
+/// Facilitates reading from the embedded license files for RDMP and third party libraries.  Also generates a SHA512 hash for tracking when a user has
 /// agreed to a license that has been subsequently changed in a software update (e.g. if we use a new library).
 /// </summary>
 public class License
@@ -30,7 +30,7 @@ public class License
     }
 
     /// <summary>
-    /// Computes an MD5 Hash of the current License text
+    /// Computes a SHA512 hash of the current License text
     /// </summary>
     /// <returns></returns>
     public string GetHashOfLicense()
