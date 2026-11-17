@@ -1,4 +1,4 @@
-// Copyright (c) The University of Dundee 2018-2019
+// Copyright (c) The University of Dundee 2018-2026
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Threading;
@@ -20,11 +21,22 @@ using Rdmp.Core.Repositories.Construction;
 namespace Rdmp.Core.Repositories;
 
 /// <summary>
-/// Provides support for downloading Plugins out of the Catalogue Database, identifying Exports and building the
-/// <see cref="SafeDirectoryCatalog"/>.  It also includes methods for creating instances of the exported Types.
+/// Finds Types by name and lists the Types which implement a given interface or base class (e.g. every IAttacher), so
+/// that they can be created on demand, and creates instances of them.
 ///
-/// <para>The class name MEF is a misnomer because historically we used the Managed Extensibility Framework (but now we
-/// just grab everything with reflection)</para>
+/// <para>The class name MEF is a misnomer because historically we used the Managed Extensibility Framework.  The Types
+/// come from the <see cref="CompiledTypeRegistry"/>, in which every RDMP assembly lists its own Types at compile time, so
+/// no assembly is scanned with reflection.  If the registry cannot be used (e.g. a registered Type fails to load or an
+/// RDMP assembly was built without the generator) MEF logs a warning and scans the loaded assemblies with reflection
+/// instead, as it used to, unless <see cref="RequireCompiledTypeRegistrySwitch"/> is set (as it is for the tests), in
+/// which case it throws.</para>
+///
+/// <para>Types are found by full or short name, ignoring case.  When several Types have the same name one whose full name
+/// starts with Rdmp.Core wins (the last listed if several do), otherwise the first listed wins.  Types are listed in
+/// assembly load order and then metadata order, the order reflection lists them in, so the registry resolves names
+/// exactly as reflection did.  Types of other assemblies (the .NET runtime, NuGet packages) are found by their exact full
+/// name, as Type.GetType would find them, but not by short name, and are not listed by <see cref="GetTypes{T}"/>,
+/// <see cref="GetGenericTypes"/> or <see cref="GetAllTypes"/> (unless MEF has fallen back on reflection).</para>
 ///
 /// <para>This class is AssemblyLoadContext-aware: each context gets its own type cache containing only types
 /// accessible from that context (the context itself + the default context). This ensures correct type identity
@@ -32,52 +44,106 @@ namespace Rdmp.Core.Repositories;
 /// </summary>
 public static class MEF
 {
-    // Primary type source: CompiledTypeRegistry (FrozenDictionary) if available, otherwise reflection-based
-    // This is shared across all contexts since it's built from the default context's assemblies
-    private static Lazy<IReadOnlyDictionary<string, Type>> _primaryTypes;
+    /// <summary>
+    /// Name of the AppContext switch which, when set to true, makes MEF throw a <see cref="CompiledTypeRegistryException"/>
+    /// rather than log a warning and fall back on reflection when the <see cref="CompiledTypeRegistry"/> cannot be used.  The
+    /// test projects set it (in Directory.Build.props) so that a problem with the registry fails the tests.
+    /// </summary>
+    public const string RequireCompiledTypeRegistrySwitch = "Rdmp.Core.Repositories.MEF.RequireCompiledTypeRegistry";
+
+    /// <summary>
+    /// The Types found when MEF was first used (from the <see cref="CompiledTypeRegistry"/>, or reflection if that could not
+    /// be used).  Shared by all contexts since it is built from the assemblies loaded at that time.
+    /// </summary>
+    private static readonly Lazy<TypeIndex> Primary = new(BuildPrimary, LazyThreadSafetyMode.ExecutionAndPublication);
 
     // Per-context caches - automatically cleaned up when context is unloaded
     private static readonly ConditionalWeakTable<AssemblyLoadContext, ContextCache> _contextCaches = new();
 
     // Cache for the default context (used when CurrentContextualReflectionContext is null)
-    private static ContextCache _defaultContextCache;
+    private static readonly ContextCache _defaultContextCache = new();
 
     private static readonly Dictionary<string, Exception> badAssemblies = new();
+
+    /// <summary>
+    /// Assemblies loaded since MEF was first used whose Types have yet to be added to the caches.  Assembly load events only
+    /// queue the assembly (so that they never wait for, or re-enter, the building of <see cref="Primary"/>); the queue is
+    /// emptied the next time a Type is looked up.
+    /// </summary>
+    private static readonly ConcurrentQueue<Assembly> PendingAssemblies = new();
+
+    private static readonly object PendingLock = new();
+    private static int _pendingCount;
 
     /// <summary>
     /// Name prefixes of assemblies whose Types are left out of the Type lookup caches.  DocumentFormat.OpenXml is
     /// excluded because it contains thousands of classes with generic names (e.g. Name, Body, Table) which would
     /// otherwise be returned when an unrelated Type is looked up by its short name.  Types in these assemblies are
     /// never cached, since caching also records the short name.  One can still be found by its full name, provided
-    /// no cached Type has the same short name (cached names are tried first).  Keep in step with the list in
-    /// TypeRegistryGenerator.
+    /// no cached Type has the same short name (cached names are tried first).  Only matters when MEF falls back on
+    /// reflection: the <see cref="CompiledTypeRegistry"/> only lists RDMP's own Types.
     /// </summary>
     private static readonly string[] AssembliesExcludedFromTypeLookup = { "CommandLine", "DocumentFormat.OpenXml" };
+
+    private static readonly Assembly RdmpCoreAssembly = typeof(MEF).Assembly;
+    private static readonly string RdmpCoreAssemblyName = RdmpCoreAssembly.GetName().Name;
 
     /// <summary>
     /// Per-AssemblyLoadContext cache for types and type hierarchies
     /// </summary>
-    private sealed class ContextCache
+    internal sealed class ContextCache
     {
+        /// <summary>
+        /// Types of assemblies loaded after <see cref="Primary"/> was built, by short and full name (as in <see cref="TypeIndex"/>)
+        /// </summary>
         public ConcurrentDictionary<string, Type> LookasideTypes { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Types outside the index which were found by their exact full name (only used with the <see cref="CompiledTypeRegistry"/>)
+        /// </summary>
+        public ConcurrentDictionary<string, Type> TypesFoundByFullName { get; } = new(StringComparer.Ordinal);
+
         public ConcurrentDictionary<Type, Type[]> TypeHierarchyCache { get; } = new();
         public HashSet<string> ProcessedAssemblies { get; } = new();
+    }
+
+    /// <summary>
+    /// Types indexed by short and full name (see <see cref="IndexByName"/>), and where they came from
+    /// </summary>
+    internal sealed class TypeIndex
+    {
+        public TypeIndex(FrozenDictionary<string, Type> typesByName, bool fromCompiledTypeRegistry,
+            IReadOnlySet<Assembly> assemblies)
+        {
+            TypesByName = typesByName;
+            Types = typesByName.Values.Distinct().ToArray();
+            FromCompiledTypeRegistry = fromCompiledTypeRegistry;
+            Assemblies = assemblies;
+        }
+
+        public FrozenDictionary<string, Type> TypesByName { get; }
+
+        /// <summary>
+        /// Every Type which can be found by at least one name
+        /// </summary>
+        public Type[] Types { get; }
+
+        /// <summary>
+        /// True if the Types came from the <see cref="CompiledTypeRegistry"/>, false if from scanning assemblies with reflection
+        /// </summary>
+        public bool FromCompiledTypeRegistry { get; }
+
+        /// <summary>
+        /// The assemblies whose Types were indexed
+        /// </summary>
+        public IReadOnlySet<Assembly> Assemblies { get; }
+
+        public TimeSpan BuildTime { get; set; }
     }
 
     static MEF()
     {
         AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoad;
-        Initialize();
-    }
-
-    private static void Initialize()
-    {
-        _primaryTypes ??= new Lazy<IReadOnlyDictionary<string, Type>>(PopulatePrimary,
-            LazyThreadSafetyMode.ExecutionAndPublication);
-        _defaultContextCache ??= new ContextCache();
-#if DEBUG
-        Console.WriteLine("MEF: Initialized with context-aware caching");
-#endif
     }
 
     /// <summary>
@@ -99,9 +165,22 @@ public static class MEF
     }
 
     /// <summary>
+    /// Gets the cache for the context <paramref name="assembly"/> is loaded in, or null if it is in none
+    /// </summary>
+    private static ContextCache GetCacheFor(Assembly assembly)
+    {
+        var context = AssemblyLoadContext.GetLoadContext(assembly);
+
+        if (context == AssemblyLoadContext.Default)
+            return _defaultContextCache;
+
+        return context == null ? null : _contextCaches.GetOrCreateValue(context);
+    }
+
+    /// <summary>
     /// Gets assemblies accessible from the current context (current + default)
     /// </summary>
-    private static IEnumerable<System.Reflection.Assembly> GetAccessibleAssemblies()
+    private static IEnumerable<Assembly> GetAccessibleAssemblies()
     {
         var current = CurrentContext;
         var defaultCtx = AssemblyLoadContext.Default;
@@ -120,18 +199,40 @@ public static class MEF
         if (loadedAssembly == null)
             return;
 
-        // Determine which context the assembly was loaded into
-        var assemblyContext = AssemblyLoadContext.GetLoadContext(loadedAssembly);
+        PendingAssemblies.Enqueue(loadedAssembly);
+        Interlocked.Increment(ref _pendingCount);
+    }
 
-        // Add to the appropriate context's cache
-        if (assemblyContext == AssemblyLoadContext.Default)
+    /// <summary>
+    /// Returns the index of Types (building it if MEF has not been used before), having added the Types of any assemblies
+    /// loaded since it was last used to the caches
+    /// </summary>
+    private static TypeIndex GetPrimary()
+    {
+        var primary = Primary.Value;
+
+        if (Volatile.Read(ref _pendingCount) > 0)
+            ProcessPendingAssemblies(primary);
+
+        return primary;
+    }
+
+    private static void ProcessPendingAssemblies(TypeIndex primary)
+    {
+        // Lookups wait here while another thread adds Types, rather than miss them
+        lock (PendingLock)
         {
-            AddAssemblyToCache(loadedAssembly, _defaultContextCache);
-        }
-        else if (assemblyContext != null)
-        {
-            var cache = _contextCaches.GetOrCreateValue(assemblyContext);
-            AddAssemblyToCache(loadedAssembly, cache);
+            while (PendingAssemblies.TryDequeue(out var assembly))
+                try
+                {
+                    var cache = GetCacheFor(assembly);
+                    if (cache != null)
+                        AddAssembly(primary, assembly, cache);
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _pendingCount);
+                }
         }
     }
 
@@ -141,9 +242,11 @@ public static class MEF
     /// </summary>
     public static void RefreshTypes()
     {
+        var primary = GetPrimary();
         var cache = GetCurrentCache();
 
         cache.LookasideTypes.Clear();
+        cache.TypesFoundByFullName.Clear();
         cache.TypeHierarchyCache.Clear();
         lock (cache.ProcessedAssemblies)
         {
@@ -151,136 +254,194 @@ public static class MEF
         }
 
         foreach (var assembly in GetAccessibleAssemblies())
-        {
-            AddAssemblyToCache(assembly, cache);
-        }
+            AddAssembly(primary, assembly, cache);
     }
 
-    private static IReadOnlyDictionary<string, Type> PopulatePrimary()
+    /// <summary>
+    /// True if the <see cref="CompiledTypeRegistry"/> cannot be used without MEF throwing (see <see cref="RequireCompiledTypeRegistrySwitch"/>)
+    /// </summary>
+    private static bool CompiledTypeRegistryRequired =>
+        AppContext.TryGetSwitch(RequireCompiledTypeRegistrySwitch, out var required) && required;
+
+    /// <summary>
+    /// True if MEF's Types come from the <see cref="CompiledTypeRegistry"/>.  False if MEF is finding them with reflection
+    /// because the registry could not be used: the reasons are logged as warnings and listed by <see cref="ListBadAssemblies"/>.
+    /// </summary>
+    public static bool UsesCompiledTypeRegistry => GetPrimary().FromCompiledTypeRegistry;
+
+    /// <summary>
+    /// How long it took to find the Types, when MEF was first used
+    /// </summary>
+    public static TimeSpan TypeIndexBuildTime => GetPrimary().BuildTime;
+
+    /// <summary>
+    /// The assemblies whose Types were found when MEF was first used
+    /// </summary>
+    internal static IReadOnlySet<Assembly> IndexedAssemblies => GetPrimary().Assemblies;
+
+    private static TypeIndex BuildPrimary()
     {
         var sw = Stopwatch.StartNew();
 
-        // Try to use compile-time generated registry (FrozenDictionary) if available
-        // Search all loaded assemblies since Type.GetType() doesn't work across assembly boundaries
+        // RDMP assemblies register when their code is first used, so may not have yet (e.g. if they were loaded by reflection)
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            if (IsRdmpAssembly(assembly) && CompiledTypeRegistry.IsRegisteringAssembly(assembly))
+                CompiledTypeRegistry.EnsureRegistered(assembly);
+
+        var loadOrder = AppDomain.CurrentDomain.GetAssemblies();
+        var problems = new List<KeyValuePair<string, Exception>>();
+
+        var index = BuildFromCompiledTypeRegistry(CompiledTypeRegistry.GetRegistrations(), loadOrder, problems);
+
+        if (index == null)
         {
+            ReportProblems(problems,
+                "MEF could not use the compiled type registry so is finding Types with reflection instead, as RDMP used to.  This is slower, and Types from assemblies other than RDMP's can then be found by short name");
+            index = BuildFromReflection(loadOrder, badAssemblies);
+        }
+
+        index.BuildTime = sw.Elapsed;
+        return index;
+    }
+
+    /// <summary>
+    /// Indexes the Types listed by <paramref name="registrations"/>, ordering the assemblies as in <paramref name="loadOrder"/>
+    /// (as reflection does).  Returns null (having added the reasons to <paramref name="problems"/>) if any registration
+    /// cannot list its Types, or an RDMP assembly in <paramref name="loadOrder"/> (one which is or references Rdmp.Core) has
+    /// not registered, since its Types would then be missing.
+    /// </summary>
+    internal static TypeIndex BuildFromCompiledTypeRegistry(IReadOnlyList<CompiledTypeRegistration> registrations,
+        IReadOnlyList<Assembly> loadOrder, List<KeyValuePair<string, Exception>> problems)
+    {
+        var registered = registrations.Select(static r => r.Assembly).ToHashSet();
+        var rdmpCoreContext = AssemblyLoadContext.GetLoadContext(RdmpCoreAssembly);
+
+        foreach (var assembly in loadOrder)
+            if (!registered.Contains(assembly) && AssemblyLoadContext.GetLoadContext(assembly) == rdmpCoreContext &&
+                IsRdmpAssembly(assembly))
+                problems.Add(new KeyValuePair<string, Exception>(assembly.FullName, GetNotRegisteredException(assembly)));
+
+        var position = new Dictionary<Assembly, int>();
+        for (var i = 0; i < loadOrder.Count; i++)
+            position.TryAdd(loadOrder[i], i);
+
+        var types = new List<Type>();
+
+        foreach (var registration in registrations.OrderBy(r => position.GetValueOrDefault(r.Assembly, int.MaxValue)))
             try
             {
-                var compiledRegistryType = assembly.GetType("Rdmp.Core.Repositories.CompiledTypeRegistry");
-                if (compiledRegistryType != null)
-                {
-                    var frozen = TryLoadCompiledRegistry(compiledRegistryType);
-                    if (frozen != null)
-                    {
-#if DEBUG
-                        Console.WriteLine($"MEF: Using CompiledTypeRegistry with {frozen.Count} types (loaded in {sw.ElapsedMilliseconds}ms)");
-#endif
-                        return frozen; // Early return - use compile-time registry
-                    }
-                }
+                types.AddRange(registration.GetTypes());
             }
-#if DEBUG
-            catch (Exception ex)
+            catch (CompiledTypeRegistryException e)
             {
-                // Silent failure - fall back to reflection
-                if (ex.Message.Contains("CompiledTypeRegistry"))
-                    Console.WriteLine($"MEF: Error loading CompiledTypeRegistry: {ex.Message}");
+                problems.Add(new KeyValuePair<string, Exception>(registration.Assembly.FullName, e));
             }
-#else
-            catch (Exception)
-            {
-                // Silent failure - fall back to reflection
-            }
-#endif
-        }
 
-        // Fallback: Use reflection to scan all assemblies (slower)
-#if DEBUG
-        Console.WriteLine("MEF: CompiledTypeRegistry not found, falling back to reflection");
-#endif
-        var typeByName = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
-        var assembliesProcessed = 0;
-        var assembliesSkipped = 0;
+        return problems.Count > 0 ? null : new TypeIndex(IndexByName(types), true, registered);
+    }
 
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+    /// <summary>
+    /// Indexes the Types of all <paramref name="assemblies"/> (except those <see cref="IsExcludedFromTypeLookup">excluded</see>)
+    /// by scanning them with reflection, as MEF did before the <see cref="CompiledTypeRegistry"/>
+    /// </summary>
+    /// <param name="assemblies">The assemblies to index, in load order</param>
+    /// <param name="failures">Where to record assemblies whose Types cannot be listed</param>
+    internal static TypeIndex BuildFromReflection(IEnumerable<Assembly> assemblies, Dictionary<string, Exception> failures)
+    {
+        var indexed = new HashSet<Assembly>();
+        var types = new List<Type>();
+
+        foreach (var assembly in assemblies)
         {
             if (IsExcludedFromTypeLookup(assembly))
-            {
-                assembliesSkipped++;
                 continue;
-            }
 
-            assembliesProcessed++;
-            foreach (var type in AssemblyTypeLoader.GetTypesSafely(assembly, badAssemblies))
+            indexed.Add(assembly);
+            types.AddRange(AssemblyTypeLoader.GetTypesSafely(assembly, failures));
+        }
+
+        return new TypeIndex(IndexByName(types), false, indexed);
+    }
+
+    /// <summary>
+    /// Indexes <paramref name="types"/> by short name and full name, ignoring case.  When several Types have the same name a
+    /// Type whose full name starts with Rdmp.Core wins (the last such Type listed), so that e.g. Rdmp.Core's ColumnInfo is
+    /// found rather than Npgsql's, otherwise the first Type listed wins.  Used whether the Types come from the registry or
+    /// reflection, so given the same Types in the same order both resolve every name the same way.
+    /// </summary>
+    internal static FrozenDictionary<string, Type> IndexByName(IEnumerable<Type> types)
+    {
+        var typeByName = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var type in types)
+        {
+            var fullName = type.FullName;
+            if (fullName == null)
+                continue;
+
+            var takesPrecedence = fullName.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase);
+            var shortName = Tail(fullName);
+
+            Add(shortName);
+            if (shortName != fullName)
+                Add(fullName);
+
+            void Add(string name)
             {
-                foreach (var alias in new[]
-                         {
-                         Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
-                         type.FullName?.ToUpperInvariant()
-                     }.Where(static x => x is not null).Distinct())
-                    if (!typeByName.TryAdd(alias, type) &&
-                        type.FullName?.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase) == true)
-                    {
-                        // Simple hack so Rdmp.Core types like ColumnInfo take precedence over others like System.Data.Select+ColumnInfo
-                        typeByName.Remove(alias);
-                        typeByName.Add(alias, type);
-                    }
+                if (!typeByName.TryAdd(name, type) && takesPrecedence)
+                    typeByName[name] = type;
             }
         }
 
-#if DEBUG
-        Console.WriteLine($"MEF: Reflection fallback processed {assembliesProcessed} assemblies, found {typeByName.Count} types in {sw.ElapsedMilliseconds}ms");
-#endif
-
-        // Return as FrozenDictionary for optimal lookup performance
         return typeByName.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
-    /// Returns the Types listed by the public static GetAllTypes method of <paramref name="registryType"/> (a compile
-    /// time generated CompiledTypeRegistry), keyed case insensitively by name.  Returns null if there is no such
-    /// method, it does not return name/Type pairs or it fails, in which case <see cref="PopulatePrimary"/> carries on
-    /// looking and eventually falls back on reflection.
+    /// Adds the Types of an assembly loaded after the index was built (or all accessible assemblies on <see cref="RefreshTypes"/>)
+    /// to <paramref name="cache"/>.  With the registry only RDMP assemblies' Types are added: from their registration, or
+    /// (loudly) with reflection if they have none.
     /// </summary>
-    /// <param name="registryType">A Type called CompiledTypeRegistry found in one of the loaded assemblies</param>
-    internal static IReadOnlyDictionary<string, Type> TryLoadCompiledRegistry(Type registryType)
+    private static void AddAssembly(TypeIndex primary, Assembly assembly, ContextCache cache)
     {
-        try
+        if (!primary.FromCompiledTypeRegistry)
         {
-            var getTypeMethod = registryType.GetMethod("GetAllTypes", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            if (getTypeMethod != null)
-            {
-                var compiledTypes = getTypeMethod.Invoke(null, null) as IEnumerable<KeyValuePair<string, Type>>;
-                if (compiledTypes != null)
-                {
-                    // Use FrozenDictionary from CompiledTypeRegistry for optimal lookup performance
-                    return compiledTypes.ToFrozenDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value,
-                        StringComparer.OrdinalIgnoreCase);
-                }
-            }
+            // As before the registry: Types already in the index are skipped one by one
+            if (!IsExcludedFromTypeLookup(assembly))
+                AddTypesToCache(primary, assembly, AssemblyTypeLoader.GetTypesSafely(assembly, badAssemblies), cache);
+            return;
         }
-#if DEBUG
-        catch (Exception ex)
-        {
-            // Fall back to reflection.  A failure in GetAllTypes arrives wrapped in a TargetInvocationException.
-            Console.WriteLine($"MEF: Error loading CompiledTypeRegistry: {ex.GetBaseException().Message}");
-        }
-#else
-        catch (Exception)
-        {
-            // Silent failure - fall back to reflection
-        }
-#endif
 
-        return null;
+        if (primary.Assemblies.Contains(assembly) || !IsRdmpAssembly(assembly))
+            return;
+
+        if (CompiledTypeRegistry.IsRegisteringAssembly(assembly))
+            CompiledTypeRegistry.EnsureRegistered(assembly);
+
+        var registration = CompiledTypeRegistry.GetRegistration(assembly);
+        Exception problem;
+
+        if (registration != null)
+            try
+            {
+                AddTypesToCache(primary, assembly, registration.GetTypes(), cache);
+                return;
+            }
+            catch (CompiledTypeRegistryException e)
+            {
+                problem = e;
+            }
+        else
+            problem = GetNotRegisteredException(assembly);
+
+        ReportProblems(new[] { new KeyValuePair<string, Exception>(assembly.FullName, problem) },
+            $"MEF is finding the Types of assembly '{assembly.GetName().Name}' with reflection");
+        AddTypesToCache(primary, assembly, AssemblyTypeLoader.GetTypesSafely(assembly, badAssemblies), cache);
     }
 
     /// <summary>
     /// Add types from a runtime-loaded assembly to the specified context cache
     /// </summary>
-    private static void AddAssemblyToCache(System.Reflection.Assembly assembly, ContextCache cache)
+    private static void AddTypesToCache(TypeIndex primary, Assembly assembly, IEnumerable<Type> types, ContextCache cache)
     {
         // Skip if already processed in this cache
         var assemblyName = assembly.FullName;
@@ -290,32 +451,19 @@ public static class MEF
                 return; // Already processed
         }
 
-        if (IsExcludedFromTypeLookup(assembly))
-            return;
-
-        foreach (var type in AssemblyTypeLoader.GetTypesSafely(assembly, badAssemblies))
+        foreach (var type in types)
         {
             // Only add if not in primary dictionary
-            var primaryDict = _primaryTypes?.Value;
-            if (primaryDict != null && primaryDict.ContainsKey(type.FullName))
+            if (type.FullName == null || primary.TypesByName.ContainsKey(type.FullName))
                 continue; // Already in primary, skip
 
-            foreach (var alias in new[]
-                     {
-                     Tail(type.FullName), type.FullName, Tail(type.FullName).ToUpperInvariant(),
-                     type.FullName?.ToUpperInvariant()
-                 }.Where(static x => x is not null).Distinct())
-            {
+            var shortName = Tail(type.FullName);
+            foreach (var alias in shortName == type.FullName ? new[] { shortName } : new[] { shortName, type.FullName })
                 // Use AddOrUpdate to handle Rdmp.Core precedence
-                if (type.FullName?.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase) == true)
-                {
+                if (type.FullName.StartsWith("Rdmp.Core", StringComparison.OrdinalIgnoreCase))
                     cache.LookasideTypes[alias] = type; // Rdmp.Core takes precedence
-                }
                 else
-                {
                     cache.LookasideTypes.TryAdd(alias, type);
-                }
-            }
         }
 
         // Clear type hierarchy cache as new types may affect inheritance queries
@@ -323,10 +471,70 @@ public static class MEF
     }
 
     /// <summary>
+    /// True if <paramref name="assembly"/> is Rdmp.Core or references it, i.e. is one whose Types MEF is meant to find
+    /// </summary>
+    private static bool IsRdmpAssembly(Assembly assembly)
+    {
+        if (assembly.IsDynamic)
+            return false;
+
+        if (assembly == RdmpCoreAssembly)
+            return true;
+
+        try
+        {
+            // Reads the assembly's metadata only (does not load the referenced assemblies)
+            return Array.Exists(assembly.GetReferencedAssemblies(),
+                static r => string.Equals(r.Name, RdmpCoreAssemblyName, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    private static CompiledTypeRegistryException GetNotRegisteredException(Assembly assembly) =>
+        new(CompiledTypeRegistry.IsRegisteringAssembly(assembly)
+            ? $"Assembly '{assembly.FullName}' was built with the type registry generator but has not registered its Types with the compiled type registry"
+            : $"Assembly '{assembly.FullName}' uses Rdmp.Core but was built without the type registry generator (Rdmp.Core.Generators), so its Types are not in the compiled type registry");
+
+    /// <summary>
+    /// Records <paramref name="problems"/> (see <see cref="ListBadAssemblies"/>) and logs them as a warning, or throws if the
+    /// registry is required (see <see cref="RequireCompiledTypeRegistrySwitch"/>)
+    /// </summary>
+    private static void ReportProblems(IReadOnlyCollection<KeyValuePair<string, Exception>> problems, string consequence) =>
+        ReportProblems(problems, consequence, CompiledTypeRegistryRequired, badAssemblies,
+            static message => NLog.LogManager.GetCurrentClassLogger().Warn(message));
+
+    /// <summary>
+    /// Throws a <see cref="CompiledTypeRegistryException"/> describing <paramref name="problems"/> if <paramref name="required"/>,
+    /// otherwise records them in <paramref name="failures"/> and passes the description, starting with what MEF does instead
+    /// (<paramref name="consequence"/>), to <paramref name="warn"/>
+    /// </summary>
+    internal static void ReportProblems(IReadOnlyCollection<KeyValuePair<string, Exception>> problems, string consequence,
+        bool required, Dictionary<string, Exception> failures, Action<string> warn)
+    {
+        var list = string.Join(Environment.NewLine, problems.Select(static p => $"- {p.Value.Message}"));
+
+        if (required)
+            throw new CompiledTypeRegistryException(
+                $"MEF requires the compiled type registry (AppContext switch '{RequireCompiledTypeRegistrySwitch}' is set) but cannot use it:{Environment.NewLine}{list}",
+                new AggregateException(problems.Select(static p => p.Value)));
+
+        lock (failures)
+        {
+            foreach (var (assembly, problem) in problems)
+                failures.TryAdd(assembly, problem);
+        }
+
+        warn($"{consequence}:{Environment.NewLine}{list}");
+    }
+
+    /// <summary>
     /// True if the Types in <paramref name="assembly"/> are left out of the Type lookup caches (see
     /// <see cref="AssembliesExcludedFromTypeLookup"/>)
     /// </summary>
-    private static bool IsExcludedFromTypeLookup(System.Reflection.Assembly assembly)
+    private static bool IsExcludedFromTypeLookup(Assembly assembly)
     {
         var name = assembly.FullName;
 
@@ -353,25 +561,33 @@ public static class MEF
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
 
-        var cache = GetCurrentCache();
+        return Resolve(GetPrimary(), GetCurrentCache(), typeName);
+    }
 
+    /// <summary>
+    /// Finds the Type called <paramref name="typeName"/> in <paramref name="primary"/> and <paramref name="cache"/>, or
+    /// failing that the loaded assemblies (see <see cref="GetType(string)"/>)
+    /// </summary>
+    internal static Type Resolve(TypeIndex primary, ContextCache cache, string typeName)
+    {
         // Check context-specific lookaside first - these are runtime-loaded types
         if (cache.LookasideTypes.TryGetValue(typeName, out var type))
             return type;
         if (cache.LookasideTypes.TryGetValue(Tail(typeName), out type))
             return type;
 
-        // Fast path: Check primary dictionary (FrozenDictionary from CompiledTypeRegistry)
-        var primaryDict = _primaryTypes.Value;
-        if (primaryDict.TryGetValue(typeName, out type))
+        // Fast path: Check primary dictionary
+        if (primary.TypesByName.TryGetValue(typeName, out type))
             return type;
 
+        if (primary.FromCompiledTypeRegistry)
+            return ResolveOutsideCompiledTypeRegistry(primary, cache, typeName);
+
         // Try short name in primary
-        if (primaryDict.TryGetValue(Tail(typeName), out type))
+        if (primary.TypesByName.TryGetValue(Tail(typeName), out type))
             return type;
 
         // Fallback: Use Type.GetType() for types in currently loaded assemblies not in our cache
-        // This handles edge cases like test classes that weren't in CompiledTypeRegistry
         type = Type.GetType(typeName);
         if (type != null)
         {
@@ -392,6 +608,52 @@ public static class MEF
 
         // Not found
         return null;
+    }
+
+    /// <summary>
+    /// Finds a Type which is not in the <see cref="CompiledTypeRegistry"/> index as if the index held every loaded Type, as
+    /// the one reflection built did: a Type called exactly <paramref name="typeName"/> in the first accessible assembly (in
+    /// load order) which has one is found before any Type with the same short name, except one in an
+    /// <see cref="IsExcludedFromTypeLookup">excluded</see> assembly.  Names which no assembly has a Type called (e.g.
+    /// assembly qualified names) are then given to Type.GetType.
+    /// </summary>
+    private static Type ResolveOutsideCompiledTypeRegistry(TypeIndex primary, ContextCache cache, string typeName)
+    {
+        if (cache.TypesFoundByFullName.TryGetValue(typeName, out var type))
+            return type;
+
+        Type inExcludedAssembly = null;
+
+        // Still not found - scan accessible assemblies only (current context + default)
+        foreach (var assembly in GetAccessibleAssemblies())
+        {
+            type = assembly.GetType(typeName);
+            if (type == null)
+                continue;
+
+            if (!IsExcludedFromTypeLookup(assembly))
+            {
+                cache.TypesFoundByFullName.TryAdd(typeName, type);
+                return type;
+            }
+
+            inExcludedAssembly ??= type;
+        }
+
+        // Try short name in primary
+        if (primary.TypesByName.TryGetValue(Tail(typeName), out type))
+            return type;
+
+        // Types in excluded assemblies are only found by full name, and are never cached (as before)
+        if (inExcludedAssembly != null)
+            return inExcludedAssembly;
+
+        // Fallback: Use Type.GetType() e.g. for assembly qualified names
+        type = Type.GetType(typeName);
+        if (type != null && !IsExcludedFromTypeLookup(type.Assembly))
+            cache.TypesFoundByFullName.TryAdd(typeName, type);
+
+        return type;
     }
 
     /// <summary>
@@ -422,7 +684,7 @@ public static class MEF
     {
         lock (badAssemblies)
         {
-            return new ReadOnlyDictionary<string, Exception>(badAssemblies);
+            return new ReadOnlyDictionary<string, Exception>(new Dictionary<string, Exception>(badAssemblies));
         }
     }
 
@@ -461,15 +723,16 @@ public static class MEF
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    private static IEnumerable<Type> GetTypes(Type type)
+    internal static IEnumerable<Type> GetTypes(Type type)
     {
+        var primary = GetPrimary();
         var cache = GetCurrentCache();
 
         return cache.TypeHierarchyCache.GetOrAdd(type, target =>
         {
             // Combine lookaside and primary types (lookaside first for context-specific types)
             var allTypes = cache.LookasideTypes.Values
-                .Concat(_primaryTypes.Value.Values)
+                .Concat(primary.Types)
                 .Distinct();
 
             return allTypes
@@ -579,11 +842,12 @@ public static class MEF
     /// <returns></returns>
     public static IEnumerable<Type> GetGenericTypes(Type genericType, Type typeOfT)
     {
+        var primary = GetPrimary();
         var cache = GetCurrentCache();
         var target = genericType.MakeGenericType(typeOfT);
 
         // Combine primary and context-specific lookaside types
-        var allTypes = _primaryTypes.Value.Values.Concat(cache.LookasideTypes.Values).Distinct();
+        var allTypes = primary.Types.Concat(cache.LookasideTypes.Values).Distinct();
 
         return allTypes
             .Where(t => !t.IsAbstract && !t.IsGenericType && target.IsAssignableFrom(t))
@@ -592,10 +856,11 @@ public static class MEF
 
     public static IEnumerable<Type> GetAllTypes()
     {
+        var primary = GetPrimary();
         var cache = GetCurrentCache();
 
         // Combine primary and context-specific lookaside types
-        return _primaryTypes.Value.Values
+        return primary.Types
             .Concat(cache.LookasideTypes.Values)
             .Distinct();
     }
