@@ -82,13 +82,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Rdmp.Core\Rdmp.Core.csproj" />
         <ProjectReference Include="..\Tests.Common\Tests.Common.csproj" />
-        <!-- Source generator for compile-time type registry -->
-        <!-- The compile time type registry (Rdmp.Core.Generators) is not generated here for now.  It has never been used:
-             it failed to initialise while NPOI's SkiaSharp was referenced, and now that it works its lookups do not yet
-             match the reflection that production uses (e.g. no interfaces, enums or internal types).  It is to be made
-             the replacement for reflection, in production as well as here, as separate work; restore this then.
-        <ProjectReference Include="..\Rdmp.Core.Generators\Rdmp.Core.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-        -->
+        <!-- The compile time type registry generator (Rdmp.Core.Generators) is referenced by every project, in Directory.Build.props -->
         <!-- Plugin references to ensure assemblies are loaded for MEF type resolution -->
         <!-- Old plugin projects removed - consolidated plugins now handle this -->
     </ItemGroup>
