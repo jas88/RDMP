@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Rdmp.Core.ReusableLibraryCode;
 
@@ -52,34 +53,17 @@ public static partial class Diff
         {
             _linesA = linesA;
             _linesB = linesB;
+            (_start, _endA, _endB) = FindCommonStartAndEnd(linesA, linesB);
 
-            var start = 0;
-            while (start < linesA.Length && start < linesB.Length && linesA[start] == linesB[start])
-                start++;
-
-            _start = start;
-            _endA = linesA.Length;
-            _endB = linesB.Length;
-            while (_endA > start && _endB > start && linesA[_endA - 1] == linesB[_endB - 1])
-            {
-                _endA--;
-                _endB--;
-            }
-
+            // The lines in between are changed until the search keeps them
             _changedA = new bool[linesA.Length];
             _changedB = new bool[linesB.Length];
-            Array.Fill(_changedA, true, start, _endA - start);
-            Array.Fill(_changedB, true, start, _endB - start);
+            Array.Fill(_changedA, true, _start, _endA - _start);
+            Array.Fill(_changedB, true, _start, _endB - _start);
 
-            // Bit 1 set: the line occurs in the middle of the first text, bit 2: in the middle of the second
-            var occurs = new byte[keyCount];
-            for (var i = start; i < _endA; i++)
-                occurs[linesA[i]] |= 1;
-            for (var i = start; i < _endB; i++)
-                occurs[linesB[i]] |= 2;
-
-            (_keysA, _indexA) = SelectSearchLines(linesA, start, _endA, occurs);
-            (_keysB, _indexB) = SelectSearchLines(linesB, start, _endB, occurs);
+            var inBoth = FindLinesInBothMiddles(linesA, linesB, _start, _endA, _endB, keyCount);
+            (_keysA, _indexA) = SelectSearchLines(linesA, _start, _endA, inBoth);
+            (_keysB, _indexB) = SelectSearchLines(linesB, _start, _endB, inBoth);
 
             // No search goes beyond this many edits, see FindMiddleSnake
             _offset = (_keysA.Length + _keysB.Length + 1) / 2;
@@ -87,14 +71,53 @@ public static partial class Diff
             _backward = new int[2 * _offset + 1];
         }
 
-        private static (int[] Keys, int[] Index) SelectSearchLines(int[] lines, int from, int to, byte[] occurs)
+        /// <summary>
+        /// Returns how many lines both texts start with, and then where the lines that both end with (of those left)
+        /// begin in each text
+        /// </summary>
+        private static (int Start, int EndA, int EndB) FindCommonStartAndEnd(int[] linesA, int[] linesB)
+        {
+            var start = 0;
+            while (start < linesA.Length && start < linesB.Length && linesA[start] == linesB[start])
+                start++;
+
+            var endA = linesA.Length;
+            var endB = linesB.Length;
+            while (endA > start && endB > start && linesA[endA - 1] == linesB[endB - 1])
+            {
+                endA--;
+                endB--;
+            }
+
+            return (start, endA, endB);
+        }
+
+        /// <summary>
+        /// Returns, for each line number, whether that line occurs both in lines <c>[start, endA)</c> of the first text
+        /// and in lines <c>[start, endB)</c> of the second. No other line in those ranges can be kept.
+        /// </summary>
+        private static bool[] FindLinesInBothMiddles(int[] linesA, int[] linesB, int start, int endA, int endB,
+            int keyCount)
+        {
+            var inMiddleOfA = new bool[keyCount];
+            for (var i = start; i < endA; i++)
+                inMiddleOfA[linesA[i]] = true;
+
+            var inBoth = new bool[keyCount];
+            for (var i = start; i < endB; i++)
+                inBoth[linesB[i]] = inMiddleOfA[linesB[i]];
+
+            return inBoth;
+        }
+
+        private static (int[] Keys, int[] Index) SelectSearchLines(int[] lines, int from, int to, bool[] inBoth)
         {
             var keys = new List<int>();
             var index = new List<int>();
 
             for (var i = from; i < to; i++)
             {
-                if (occurs[lines[i]] != 3)
+                if (!inBoth[lines[i]])
                     continue;
 
                 keys.Add(lines[i]);
@@ -285,12 +308,7 @@ public static partial class Diff
         /// </summary>
         private static bool[] ChangedBetweenKeptLines(bool[] changed)
         {
-            var keptCount = 0;
-            foreach (var isChanged in changed)
-                if (!isChanged)
-                    keptCount++;
-
-            var result = new bool[keptCount + 1];
+            var result = new bool[changed.Count(static isChanged => !isChanged) + 1];
             var kept = 0;
             foreach (var isChanged in changed)
             {
