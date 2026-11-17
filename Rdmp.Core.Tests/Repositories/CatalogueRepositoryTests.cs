@@ -50,8 +50,9 @@ internal class CatalogueRepositoryTests
         ImplementationManager.Load<FAnsi.Implementations.MicrosoftSQL.MicrosoftSQLImplementation>();
 #pragma warning restore CS0618 // Type or member is obsolete
 
+        // Not applicable rather than Inconclusive: CI treats Inconclusive as a missing database
         if (EnvironmentInfo.IsLinux)
-            Assert.Inconclusive(
+            Assert.Ignore(
                 "Linux doesn't really support IntegratedSecurity and in fact can bomb just setting it on a builder");
 
         var repo = new CatalogueRepository(new SqlConnectionStringBuilder

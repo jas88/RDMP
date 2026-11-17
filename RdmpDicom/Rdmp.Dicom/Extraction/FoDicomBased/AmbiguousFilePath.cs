@@ -53,7 +53,8 @@ public partial class AmbiguousFilePath
     private static readonly Regex RegexDigitsAndDotsOnly = DigitsAndDotsOnlyRegex();
 
 
-    public AmbiguousFilePath(string fullPath) : this(null, new[] { (fullPath, fullPath) })
+    // Must use the (root, fileName) overload: it is the one that expands a whole zip archive into its entries
+    public AmbiguousFilePath(string fullPath) : this((string)null, fullPath)
     {
     }
 

@@ -440,21 +440,14 @@ public class FlatFileAttacherTests : DatabaseTests
         File.Delete(filename);
     }
 
-    [TestCase(DatabaseType.MySql, "27/01/2001", "en-GB", "en-GB")]
-    [TestCase(DatabaseType.MySql, "27/01/2001", "en-GB", "en-us")]
-    [TestCase(DatabaseType.MySql, "01/27/2001", "en-us", "en-us")]
-    [TestCase(DatabaseType.MySql, "01/27/2001", "en-us", "en-GB")]
-    [TestCase(DatabaseType.MicrosoftSQLServer, "27/01/2001", "en-GB", "en-GB")]
-    [TestCase(DatabaseType.MicrosoftSQLServer, "27/01/2001", "en-GB", "en-us")]
-    [TestCase(DatabaseType.MicrosoftSQLServer, "01/27/2001", "en-us", "en-us")]
-    [TestCase(DatabaseType.MicrosoftSQLServer, "01/27/2001", "en-us", "en-GB")]
-    [TestCase(DatabaseType.Oracle, "27/01/2001", "en-GB", "en-GB")]
-    [TestCase(DatabaseType.Oracle, "27/01/2001", "en-GB", "en-us")]
-    [TestCase(DatabaseType.Oracle, "01/27/2001", "en-us", "en-us")]
-    [TestCase(DatabaseType.Oracle, "01/27/2001", "en-us", "en-GB")]
-    public void Test_FlatFileAttacher_AmbiguousDates(DatabaseType type, string val, string attacherCulture,
-        string threadCulture)
+    [Test, Combinatorial]
+    public void Test_FlatFileAttacher_AmbiguousDates(
+        [ValueSource(typeof(All), nameof(All.DatabaseTypes))] DatabaseType type,
+        [Values("en-GB", "en-us")] string attacherCulture,
+        [Values("en-GB", "en-us")] string threadCulture)
     {
+        // 27th January 2001 written in the attacher's culture
+        var val = attacherCulture == "en-GB" ? "27/01/2001" : "01/27/2001";
         Thread.CurrentThread.CurrentCulture = new CultureInfo(threadCulture);
 
         var filename = Path.Combine(_loadDirectory.ForLoading.FullName, "bob.csv");
