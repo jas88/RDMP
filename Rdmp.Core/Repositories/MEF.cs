@@ -42,9 +42,10 @@ namespace Rdmp.Core.Repositories;
 /// <para>This class is AssemblyLoadContext-aware: each context gets its own type cache containing only types
 /// accessible from that context (the context itself + the default context). This ensures correct type identity
 /// in test scenarios where assemblies may be loaded in multiple contexts.  The index built when MEF is first used is
-/// shared by all contexts and holds the Types of the assemblies loaded then (in any context, as the index reflection
-/// built did); the Types of assemblies loaded later go in the cache of their own context.  The cache of a collectible
-/// context is dropped when it starts to unload, so that MEF does not stop it unloading.</para>
+/// shared by all contexts and holds the Types of the assemblies loaded then, in any context (as the index reflection
+/// built did) except collectible ones; the Types of assemblies loaded later, or in collectible contexts, go in the cache
+/// of their own context.  The cache of a collectible context is dropped when it starts to unload, so that MEF does not
+/// stop it unloading.</para>
 /// </summary>
 public static class MEF
 {
@@ -341,6 +342,15 @@ public static class MEF
         EnsureRegistered(AppDomain.CurrentDomain.GetAssemblies(), problems);
 
         var loadOrder = AppDomain.CurrentDomain.GetAssemblies();
+
+        // The index lasts as long as MEF, so the Types of assemblies in other collectible contexts go in the caches of their
+        // own contexts instead (as if they had been loaded after MEF was first used), which are dropped when they unload
+        foreach (var assembly in loadOrder.Where(IsInAnotherCollectibleContext))
+        {
+            PendingAssemblies.Enqueue(assembly);
+            Interlocked.Increment(ref _pendingCount);
+        }
+
         var index = BuildFromCompiledTypeRegistry(CompiledTypeRegistry.GetRegistrations(), loadOrder, problems);
 
         if (index == null)
@@ -374,10 +384,11 @@ public static class MEF
 
     /// <summary>
     /// Indexes the Types listed by the <paramref name="registrations"/> of the assemblies in <paramref name="loadOrder"/>,
-    /// ordering the assemblies as in <paramref name="loadOrder"/> (as reflection does).  Returns null (having added the
-    /// reasons to <paramref name="problems"/>) if there were already problems, any registration cannot list its Types, or an
-    /// RDMP assembly in <paramref name="loadOrder"/> (one which is or references Rdmp.Core) has not registered, since its
-    /// Types would then be missing.
+    /// ordering the assemblies as in <paramref name="loadOrder"/> (as reflection does), except those in collectible contexts
+    /// other than Rdmp.Core's (see <see cref="IsInAnotherCollectibleContext"/>).  Returns null (having added the reasons to
+    /// <paramref name="problems"/>) if there were already problems, any registration cannot list its Types, or an RDMP
+    /// assembly in <paramref name="loadOrder"/> (one which is or references Rdmp.Core) has not registered, since its Types
+    /// would then be missing.
     /// </summary>
     internal static TypeIndex BuildFromCompiledTypeRegistry(IReadOnlyList<CompiledTypeRegistration> registrations,
         IReadOnlyList<Assembly> loadOrder, List<KeyValuePair<string, Exception>> problems)
@@ -386,8 +397,9 @@ public static class MEF
         for (var i = 0; i < loadOrder.Count; i++)
             position.TryAdd(loadOrder[i], i);
 
-        // Like reflection, only index assemblies which are loaded (not one whose context has since been unloaded)
-        var present = registrations.Where(r => position.ContainsKey(r.Assembly))
+        // Like reflection, only index assemblies which are loaded (not one whose context has since been unloaded), and not
+        // those which could stop a collectible context unloading
+        var present = registrations.Where(r => position.ContainsKey(r.Assembly) && !IsInAnotherCollectibleContext(r.Assembly))
             .OrderBy(r => position[r.Assembly]).ToArray();
         var registered = present.Select(static r => r.Assembly).ToHashSet();
 
@@ -415,8 +427,9 @@ public static class MEF
     }
 
     /// <summary>
-    /// Indexes the Types of all <paramref name="assemblies"/> (except those <see cref="IsExcludedFromTypeLookup">excluded</see>)
-    /// by scanning them with reflection, as MEF did before the <see cref="CompiledTypeRegistry"/>
+    /// Indexes the Types of all <paramref name="assemblies"/> (except those <see cref="IsExcludedFromTypeLookup">excluded</see>
+    /// and those in collectible contexts other than Rdmp.Core's, see <see cref="IsInAnotherCollectibleContext"/>) by scanning
+    /// them with reflection, as MEF did before the <see cref="CompiledTypeRegistry"/>
     /// </summary>
     /// <param name="assemblies">The assemblies to index, in load order</param>
     /// <param name="failures">Where to record assemblies whose Types cannot be listed</param>
@@ -425,17 +438,23 @@ public static class MEF
         var indexed = new HashSet<Assembly>();
         var types = new List<Type>();
 
-        foreach (var assembly in assemblies)
+        foreach (var assembly in assemblies.Where(static a => !IsExcludedFromTypeLookup(a) && !IsInAnotherCollectibleContext(a)))
         {
-            if (IsExcludedFromTypeLookup(assembly))
-                continue;
-
             indexed.Add(assembly);
             types.AddRange(AssemblyTypeLoader.GetTypesSafely(assembly, failures));
         }
 
         return new TypeIndex(types, false, indexed);
     }
+
+    /// <summary>
+    /// True if <paramref name="assembly"/> is in a collectible AssemblyLoadContext other than Rdmp.Core's.  The index built when
+    /// MEF is first used does not hold the Types of such an assembly (they go in the cache of its context), as it would stop
+    /// the context unloading.  If Rdmp.Core is itself in a collectible context, MEF unloads with it.
+    /// </summary>
+    private static bool IsInAnotherCollectibleContext(Assembly assembly) =>
+        AssemblyLoadContext.GetLoadContext(assembly) is { IsCollectible: true } context &&
+        context != AssemblyLoadContext.GetLoadContext(RdmpCoreAssembly);
 
     /// <summary>
     /// Indexes <paramref name="types"/> by short name and full name, ignoring case.  When several Types have the same name a
@@ -528,12 +547,9 @@ public static class MEF
                 return; // Already processed
         }
 
-        foreach (var type in types)
+        // Only add Types which are not in the index
+        foreach (var type in types.Where(t => t.FullName != null && !primary.TypesByName.ContainsKey(t.FullName)))
         {
-            // Only add if not in primary dictionary
-            if (type.FullName == null || primary.TypesByName.ContainsKey(type.FullName))
-                continue; // Already in primary, skip
-
             var shortName = Tail(type.FullName);
             foreach (var alias in shortName == type.FullName ? new[] { shortName } : new[] { shortName, type.FullName })
                 // Use AddOrUpdate to handle Rdmp.Core precedence

@@ -467,7 +467,7 @@ public class CompiledTypeRegistryTests
 
         try
         {
-            var assembly = context.LoadFromStream(EmitRdmpAssembly("RegistryTestModuleInitializerFails", true));
+            var assembly = context.LoadFromStream(EmitAssembly("RegistryTestModuleInitializerFails", ModuleInitializer.Throws));
 
             // MEF notices the assembly the next time it is used
             var ex = Assert.Throws<CompiledTypeRegistryException>(() => MEF.GetType("Catalogue"));
@@ -512,27 +512,17 @@ public class CompiledTypeRegistryTests
 
     /// <summary>
     /// The registry forgets the registration of an assembly in a collectible AssemblyLoadContext when the context unloads,
-    /// so that it can be collected
+    /// and MEF drops the context's cache, so that the context can be collected
     /// </summary>
     [Test]
-    public void Register_CollectibleContext_DoesNotStopItUnloading()
-    {
-        var context = LoadRegisteringAssemblyAndUnload();
-
-        for (var i = 0; i < 20 && context.IsAlive; i++)
-        {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-        }
-
-        Assert.That(context.IsAlive, Is.False, "Something still refers to the unloaded AssemblyLoadContext");
-    }
+    public void Register_CollectibleContext_DoesNotStopItUnloading() =>
+        Assert.That(IsCollected(LoadRegisteringAssemblyAndUnload()), "Something still refers to the unloaded AssemblyLoadContext");
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static WeakReference LoadRegisteringAssemblyAndUnload()
     {
         var context = new AssemblyLoadContext(nameof(Register_CollectibleContext_DoesNotStopItUnloading), true);
-        var assembly = context.LoadFromStream(EmitRdmpAssembly("RegistryTestCollectible", false));
+        var assembly = context.LoadFromStream(EmitAssembly("RegistryTestCollectible", ModuleInitializer.Registers));
 
         // MEF finds the assembly's (one) Type for its context
         MEF.GetType("Catalogue");
@@ -546,21 +536,119 @@ public class CompiledTypeRegistryTests
     }
 
     /// <summary>
-    /// Emits an assembly like one built with the type registry generator: marked with
-    /// <see cref="CompiledTypeRegistryAttribute"/>, with one Type (RegistryTest.Marker) which its module initializer registers,
-    /// or with a module initializer which throws
+    /// An index of Types built while a collectible AssemblyLoadContext is loaded (as when it was loaded before MEF was first
+    /// used) does not hold the Types of its assemblies, whether from the registry or reflection, so the context can unload
     /// </summary>
-    private static MemoryStream EmitRdmpAssembly(string name, bool moduleInitializerFails)
+    [Test]
+    public void Index_BuiltWhileCollectibleContextIsLoaded_DoesNotStopItUnloading()
+    {
+        var (context, fromRegistry, fromReflection) = BuildIndexesAndUnload();
+
+        Assert.That(IsCollected(context), "Something still refers to the unloaded AssemblyLoadContext");
+
+        // The indexes are still in use, so it is not they which let the context go
+        Assert.That(fromRegistry.Types, Is.Not.Empty);
+        Assert.That(fromReflection.Types, Is.Not.Empty);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (WeakReference, MEF.TypeIndex, MEF.TypeIndex) BuildIndexesAndUnload()
+    {
+        var context = new AssemblyLoadContext(nameof(Index_BuiltWhileCollectibleContextIsLoaded_DoesNotStopItUnloading), true);
+        var assembly = context.LoadFromStream(EmitAssembly("RegistryTestCollectibleBeforeIndex", ModuleInitializer.Registers));
+        CompiledTypeRegistry.EnsureRegistered(assembly);
+
+        var loadOrder = AppDomain.CurrentDomain.GetAssemblies();
+        Assert.That(loadOrder, Does.Contain(assembly));
+
+        var problems = new List<KeyValuePair<string, Exception>>();
+        var fromRegistry = MEF.BuildFromCompiledTypeRegistry(CompiledTypeRegistry.GetRegistrations(), loadOrder, problems);
+        var fromReflection = MEF.BuildFromReflection(loadOrder, new Dictionary<string, Exception>());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(problems, Is.Empty);
+            Assert.That(fromRegistry.Assemblies, Does.Not.Contain(assembly));
+            Assert.That(fromRegistry.Types.Where(t => t.Assembly == assembly), Is.Empty);
+            Assert.That(fromReflection.Assemblies, Does.Not.Contain(assembly));
+            Assert.That(fromReflection.Types.Where(t => t.Assembly == assembly), Is.Empty);
+        });
+
+        context.Unload();
+
+        // MEF queued the assembly when it was loaded: let it see that the context is unloading
+        MEF.GetType("Catalogue");
+
+        return (new WeakReference(context), fromRegistry, fromReflection);
+    }
+
+    /// <summary>
+    /// True once <paramref name="context"/> has been collected.  An unloaded AssemblyLoadContext is only freed by the garbage
+    /// collector, so these tests must run it (the usual pattern for testing that a context can unload).
+    /// </summary>
+    private static bool IsCollected(WeakReference context)
+    {
+        for (var i = 0; i < 20 && context.IsAlive; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
+        return !context.IsAlive;
+    }
+
+    /// <summary>
+    /// The Types which an assembly emitted by <see cref="EmitAssembly"/> has, and what its module initializer does
+    /// </summary>
+    private enum ModuleInitializer
+    {
+        /// <summary>
+        /// None, and the assembly is not marked with <see cref="CompiledTypeRegistryAttribute"/>, so it is not an RDMP one
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// Registers the assembly's Type with the <see cref="CompiledTypeRegistry"/>, as one built with the generator does
+        /// </summary>
+        Registers,
+
+        /// <summary>
+        /// Throws (the assembly is marked as registering its Types)
+        /// </summary>
+        Throws
+    }
+
+    /// <summary>
+    /// Emits an assembly with one Type (RegistryTest.Marker) and, unless <paramref name="moduleInitializer"/> is
+    /// <see cref="ModuleInitializer.None"/>, marked with <see cref="CompiledTypeRegistryAttribute"/> and with a module
+    /// initializer like that of an assembly built with the type registry generator
+    /// </summary>
+    private static MemoryStream EmitAssembly(string name, ModuleInitializer moduleInitializer)
     {
         var assembly = new PersistedAssemblyBuilder(new AssemblyName(name), typeof(object).Assembly);
-        assembly.SetCustomAttribute(new CustomAttributeBuilder(
-            typeof(CompiledTypeRegistryAttribute).GetConstructor(Type.EmptyTypes)!, Array.Empty<object>()));
+
+        if (moduleInitializer != ModuleInitializer.None)
+            assembly.SetCustomAttribute(new CustomAttributeBuilder(
+                typeof(CompiledTypeRegistryAttribute).GetConstructor(Type.EmptyTypes)!, Array.Empty<object>()));
 
         var module = assembly.DefineDynamicModule(name);
         var marker = module.DefineType("RegistryTest.Marker",
             TypeAttributes.Public | TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.Class);
         marker.CreateType();
 
+        if (moduleInitializer != ModuleInitializer.None)
+            EmitModuleInitializer(module, marker, moduleInitializer == ModuleInitializer.Throws);
+
+        module.CreateGlobalFunctions();
+
+        var stream = new MemoryStream();
+        assembly.Save(stream);
+        stream.Position = 0;
+        return stream;
+    }
+
+    private static void EmitModuleInitializer(ModuleBuilder module, Type marker, bool throws)
+    {
         var getTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!;
 
         var getTypes = module.DefineGlobalMethod("GetTypes", MethodAttributes.Public | MethodAttributes.Static,
@@ -580,31 +668,23 @@ public class CompiledTypeRegistryTests
             MethodAttributes.RTSpecialName, typeof(void), Type.EmptyTypes);
         il = moduleInitializer.GetILGenerator();
 
-        if (moduleInitializerFails)
+        if (throws)
         {
             il.Emit(OpCodes.Ldstr, "Module initializer failed for the test");
             il.Emit(OpCodes.Newobj, typeof(InvalidOperationException).GetConstructor(new[] { typeof(string) })!);
             il.Emit(OpCodes.Throw);
-        }
-        else
-        {
-            // CompiledTypeRegistry.Register(typeof(Marker).Assembly, GetTypes)
-            il.Emit(OpCodes.Ldtoken, marker);
-            il.Emit(OpCodes.Call, getTypeFromHandle);
-            il.Emit(OpCodes.Callvirt, typeof(Type).GetProperty(nameof(Type.Assembly))!.GetMethod!);
-            il.Emit(OpCodes.Ldnull);
-            il.Emit(OpCodes.Ldftn, getTypes);
-            il.Emit(OpCodes.Newobj, typeof(Func<Type[]>).GetConstructor(new[] { typeof(object), typeof(IntPtr) })!);
-            il.Emit(OpCodes.Call, typeof(CompiledTypeRegistry).GetMethod(nameof(CompiledTypeRegistry.Register))!);
-            il.Emit(OpCodes.Ret);
+            return;
         }
 
-        module.CreateGlobalFunctions();
-
-        var stream = new MemoryStream();
-        assembly.Save(stream);
-        stream.Position = 0;
-        return stream;
+        // CompiledTypeRegistry.Register(typeof(Marker).Assembly, GetTypes)
+        il.Emit(OpCodes.Ldtoken, marker);
+        il.Emit(OpCodes.Call, getTypeFromHandle);
+        il.Emit(OpCodes.Callvirt, typeof(Type).GetProperty(nameof(Type.Assembly))!.GetMethod!);
+        il.Emit(OpCodes.Ldnull);
+        il.Emit(OpCodes.Ldftn, getTypes);
+        il.Emit(OpCodes.Newobj, typeof(Func<Type[]>).GetConstructor(new[] { typeof(object), typeof(IntPtr) })!);
+        il.Emit(OpCodes.Call, typeof(CompiledTypeRegistry).GetMethod(nameof(CompiledTypeRegistry.Register))!);
+        il.Emit(OpCodes.Ret);
     }
 
     [Test]
