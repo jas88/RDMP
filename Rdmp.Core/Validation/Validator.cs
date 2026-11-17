@@ -233,11 +233,18 @@ public class Validator
 
     /// <summary>
     /// Returns the classes which can appear in the XML of a Validator (constraints and prediction rules), which its
-    /// XmlSerializer must be told about.  <see cref="MEF"/> finds them (in the compiled type registry) for the current
-    /// context, in the order it lists Types: assembly load order, then metadata order.
+    /// XmlSerializer must be told about.  <see cref="MEF"/> finds them (in the compiled type registry), in the order it lists
+    /// Types: assembly load order, then metadata order.  Only Types of assemblies in the current context or the default one
+    /// are used, since the serializer is for the current context (MEF's Types include those of any context loaded before
+    /// it was first used).
     /// </summary>
-    private static List<Type> RefreshExtraTypes() =>
-        MEF.GetAllTypes().Where(static type =>
+    private static List<Type> RefreshExtraTypes()
+    {
+        var current = AssemblyLoadContext.CurrentContextualReflectionContext ?? AssemblyLoadContext.Default;
+
+        return MEF.GetAllTypes().Where(type =>
+            IsInContext(type, current)
+            &&
             (typeof(IConstraint).IsAssignableFrom(type) ||
              typeof(PredictionRule).IsAssignableFrom(type))
             &&
@@ -247,6 +254,13 @@ public class Validator
             &&
             type.IsClass
         ).DistinctBy(static t => t.FullName).ToList();
+    }
+
+    private static bool IsInContext(Type type, AssemblyLoadContext current)
+    {
+        var context = AssemblyLoadContext.GetLoadContext(type.Assembly);
+        return context == current || context == AssemblyLoadContext.Default;
+    }
 
     public static List<Type> GetExtraTypes()
     {
