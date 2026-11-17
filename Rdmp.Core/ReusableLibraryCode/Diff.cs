@@ -23,9 +23,9 @@ public static partial class Diff
     /// One change between two texts: <see cref="deletedA"/> lines of the first text, starting at line
     /// <see cref="StartA"/>, are replaced by <see cref="insertedB"/> lines of the second text, starting at line
     /// <see cref="StartB"/>. Line numbers start at 0.
-    /// <para>Either count can be 0. For a pure insertion <see cref="StartA"/> is the line of the first text that the new
-    /// lines go before (the number of lines when they go at the end). For a pure deletion <see cref="StartB"/> is the
-    /// line of the second text that follows the place where the lines were removed.</para>
+    /// <para>One of the two counts can be 0, but never both. For a pure insertion <see cref="StartA"/> is the line of the
+    /// first text that the new lines go before (the number of lines when they go at the end). For a pure deletion
+    /// <see cref="StartB"/> is the line of the second text that follows the place where the lines were removed.</para>
     /// </summary>
     public readonly struct Item
     {
@@ -75,6 +75,9 @@ public static partial class Diff
     /// <para>The changes cover as few lines as possible. The lines that both texts start with, and then the lines that
     /// both end with, are never part of a change. Lines that are not part of any change pair up in order between the
     /// two texts, and two changes are always separated by at least one such line.</para>
+    /// <para>When equal lines make several such results possible, a run of deleted or inserted lines is moved over the
+    /// equal lines next to it to where it joins a change in the other text, so that an edited line next to a copy of
+    /// its old content is one change. A run that cannot join one goes as far down as it can.</para>
     /// </summary>
     /// <param name="textA">The first (before) text</param>
     /// <param name="textB">The second (after) text</param>

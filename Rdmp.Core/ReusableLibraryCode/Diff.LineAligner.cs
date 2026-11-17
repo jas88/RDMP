@@ -19,14 +19,23 @@ public static partial class Diff
     /// <para>Lines that both texts start with, then lines that both end with, are kept without searching. Of the lines
     /// left in the middle, those found only in one text can never be kept, so the search runs on the others: the search
     /// lines. It splits the problem at a middle snake (Myers section 4b) and recurses on the two halves.</para>
+    /// <para>The lines in the middle start out changed, and the search marks the ones it keeps. The runs of changed lines
+    /// are then moved over equal lines (see <see cref="SlideRuns"/>) before the changes are read off.</para>
     /// </summary>
     private sealed class LineAligner
     {
-        private readonly List<Item> _changes = new();
+        // Line numbers of the two whole texts
+        private readonly int[] _linesA;
+        private readonly int[] _linesB;
 
-        // Where the lines that both texts end with begin
+        // The lines that both texts start with end at _start, and the lines that both end with begin at _endA and _endB
+        private readonly int _start;
         private readonly int _endA;
         private readonly int _endB;
+
+        // Which lines of the first text are deleted and which lines of the second are inserted
+        private readonly bool[] _changedA;
+        private readonly bool[] _changedB;
 
         // The search lines: _keysA[i] is the number of line _indexA[i] of the first text, and the same for B
         private readonly int[] _keysA;
@@ -39,16 +48,16 @@ public static partial class Diff
         private readonly int[] _backward;
         private readonly int _offset;
 
-        // The first line of each text after the last pair of lines kept so far
-        private int _nextA;
-        private int _nextB;
-
         public LineAligner(int[] linesA, int[] linesB, int keyCount)
         {
+            _linesA = linesA;
+            _linesB = linesB;
+
             var start = 0;
             while (start < linesA.Length && start < linesB.Length && linesA[start] == linesB[start])
                 start++;
 
+            _start = start;
             _endA = linesA.Length;
             _endB = linesB.Length;
             while (_endA > start && _endB > start && linesA[_endA - 1] == linesB[_endB - 1])
@@ -57,8 +66,10 @@ public static partial class Diff
                 _endB--;
             }
 
-            _nextA = start;
-            _nextB = start;
+            _changedA = new bool[linesA.Length];
+            _changedB = new bool[linesB.Length];
+            Array.Fill(_changedA, true, start, _endA - start);
+            Array.Fill(_changedB, true, start, _endB - start);
 
             // Bit 1 set: the line occurs in the middle of the first text, bit 2: in the middle of the second
             var occurs = new byte[keyCount];
@@ -97,10 +108,10 @@ public static partial class Diff
         {
             Align(0, _keysA.Length, 0, _keysB.Length);
 
-            // Whatever has not been kept before the common end is the last change
-            AddChangeBefore(_endA, _endB);
+            SlideRuns(_linesA, _changedA, _start, _endA, ChangedBetweenKeptLines(_changedB));
+            SlideRuns(_linesB, _changedB, _start, _endB, ChangedBetweenKeptLines(_changedA));
 
-            return _changes.ToArray();
+            return ReadChanges();
         }
 
         /// <summary>
@@ -262,23 +273,161 @@ public static partial class Diff
         {
             for (var i = 0; i < length; i++)
             {
-                var lineA = _indexA[x + i];
-                var lineB = _indexB[y + i];
-
-                AddChangeBefore(lineA, lineB);
-                _nextA = lineA + 1;
-                _nextB = lineB + 1;
+                _changedA[_indexA[x + i]] = false;
+                _changedB[_indexB[y + i]] = false;
             }
         }
 
         /// <summary>
-        /// Adds a change for the lines from the last kept pair up to (not including) line <paramref name="lineA"/> of the
-        /// first text and line <paramref name="lineB"/> of the second, if there are any
+        /// Returns, for each r from 0 to the number of kept lines in <paramref name="changed"/>, whether the text has a
+        /// changed line between its kept lines r - 1 and r (before the first kept line when r is 0, and after the last
+        /// one when r is the number of kept lines)
         /// </summary>
-        private void AddChangeBefore(int lineA, int lineB)
+        private static bool[] ChangedBetweenKeptLines(bool[] changed)
         {
-            if (lineA > _nextA || lineB > _nextB)
-                _changes.Add(new Item(_nextA, lineA - _nextA, _nextB, lineB - _nextB));
+            var keptCount = 0;
+            foreach (var isChanged in changed)
+                if (!isChanged)
+                    keptCount++;
+
+            var result = new bool[keptCount + 1];
+            var kept = 0;
+            foreach (var isChanged in changed)
+            {
+                if (isChanged)
+                    result[kept] = true;
+                else
+                    kept++;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Moves each run of changed lines of one text over the equal lines next to it: to the lowest place where it joins
+        /// a change of the other text between the same two kept lines, or else as far down as it can go. Runs that meet
+        /// become one run. GNU diff and git tidy their results in the same way.
+        /// <para>Each move swaps a kept line for an equal changed line at the other end of the run, so the kept lines read
+        /// the same and the number of changed lines does not change: the result is still a shortest edit script. Runs stay
+        /// within <c>[lo, hi)</c>, so the lines that both texts start and end with are never changed.</para>
+        /// </summary>
+        /// <param name="lines">Line numbers of the text, from <see cref="KeyLines"/></param>
+        /// <param name="changed">Which lines of the text are changed, updated in place</param>
+        /// <param name="lo">The first line that can be changed</param>
+        /// <param name="hi">The line after the last one that can be changed</param>
+        /// <param name="otherChanged">For the other text, from <see cref="ChangedBetweenKeptLines"/></param>
+        private static void SlideRuns(int[] lines, bool[] changed, int lo, int hi, bool[] otherChanged)
+        {
+            // The lines before lo are all kept
+            var kept = lo;
+            var i = lo;
+
+            while (i < hi)
+            {
+                if (!changed[i])
+                {
+                    kept++;
+                    i++;
+                    continue;
+                }
+
+                var end = i + 1;
+                while (end < hi && changed[end])
+                    end++;
+
+                (i, kept) = PlaceRun(lines, changed, lo, hi, otherChanged, i, end, kept);
+            }
+        }
+
+        /// <summary>
+        /// Moves the run of changed lines <c>[start, end)</c>, which has <paramref name="kept"/> kept lines before it, as
+        /// described on <see cref="SlideRuns"/>
+        /// </summary>
+        /// <returns>The end of the run where it is placed, and the number of kept lines before it there</returns>
+        private static (int End, int Kept) PlaceRun(int[] lines, bool[] changed, int lo, int hi, bool[] otherChanged,
+            int start, int end, int kept)
+        {
+            // Slide to the top and then to the bottom of the equal lines around the run, joining the runs it meets, until
+            // it stops growing
+            int length;
+            int topKept;
+            do
+            {
+                length = end - start;
+
+                // Up, while the kept line above is equal to the last changed line, which becomes kept instead
+                while (start > lo && lines[start - 1] == lines[end - 1])
+                {
+                    changed[--start] = true;
+                    changed[--end] = false;
+                    kept--;
+
+                    while (start > lo && changed[start - 1])
+                        start--;
+                }
+
+                topKept = kept;
+
+                // Down, while the kept line below is equal to the first changed line
+                while (end < hi && lines[start] == lines[end])
+                {
+                    changed[start++] = false;
+                    changed[end++] = true;
+                    kept++;
+
+                    while (end < hi && changed[end])
+                        end++;
+                }
+            }
+            while (end - start != length);
+
+            // The run can sit anywhere from topKept to kept kept lines down without meeting another run. Go back up to the
+            // lowest of those places where the other text has a change between the same two kept lines, if there is one
+            for (var target = kept; target >= topKept; target--)
+            {
+                if (!otherChanged[target])
+                    continue;
+
+                for (; kept > target; kept--)
+                {
+                    changed[--start] = true;
+                    changed[--end] = false;
+                }
+
+                break;
+            }
+
+            return (end, kept);
+        }
+
+        /// <summary>
+        /// Reads the changes off the changed lines: the changed lines between two pairs of kept lines are one change
+        /// </summary>
+        private Item[] ReadChanges()
+        {
+            var changes = new List<Item>();
+            var a = 0;
+            var b = 0;
+
+            while (true)
+            {
+                var startA = a;
+                var startB = b;
+                while (a < _changedA.Length && _changedA[a])
+                    a++;
+                while (b < _changedB.Length && _changedB[b])
+                    b++;
+
+                if (a > startA || b > startB)
+                    changes.Add(new Item(startA, a - startA, startB, b - startB));
+
+                // Lines a and b are now a pair of kept lines, unless the texts have ended
+                if (a == _changedA.Length || b == _changedB.Length)
+                    return changes.ToArray();
+
+                a++;
+                b++;
+            }
         }
     }
 }

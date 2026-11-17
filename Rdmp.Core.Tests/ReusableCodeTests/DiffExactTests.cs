@@ -13,8 +13,9 @@ using Hunk = (int StartA, int deletedA, int StartB, int insertedB);
 namespace Rdmp.Core.Tests.ReusableCodeTests;
 
 /// <summary>
-/// Tests that <see cref="Diff.DiffText"/> gives exactly the expected changes, for inputs where only one result follows
-/// all the rules (see <see cref="DiffTestHelpers.FindViolations"/>), and that it rejects null
+/// Tests that <see cref="Diff.DiffText"/> gives exactly the expected changes: for inputs where only one result follows
+/// all the rules (see <see cref="DiffTestHelpers.FindViolations"/>), and for edits next to equal lines, where it picks
+/// the result that shows the edit as one change. Also tests that it rejects null.
 /// </summary>
 public class DiffExactTests
 {
@@ -111,6 +112,32 @@ public class DiffExactTests
 
     [TestCaseSource(nameof(ExactCases))]
     public void DiffText_GivesTheOnlyMinimalResult(string before, string after, Hunk[] expected)
+    {
+        var items = Diff.DiffText(before, after);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(AsHunks(items), Is.EqualTo(expected));
+            Assert.That(FindViolations(before, after, items), Is.Empty);
+        }
+    }
+
+    private static IEnumerable<TestCaseData> EditNextToEqualLineCases()
+    {
+        // A line is edited next to a copy of its old content, and another change stops the common end from deciding.
+        // Deleting the copy and inserting the edited line would be just as short, but harder to read.
+        yield return Case("J01", "x\nGO\nGO\ny\nz", "x\nGO \nGO\ny\nz2", (1, 1, 1, 1), (4, 1, 4, 1));
+
+        // The same the other way round, with the copy in the second text
+        yield return Case("J02", "x\nGO \nGO\ny\nz", "x\nGO\nGO\ny\nz2", (1, 1, 1, 1), (4, 1, 4, 1));
+
+        // A blank line before another blank line gains a trailing space
+        yield return Case("J03", "SELECT\n  [t].[chi]\n\n\nFROM [t]\nWHERE [t].[x] = 1",
+            "SELECT\n  [t].[chi]\n \n\nFROM [t]\nWHERE [t].[x] = 2", (2, 1, 2, 1), (5, 1, 5, 1));
+    }
+
+    [TestCaseSource(nameof(EditNextToEqualLineCases))]
+    public void DiffText_EditNextToEqualLine_IsOneChange(string before, string after, Hunk[] expected)
     {
         var items = Diff.DiffText(before, after);
 
