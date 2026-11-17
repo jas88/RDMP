@@ -1,16 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <PackageId>Rdmp.Tests.Common</PackageId>
-        <version>$(version)</version>
         <title>Rdmp.Tests.Common</title>
         <authors>Health Informatics Centre, University of Dundee</authors>
-        <owners>Health Informatics Centre, University of Dundee</owners>
-        <licenseUrl>https://raw.githubusercontent.com/HicServices/RDMP/master/LICENSE</licenseUrl>
-        <projectUrl>https://github.com/HicServices/RDMP</projectUrl>
-        <iconUrl>
-            https://raw.githubusercontent.com/HicServices/RDMP/master/Application/ResearchDataManagementPlatform/Icon/main.png</iconUrl>
-        <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/jas88/RDMP</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/jas88/RDMP</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageIcon>main.png</PackageIcon>
         <description>Package for writing plugin tests</description>
         <copyright>Copyright 2018-2019</copyright>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -23,6 +20,7 @@
     </PropertyGroup>
     <ItemGroup>
         <None Remove="TestDatabases.txt" />
+        <None Include="..\Application\ResearchDataManagementPlatform\Icon\main.png" Pack="true" PackagePath="\" Visible="false" />
     </ItemGroup>
     <ItemGroup>
         <Compile Include="..\SharedAssemblyInfo.cs" Link="SharedAssemblyInfo.cs" />
