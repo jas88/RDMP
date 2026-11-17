@@ -37,9 +37,17 @@ internal static partial class PrimaryKeyDataTypes
 
     /// <summary>
     /// The most bytes a character takes in utf8mb4, the default character set of MySQL 8 and MariaDB 11.6.  The
-    /// character set of a column is not known before it is created, so this is assumed for every string column
+    /// character set of a column is not known before it is created, so this is assumed for every string column except
+    /// those of the national types (see <see cref="MySqlNationalBytesPerCharacter"/>)
     /// </summary>
-    private const int MySqlMaxBytesPerCharacter = 4;
+    private const int MySqlBytesPerCharacter = 4;
+
+    /// <summary>
+    /// The most bytes a character takes in utf8mb3, the character set of the national character types of MySQL and
+    /// MariaDB (nchar, nvarchar, national char, national varchar, nchar varchar etc.) whatever the default character set.
+    /// MySQL warns that these will become utf8mb4 in a future release, which would make them as wide as the other types
+    /// </summary>
+    private const int MySqlNationalBytesPerCharacter = 3;
 
     /// <summary>
     /// Returns why a column of type <paramref name="sqlType"/> cannot be part of a primary key on
@@ -104,13 +112,20 @@ internal static partial class PrimaryKeyDataTypes
 
         var width = QuerySyntaxHelperFactory.Create(DatabaseType.MySql).TypeTranslater.GetLengthIfString(sqlType);
 
+        // nchar, nvarchar and the types spelt "national ..." or "nchar ..." (e.g. "nchar varchar")
+        var national = name is "nchar" or "nvarchar" or "national";
+        var bytesPerCharacter = national ? MySqlNationalBytesPerCharacter : MySqlBytesPerCharacter;
+
         // -1 is not a string type and int.MaxValue a string type FAnsi has no width for (e.g. enum and set, as the
         // unbounded types have been refused already)
-        if (width <= 0 || width == int.MaxValue || (long)width * MySqlMaxBytesPerCharacter <= room)
+        if (width <= 0 || width == int.MaxValue || (long)width * bytesPerCharacter <= room)
             return null;
 
-        return
-            $"MySQL limits a primary key to {MySqlMaxKeyBytes} bytes and a character can take {MySqlMaxBytesPerCharacter} bytes (in utf8mb4, MySQL's default character set), which leaves room for at most varchar({room / MySqlMaxBytesPerCharacter}){besideOtherColumns}";
+        var widest = room / bytesPerCharacter;
+
+        return national
+            ? $"MySQL limits a primary key to {MySqlMaxKeyBytes} bytes and a character of a national type takes {bytesPerCharacter} bytes (in utf8mb3), which leaves room for at most nvarchar({widest}){besideOtherColumns}"
+            : $"MySQL limits a primary key to {MySqlMaxKeyBytes} bytes and a character can take {bytesPerCharacter} bytes (in utf8mb4, MySQL's default character set), which leaves room for at most varchar({widest}){besideOtherColumns}";
     }
 
     /// <summary>

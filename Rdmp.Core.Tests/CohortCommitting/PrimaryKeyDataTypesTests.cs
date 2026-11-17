@@ -97,13 +97,14 @@ public class PrimaryKeyDataTypesTests : UnitTests
         Assert.That(PrimaryKeyDataTypes.GetReasonCannotBePrimaryKey(databaseType, sqlType), Is.Null);
 
     /// <summary>
-    /// MySQL counts 4 bytes a character (utf8mb4) for every string column in a key, and the whole key must fit in 3072 bytes
+    /// MySQL counts up to 4 bytes a character (utf8mb4) for a string column in a key, and the whole key must fit in 3072
+    /// bytes
     /// </summary>
     [TestCase("varchar(767)", 4, true)]
     [TestCase("varchar(768)", 4, false)]
     [TestCase("VARCHAR(768)", 0, true)]
     [TestCase("varchar(769)", 0, false)]
-    [TestCase("nvarchar(768)", 4, false)]
+    [TestCase("character varying(768)", 4, false)]
     [TestCase("varchar(4000)", 4, false)]
     [TestCase("char(255)", 4, true)]
     public void GetReasonCannotBePrimaryKey_MySqlKeyLengthLimit(string sqlType, int otherKeyColumnBytes,
@@ -114,8 +115,33 @@ public class PrimaryKeyDataTypesTests : UnitTests
         if (expectCanBeKeyed)
             Assert.That(reason, Is.Null);
         else
-            Assert.That(reason, Does.Contain("3072 bytes")
+            Assert.That(reason, Does.Contain("3072 bytes").And.Contain("utf8mb4")
                 .And.Contain($"at most varchar({(3072 - otherKeyColumnBytes) / 4})"));
+    }
+
+    /// <summary>
+    /// The national character types of MySQL are utf8mb3, which takes up to 3 bytes a character
+    /// </summary>
+    [TestCase("nvarchar(1022)", 4, true)]
+    [TestCase("nvarchar(1023)", 4, false)]
+    [TestCase("NVARCHAR(1024)", 0, true)]
+    [TestCase("nvarchar(1025)", 0, false)]
+    [TestCase("national varchar(1022)", 4, true)]
+    [TestCase("national varchar(1023)", 4, false)]
+    [TestCase("national char varying(1023)", 4, false)]
+    [TestCase("nchar varchar(1023)", 4, false)]
+    [TestCase("nchar(255)", 4, true)]
+    [TestCase("national char(255)", 4, true)]
+    public void GetReasonCannotBePrimaryKey_MySqlKeyLengthLimit_National(string sqlType, int otherKeyColumnBytes,
+        bool expectCanBeKeyed)
+    {
+        var reason = PrimaryKeyDataTypes.GetReasonCannotBePrimaryKey(DatabaseType.MySql, sqlType, otherKeyColumnBytes);
+
+        if (expectCanBeKeyed)
+            Assert.That(reason, Is.Null);
+        else
+            Assert.That(reason, Does.Contain("3072 bytes").And.Contain("utf8mb3")
+                .And.Contain($"at most nvarchar({(3072 - otherKeyColumnBytes) / 3})"));
     }
 
     /// <summary>
@@ -177,6 +203,7 @@ public class PrimaryKeyDataTypesTests : UnitTests
     [TestCase(DatabaseType.MySql, "text")]
     [TestCase(DatabaseType.MySql, "varchar(4000)")]
     [TestCase(DatabaseType.MySql, "varchar(768)")]
+    [TestCase(DatabaseType.MySql, "nvarchar(1023)")]
     [TestCase(DatabaseType.MySql, "varbinary(3069)")]
     [TestCase(DatabaseType.Oracle, "CLOB")]
     [TestCase(DatabaseType.PostgreSql, "json")]
@@ -192,8 +219,8 @@ public class PrimaryKeyDataTypesTests : UnitTests
         var ex = Assert.Throws<Exception>(() =>
             wizard.CreateDatabase(new PrivateIdentifierPrototype("chi", sqlType), ThrowImmediatelyCheckNotifier.Quiet));
 
-        // the cohort definition id (an int) is the rest of the key, which is why varchar(768) and varbinary(3069) are too
-        // wide on MySQL
+        // the cohort definition id (an int) is the rest of the key, which is why varchar(768), nvarchar(1023) and
+        // varbinary(3069) are too wide on MySQL
         var reason = PrimaryKeyDataTypes.GetReasonCannotBePrimaryKey(databaseType, sqlType, 4);
 
         Assert.That(ex.Message, Is.EqualTo(
