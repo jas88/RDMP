@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bring the third-party licences that the Windows client shows (LIBRARYLICENSES) up to date with what the RDMP releases include, so users are asked to accept the licence again. Libraries RDMP no longer uses are removed (MySql.Data, NUnit, RhinoMocks, GraphX, QuickGraphPCL, DocX, AutocompleteMenu-ScintillaNET and Mono.Reflection). The libraries, native code and embedded code and data which were missing are added, including MySqlConnector, Npgsql, Microsoft.Data.SqlClient, SQLite, FAnsiSql, ExcelDataReader, DocumentFormat.OpenXml, LibArchive.Net and the native libraries in it, the .NET runtime, the British English spell checking dictionary and the diff code. SSH.NET is listed under the MIT licence, ObjectListView under its author, the spell checker as WeCantSpell.Hunspell and the Oracle driver with its current licence terms
 - The command line releases (the win-x64 and linux-x64 archives and the Docker image) include RDMP's licence (LICENSE) and the third-party licences (LIBRARYLICENSES) next to the rdmp executable
 - The NuGet packages are published as `Rdmp.Core`, `Rdmp.UI` and `Rdmp.Tests.Common`, replacing HIC.RDMP.Plugin, HIC.RDMP.Plugin.UI and HIC.RDMP.Plugin.Test
+- The command line Docker image is published as `ghcr.io/jas88/rdmpcli`, replacing `ghcr.io/hicservices/rdmpcli`
 
 
 ## [9.0.1] - 2025-07-31
