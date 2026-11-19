@@ -22,7 +22,7 @@
 
 <a name="binary"></a>
 # RDMP Binary and Documentation
-The Research Data Management Platform Binaries are available on [Releases section of Github](https://github.com/HicServices/RDMP/releases).  In order to use RDMP you will also need access to a Microsoft Sql Server (or Sql Express).  After completing the setup process the main UI will launch.
+The Research Data Management Platform Binaries are available on [Releases section of Github](https://github.com/jas88/RDMP/releases).  In order to use RDMP you will also need access to a Microsoft Sql Server (or Sql Express).  After completing the setup process the main UI will launch.
 
 From here you can access several resources that help understand RDMP classes / patterns etc.  
 
@@ -43,12 +43,12 @@ Fourthly there is the Tutorial system `Help=>Tutorials` which cover the basics f
 
 Rdmp plugins must be packaged as [NuGet packages](https://en.wikipedia.org/wiki/NuGet) (e.g. MyPlugin.0.0.1.nupkg).
 
-Create a new project and add a reference to the nuget package [HIC.RDMP.Plugin](https://www.nuget.org/packages/HIC.RDMP.Plugin/)
+Create a new project and add a reference to the nuget package `Rdmp.Core`
 
 ```
 dotnet new classlib -n MyPlugin -o ./MyPlugin
 cd ./MyPlugin
-dotnet add package HIC.RDMP.Plugin
+dotnet add package Rdmp.Core
 ```
 
 Add the following classes:
@@ -104,7 +104,7 @@ Create a nuspec file called `MyPlugin.nuspec` that describes your plugin:
         <description>My RDMP Plugin</description>
         <dependencies>
             <!-- Make sure this matches your running RDMP major/minor versions-->
-            <dependency id="HIC.RDMP.Plugin" version="7.0" />
+            <dependency id="Rdmp.Core" version="9.0" />
         </dependencies>
     </metadata>
     <files>
@@ -124,10 +124,10 @@ This should produce a file called `MyPlugin.0.0.1.nupkg`.  Open RDMP and click t
 
  ![Adding a plugin via the RDMP user interface](Images/AddPluginContextMenu.png)
 
-Make sure that you have listed the correct RDMP Major/Minor version in the nuspec file (7.0 in the xml example above).  Otherwise when you add it you will get an error:
+Make sure that you have listed the correct RDMP Major/Minor version in the nuspec file (9.0 in the xml example above).  Otherwise when you add it you will get an error:
 
 ```
-Plugin version 0.0.1 is incompatible with current running version of RDMP (7.0.0).
+Plugin version 0.0.1 is incompatible with current running version of RDMP (9.0.2).
 ```
 
 Restart RDMP and right click a Catalogue
@@ -500,7 +500,7 @@ dotnet add reference ../MyPlugin/MyPlugin.csproj
 References to the following NuGet packages:
 
 ```
-dotnet add package HIC.RDMP.Plugin.Test
+dotnet add package Rdmp.Tests.Common
 dotnet add package Microsoft.NET.Test.Sdk
 dotnet add package NUnit
 dotnet add package NUnit3TestAdapter
@@ -1267,7 +1267,7 @@ RDMP does support graphical plugins for the RDMP windows client application.  Th
 ```
 dotnet new winformslib -n MyPluginUI -o ./MyPluginUI
 cd ./MyPluginUI
-dotnet add package HIC.RDMP.Plugin.UI
+dotnet add package Rdmp.UI
 ```
 
 Add a new user control using the Visual Studio Forms Designer

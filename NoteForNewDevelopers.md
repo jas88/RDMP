@@ -134,7 +134,7 @@ git push --tags
 
 This should push a new release to both `NuGet` and `GitHub Releases`.  If you have a problem with the build CI, you can [delete the local AND remote tag](https://devconnected.com/how-to-delete-local-and-remote-tags-on-git/) then fix the problem then re-tag.
 
-Once the release is built and you have tested the binary in [GitHub Releases](https://github.com/HicServices/RDMP/releases) you can make it live by updating [rdmp-client.xml](./rdmp-client.xml)
+Once the release is built and you have tested the binary in [GitHub Releases](https://github.com/jas88/RDMP/releases) you can make it live by updating [rdmp-client.xml](./rdmp-client.xml)
 
 - Update the `version` tag
 - Update the `url` tag to the new version

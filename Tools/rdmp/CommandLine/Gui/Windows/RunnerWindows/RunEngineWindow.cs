@@ -174,7 +174,9 @@ internal class RunEngineWindow<T> : Window, IListDataSource where T : RDMPComman
         }
 
         var cmd = new ExecuteCommandGenerateRunCommand(BasicActivator, commandGetter);
-        var args = cmd.GetCommandText(true);
+
+        // This program only runs once the licenses have been accepted, and the engine it starts cannot ask as its output is captured
+        var args = $"{cmd.GetCommandText(true)} --{LicenseAcceptance.AcceptOptionName}";
 
         process = new Process
         {

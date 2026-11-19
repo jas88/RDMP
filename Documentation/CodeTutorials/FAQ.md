@@ -102,7 +102,7 @@ Yes, read all about it in [CommandLine](./RdmpCommandLine.md)
 
 The [RDMP CLI](./RdmpCommandLine.md) runs natively under linux.
 
-Download the [RDMP CLI release binary for linux-x64](https://github.com/HicServices/RDMP/releases)
+Download the [RDMP CLI release binary for linux-x64](https://github.com/jas88/RDMP/releases)
 
 For example to create test databases run:
 
@@ -132,9 +132,9 @@ In addition core and plugin commands can be accessed through the cmd verb e.g.
 <a name="api"></a>
 ### Does RDMP have an API?
 Yes, RDMP can be controlled programmatically through its API which is available as 3 NuGet packages 
-- [HIC.RDMP.Plugin](https://www.nuget.org/packages/HIC.RDMP.Plugin): All core objects, engines etc
-- [HIC.RDMP.Plugin.UI](https://www.nuget.org/packages/HIC.RDMP.Plugin.UI): All definitions for writing user interface plugins that run in the main RDMP client application.
-- [HIC.RDMP.Plugin.Test](https://www.nuget.org/packages/HIC.RDMP.Plugin.Test/): Classes to simplify writing Unit/Integration Tests for RDMP plugins
+- `Rdmp.Core`: All core objects, engines etc
+- `Rdmp.UI`: All definitions for writing user interface plugins that run in the main RDMP client application.
+- `Rdmp.Tests.Common`: Classes to simplify writing Unit/Integration Tests for RDMP plugins
 
 <a name="plugins"></a>
 ### Does RDMP Support Plugins?
@@ -158,7 +158,7 @@ During application startup (following installing an update) you will be prompted
 
 ### Updating the CLI
 
-Download the [latest release binary](https://github.com/HicServices/RDMP/releases) (e.g. rdmp-cli-win-x64.zip) and unzip into a new empty folder (e.g. c:\temp\latest).  Locate your current CLI deployment folder (e.g. c:\rdmpcli\).
+Download the [latest release binary](https://github.com/jas88/RDMP/releases) (e.g. rdmp-9.0.2-cli-win-x64.zip) and unzip into a new empty folder (e.g. c:\temp\latest).  Locate your current CLI deployment folder (e.g. c:\rdmpcli\).
 
 Copy all files from the new release into your current CLI directory __EXCEPT__:
 
@@ -618,7 +618,7 @@ There are 4 ways to export/import dataset descriptions from RDMP
 
 #### Metadata Report
 
-This report is accessed through the 'Reports' menu.  It uses [DocX](https://github.com/xceedsoftware/DocX) to write a Microsoft Word file containing the dataset description, row count, unique patient count as well as any graphs that are marked extractable.
+This report is accessed through the 'Reports' menu.  It uses [DocumentFormat.OpenXml](https://github.com/dotnet/Open-XML-SDK) (the Open XML SDK) to write a Microsoft Word file containing the dataset description, row count, unique patient count as well as any graphs that are marked extractable.
 
 This report can be generated for a specific dataset only or all datasets.  A variant of this report is produced when performing a project extraction which shows only the subset of data extracted for the given project/cohort.
 
@@ -638,7 +638,7 @@ Share Definition files include JSON serialization of values and are not designed
 
 #### Dublin Core
 
-[Catalogue] descriptive metadata can be serialized into an xml file which follows the [Dublin Core guidelines]( http://dublincore.org/documents/dc-xml-guidelines/).  RDMP can load dataset descriptions from `<metadata>` `XElements` which follow this xmlns.
+[Catalogue] descriptive metadata can be serialized into an xml file which follows the [Dublin Core guidelines](https://www.dublincore.org/specifications/dublin-core/dc-xml-guidelines/).  RDMP can load dataset descriptions from `<metadata>` `XElements` which follow this xmlns.
 
 An example can be seen below:
 

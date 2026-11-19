@@ -7,9 +7,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using FAnsi.Discovery;
 using Rdmp.Core.ReusableLibraryCode.Checks;
+using Rdmp.Core.ReusableLibraryCode.Licenses;
 
 namespace Rdmp.Core.ReusableLibraryCode.Settings;
 
@@ -26,6 +29,20 @@ public static class UserSettings
     private static RDMPApplicationSettings AppSettings => Implementation.Value ??
                                                           throw new NotImplementedException(
                                                               "Isolated Storage does not work in this environment...");
+
+    /// <summary>
+    /// Settings which every RDMP program the user runs shares, unlike <see cref="AppSettings"/>.  Tests replace them, so that they never
+    /// change the settings of the user running them.
+    /// </summary>
+    internal static SharedUserSettings SharedSettings { get; set; } = SharedUserSettings.ForCurrentUser();
+
+    private const string LicenseAcceptedKey = "LicenseAccepted";
+
+    /// <summary>
+    /// The hash of the third party licenses which this version of RDMP includes
+    /// </summary>
+    private static readonly Lazy<string> CurrentLicenseHash =
+        new(static () => new License(License.ThirdPartyLicenses).GetHashOfLicense());
 
 
     public static bool UseLocalFileSystem
@@ -50,13 +67,128 @@ public static class UserSettings
     }
 
     /// <summary>
-    /// True if the user has accepted the open source license agreements for RDMP and
-    /// dependencies used in the software (i.e. MIT and GNU licenses).
+    /// The hash (see <see cref="License.GetHashOfLicense"/>) of the third party licenses (LIBRARYLICENSES) which the user last accepted
+    /// along with the license of RDMP, or null if they have not accepted them.  Unlike the other settings, which each RDMP program keeps
+    /// separately, this is stored in a folder of the user which every RDMP program shares, so accepting the licenses in the Windows client
+    /// or the rdmp command line counts for both.  A program which cannot write to that folder keeps the hash in its own settings instead.
     /// </summary>
     public static string LicenseAccepted
     {
-        get => AppSettings.GetValueOrDefault("LicenseAccepted", null);
-        set => AppSettings.AddOrUpdateValue("LicenseAccepted", value);
+        get => ChooseLicenseAccepted(SharedSettings.Get(LicenseAcceptedKey),
+            static () => ReadOwnSetting(static () => AppSettings.GetValueOrDefault(LicenseAcceptedKey, null)),
+            CurrentLicenseHash.Value);
+        set => RecordLicenseAccepted(value, SetSharedLicenseAccepted, SetOwnLicenseAccepted);
+    }
+
+    private static void SetSharedLicenseAccepted(string hash) => SharedSettings.Set(LicenseAcceptedKey, hash);
+
+    private static void SetOwnLicenseAccepted(string hash) => AppSettings.AddOrUpdateValue(LicenseAcceptedKey, hash);
+
+    /// <summary>
+    /// Returns the hash of the licenses which the user accepted, from what the shared settings and this program's own settings recorded
+    /// </summary>
+    /// <param name="shared">The hash recorded in the shared settings, or null</param>
+    /// <param name="readOwn">Reads the hash recorded in this program's own settings, or null.  It is only recorded there when the shared
+    /// settings could not be written, so it can be newer than the shared one.  It is not read if the shared settings have the current hash</param>
+    /// <param name="currentHash">The hash of the licenses which this version of RDMP includes</param>
+    /// <returns><paramref name="currentHash"/> if either recorded it, otherwise the hash which the shared settings or else this program's
+    /// own settings recorded</returns>
+    internal static string ChooseLicenseAccepted(string shared, Func<string> readOwn, string currentHash)
+    {
+        if (shared == currentHash)
+            return shared;
+
+        var own = readOwn();
+        return own == currentHash ? own : shared ?? own;
+    }
+
+    /// <summary>
+    /// Reads one of this program's own settings, treating settings which cannot be opened or read as having no value, so that they cannot
+    /// stop RDMP from starting.  Other errors are not hidden.
+    /// </summary>
+    /// <param name="read">Reads the setting</param>
+    /// <returns>The value, or null if the settings could not be read</returns>
+    internal static string ReadOwnSetting(Func<string> read)
+    {
+        try
+        {
+            return read();
+        }
+        catch (Exception e) when (IsStorageError(e))
+        {
+            NLog.LogManager.GetCurrentClassLogger().Warn(e, "Could not read this program's own settings, so ignoring them");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Returns true for the errors of settings which cannot be opened, read or written
+    /// </summary>
+    private static bool IsStorageError(Exception e) =>
+        e is IsolatedStorageException or IOException or UnauthorizedAccessException;
+
+    /// <summary>
+    /// Records the hash of the licenses which the user accepted in the shared settings and forgets this program's own copy, or records it
+    /// in this program's own settings if the shared settings cannot be written.  A null hash forgets the acceptance instead (see
+    /// <see cref="ForgetLicenseAccepted"/>).
+    /// </summary>
+    /// <param name="hash">The hash to record, or null to forget that the licenses were accepted</param>
+    /// <param name="setShared">Records a hash in the shared settings</param>
+    /// <param name="setOwn">Records a hash in this program's own settings</param>
+    internal static void RecordLicenseAccepted(string hash, Action<string> setShared, Action<string> setOwn)
+    {
+        if (hash == null)
+        {
+            ForgetLicenseAccepted(setShared, setOwn);
+            return;
+        }
+
+        try
+        {
+            setShared(hash);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // Throws if this program's own settings cannot be written either, so that the caller knows nothing was recorded
+            setOwn(hash);
+            return;
+        }
+
+        // Forget any hash which earlier versions, or a failed write to the shared settings, kept in this program's own settings.  The hash
+        // is recorded, so own settings which cannot be written must not stop RDMP
+        try
+        {
+            setOwn(null);
+        }
+        catch (Exception e) when (IsStorageError(e))
+        {
+            NLog.LogManager.GetCurrentClassLogger().Warn(e, "Could not remove the license acceptance from this program's own settings");
+        }
+    }
+
+    /// <summary>
+    /// Forgets that the licenses were accepted, in both this program's own settings and the shared settings.  Both are cleared even if one of
+    /// them fails, and then the failure is thrown: an acceptance which could not be removed would still count, so the caller must know.
+    /// </summary>
+    /// <param name="setShared">Records a hash in the shared settings</param>
+    /// <param name="setOwn">Records a hash in this program's own settings</param>
+    internal static void ForgetLicenseAccepted(Action<string> setShared, Action<string> setOwn)
+    {
+        Exception ownFailure = null;
+
+        try
+        {
+            setOwn(null);
+        }
+        catch (Exception e) when (IsStorageError(e))
+        {
+            ownFailure = e;
+        }
+
+        setShared(null);
+
+        if (ownFailure != null)
+            ExceptionDispatchInfo.Throw(ownFailure);
     }
 
     /// <summary>
@@ -616,6 +748,15 @@ public static class UserSettings
 
     public static void ClearUserSettings()
     {
-        AppSettings.Clear();
+        try
+        {
+            // Including the acceptance of the licenses, which is mostly in the shared settings.  A failure is thrown, as an acceptance
+            // which could not be removed would still count
+            ForgetLicenseAccepted(SetSharedLicenseAccepted, SetOwnLicenseAccepted);
+        }
+        finally
+        {
+            AppSettings.Clear();
+        }
     }
 }

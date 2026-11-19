@@ -1,328 +1,264 @@
-// Copyright (c) The University of Dundee 2018-2025
+// Copyright (c) The University of Dundee 2018-2026
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Rdmp.Core.Generators;
 
 /// <summary>
-/// Generates a compile-time type registry (FrozenDictionary) containing all types
-/// from all referenced assemblies. This eliminates runtime reflection overhead and
-/// assembly loading timing issues.
+/// Generates the compile time type registration of an RDMP assembly: a list of every Type declared in the assembly being
+/// compiled (classes, structs, records, interfaces, enums and delegates, generic or not, public or not, nested or not), which
+/// a module initializer hands to Rdmp.Core.Repositories.CompiledTypeRegistry so that MEF can find the Types without scanning
+/// the assembly with reflection.
+///
+/// <para>Only the assembly's own Types are listed, so a registration never refers to an assembly which is not deployed:
+/// each RDMP assembly runs this generator itself (it is referenced by every project in Directory.Build.props).  The Types
+/// are listed in the order in which the compiler writes them to metadata, which is the order reflection returns them in,
+/// so that MEF resolves short name clashes the same way whichever lists the Types.</para>
+///
+/// <para>Types which the compiler generates (closures, iterators, anonymous types etc.) have no symbols so are not listed.
+/// Nested Types which cannot be named from outside their containing Type (private, protected and private protected) are
+/// fetched with GetNestedType from the nearest containing Type which can be named, and file local Types by their metadata
+/// name.</para>
 /// </summary>
 [Generator]
-public class TypeRegistryGenerator : IIncrementalGenerator
+public sealed class TypeRegistryGenerator : IIncrementalGenerator
 {
+    /// <summary>
+    /// Metadata name of the Rdmp.Core class which the generated module initializer registers the Types with
+    /// </summary>
+    private const string RegistryMetadataName = "Rdmp.Core.Repositories.CompiledTypeRegistry";
+
+    /// <summary>
+    /// Metadata name of the assembly attribute which marks an assembly as having a generated registration
+    /// </summary>
+    private const string AttributeMetadataName = "Rdmp.Core.Repositories.CompiledTypeRegistryAttribute";
+
+    /// <summary>
+    /// Start of the name of the generated class (in <see cref="GeneratedNamespace"/>) which registers the Types.  The rest
+    /// is the assembly name, so that the class has a different full name in each assembly (an assembly which can see the
+    /// internals of another would otherwise see two)
+    /// </summary>
+    private const string GeneratedClassNamePrefix = "GeneratedTypeRegistration_";
+
+    private const string GeneratedNamespace = "Rdmp.Core.Repositories.Generated";
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Collect all types from the compilation
-        var typesProvider = context.CompilationProvider
-            .Select((compilation, _) =>
-            {
-                var types = new List<TypeInfo>();
-                var currentAssemblyName = compilation.AssemblyName;
+        // The output is a string, so later steps only run again when the list of Types changes
+        var source = context.CompilationProvider.Select(static (compilation, ct) => Generate(compilation, ct));
 
-                // Get types from current compilation (can include internal)
-                CollectTypes(compilation.Assembly, types, currentAssemblyName, includeInternal: true);
-
-                // Get types from all referenced assemblies (public only)
-                foreach (var reference in compilation.References)
-                {
-                    var symbol = compilation.GetAssemblyOrModuleSymbol(reference);
-                    if (symbol is IAssemblySymbol assemblySymbol)
-                    {
-                        CollectTypes(assemblySymbol, types, currentAssemblyName, includeInternal: false);
-                    }
-                }
-
-                return types;
-            });
-
-        // Generate the source with type indices
-        context.RegisterSourceOutput(typesProvider, (spc, types) =>
+        context.RegisterSourceOutput(source, static (spc, s) =>
         {
-            var source = GenerateTypeRegistry(types);
-            spc.AddSource("CompiledTypeRegistry.g.cs", SourceText.From(source, Encoding.UTF8));
-
-            // Generate interface indices
-            var indexSource = GenerateInterfaceIndices(types);
-            spc.AddSource("CompiledTypeRegistry.Indices.g.cs", SourceText.From(indexSource, Encoding.UTF8));
+            if (s != null)
+                spc.AddSource("GeneratedTypeRegistration.g.cs", SourceText.From(s, Encoding.UTF8));
         });
     }
 
-    private static void CollectTypes(IAssemblySymbol assembly, List<TypeInfo> types, string currentAssemblyName, bool includeInternal)
+    private static string Generate(Compilation compilation, CancellationToken ct)
     {
-        // Skip certain assemblies to reduce size.  DocumentFormat.OpenXml is also skipped because its thousands of
-        // element classes have generic names (Name, Body, Table...) which must not be found by short name lookups
-        // (keep in step with MEF.AssembliesExcludedFromTypeLookup)
-        var name = assembly.Name;
-        if (name.StartsWith("System.") ||
-            name.StartsWith("DocumentFormat.OpenXml") ||
-            name.StartsWith("Microsoft.") ||
-            name.StartsWith("netstandard") ||
-            name.StartsWith("mscorlib") ||
-            name.StartsWith("NUnit") ||
-            name.StartsWith("coverlet") ||
-            name.StartsWith("NSubstitute") ||
-            name == "CommandLine" ||
-            name.StartsWith("Spectre."))
-            return;
+        // Nothing to register with in an assembly which can see neither the registry nor its attribute (one which does
+        // not reference Rdmp.Core).  MEF only looks for Types in Rdmp.Core and the assemblies which reference it.
+        if (compilation.GetTypeByMetadataName(RegistryMetadataName) == null ||
+            compilation.GetTypeByMetadataName(AttributeMetadataName) == null)
+            return null;
 
-        CollectTypesFromNamespace(assembly.GlobalNamespace, types, includeInternal);
-    }
-
-    private static void CollectTypesFromNamespace(INamespaceSymbol ns, List<TypeInfo> types, bool includeInternal)
-    {
-        foreach (var member in ns.GetMembers())
-        {
-            if (member is INamespaceSymbol childNs)
-            {
-                CollectTypesFromNamespace(childNs, types, includeInternal);
-            }
-            else if (member is INamedTypeSymbol type && ShouldIncludeType(type, includeInternal))
-            {
-                // Use fully qualified name with global:: to avoid namespace conflicts
-                var fullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-                // Some types can't be referenced even with global:: (nested private types, etc)
-                // We'll validate this doesn't contain invalid characters
-                if (fullName.Contains("<PrivateImplementationDetails>") ||
-                    fullName.Contains("<<") ||
-                    fullName.Contains(">>"))
-                    return;
-
-                types.Add(new TypeInfo
-                {
-                    FullName = fullName,
-                    ShortName = type.Name,
-                    Namespace = type.ContainingNamespace?.ToDisplayString() ?? ""
-                });
-            }
-        }
-    }
-
-    private static bool ShouldIncludeType(INamedTypeSymbol type, bool includeInternal)
-    {
-        // Only include classes
-        if (type.TypeKind != TypeKind.Class) return false;
-
-        // Skip generic type definitions with unbound parameters
-        if (type.IsGenericType && type.TypeParameters.Length > 0) return false;
-
-        // Skip types in .Internal namespaces (experimental/private APIs)
-        var ns = type.ContainingNamespace?.ToDisplayString() ?? "";
-        if (ns.Contains(".Internal.") || ns.EndsWith(".Internal")) return false;
-
-        // Skip compiler-generated and special types
-        if (type.Name.Contains("<") || type.Name.Contains(">") || type.Name.StartsWith("__")) return false;
-
-        // Skip types marked as Obsolete/Experimental with diagnostic IDs (like NPG9001)
-        foreach (var attr in type.GetAttributes())
-        {
-            if (attr.AttributeClass?.Name == "ObsoleteAttribute" ||
-                attr.AttributeClass?.Name == "ExperimentalAttribute")
-            {
-                // If it has a diagnostic ID, skip it
-                if (attr.ConstructorArguments.Length > 0)
-                    return false;
-            }
-        }
-
-        // Check accessibility
-        if (type.DeclaredAccessibility == Accessibility.Public)
-            return true;
-
-        if (type.DeclaredAccessibility == Accessibility.Internal && includeInternal)
-            return true;
-
-        // Skip private, protected, and other non-accessible types
-        return false;
-    }
-
-    private static string GenerateTypeRegistry(List<TypeInfo> types)
-    {
-        // Deduplicate types by qualified name (can happen when multiple assemblies expose the same type).
-        // Normalize by stripping global:: so dedup matches the dictionary key space.
-        var deduped = types
-            .GroupBy(t => t.FullName.Replace("global::", ""))
-            .Select(g => g.First())
+        var entries = GetTypesInMetadataOrder(compilation.SourceModule.GlobalNamespace, ct)
+            // Types with unspeakable names (e.g. the class holding top level statements) cannot be referred to
+            .Where(static t => t.CanBeReferencedByName && t.TypeKind != TypeKind.Error)
+            .Select(GetTypeExpression)
             .ToList();
 
-        var sb = new StringBuilder();
+        return GenerateSource(GetGeneratedClassName(compilation.AssemblyName), entries);
+    }
 
-        sb.AppendLine("// <auto-generated/>");
-        sb.AppendLine("#nullable enable");
-        sb.AppendLine("#define HAS_COMPILED_TYPE_REGISTRY");
-        sb.AppendLine();
-        sb.AppendLine("using System;");
-        sb.AppendLine("using System.Collections.Frozen;");
-        sb.AppendLine("using System.Collections.Generic;");
-        sb.AppendLine();
-        sb.AppendLine("namespace Rdmp.Core.Repositories;");
-        sb.AppendLine();
-        sb.AppendLine("#pragma warning disable CS0612 // Type or member is obsolete");
-        sb.AppendLine();
-        sb.AppendLine("/// <summary>");
-        sb.AppendLine("/// Compile-time generated type registry containing all types from referenced assemblies.");
-        sb.AppendLine($"/// Generated at compile-time with {deduped.Count} types.");
-        sb.AppendLine("/// </summary>");
-        sb.AppendLine("public static partial class CompiledTypeRegistry");
-        sb.AppendLine("{");
-        sb.AppendLine("    private static readonly FrozenDictionary<string, Type> _typesByName;");
-        sb.AppendLine();
-        sb.AppendLine("    static CompiledTypeRegistry()");
-        sb.AppendLine("    {");
-        sb.AppendLine("        var dict = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);");
-        sb.AppendLine();
+    private static string GetGeneratedClassName(string assemblyName)
+    {
+        var sb = new StringBuilder(GeneratedClassNamePrefix);
 
-        // Group types by short name to handle duplicates.
-        // Materialize each group into a list to avoid repeated enumeration.
-        foreach (var group in deduped.GroupBy(t => t.ShortName))
+        foreach (var c in assemblyName ?? "")
+            sb.Append(char.IsLetterOrDigit(c) || c == '_' ? c : '_');
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Returns the Types declared in the module in the order the compiler writes them to the metadata table of Type definitions (and so
+    /// the order in which reflection's GetTypes returns them): Types which are not nested in namespace order (each namespace's
+    /// Types, then its child namespaces last first), followed by all nested Types breadth first.
+    /// </summary>
+    private static IEnumerable<INamedTypeSymbol> GetTypesInMetadataOrder(INamespaceSymbol globalNamespace, CancellationToken ct)
+    {
+        var topLevel = new List<INamedTypeSymbol>();
+        var namespaces = new Stack<INamespaceSymbol>();
+        namespaces.Push(globalNamespace);
+
+        while (namespaces.Count > 0)
         {
-            var members = group.ToList();
-            if (members.Count == 1)
-            {
-                var type = members[0];
-                sb.AppendLine($"        // {type.FullName}");
-                // Add all lookup variants
-                AddTypeLookup(sb, type.ShortName, type.FullName);
-                AddTypeLookup(sb, type.FullName, type.FullName);
-            }
-            else
-            {
-                // Multiple types with same short name - only store full names
-                foreach (var type in members)
-                {
-                    sb.AppendLine($"        // {type.FullName} (short name conflict)");
-                    AddTypeLookup(sb, type.FullName, type.FullName);
-                }
-            }
-            sb.AppendLine();
+            ct.ThrowIfCancellationRequested();
+
+            foreach (var member in namespaces.Pop().GetMembers())
+                if (member is INamespaceSymbol childNamespace)
+                    namespaces.Push(childNamespace);
+                else if (member is INamedTypeSymbol type)
+                    topLevel.Add(type);
         }
 
-        sb.AppendLine("        _typesByName = dict.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);");
-        sb.AppendLine("    }");
-        sb.AppendLine();
-        sb.AppendLine("    public static Type? GetType(string typeName)");
-        sb.AppendLine("    {");
-        sb.AppendLine("        return _typesByName.TryGetValue(typeName, out var type) ? type : null;");
-        sb.AppendLine("    }");
-        sb.AppendLine();
-        sb.AppendLine("    public static int TypeCount => _typesByName.Count;");
-        sb.AppendLine();
-        sb.AppendLine("    public static IEnumerable<KeyValuePair<string, Type>> GetAllTypes()");
-        sb.AppendLine("    {");
-        sb.AppendLine("        return _typesByName;");
-        sb.AppendLine("    }");
-        sb.AppendLine("}");
+        var nested = new Queue<INamedTypeSymbol>();
+
+        foreach (var type in topLevel)
+        {
+            yield return type;
+
+            foreach (var nestedType in type.GetTypeMembers())
+                nested.Enqueue(nestedType);
+        }
+
+        while (nested.Count > 0)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var type = nested.Dequeue();
+            yield return type;
+
+            foreach (var nestedType in type.GetTypeMembers())
+                nested.Enqueue(nestedType);
+        }
+    }
+
+    /// <summary>
+    /// Returns C# which evaluates to the System.Type of <paramref name="type"/> from the generated class
+    /// </summary>
+    private static string GetTypeExpression(INamedTypeSymbol type)
+    {
+        // The Type and the Types containing it, outermost first
+        var chain = new List<INamedTypeSymbol>();
+        for (var t = type; t != null; t = t.ContainingType)
+            chain.Insert(0, t);
+
+        // The Types from the outermost which can be named in typeof from another Type in the assembly
+        var nameable = chain[0].IsFileLocal ? 0 : chain.TakeWhile(CanBeNamedFromAnotherTypeInTheAssembly).Count();
+
+        if (nameable == chain.Count)
+            return $"typeof({GetTypeOfName(type)})";
+
+        var expression = nameable == 0
+            ? $"InThisAssembly(\"{GetMetadataFullName(chain[0])}\")"
+            : $"typeof({GetTypeOfName(chain[nameable - 1])})";
+
+        for (var i = Max(nameable, 1); i < chain.Count; i++)
+            expression = $"Nested({expression}, \"{chain[i].MetadataName}\")";
+
+        return expression;
+    }
+
+    private static int Max(int a, int b) => a > b ? a : b;
+
+    private static bool CanBeNamedFromAnotherTypeInTheAssembly(INamedTypeSymbol type) =>
+        !type.IsFileLocal &&
+        type.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal;
+
+    /// <summary>
+    /// Returns the name to use in typeof for <paramref name="type"/> e.g. global::Ns.Outer&lt;,&gt;.Inner (generic Types are
+    /// unbound)
+    /// </summary>
+    private static string GetTypeOfName(INamedTypeSymbol type)
+    {
+        var sb = new StringBuilder();
+
+        if (type.ContainingType != null)
+        {
+            sb.Append(GetTypeOfName(type.ContainingType)).Append('.');
+        }
+        else
+        {
+            sb.Append("global::");
+            if (!type.ContainingNamespace.IsGlobalNamespace)
+                sb.Append(string.Join(".", GetNamespaceParts(type.ContainingNamespace).Select(EscapeIdentifier))).Append('.');
+        }
+
+        sb.Append(EscapeIdentifier(type.Name));
+
+        if (type.Arity > 0)
+            sb.Append('<').Append(',', type.Arity - 1).Append('>');
 
         return sb.ToString();
     }
 
-    private static void AddTypeLookup(StringBuilder sb, string key, string typeFullName)
+    /// <summary>
+    /// Returns the full name of a Type which is not nested as it appears in metadata (which for a file local Type includes
+    /// the prefix the compiler adds to its name)
+    /// </summary>
+    private static string GetMetadataFullName(INamedTypeSymbol type) =>
+        type.ContainingNamespace.IsGlobalNamespace
+            ? type.MetadataName
+            : $"{string.Join(".", GetNamespaceParts(type.ContainingNamespace))}.{type.MetadataName}";
+
+    private static IEnumerable<string> GetNamespaceParts(INamespaceSymbol ns)
     {
-        // Remove global:: prefix for the dictionary key so Type.FullName lookups hit the fast path,
-        // but keep global:: in the typeof() expression to avoid namespace conflicts
-        var lookupKey = key.Replace("global::", "").Replace("\"", "\\\"");
-        sb.AppendLine($"        dict.TryAdd(\"{lookupKey}\", typeof({typeFullName}));");
+        var parts = new Stack<string>();
+        for (var n = ns; n is { IsGlobalNamespace: false }; n = n.ContainingNamespace)
+            parts.Push(n.Name);
+
+        return parts;
     }
 
-    private static string GenerateInterfaceIndices(List<TypeInfo> types)
+    private static string EscapeIdentifier(string identifier) =>
+        SyntaxFacts.GetKeywordKind(identifier) != SyntaxKind.None ? $"@{identifier}" : identifier;
+
+    private static string GenerateSource(string className, List<string> entries)
     {
-        // For now, we can't analyze inheritance at symbol level easily
-        // So we'll generate runtime initialization code that builds the indices
         var sb = new StringBuilder();
 
         sb.AppendLine("// <auto-generated/>");
+        sb.AppendLine("// Generated by Rdmp.Core.Generators.TypeRegistryGenerator: the Types declared in this assembly, for MEF");
         sb.AppendLine("#nullable enable");
+        sb.AppendLine("#pragma warning disable CS0612, CS0618 // Obsolete Types are registered like any others");
         sb.AppendLine();
-        sb.AppendLine("using System;");
-        sb.AppendLine("using System.Collections.Frozen;");
-        sb.AppendLine("using System.Collections.Generic;");
-        sb.AppendLine("using System.Linq;");
+        sb.AppendLine($"[assembly: global::{AttributeMetadataName}]");
         sb.AppendLine();
-        sb.AppendLine("namespace Rdmp.Core.Repositories;");
-        sb.AppendLine();
-        sb.AppendLine("#pragma warning disable CS0612 // Type or member is obsolete");
-        sb.AppendLine();
-        sb.AppendLine("public static partial class CompiledTypeRegistry");
+        sb.AppendLine($"namespace {GeneratedNamespace}");
         sb.AppendLine("{");
-        sb.AppendLine("    private static readonly Lazy<FrozenDictionary<Type, FrozenSet<Type>>> _typesByInterface = new(BuildInterfaceIndices);");
-        sb.AppendLine();
-        sb.AppendLine("    private static FrozenDictionary<Type, FrozenSet<Type>> BuildInterfaceIndices()");
+        sb.AppendLine("    [global::System.CodeDom.Compiler.GeneratedCode(\"Rdmp.Core.Generators.TypeRegistryGenerator\", \"2.0.0\")]");
+        sb.AppendLine("    [global::System.Runtime.CompilerServices.CompilerGenerated]");
+        sb.AppendLine($"    internal static class {className}");
         sb.AppendLine("    {");
-        sb.AppendLine("        var indices = new Dictionary<Type, HashSet<Type>>();");
+        sb.AppendLine("        [global::System.Runtime.CompilerServices.ModuleInitializer]");
+        sb.AppendLine("        internal static void Register() =>");
+        sb.AppendLine($"            global::{RegistryMetadataName}.Register(typeof({className}).Assembly, GetTypes);");
         sb.AppendLine();
-        sb.AppendLine("        // Pre-index hot interfaces and base classes");
-        sb.AppendLine("        var hotTypeNames = new[]");
+        sb.AppendLine($"        // {entries.Count} Types, in metadata order");
+        sb.AppendLine("        private static global::System.Type[] GetTypes() => new global::System.Type[]");
         sb.AppendLine("        {");
-        sb.AppendLine("            \"Rdmp.Core.Curation.Data.DatabaseEntity\",  // All database entities");
-        sb.AppendLine("            \"Rdmp.Core.Curation.Data.DataLoad.IProcessTask\",  // Process tasks");
-        sb.AppendLine("            \"Rdmp.Core.Curation.Data.Pipelines.IPipelineComponent\",  // Pipeline components");
+
+        foreach (var entry in entries)
+            sb.Append("            ").Append(entry).AppendLine(",");
+
         sb.AppendLine("        };");
         sb.AppendLine();
-        sb.AppendLine("        foreach (var typeName in hotTypeNames)");
-        sb.AppendLine("        {");
-        sb.AppendLine("            Type? hotType = null;");
-        sb.AppendLine("            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())");
-        sb.AppendLine("            {");
-        sb.AppendLine("                hotType = asm.GetType(typeName);");
-        sb.AppendLine("                if (hotType != null) break;");
-        sb.AppendLine("            }");
-        sb.AppendLine("            if (hotType == null) continue;  // Type doesn't exist in this project");
+        sb.AppendLine("        private static global::System.Type Nested(");
+        sb.AppendLine("            [global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(");
+        sb.AppendLine("                global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicNestedTypes |");
+        sb.AppendLine("                global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.NonPublicNestedTypes)]");
+        sb.AppendLine("            global::System.Type declaringType, string name) =>");
+        sb.AppendLine("            declaringType.GetNestedType(name,");
+        sb.AppendLine("                global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.NonPublic) ??");
+        sb.AppendLine("            throw new global::System.TypeLoadException($\"Nested Type '{name}' of '{declaringType}' was not found\");");
         sb.AppendLine();
-        sb.AppendLine();
-        sb.AppendLine("            try");
-        sb.AppendLine("            {");
-        sb.AppendLine("                indices[hotType] = new HashSet<Type>();");
-        sb.AppendLine("                foreach (var type in _typesByName.Values.Distinct())");
-        sb.AppendLine("                {");
-        sb.AppendLine("                    if (hotType.IsAssignableFrom(type))");
-        sb.AppendLine("                        indices[hotType].Add(type);");
-        sb.AppendLine("                }");
-        sb.AppendLine("            }");
-        sb.AppendLine("            catch { /* Error checking type */ }");
-        sb.AppendLine("        }");
-        sb.AppendLine();
-        sb.AppendLine("        return indices.ToFrozenDictionary(");
-        sb.AppendLine("            kv => kv.Key,");
-        sb.AppendLine("            kv => kv.Value.ToFrozenSet()");
-        sb.AppendLine("        );");
-        sb.AppendLine("    }");
-        sb.AppendLine();
-        sb.AppendLine("    /// <summary>");
-        sb.AppendLine("    /// Gets all types that implement or inherit from the specified type.");
-        sb.AppendLine("    /// Returns null if the type is not indexed (caller should fall back to runtime reflection).");
-        sb.AppendLine("    /// </summary>");
-        sb.AppendLine("    public static IEnumerable<Type>? GetTypesByInterface(Type interfaceOrBaseType)");
-        sb.AppendLine("    {");
-        sb.AppendLine("        return _typesByInterface.Value.TryGetValue(interfaceOrBaseType, out var types)");
-        sb.AppendLine("            ? types");
-        sb.AppendLine("            : null;  // Not indexed - caller must use runtime reflection");
-        sb.AppendLine("    }");
-        sb.AppendLine();
-        sb.AppendLine("    public static IEnumerable<Type>? GetTypesByInterface<T>()");
-        sb.AppendLine("    {");
-        sb.AppendLine("        return GetTypesByInterface(typeof(T));");
+        sb.AppendLine("        private static global::System.Type InThisAssembly(string fullName) =>");
+        sb.AppendLine($"            typeof({className}).Assembly.GetType(fullName, throwOnError: true, ignoreCase: false)!;");
         sb.AppendLine("    }");
         sb.AppendLine("}");
 
         return sb.ToString();
-    }
-
-    private class TypeInfo
-    {
-        public string FullName { get; set; } = "";
-        public string ShortName { get; set; } = "";
-        public string Namespace { get; set; } = "";
     }
 }

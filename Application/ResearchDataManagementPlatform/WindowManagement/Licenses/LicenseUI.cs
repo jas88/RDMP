@@ -7,6 +7,7 @@
 using System;
 using System.Diagnostics;
 using System.Windows.Forms;
+using Rdmp.Core.ReusableLibraryCode.Licenses;
 using Rdmp.Core.ReusableLibraryCode.Settings;
 using Rdmp.UI.SimpleDialogs;
 
@@ -25,8 +26,8 @@ public partial class LicenseUI : Form
 
         try
         {
-            var main = new License("LICENSE");
-            _thirdParth = new License("LIBRARYLICENSES");
+            var main = new License(License.RdmpLicense);
+            _thirdParth = new License(License.ThirdPartyLicenses);
 
             rtLicense.Text = main.GetLicenseText();
             rtLicense.KeyDown += (s, e) =>
@@ -60,7 +61,17 @@ public partial class LicenseUI : Form
 
     private void btnDecline_Click(object sender, EventArgs e)
     {
-        UserSettings.LicenseAccepted = null;
+        try
+        {
+            UserSettings.LicenseAccepted = null;
+        }
+        catch (Exception ex)
+        {
+            // RDMP still closes, as the licenses were declined, but an earlier acceptance which could not be removed still counts
+            ExceptionViewer.Show(
+                "Could not forget that you accepted the licenses before, so RDMP may start without asking you to accept them", ex);
+        }
+
         allowClose = true;
         Process.GetCurrentProcess().Kill();
     }

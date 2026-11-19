@@ -73,6 +73,13 @@ public abstract class RDMPCommandLineOptions
     public bool SkipPatching { get; set; }
 
     /// <summary>
+    /// Accepts the licenses for this run of the rdmp command line, which checks for the option (see <see cref="LicenseAcceptance"/>)
+    /// before it parses its arguments
+    /// </summary>
+    [Option(LicenseAcceptance.AcceptOptionName, Required = false, HelpText = LicenseAcceptance.AcceptOptionHelpText)]
+    public bool AcceptLicenses { get; set; }
+
+    /// <summary>
     /// If <see cref="ConnectionStringsFile"/> was specified and that file existed and was successfully loaded
     /// using <see cref="PopulateConnectionStringsFromYamlIfMissing"/> then this property will store the
     /// file used including name and description

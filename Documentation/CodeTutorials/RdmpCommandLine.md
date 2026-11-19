@@ -3,7 +3,8 @@
 ## Contents
 
 1. [Installing](#installing)
-2. [Commands](#commands)
+2. [Accepting the licences](#accepting-the-licences)
+3. [Commands](#commands)
     1. [Install](#install)
     2. [cmd](#cmd)
 4. [Terminal Gui](#terminal-gui)
@@ -13,7 +14,7 @@
 
 Command line programs run in a terminal window (e.g. DOS).  In Windows these files usually have the extension `.exe` (e.g. `rdmp.exe`), in Linux these often have no extension (e.g. `rdmp`).
 
-The binaries (runnable files) for the RDMP command line are included in the [Releases](https://github.com/HicServices/RDMP/releases) section of GitHub.  Download and unzip the file that matches your operating system e.g. `rdmp-cli-win-x64.zip` for Windows or `rdmp-cli-linux-x64.zip` for linux.
+The binaries (runnable files) for the RDMP command line are included in the [Releases](https://github.com/jas88/RDMP/releases) section of GitHub.  Download and unzip the file that matches your operating system e.g. `rdmp-9.0.2-cli-win-x64.zip` for Windows or `rdmp-9.0.2-cli-linux-x64.zip` for linux.
 
 Unzip the package and edit `Databases.yaml` so that it points to your RDMP databases.  If you do not have any platform databases yet then you can run `./rdmp install "(localdb)\MSSQLLocalDB" TEST_ -e` (use your own server name and/or different prefix if desired).
 
@@ -30,6 +31,28 @@ PS C:\Users\44777\Downloads\rdmp-7.0.20-cli-win-x64> ./rdmp list Catalogue
 4:HospitalAdmissions
 5:vConditions
 6:vOperations
+```
+
+## Accepting the licences
+
+Before the command line does anything except show its help (`--help`, `--version` or `help`), it asks you to accept the RDMP licence and the licences of the third party software it includes, some of which require your agreement.  They are in the files `LICENSE` and `LIBRARYLICENSES` next to the `rdmp` program.  Enter `y` to accept them.
+
+You are only asked once, and the RDMP Windows client knows that you accepted them too (and the other way round).  Like the Windows client, RDMP records which version of the third party licences (`LIBRARYLICENSES`) you accepted, so you are asked again when a new release changes that file, but not when only `LICENSE` changes.  The acceptance is kept for each user, in `%LOCALAPPDATA%\RDMP\LicenseAccepted` on Windows and `~/.local/share/RDMP/LicenseAccepted` on Linux.
+
+Scripts, scheduled tasks and containers cannot answer the question.  When input is redirected and you have not accepted the licences, `rdmp` stops at once with exit code 8 instead of waiting for an answer.  To accept the licences for a single run without being asked, pass `--accept-licenses`:
+
+```
+./rdmp --accept-licenses -f script.yaml
+./rdmp install --accept-licenses localhost\sqlexpress RDMP_
+```
+
+Alternatively set the environment variable `RDMP_ACCEPT_LICENSES` to `1` (or `true` or `yes`).  Neither is remembered, so use one wherever `rdmp` runs unattended.
+
+The Docker image `ghcr.io/jas88/rdmpcli` does not accept the licences for you.  Pass the environment variable to `docker run` or `docker exec` to accept them, for example:
+
+```
+docker run -d --name rdmp -e RDMP_ACCEPT_LICENSES=1 ghcr.io/jas88/rdmpcli
+docker exec rdmp /rdmp/rdmp list Catalogue
 ```
 
 ## Commands
