@@ -54,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Oracle: CLOB, NCLOB, BLOB, BFILE, LONG, LONG RAW and XMLTYPE
   - PostgreSQL: json and xml
   - No longer refused: PostgreSQL `text` and MySQL enum and set, which can be keyed
+- The line diff used by the before/after dialogs (then vs now SQL, commit history, the prompt to save changes and propagating a column description) is a new implementation, and the unused CLI autocomplete code is removed. When more than one smallest set of changed lines is possible, for example where lines are repeated, swapped or moved, the dialogs can now highlight a different but equally small set of lines than before for the same texts
+- API change for plugins: `Diff` is now a static class with only the two-argument `DiffText` (the other overloads are removed), and the `StartA`, `deletedA`, `StartB` and `insertedB` members of `Diff.Item` are read-only properties instead of fields. This breaks plugins that are already compiled, not just their source code: until it is rebuilt, a plugin built against an earlier version fails with MissingFieldException when it reads one of those members, or MissingMethodException when it calls a removed overload
 
 
 ## [9.0.1] - 2025-07-31
