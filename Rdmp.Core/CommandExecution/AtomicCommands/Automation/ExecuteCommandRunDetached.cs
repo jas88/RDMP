@@ -7,6 +7,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using Rdmp.Core.CommandLine;
 using Rdmp.Core.CommandLine.Options;
 using Rdmp.Core.Icons.IconProvision;
 using Rdmp.Core.ReusableLibraryCode;
@@ -38,6 +39,10 @@ public class ExecuteCommandRunDetached : AutomationCommandExecution, IAtomicComm
     public override void Execute()
     {
         base.Execute();
-        BasicActivator.LaunchSubprocess(new ProcessStartInfo(_rdmpBinaryPath, GetCommandText(true)));
+
+        // Only the Windows client launches subprocesses, and it does not run until the user has accepted the licenses,
+        // so accept them for the command line too: it cannot ask, as its input is not a terminal
+        BasicActivator.LaunchSubprocess(new ProcessStartInfo(_rdmpBinaryPath,
+            $"{GetCommandText(true)} --{LicenseAcceptance.AcceptOptionName}"));
     }
 }

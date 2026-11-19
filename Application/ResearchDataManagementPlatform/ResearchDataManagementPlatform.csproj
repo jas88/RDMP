@@ -83,12 +83,6 @@
     <EmbeddedResource Update="Menus\RDMPTopMenuStripUI.resx">
       <DependentUpon>RDMPTopMenuStripUI.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="..\..\LICENSE">
-      <Link>WindowManagement\Licenses\LICENSE</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\..\LIBRARYLICENSES">
-      <Link>WindowManagement\Licenses\LIBRARYLICENSES</Link>
-    </EmbeddedResource>
     <None Include="DockingInfrastructure.cd" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
