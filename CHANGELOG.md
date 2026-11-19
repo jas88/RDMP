@@ -59,6 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The NuGet packages are published as `Rdmp.Core`, `Rdmp.UI` and `Rdmp.Tests.Common`, replacing HIC.RDMP.Plugin, HIC.RDMP.Plugin.UI and HIC.RDMP.Plugin.Test
 - The command line Docker image is published as `ghcr.io/jas88/rdmpcli`, replacing `ghcr.io/hicservices/rdmpcli`
 - The rdmp command line asks you to accept RDMP's licence (LICENSE) and the third-party licences (LIBRARYLICENSES) the first time it runs, as the Windows client does, except when it only shows its help (`--help`, `--version` or `help`). Accepting them in either counts for both, and you are asked again only when a release changes LIBRARYLICENSES. Scripts and containers can accept them for a single run with `--accept-licenses` or by setting `RDMP_ACCEPT_LICENSES=1` (the Docker image does not set it); without either, a run with redirected input that has not accepted them stops with exit code 8 instead of waiting for an answer
+- FIX: Delimited flat file loads (DelimitedFlatFileDataFlowSource and DelimitedFlatFileAttacher) with IgnoreBadReads stopped ignoring bad reads, such as a quote in the middle of a cell, once MaximumErrorsToReport bad data warnings (100 by default) had been reported. Later bad reads were handled by the BadDataHandlingStrategy: the load failed (ThrowException), or the rows were dropped (IgnoreRows) or diverted (DivertRows) without a warning. MaximumErrorsToReport now only limits the warnings
+- FIX: The help text of DelimitedFlatFileDataFlowSource's IgnoreBlankLines property was the one for IgnoreQuotes
+- FIX: The delimited flat file error for a CsvHelper reading exception said `Bad data found on liline` instead of `line`
 
 
 ## [9.0.1] - 2025-07-31
