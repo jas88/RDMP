@@ -75,6 +75,9 @@ public class SharedUserSettingsTests
         {
             Assert.That(settings.Get(Key), Is.Null);
             Assert.Throws<IOException>(() => settings.Set(Key, "AA-BB"));
+
+            // Removing a setting succeeds, as there is none
+            Assert.DoesNotThrow(() => settings.Set(Key, null));
         });
     }
 

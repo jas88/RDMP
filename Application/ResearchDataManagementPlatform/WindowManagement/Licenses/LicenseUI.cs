@@ -61,7 +61,17 @@ public partial class LicenseUI : Form
 
     private void btnDecline_Click(object sender, EventArgs e)
     {
-        UserSettings.LicenseAccepted = null;
+        try
+        {
+            UserSettings.LicenseAccepted = null;
+        }
+        catch (Exception ex)
+        {
+            // RDMP still closes, as the licenses were declined, but an earlier acceptance which could not be removed still counts
+            ExceptionViewer.Show(
+                "Could not forget that you accepted the licenses before, so RDMP may start without asking you to accept them", ex);
+        }
+
         allowClose = true;
         Process.GetCurrentProcess().Kill();
     }

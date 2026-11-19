@@ -169,6 +169,61 @@ public class UserSettingsLicenseAcceptedTests
     }
 
     [Test]
+    public void RecordLicenseAccepted_Clearing_ForgetsBothSettings()
+    {
+        var shared = Current;
+        var own = Current;
+
+        UserSettings.RecordLicenseAccepted(null, hash => shared = hash, hash => own = hash);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(shared, Is.Null);
+            Assert.That(own, Is.Null);
+        });
+    }
+
+    [TestCase(typeof(IsolatedStorageException))]
+    [TestCase(typeof(IOException))]
+    [TestCase(typeof(UnauthorizedAccessException))]
+    public void RecordLicenseAccepted_ClearingWithBrokenOwnSettings_ThrowsAndTheNextReadIsNotAccepted(Type error)
+    {
+        // The licenses were accepted, and this program's own settings can be neither written nor read
+        var shared = Current;
+        Exception Broken() => (Exception)Activator.CreateInstance(error);
+
+        Assert.That(() => UserSettings.RecordLicenseAccepted(null, hash => shared = hash, _ => throw Broken()),
+            Throws.TypeOf(error));
+
+        Assert.Multiple(() =>
+        {
+            // The shared acceptance was removed despite the failure
+            Assert.That(shared, Is.Null);
+            Assert.That(UserSettings.ChooseLicenseAccepted(shared, () => UserSettings.ReadOwnSetting(() => throw Broken()),
+                Current), Is.Null);
+        });
+    }
+
+    [Test]
+    public void RecordLicenseAccepted_ClearingWhenTheSharedSettingsCannotBeChanged_ClearsTheOwnSettingsAndThrows()
+    {
+        var own = Current;
+
+        // So that the caller can say that the shared acceptance still counts
+        Assert.Throws<UnauthorizedAccessException>(() => UserSettings.RecordLicenseAccepted(null,
+            static _ => throw new UnauthorizedAccessException("read only"), hash => own = hash));
+
+        Assert.That(own, Is.Null);
+    }
+
+    [Test]
+    public void RecordLicenseAccepted_ClearingWithOtherErrors_AreNotHidden()
+    {
+        Assert.Throws<InvalidOperationException>(() => UserSettings.RecordLicenseAccepted(null, static _ => { },
+            static _ => throw new InvalidOperationException()));
+    }
+
+    [Test]
     public void RecordLicenseAccepted_OtherErrors_AreNotHidden()
     {
         Assert.Throws<InvalidOperationException>(() =>
@@ -200,5 +255,30 @@ public class UserSettingsLicenseAcceptedTests
         UserSettings.LicenseAccepted = currentHash;
 
         Assert.That(UserSettings.LicenseAccepted, Is.EqualTo(currentHash));
+    }
+
+    [Test]
+    public void LicenseAccepted_SetToNull_ForgetsTheSharedAcceptance()
+    {
+        var currentHash = new License(License.ThirdPartyLicenses).GetHashOfLicense();
+        UserSettings.SharedSettings = new SharedUserSettings(_folder);
+        UserSettings.LicenseAccepted = currentHash;
+
+        UserSettings.LicenseAccepted = null;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(new SharedUserSettings(_folder).Get("LicenseAccepted"), Is.Null);
+            Assert.That(UserSettings.LicenseAccepted, Is.Null);
+        });
+    }
+
+    [Test]
+    public void LicenseAccepted_SetToNullWithoutSharedSettings_DoesNotThrow()
+    {
+        // Nothing can have been stored in shared settings which do not exist
+        UserSettings.SharedSettings = new SharedUserSettings(null);
+
+        Assert.DoesNotThrow(() => UserSettings.LicenseAccepted = null);
     }
 }

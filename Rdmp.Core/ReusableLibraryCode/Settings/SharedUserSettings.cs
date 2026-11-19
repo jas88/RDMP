@@ -70,12 +70,18 @@ internal sealed class SharedUserSettings
     /// </summary>
     /// <param name="key">The name of the setting, which is also its file name</param>
     /// <param name="value">The value to store, or null to remove the setting</param>
-    /// <exception cref="IOException">If there is no folder, or the setting cannot be written</exception>
+    /// <exception cref="IOException">If there is no folder to store a value in, or the setting cannot be written</exception>
     /// <exception cref="UnauthorizedAccessException">If the user may not write to the folder</exception>
     public void Set(string key, string value)
     {
         if (Folder == null)
+        {
+            // Nothing can have been stored, so there is nothing to remove
+            if (value == null)
+                return;
+
             throw new IOException("The current user has no local application data folder to store settings in");
+        }
 
         var path = Path.Join(Folder, key);
 

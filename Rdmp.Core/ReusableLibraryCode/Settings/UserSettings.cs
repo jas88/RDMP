@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.IsolatedStorage;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using FAnsi.Discovery;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Licenses;
@@ -76,9 +77,12 @@ public static class UserSettings
         get => ChooseLicenseAccepted(SharedSettings.Get(LicenseAcceptedKey),
             static () => ReadOwnSetting(static () => AppSettings.GetValueOrDefault(LicenseAcceptedKey, null)),
             CurrentLicenseHash.Value);
-        set => RecordLicenseAccepted(value, static hash => SharedSettings.Set(LicenseAcceptedKey, hash),
-            static hash => AppSettings.AddOrUpdateValue(LicenseAcceptedKey, hash));
+        set => RecordLicenseAccepted(value, SetSharedLicenseAccepted, SetOwnLicenseAccepted);
     }
+
+    private static void SetSharedLicenseAccepted(string hash) => SharedSettings.Set(LicenseAcceptedKey, hash);
+
+    private static void SetOwnLicenseAccepted(string hash) => AppSettings.AddOrUpdateValue(LicenseAcceptedKey, hash);
 
     /// <summary>
     /// Returns the hash of the licenses which the user accepted, from what the shared settings and this program's own settings recorded
@@ -125,13 +129,20 @@ public static class UserSettings
 
     /// <summary>
     /// Records the hash of the licenses which the user accepted in the shared settings and forgets this program's own copy, or records it
-    /// in this program's own settings if the shared settings cannot be written
+    /// in this program's own settings if the shared settings cannot be written.  A null hash forgets the acceptance instead (see
+    /// <see cref="ForgetLicenseAccepted"/>).
     /// </summary>
     /// <param name="hash">The hash to record, or null to forget that the licenses were accepted</param>
     /// <param name="setShared">Records a hash in the shared settings</param>
     /// <param name="setOwn">Records a hash in this program's own settings</param>
     internal static void RecordLicenseAccepted(string hash, Action<string> setShared, Action<string> setOwn)
     {
+        if (hash == null)
+        {
+            ForgetLicenseAccepted(setShared, setOwn);
+            return;
+        }
+
         try
         {
             setShared(hash);
@@ -153,6 +164,31 @@ public static class UserSettings
         {
             NLog.LogManager.GetCurrentClassLogger().Warn(e, "Could not remove the license acceptance from this program's own settings");
         }
+    }
+
+    /// <summary>
+    /// Forgets that the licenses were accepted, in both this program's own settings and the shared settings.  Both are cleared even if one of
+    /// them fails, and then the failure is thrown: an acceptance which could not be removed would still count, so the caller must know.
+    /// </summary>
+    /// <param name="setShared">Records a hash in the shared settings</param>
+    /// <param name="setOwn">Records a hash in this program's own settings</param>
+    internal static void ForgetLicenseAccepted(Action<string> setShared, Action<string> setOwn)
+    {
+        Exception ownFailure = null;
+
+        try
+        {
+            setOwn(null);
+        }
+        catch (Exception e) when (IsStorageError(e))
+        {
+            ownFailure = e;
+        }
+
+        setShared(null);
+
+        if (ownFailure != null)
+            ExceptionDispatchInfo.Throw(ownFailure);
     }
 
     /// <summary>
@@ -712,16 +748,15 @@ public static class UserSettings
 
     public static void ClearUserSettings()
     {
-        AppSettings.Clear();
-
-        // Including the acceptance of the licenses, which is in the shared settings
         try
         {
-            SharedSettings.Set(LicenseAcceptedKey, null);
+            // Including the acceptance of the licenses, which is mostly in the shared settings.  A failure is thrown, as an acceptance
+            // which could not be removed would still count
+            ForgetLicenseAccepted(SetSharedLicenseAccepted, SetOwnLicenseAccepted);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        finally
         {
-            Console.WriteLine($"Unable to clear the acceptance of the licenses. Message: {e.Message}");
+            AppSettings.Clear();
         }
     }
 }
