@@ -113,7 +113,7 @@ public class CreateNewCohortDatabaseWizardTests : DatabaseTests
     }
 
     [TestCase("text")]
-    //[TestCase("ntext")] // TODO: FAnsiSql doesn't know that this is max width
+    [TestCase("ntext")]
     [TestCase("varchar(max)")]
     [TestCase("nvarchar(max)")]
     public void TestVarcharMaxNotAllowed(string term)
@@ -132,8 +132,14 @@ public class CreateNewCohortDatabaseWizardTests : DatabaseTests
         var ex = Assert.Throws<Exception>(() => wizard.CreateDatabase(
             candidate,
             ThrowImmediatelyCheckNotifier.Quiet));
-        Assert.That(
-            ex.Message, Is.EqualTo("Private identifier datatype cannot be varchar(max) style as this prevents Primary Key creation on the table"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(ex.Message, Does.StartWith(
+                $"Private identifier datatype '{term}' cannot be used for a cohort store, because the private identifier is part of the primary key of the cohort table and "));
+
+            //refused before anything was created
+            Assert.That(db.DiscoverTables(false), Is.Empty);
+        });
     }
 
     [TestCaseSource(typeof(All), nameof(All.DatabaseTypes))]
