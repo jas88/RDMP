@@ -22,9 +22,6 @@ public class CopyrightHeaderTests
 {
     private const string ExpectedPrefix = "// Copyright (c) The University of Dundee 2018-20";
 
-    private const string AdaptedCodeHeader =
-        "// This code is adapted from https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications";
-
     [Test]
     public void AllSourceFiles_HaveCopyrightHeaders()
     {
@@ -44,7 +41,7 @@ public class CopyrightHeaderTests
     private static bool HasCopyrightHeader(string file)
     {
         var firstLine = File.ReadLines(file).FirstOrDefault() ?? string.Empty;
-        return firstLine.StartsWith(ExpectedPrefix, StringComparison.Ordinal) || firstLine == AdaptedCodeHeader;
+        return firstLine.StartsWith(ExpectedPrefix, StringComparison.Ordinal);
     }
 
     private static string ExpectedHeader() =>

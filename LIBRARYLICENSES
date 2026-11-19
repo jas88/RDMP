@@ -1,13 +1,5 @@
 ﻿--------------------------------------------------------------------------------
 
-AutoComplete Console by Jasper Lammers
-The Code Project Open License (CPOL) 1.02
-https://www.codeproject.com/info/cpol10.aspx
-The autocompletion in RDMP's command line is adapted from
-https://www.codeproject.com/Articles/1182358/Using-Autocomplete-in-Windows-Console-Applications
-
---------------------------------------------------------------------------------
-
 AutoUpdater.NET by RBSoft
 The MIT License (MIT)
 https://github.com/ravibpatel/AutoUpdater.NET/blob/master/LICENSE
@@ -66,13 +58,6 @@ THE SOFTWARE.
 CsvHelper by Josh Close
 Dual licensing under MS-PL and Apache 2.0
 https://raw.githubusercontent.com/JoshClose/CsvHelper/master/LICENSE.txt
-
---------------------------------------------------------------------------------
-
-Diff, a C# implementation of "An O(ND) Difference Algorithm and its Variations" (Eugene Myers)
-by Matthias Hertel, http://www.mathertel.de/Diff/
-Creative Commons Attribution 2.0 Germany License
-https://creativecommons.org/licenses/by/2.0/de/
 
 --------------------------------------------------------------------------------
 
