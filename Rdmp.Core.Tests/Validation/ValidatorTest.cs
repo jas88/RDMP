@@ -1,4 +1,4 @@
-// Copyright (c) The University of Dundee 2018-2019
+// Copyright (c) The University of Dundee 2018-2026
 // This file is part of the Research Data Management Platform (RDMP).
 // RDMP is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -7,12 +7,17 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using System.Runtime.Loader;
 using NUnit.Framework;
+using Rdmp.Core.Repositories;
 using Rdmp.Core.Tests.Validation.TestData;
+using Rdmp.Core.Tests.Validation.ValidationPluginTests;
 using Rdmp.Core.Validation;
 using Rdmp.Core.Validation.Constraints;
 using Rdmp.Core.Validation.Constraints.Primary;
 using Rdmp.Core.Validation.Constraints.Secondary;
+using Rdmp.Core.Validation.Constraints.Secondary.Predictor;
 
 namespace Rdmp.Core.Tests.Validation;
 
@@ -284,5 +289,59 @@ public class ValidatorTest
         validator.AddItemValidator(itemValidator, "non-existent", typeof(string));
 
         return validator;
+    }
+
+    /// <summary>
+    /// The Validator used to find the Types for its XmlSerializer by scanning the loaded assemblies with reflection, as
+    /// <see cref="GetExtraTypesWithReflection"/> does.  It now takes them from <see cref="MEF"/>: the Types and their
+    /// order must be the same.
+    /// </summary>
+    [Test]
+    public void GetExtraTypes_FindsTheSameTypesAsTheReflectionScan()
+    {
+        var withReflection = GetExtraTypesWithReflection();
+        TestContext.Out.WriteLine($"The reflection scan finds {withReflection.Count} extra Types");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(MEF.UsesCompiledTypeRegistry);
+            Assert.That(Validator.GetExtraTypes(), Is.EqualTo(withReflection));
+
+            // Constraints and prediction rules of Rdmp.Core, and one declared by the tests
+            Assert.That(withReflection, Is.SupersetOf(new[]
+            {
+                typeof(Chi), typeof(Alpha), typeof(RegularExpression), typeof(BoundDate), typeof(Prediction),
+                typeof(ChiSexPredictor), typeof(ValuePredictsOtherValueNullity), typeof(FishConstraint)
+            }));
+        });
+    }
+
+    /// <summary>
+    /// How the Validator found its extra Types before it used <see cref="MEF"/> (apart from leaving out dynamically
+    /// generated Types, e.g. NSubstitute proxies made by other tests, which cannot be serialized)
+    /// </summary>
+    private static List<Type> GetExtraTypesWithReflection()
+    {
+        var current = AssemblyLoadContext.CurrentContextualReflectionContext ?? AssemblyLoadContext.Default;
+
+        return AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a =>
+            {
+                var ctx = AssemblyLoadContext.GetLoadContext(a);
+                return ctx == current || ctx == AssemblyLoadContext.Default;
+            })
+            .Where(static a => !a.IsDynamic)
+            .SelectMany(static a => AssemblyTypeLoader.GetTypesSafely(a)).Where(
+                type =>
+                    type != null &&
+                    (typeof(IConstraint).IsAssignableFrom(type) ||
+                     typeof(PredictionRule).IsAssignableFrom(type))
+                    &&
+                    !type.IsAbstract
+                    &&
+                    !type.IsInterface
+                    &&
+                    type.IsClass
+            ).DistinctBy(t => t.FullName).ToList();
     }
 }

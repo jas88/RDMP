@@ -13,8 +13,8 @@ namespace Rdmp.Core.Repositories;
 
 /// <summary>
 /// Lists the Types in an assembly without losing them all when some cannot be loaded (e.g. because a dependency is
-/// missing).  Used by <see cref="MEF"/> and <see cref="Rdmp.Core.Validation.Validator"/> to scan the loaded assemblies.
-/// It is kept separate from <see cref="MEF"/> so that the Validator can use it without initialising <see cref="MEF"/>.
+/// missing).  Used only where <see cref="MEF"/> still finds Types with reflection: when the <see cref="CompiledTypeRegistry"/>
+/// cannot be used, and for an assembly which uses Rdmp.Core but was built without the type registry generator.
 /// </summary>
 internal static class AssemblyTypeLoader
 {

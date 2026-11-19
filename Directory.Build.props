@@ -14,4 +14,16 @@
 	<ItemGroup Condition="'$(IsTestProject)' == 'true'">
 		<PackageReference Include="coverlet.collector" PrivateAssets="All" />
 	</ItemGroup>
+
+	<!-- Compile time type registry: every project lists its own Types so that MEF finds them without reflection
+	     (see Rdmp.Core.Repositories.CompiledTypeRegistry).  PrivateAssets keeps the generator out of NuGet package dependencies. -->
+	<ItemGroup Condition="'$(MSBuildProjectName)' != 'Rdmp.Core.Generators'">
+		<ProjectReference Include="$(MSBuildThisFileDirectory)Rdmp.Core.Generators\Rdmp.Core.Generators.csproj"
+		                  OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
+	</ItemGroup>
+
+	<!-- Tests fail, rather than MEF falling back on reflection, if the compiled type registry cannot be used -->
+	<ItemGroup Condition="'$(IsTestProject)' == 'true'">
+		<RuntimeHostConfigurationOption Include="Rdmp.Core.Repositories.MEF.RequireCompiledTypeRegistry" Value="true" />
+	</ItemGroup>
 </Project>
