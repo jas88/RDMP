@@ -74,7 +74,7 @@ public class FlatFileEventHandlers
                 break;
 
             case BadDataHandlingStrategy.ThrowException:
-                throw new FlatFileLoadException($"Bad data found on li{line.GetLineDescription()}", args.Exception);
+                throw new FlatFileLoadException($"Bad data found on {line.GetLineDescription()}", args.Exception);
 
             default:
                 throw new ArgumentOutOfRangeException();
@@ -86,13 +86,15 @@ public class FlatFileEventHandlers
 
     public void BadDataFound(FlatFileLine line, bool isFromCsvHelper = false)
     {
+        // MaximumErrorsToReport only limits the warnings, the bad read is ignored either way
         if (_ignoreBadDataEvents && isFromCsvHelper)
+        {
             if (_maximumErrorsToReport-- > 0)
-            {
                 _listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
                     $"Ignoring CSVHelper internal bad data warning:{line.GetLineDescription()}"));
-                return;
-            }
+
+            return;
+        }
 
         // if we have seen this bad line already
         if (_dataPusher.BadLines.Contains(line.LineNumber))

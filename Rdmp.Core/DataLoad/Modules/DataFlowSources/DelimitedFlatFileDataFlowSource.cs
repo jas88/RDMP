@@ -104,7 +104,7 @@ This will not help you avoid bad data as the full file structure must still be r
     [DemandsInitialization(IgnoreQuotes_DemandDescription)]
     public bool IgnoreQuotes { get; set; }
 
-    [DemandsInitialization(IgnoreQuotes_DemandDescription)]
+    [DemandsInitialization(IgnoreBlankLines_DemandDescription)]
     public bool IgnoreBlankLines { get; set; }
 
     [DemandsInitialization(MakeHeaderNamesSane_DemandDescription, DemandType.Unspecified, true)]

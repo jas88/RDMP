@@ -5,9 +5,15 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using CsvHelper;
 using NUnit.Framework;
 using Rdmp.Core.DataLoad.Modules.DataFlowSources;
+using Rdmp.Core.DataLoad.Modules.DataFlowSources.SubComponents;
 using Rdmp.Core.DataLoad.Modules.Exceptions;
+using Rdmp.Core.ReusableLibraryCode.Progress;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration.PipelineTests.Sources;
 
@@ -389,5 +395,61 @@ to be honest",
             Assert.That(dt.Rows[0]["Name"], Is.EqualTo("Thomas"));
             Assert.That(dt.Rows[0]["BloodGlucose"], Is.EqualTo(100));
         });
+    }
+
+    /// <summary>
+    /// MaximumErrorsToReport limits how many bad reads are reported, not how many IgnoreBadReads ignores: the bad reads after
+    /// the limit must be ignored too, not handled according to the <see cref="BadDataHandlingStrategy"/>
+    /// </summary>
+    [TestCase(BadDataHandlingStrategy.DivertRows)]
+    [TestCase(BadDataHandlingStrategy.ThrowException)]
+    [TestCase(BadDataHandlingStrategy.IgnoreRows)]
+    public void BadCSV_IgnoreBadReads_MoreBadReadsThanMaximumErrorsToReport(BadDataHandlingStrategy strategy)
+    {
+        //every row has a quote in the middle of a cell, which CsvHelper reports as bad data
+        var file = CreateTestFile(
+            "Name,Description,Age",
+            "Frank,Is the \"greatest\",100",
+            "Bob,Is \"dynamite\",30",
+            "Dennis,Is \"ok\",35",
+            "Ted,Is \"fine\",40");
+
+        var listener = new ToMemoryDataLoadEventListener(true);
+
+        var dt = RunGetChunk(file, s =>
+        {
+            s.BadDataHandlingStrategy = strategy;
+            s.IgnoreBadReads = true;
+            s.MaximumErrorsToReport = 2;
+        }, listener);
+
+        var reported = listener.GetAllMessagesByProgressEventType()[ProgressEventType.Warning]
+            .Count(e => e.Message.StartsWith("Ignoring CSVHelper internal bad data warning", StringComparison.Ordinal));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(dt.Rows, Has.Count.EqualTo(4));
+            Assert.That(dt.Rows[3]["Description"], Is.EqualTo("Is \"fine\""));
+            Assert.That(reported, Is.EqualTo(2));
+        });
+    }
+
+    /// <summary>
+    /// CsvHelper does not raise ReadingExceptionOccurred with the settings the source uses, so the handler is called directly
+    /// </summary>
+    [Test]
+    public void ReadingException_ThrowException_ReportsLineNumber()
+    {
+        using var reader = new CsvReader(new StringReader($"Name,Age{Environment.NewLine}Frank,100"),
+            CultureInfo.InvariantCulture);
+        reader.Read();
+        reader.Read();
+
+        var handlers = new FlatFileEventHandlers(null, null, true, BadDataHandlingStrategy.ThrowException,
+            ThrowImmediatelyDataLoadEventListener.Quiet, 100, false);
+        var args = new ReadingExceptionOccurredArgs(new CsvHelperException(reader.Context, "Test exception"));
+
+        var ex = Assert.Throws<FlatFileLoadException>(() => handlers.ReadingExceptionOccurred(args));
+        Assert.That(ex?.Message, Is.EqualTo("Bad data found on line 2"));
     }
 }
