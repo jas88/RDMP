@@ -61,7 +61,7 @@ internal class CohortContainerManager : ICohortContainerManager
 
     public int? GetOrderIfExistsFor(AggregateConfiguration configuration)
     {
-        if (configuration.Repository != this)
+        if (!ReferenceEquals(configuration.Repository, CatalogueRepository))
             if (((CatalogueRepository)configuration.Repository).ConnectionString !=
                 CatalogueRepository.ConnectionString)
                 throw new NotSupportedException(
