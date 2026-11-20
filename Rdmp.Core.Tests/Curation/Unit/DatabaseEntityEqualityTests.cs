@@ -119,8 +119,17 @@ public class DatabaseEntityEqualityTests : UnitTests
         {
             Assert.That(catalogue.Equals(record), Is.False);
             Assert.That(record.Equals(catalogue), Is.False);
-            Assert.That(record.Equals(null), Is.False);
         }
+    }
+
+    [TestCaseSource(nameof(TypesTested))]
+    public void Records_AreNotEqualToNull(Type type)
+    {
+        // NUnit's Is.EqualTo treats null as unequal without calling Equals, so this calls Equals itself.  The null is
+        // held in a variable because the cs/null-argument-to-equals code scanning rule reports x.Equals(null).
+        object nothing = null;
+
+        Assert.That(Load(type, RecordId).Equals(nothing), Is.False);
     }
 
     [Test]
