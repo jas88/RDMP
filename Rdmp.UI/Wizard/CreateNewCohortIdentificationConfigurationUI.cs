@@ -53,9 +53,9 @@ public partial class CreateNewCohortIdentificationConfigurationUI : RDMPForm
 
         SimpleCohortSetUI target = null;
 
-        if (sender == cbExclusion1)
+        if (ReferenceEquals(sender, cbExclusion1))
             target = exclusionCriteria1;
-        if (sender == cbExclusion2)
+        if (ReferenceEquals(sender, cbExclusion2))
         {
             if (exclusionCriteria1.Catalogue == null && cb.Checked)
             {
@@ -66,7 +66,7 @@ public partial class CreateNewCohortIdentificationConfigurationUI : RDMPForm
             target = exclusionCriteria2;
         }
 
-        if (sender == cbInclusion2)
+        if (ReferenceEquals(sender, cbInclusion2))
         {
             if (inclusionCriteria1.Catalogue == null && cb.Checked)
             {

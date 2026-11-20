@@ -118,17 +118,17 @@ public partial class ServerDefaultsUI : RDMPForm
     {
         PermissableDefaults toChange;
 
-        if (sender == ddDefaultIdentifierDump)
+        if (ReferenceEquals(sender, ddDefaultIdentifierDump))
             toChange = PermissableDefaults.IdentifierDumpServer_ID;
-        else if (sender == ddDefaultLoggingServer)
+        else if (ReferenceEquals(sender, ddDefaultLoggingServer))
             toChange = PermissableDefaults.LiveLoggingServer_ID;
-        else if (sender == ddOverrideRawServer)
+        else if (ReferenceEquals(sender, ddOverrideRawServer))
             toChange = PermissableDefaults.RAWDataLoadServer;
-        else if (sender == ddDefaultANOStore)
+        else if (ReferenceEquals(sender, ddDefaultANOStore))
             toChange = PermissableDefaults.ANOStore;
-        else if (sender == ddWebServiceQueryCacheServer)
+        else if (ReferenceEquals(sender, ddWebServiceQueryCacheServer))
             toChange = PermissableDefaults.WebServiceQueryCachingServer_ID;
-        else if (sender == ddCohortIdentificationQueryCacheServer)
+        else if (ReferenceEquals(sender, ddCohortIdentificationQueryCacheServer))
             toChange = PermissableDefaults.CohortIdentificationQueryCachingServer_ID;
         else
             throw new Exception($"Did not recognise sender:{sender}");
@@ -144,37 +144,37 @@ public partial class ServerDefaultsUI : RDMPForm
     {
         PermissableDefaults toClear;
 
-        if (sender == btnClearLoggingServer)
+        if (ReferenceEquals(sender, btnClearLoggingServer))
         {
             toClear = PermissableDefaults.LiveLoggingServer_ID;
             ddDefaultLoggingServer.SelectedItem = null;
         }
-        else if (sender == btnClearIdentifierDump)
+        else if (ReferenceEquals(sender, btnClearIdentifierDump))
         {
             toClear = PermissableDefaults.IdentifierDumpServer_ID;
             ddDefaultIdentifierDump.SelectedItem = null;
         }
-        else if (sender == btnClearDQEServer)
+        else if (ReferenceEquals(sender, btnClearDQEServer))
         {
             toClear = PermissableDefaults.DQE;
             ddDQEServer.SelectedItem = null;
         }
-        else if (sender == btnClearRAWServer)
+        else if (ReferenceEquals(sender, btnClearRAWServer))
         {
             toClear = PermissableDefaults.RAWDataLoadServer;
             ddOverrideRawServer.SelectedItem = null;
         }
-        else if (sender == btnClearANOStore)
+        else if (ReferenceEquals(sender, btnClearANOStore))
         {
             toClear = PermissableDefaults.ANOStore;
             ddDefaultANOStore.SelectedItem = null;
         }
-        else if (sender == btnClearWebServiceQueryCache)
+        else if (ReferenceEquals(sender, btnClearWebServiceQueryCache))
         {
             toClear = PermissableDefaults.WebServiceQueryCachingServer_ID;
             ddWebServiceQueryCacheServer.SelectedItem = null;
         }
-        else if (sender == btnClearCohortIdentificationQueryCache)
+        else if (ReferenceEquals(sender, btnClearCohortIdentificationQueryCache))
         {
             toClear = PermissableDefaults.CohortIdentificationQueryCachingServer_ID;
             ddCohortIdentificationQueryCacheServer.SelectedItem = null;

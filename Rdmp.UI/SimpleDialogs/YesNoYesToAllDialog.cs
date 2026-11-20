@@ -89,20 +89,20 @@ public class YesNoYesToAllDialog : WideMessageBox
 
     private void btn_Click(object sender, EventArgs e)
     {
-        if (sender == btnYes)
+        if (ReferenceEquals(sender, btnYes))
         {
             DialogResult = DialogResult.Yes;
         }
-        else if (sender == btnNo)
+        else if (ReferenceEquals(sender, btnNo))
         {
             DialogResult = DialogResult.No;
         }
-        else if (sender == btnYesToAll)
+        else if (ReferenceEquals(sender, btnYesToAll))
         {
             YesToAllClicked = true;
             DialogResult = DialogResult.Yes;
         }
-        else if (sender == btnNoToAll)
+        else if (ReferenceEquals(sender, btnNoToAll))
         {
             NoToAllClicked = true;
             DialogResult = DialogResult.No;

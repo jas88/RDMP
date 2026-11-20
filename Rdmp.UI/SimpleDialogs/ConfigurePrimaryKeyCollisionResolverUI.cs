@@ -305,10 +305,10 @@ public partial class ConfigurePrimaryKeyCollisionResolverUI : RDMPForm
             //this is used only to generate the SQL preview of how to resolve primary key collisions so no username/password is required - hence the null,null
             var resolver = new PrimaryKeyCollisionResolver(_table);
 
-            if (sender == btnCopyPreview)
+            if (ReferenceEquals(sender, btnCopyPreview))
                 Clipboard.SetText(resolver.GeneratePreviewSQL());
 
-            if (sender == btnCopyDetection)
+            if (ReferenceEquals(sender, btnCopyDetection))
                 Clipboard.SetText(resolver.GenerateCollisionDetectionSQL());
         }
         catch (Exception exception)
