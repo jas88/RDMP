@@ -376,7 +376,7 @@ public class AggregateBuilder : ISqlQueryBuilder
         }
 
         if (_pivotDimension != null)
-            if (_pivotDimension.IColumn == _axisAppliesToDimension)
+            if (Equals(_pivotDimension.IColumn, _axisAppliesToDimension))
                 throw new QueryBuildingException(
                     $"Column {_pivotDimension.IColumn} is both a PIVOT and has an AXIS configured on it, you cannot have both.");
 

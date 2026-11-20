@@ -6,6 +6,7 @@
 
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data.Aggregation;
+using Rdmp.Core.QueryBuilding;
 using System.Data;
 using Rdmp.Core.ReusableLibraryCode.Settings;
 using Tests.Common;
@@ -59,5 +60,18 @@ internal class AggregateConfigurationTests : UnitTests
         }
 
         dt.Dispose();
+    }
+
+    [Test]
+    public void GetQueryBuilder_PivotAndAxisOnTheSameDimension_IsRefused()
+    {
+        var config = WhenIHaveA(Repository, out var dateEi, out _);
+        var dateDimension = new AggregateDimension(Repository, dateEi, config);
+        _ = new AggregateContinuousDateAxis(Repository, dateDimension);
+        config.PivotOnDimensionID = dateDimension.ID;
+        config.SaveToDatabase();
+
+        var ex = Assert.Throws<QueryBuildingException>(() => _ = config.GetQueryBuilder().SQL);
+        Assert.That(ex.Message, Does.Contain("is both a PIVOT and has an AXIS configured on it"));
     }
 }
