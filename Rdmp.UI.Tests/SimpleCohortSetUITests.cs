@@ -5,7 +5,9 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Linq;
 using System.Reflection;
+using System.Windows.Forms;
 using NUnit.Framework;
 using Rdmp.UI.Wizard;
 
@@ -22,9 +24,21 @@ internal class SimpleCohortSetUITests : UITests
         ui.SetupFor(ItemActivator);
 
         // no dataset has been chosen yet, so there is no column to lock in
+        var columns = GetControl<SuggestComboBox>().Single(static c => c.Name == "cbxColumns");
+        var lockButton = GetControl<Button>().Single(static b => b.Name == "btnLockExtractionIdentifier");
+        var lockButtonImage = lockButton.Image;
+
         var click = typeof(SimpleCohortSetUI).GetMethod("btnLockExtractionIdentifier_Click",
             BindingFlags.Instance | BindingFlags.NonPublic) ?? throw new MissingMethodException("btnLockExtractionIdentifier_Click");
 
         Assert.DoesNotThrow(() => click.Invoke(ui, [null, EventArgs.Empty]));
+
+        // locking in a column would disable the column list and change the button to the unlock image
+        Assert.Multiple(() =>
+        {
+            Assert.That(columns.SelectedItem, Is.Null);
+            Assert.That(columns.Enabled, Is.True);
+            Assert.That(lockButton.Image, Is.SameAs(lockButtonImage));
+        });
     }
 }
