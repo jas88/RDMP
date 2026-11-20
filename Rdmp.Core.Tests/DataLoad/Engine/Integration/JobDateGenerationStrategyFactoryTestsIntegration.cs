@@ -5,9 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
-using Microsoft.Data.SqlClient;
 using System.IO;
-using FAnsi.Discovery;
 using NUnit.Framework;
 using Rdmp.Core.Curation;
 using Rdmp.Core.Curation.Data;
@@ -30,7 +28,6 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
     private CacheProgress _cp;
     private LoadProgress _lp;
     private LoadMetadata _lmd;
-    private DiscoveredServer _server;
     private JobDateGenerationStrategyFactory _factory;
 
     [SetUp]
@@ -48,9 +45,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
 
         _cp = new CacheProgress(CatalogueRepository, _lp);
 
-
-        _server = new DiscoveredServer(new SqlConnectionStringBuilder("server=localhost;initial catalog=fish"));
-        _factory = new JobDateGenerationStrategyFactory(new SingleLoadProgressSelectionStrategy(_lp));
+        _factory =new JobDateGenerationStrategyFactory(new SingleLoadProgressSelectionStrategy(_lp));
     }
 
     [Test]
