@@ -108,7 +108,7 @@ public sealed class DicomSourceUnitTests
             //processed every file once
             Assert.That(toMemory.LastProgressRecieivedByTaskName.Single().Value.Progress.Value, Is.EqualTo(fileCount));
 
-            Assert.That(lastResult.Columns, Is.Not.Empty);
+            Assert.That(lastResult?.Columns.Count, Is.GreaterThan(0));
         }
     }
 

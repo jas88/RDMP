@@ -65,10 +65,8 @@ internal class BoundDateTest
         b.LowerFieldName = "dob";
         b.Upper = DateTime.MaxValue;
 
-        var result = CallValidateOnInvalidData("admission_date", b);
-
-        if (result == null)
-            Assert.Fail("Expected validation exception, but none came");
+        var result = CallValidateOnInvalidData("admission_date", b) ??
+                     throw new AssertionException("Expected validation exception, but none came");
 
 
         Assert.That(result.SourceConstraint, Is.Not.Null);

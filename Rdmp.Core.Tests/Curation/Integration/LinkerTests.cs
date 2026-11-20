@@ -33,11 +33,11 @@ internal class LinkerTests : DatabaseTests
         }
         finally
         {
-            lazor.DeleteInDatabase(); //delete child
-            predator.DeleteInDatabase(); //delete parent
+            lazor?.DeleteInDatabase(); //delete child
+            predator?.DeleteInDatabase(); //delete parent
 
-            velocityColumn.DeleteInDatabase(); //delete child
-            highEnergyTable.DeleteInDatabase(); //delete parent
+            velocityColumn?.DeleteInDatabase(); //delete child
+            highEnergyTable?.DeleteInDatabase(); //delete parent
         }
     }
 

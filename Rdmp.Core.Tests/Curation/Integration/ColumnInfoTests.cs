@@ -46,8 +46,8 @@ internal class ColumnInfoTests : DatabaseTests
         }
         finally
         {
-            child.DeleteInDatabase();
-            parent.DeleteInDatabase();
+            child?.DeleteInDatabase();
+            parent?.DeleteInDatabase();
         }
     }
 

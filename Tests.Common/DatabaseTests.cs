@@ -737,10 +737,7 @@ delete from {1}..Project
                 ? null
                 : new DiscoveredServer(_discoveredPostgresServer.Builder),
             _ => throw new ArgumentOutOfRangeException(nameof(type))
-        };
-
-        if (server == null)
-            Assert.Inconclusive();
+        } ?? throw new InconclusiveException($"No {type} server is configured for the tests");
 
         //the microsoft one should exist! others are optional
         if (!server.Exists() && type != DatabaseType.MicrosoftSQLServer)
