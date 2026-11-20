@@ -76,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: Children that a plugin child provider gave an object at the root of a tree (one with no parents) were not added to the tree, and an error was reported instead
 - FIX: Reading the help text from XML documentation failed with a NullReferenceException when a summary contained a `<see>` tag without a `cref`, such as `<see langword="null"/>` or `<see href="...">`. A `langword` is now shown as its word and the text of an `href` link as its text
 - FIX: JoinHelper.GetJoinSQLPrimaryKeySideOnly failed with a NullReferenceException when given a lookup alias for a join that had no primary key yet
+- FIX: When an extraction to a database (ExecuteFullExtractionToDatabaseMSSql) failed before any rows were written, e.g. because the table name was not valid, disposing the destination failed with a NullReferenceException, which was reported as a second error, and the extraction's audit (destination and number of records) was not completed. The audit now records the destination and 0 records
+- FIX: The release checks of a global whose extraction ran SQL but which is not a [SupportingSQLTable] failed with a NullReferenceException after reporting the problem
 
 
 ## [9.0.1] - 2025-07-31
@@ -1826,6 +1828,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [UNION]: ./Documentation/CodeTutorials/Glossary.md#UNION
 [INTERSECT]: ./Documentation/CodeTutorials/Glossary.md#INTERSECT
 [EXCEPT]: ./Documentation/CodeTutorials/Glossary.md#EXCEPT
+[SupportingSQLTable]: ./Documentation/CodeTutorials/Glossary.md#SupportingSQLTable
 [IsExtractionIdentifier]: ./Documentation/CodeTutorials/Glossary.md#IsExtractionIdentifier
 [DataAccessCredentials]: ./Documentation/CodeTutorials/Glossary.md#DataAccessCredentials
 [Catalogue]: ./Documentation/CodeTutorials/Glossary.md#Catalogue
