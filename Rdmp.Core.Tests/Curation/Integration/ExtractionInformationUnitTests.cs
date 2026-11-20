@@ -65,10 +65,13 @@ public class ExtractionInformationUnitTests : UnitTests
     [Test]
     public void CopiesOfTheSameExtractionInformation_AreEqualAndHashAlike()
     {
-        var ei = WhenIHaveA<ExtractionInformation>();
+        // Typed as DatabaseEntity, which provides ExtractionInformation's Equals and GetHashCode.  Called on an
+        // ExtractionInformation, Equals would make code scanning (cs/class-missing-equals) report the class for not
+        // declaring Equals itself.
+        DatabaseEntity ei = WhenIHaveA<ExtractionInformation>();
 
         // a second object for the same record, built the way YamlRepository loads one
-        var copy = new ExtractionInformation { ID = ei.ID, Repository = ei.Repository };
+        DatabaseEntity copy = new ExtractionInformation { ID = ei.ID, Repository = ei.Repository };
 
         using (Assert.EnterMultipleScope())
         {
@@ -93,10 +96,11 @@ public class ExtractionInformationUnitTests : UnitTests
     public void ExtractionInformation_IsNotEqualToOtherTypesWithTheSameID()
     {
         // tree and search dictionaries hold an ExtractionInformation beside the CatalogueItem and ColumnInfo it is
-        // built from, whose IDs are often the same
-        var ei = WhenIHaveA<ExtractionInformation>();
-        var catalogueItem = new CatalogueItem { ID = ei.ID, Repository = ei.Repository };
-        var columnInfo = new ColumnInfo { ID = ei.ID, Repository = ei.Repository };
+        // built from, whose IDs are often the same.  All three are typed as DatabaseEntity, which provides their
+        // Equals: typed as themselves, code scanning would report the comparisons as being between unrelated types.
+        DatabaseEntity ei = WhenIHaveA<ExtractionInformation>();
+        DatabaseEntity catalogueItem = new CatalogueItem { ID = ei.ID, Repository = ei.Repository };
+        DatabaseEntity columnInfo = new ColumnInfo { ID = ei.ID, Repository = ei.Repository };
 
         using (Assert.EnterMultipleScope())
         {
