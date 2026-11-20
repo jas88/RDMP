@@ -4,6 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using System.Collections.Generic;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
 using Tests.Common;
@@ -59,5 +60,51 @@ public class ExtractionInformationUnitTests : UnitTests
         var ei4 = new ExtractionInformation(RepositoryLocator.CatalogueRepository, cataItem4, ei1.ColumnInfo, "fff");
 
         Assert.That(ei4.Order, Is.EqualTo(4));
+    }
+
+    [Test]
+    public void CopiesOfTheSameExtractionInformation_AreEqualAndHashAlike()
+    {
+        var ei = WhenIHaveA<ExtractionInformation>();
+
+        // a second object for the same record, built the way YamlRepository loads one
+        var copy = new ExtractionInformation { ID = ei.ID, Repository = ei.Repository };
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(copy, Is.Not.SameAs(ei));
+            Assert.That(copy.Equals(ei), Is.True);
+            Assert.That(ei.Equals(copy), Is.True);
+            Assert.That(copy.GetHashCode(), Is.EqualTo(ei.GetHashCode()));
+            Assert.That(new HashSet<object> { ei }.Contains(copy), Is.True);
+        }
+    }
+
+    [Test]
+    public void ExtractionInformation_HashesLikeEveryOtherDatabaseEntity()
+    {
+        // Equals and GetHashCode both come from DatabaseEntity, so the two cannot disagree
+        var ei = WhenIHaveA<ExtractionInformation>();
+
+        Assert.That(ei.GetHashCode(), Is.EqualTo(ei.Repository.GetHashCode(ei)));
+    }
+
+    [Test]
+    public void ExtractionInformation_IsNotEqualToOtherTypesWithTheSameID()
+    {
+        // tree and search dictionaries hold an ExtractionInformation beside the CatalogueItem and ColumnInfo it is
+        // built from, whose IDs are often the same
+        var ei = WhenIHaveA<ExtractionInformation>();
+        var catalogueItem = new CatalogueItem { ID = ei.ID, Repository = ei.Repository };
+        var columnInfo = new ColumnInfo { ID = ei.ID, Repository = ei.Repository };
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(ei.Equals(catalogueItem), Is.False);
+            Assert.That(ei.Equals(columnInfo), Is.False);
+            Assert.That(catalogueItem.Equals(ei), Is.False);
+            Assert.That(columnInfo.Equals(ei), Is.False);
+            Assert.That(new HashSet<object> { catalogueItem, columnInfo }.Contains(ei), Is.False);
+        }
     }
 }
