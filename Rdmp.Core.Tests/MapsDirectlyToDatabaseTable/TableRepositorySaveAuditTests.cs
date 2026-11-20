@@ -4,6 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NLog;
@@ -27,34 +28,30 @@ public class TableRepositorySaveAuditTests : DatabaseTests
         if (CatalogueRepository is not TableRepository)
             Assert.Ignore("Only database-backed repositories (TableRepository) log the changes they save");
 
-        var log = new MemoryTarget { Layout = "${message}" };
-        var configuration = new LoggingConfiguration();
-        configuration.AddRule(LogLevel.Debug, LogLevel.Fatal, log);
-
         var credentials = new DataAccessCredentials(CatalogueRepository, nameof(SaveToDatabase_DoesNotLogPasswords));
         var secrets = new List<string> { "FirstPassword", "SecondPassword" };
+        string[] log;
 
-        var previous = LogManager.Configuration;
-        LogManager.Configuration = configuration;
         try
         {
-            credentials.Username = "bob";
-            credentials.Password = secrets[0];
-            secrets.Add(credentials.Password);
-            credentials.SaveToDatabase();
+            log = CaptureLog(() =>
+            {
+                credentials.Username = "bob";
+                credentials.Password = secrets[0];
+                secrets.Add(credentials.Password);
+                credentials.SaveToDatabase();
 
-            credentials.Password = secrets[1];
-            secrets.Add(credentials.Password);
-            credentials.SaveToDatabase();
+                credentials.Password = secrets[1];
+                secrets.Add(credentials.Password);
+                credentials.SaveToDatabase();
+            });
         }
         finally
         {
-            LogManager.Configuration = previous;
             credentials.DeleteInDatabase();
         }
 
-        var saves = log.Logs.Where(l => l.StartsWith($"Save,{nameof(DataAccessCredentials)},{credentials.ID},"))
-            .ToArray();
+        var saves = log.Where(l => l.StartsWith($"Save,{nameof(DataAccessCredentials)},{credentials.ID},")).ToArray();
         var hidden = $",System.String Password,{SaveAuditMessage.HiddenValue},{SaveAuditMessage.HiddenValue}";
 
         Assert.Multiple(() =>
@@ -64,7 +61,30 @@ public class TableRepositorySaveAuditTests : DatabaseTests
 
             // the passwords, and the encrypted values that the credentials store
             foreach (var secret in secrets)
-                Assert.That(log.Logs.Where(l => l.Contains(secret)), Is.Empty);
+                Assert.That(log.Where(l => l.Contains(secret)), Is.Empty);
         });
+    }
+
+    /// <summary>
+    /// Returns the messages logged at Debug level or above while <paramref name="action"/> runs
+    /// </summary>
+    private static string[] CaptureLog(Action action)
+    {
+        using var log = new MemoryTarget { Layout = "${message}" };
+        var configuration = new LoggingConfiguration();
+        configuration.AddRule(LogLevel.Debug, LogLevel.Fatal, log);
+
+        var previous = LogManager.Configuration;
+        LogManager.Configuration = configuration;
+        try
+        {
+            action();
+        }
+        finally
+        {
+            LogManager.Configuration = previous;
+        }
+
+        return log.Logs.ToArray();
     }
 }
