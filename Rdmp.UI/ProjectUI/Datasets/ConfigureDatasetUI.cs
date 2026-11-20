@@ -753,11 +753,11 @@ public partial class ConfigureDatasetUI : ConfigureDatasetUI_Design, ILifetimeSu
         ObjectListView tree;
         var senderTb = (TextBox)sender;
 
-        if (sender == tbSearchAvailable)
+        if (ReferenceEquals(sender, tbSearchAvailable))
             tree = olvAvailable;
-        else if (sender == tbSearchSelected)
+        else if (ReferenceEquals(sender, tbSearchSelected))
             tree = olvSelected;
-        else if (sender == tbSearchTables)
+        else if (ReferenceEquals(sender, tbSearchTables))
             tree = olvJoin;
         else
             throw new Exception($"Unexpected sender {sender}");
