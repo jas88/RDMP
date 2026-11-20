@@ -87,6 +87,20 @@ public class EqualsChecksExactTypeTests : UnitTests
         }
     }
 
+    [Test]
+    public void QueryTimeColumn_IsNotEqualToNullOrAnotherType()
+    {
+        var column = WhenIHaveA<ExtractionInformation>();
+        var queryTimeColumn = new QueryTimeColumn(column);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(queryTimeColumn.Equals(null), Is.False);
+            Assert.That(queryTimeColumn.Equals(column), Is.False);
+            Assert.That(queryTimeColumn.Equals("a string"), Is.False);
+        }
+    }
+
     private sealed class SubFolderNode : FolderNode<Catalogue>
     {
         public SubFolderNode(string name) : base(name)

@@ -94,9 +94,10 @@ internal class ConsoleGuiBigListBox<T>
 
         public override string ToString() => _displayFunc(Object);
 
-        public override int GetHashCode() => Object.GetHashCode();
+        // Object is null for the "Null" option (see addNull)
+        public override int GetHashCode() => Object is null ? 0 : Object.GetHashCode();
 
-        public override bool Equals(object obj) => obj is ListViewObject<T2> other && Object.Equals(other.Object);
+        public override bool Equals(object obj) => obj is ListViewObject<T2> other && Equals(Object, other.Object);
     }
 
     /// <summary>

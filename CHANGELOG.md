@@ -69,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: The help text of DelimitedFlatFileDataFlowSource's IgnoreBlankLines property was the one for IgnoreQuotes
 - FIX: The delimited flat file error for a CsvHelper reading exception said `Bad data found on liline` instead of `line`
 - FIX: Tree nodes of different kinds that share a caption were equal, e.g. a folder node named "Pipelines" and the Pipelines node, or an extraction folder and a plain folder of the same name. `SingletonNode` equality now also requires the same Type, and `SingletonNode.Equals(SingletonNode)` returns false for null instead of throwing NullReferenceException
+- FIX: `QueryTimeColumn.Equals` threw an exception, instead of returning false, when passed null or an object that is not a `QueryTimeColumn`
 - Bump CsvHelper from 33.0.1 to 33.1.0. Its fixes are to features RDMP does not use (writing records asynchronously, and default values for fields that fail to convert), so CSV files are read and written as before
 
 
