@@ -5,6 +5,7 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using NUnit.Framework;
@@ -46,6 +47,20 @@ public class ArgumentTypeTests : UnitTests
             Assert.That(args.Single().Value, Is.EqualTo("1"));
         });
     }
+
+    [TestCase(typeof(EncryptedString), true)]
+    [TestCase(typeof(Dictionary<int, EncryptedString>), true)]
+    [TestCase(typeof(string), false)]
+    [TestCase(typeof(TableInfo[]), false)]
+    public void IsEncryptedType(Type type, bool expected) =>
+        Assert.That(Argument.IsEncryptedType(type.ToString()), Is.EqualTo(expected));
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("Plugins.ThatAreGone.Setting")]
+    [TestCase("not a type [] ,")]
+    public void IsEncryptedType_TypeThatCannotBeFound(string type) =>
+        Assert.That(Argument.IsEncryptedType(type), Is.False);
 
     private class TestClassDemandingDouble
     {
