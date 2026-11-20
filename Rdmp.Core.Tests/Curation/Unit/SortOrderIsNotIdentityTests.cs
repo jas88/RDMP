@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
+using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Unit;
@@ -58,6 +59,30 @@ public class SortOrderIsNotIdentityTests : UnitTests
         {
             Assert.That(((IComparable)record).CompareTo(copy), Is.Zero);
             Assert.That(record.Equals(copy), Is.True);
+        }
+    }
+
+    private static IEnumerable<TestCaseData> SortedByName()
+    {
+        yield return new TestCaseData((Func<DatabaseEntity>)(static () => new ColumnInfo())).SetArgDisplayNames(nameof(ColumnInfo));
+        yield return new TestCaseData((Func<DatabaseEntity>)(static () => new TableInfo())).SetArgDisplayNames(nameof(TableInfo));
+        yield return new TestCaseData((Func<DatabaseEntity>)(static () => new CatalogueItem())).SetArgDisplayNames(nameof(CatalogueItem));
+        yield return new TestCaseData((Func<DatabaseEntity>)(static () => new Catalogue())).SetArgDisplayNames(nameof(Catalogue));
+    }
+
+    [TestCaseSource(nameof(SortedByName))]
+    public void SortingByName_IsAToZ(Func<DatabaseEntity> create)
+    {
+        var apple = Load(create, 1, static o => ((INamed)o).Name = "Apple");
+        var banana = Load(create, 2, static o => ((INamed)o).Name = "Banana");
+        var sorted = new List<IComparable> { (IComparable)banana, (IComparable)apple };
+        sorted.Sort();
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(((IComparable)apple).CompareTo(banana), Is.Negative);
+            Assert.That(((IComparable)banana).CompareTo(apple), Is.Positive);
+            Assert.That(sorted[0], Is.SameAs(apple));
         }
     }
 

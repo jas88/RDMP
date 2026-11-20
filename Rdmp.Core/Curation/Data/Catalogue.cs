@@ -1148,7 +1148,7 @@ public sealed class Catalogue : DatabaseEntity, IComparable, ICatalogue, IInject
     {
         if (obj is Catalogue)
             return -string.Compare(obj.ToString(), ToString(),
-                StringComparison.CurrentCulture); //sort alphabetically (reverse)
+                StringComparison.CurrentCulture); //sort alphabetically, A to Z
 
         throw new Exception($"Cannot compare {GetType().Name} to {obj?.GetType().Name}");
     }
