@@ -78,6 +78,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: JoinHelper.GetJoinSQLPrimaryKeySideOnly failed with a NullReferenceException when given a lookup alias for a join that had no primary key yet
 - FIX: When an extraction to a database (ExecuteFullExtractionToDatabaseMSSql) failed before any rows were written, e.g. because the table name was not valid, disposing the destination failed with a NullReferenceException, which was reported as a second error, and the extraction's audit (destination and number of records) was not completed. The audit now records the destination and 0 records
 - FIX: The release checks of a global whose extraction ran SQL but which is not a [SupportingSQLTable] failed with a NullReferenceException after reporting the problem
+- FIX: The filter graph, cohort summary graph and extraction aggregate graph windows failed with a NullReferenceException when they opened, so their graphs were not shown
+- FIX: Checking a ticketing system configuration that has no Type reported a NullReferenceException. It now says that the configuration has no Type
+- FIX: Clicking the button that locks in the extraction identifier in the simple cohort set step of the cohort wizard before a column was selected failed with a NullReferenceException. It now does nothing
+- FIX: In the window that runs a pipeline, if showing the progress of a failed run failed too, the 'Pipeline Failed' popup could fail with a NullReferenceException instead of showing the error
 
 
 ## [9.0.1] - 2025-07-31

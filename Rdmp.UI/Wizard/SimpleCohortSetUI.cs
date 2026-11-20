@@ -178,10 +178,11 @@ public partial class SimpleCohortSetUI : UserControl
 
     private void btnLockExtractionIdentifier_Click(object sender, EventArgs e)
     {
-        if (lockIn)
-            LockIdentifier(cbxColumns.SelectedItem as ExtractionInformation);
-        else
+        if (!lockIn)
             UnlockIdentifier(cbxColumns.SelectedItem as ExtractionInformation);
+        else if (cbxColumns.SelectedItem is ExtractionInformation selected)
+            LockIdentifier(selected);
+        //else there is no column selected to lock in as the extraction identifier
     }
 
     private void btnAddFilter_Click(object sender, EventArgs e)

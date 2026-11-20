@@ -157,16 +157,22 @@ public partial class TicketingSystemConfigurationUI : RDMPUserControl
             var factory = new TicketingSystemFactory(_activator.RepositoryLocator.CatalogueRepository);
             instance = factory.CreateIfExists(_ticketingSystemConfiguration);
 
-            if (instance != null)
+            // CreateIfExists returns null until a Type has been chosen
+            if (instance == null)
             {
-                var knownStatuses = instance.GetAvailableStatuses();
-                var requestedStatuses = tbReleases.Text.Split(',').Where(s => s.Trim() != "");
-                if (!requestedStatuses.Any()) checksUI1.OnCheckPerformed(new CheckEventArgs("No Release status set", CheckResult.Fail));
+                checksUI1.OnCheckPerformed(new CheckEventArgs(
+                    "Could not create ticketing system from your current configuration because it has no Type",
+                    CheckResult.Fail));
+                return;
+            }
 
-                foreach (var status in requestedStatuses.Where(s => !knownStatuses.Contains(s.Trim())))
-                {
-                    checksUI1.OnCheckPerformed(new CheckEventArgs($"{status} is not a known status within the ticketing system", CheckResult.Fail));
-                }
+            var knownStatuses = instance.GetAvailableStatuses();
+            var requestedStatuses = tbReleases.Text.Split(',').Where(s => s.Trim() != "");
+            if (!requestedStatuses.Any()) checksUI1.OnCheckPerformed(new CheckEventArgs("No Release status set", CheckResult.Fail));
+
+            foreach (var status in requestedStatuses.Where(s => !knownStatuses.Contains(s.Trim())))
+            {
+                checksUI1.OnCheckPerformed(new CheckEventArgs($"{status} is not a known status within the ticketing system", CheckResult.Fail));
             }
 
             checksUI1.OnCheckPerformed(
