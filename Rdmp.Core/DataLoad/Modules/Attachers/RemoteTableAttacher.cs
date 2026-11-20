@@ -411,16 +411,16 @@ public class RemoteTableAttacher : RemoteAttacher
             _remoteDatabase.Server.Builder, Timeout == 0 ? 50000 : Timeout);
 
         //For Oracle / Postgres we have to add the parameters to the DbCommand directly
-        if (_minDateParam.HasValue && _maxDateParam.HasValue && !syntax.SupportsEmbeddedParameters())
+        if (_minDateParam is { } minDate && _maxDateParam is { } maxDate && !syntax.SupportsEmbeddedParameters())
             source.CommandAdjuster = cmd =>
             {
                 var pmin = cmd.CreateParameter();
-                pmin.Value = _minDateParam.Value;
+                pmin.Value = minDate;
                 pmin.ParameterName = StartDateParameter;
                 cmd.Parameters.Add(pmin);
 
                 var pmax = cmd.CreateParameter();
-                pmax.Value = _maxDateParam.Value;
+                pmax.Value = maxDate;
                 pmax.ParameterName = EndDateParameter;
                 cmd.Parameters.Add(pmax);
             };

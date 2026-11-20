@@ -365,6 +365,15 @@ This will not help you avoid bad data as the full file structure must still be r
                     "StronglyTypeInputBatchSize is less than the recommended 500: this may cause errors when determining the best data type from the source file.",
                     CheckResult.Warning));
 
+        if (_fileToLoad == null)
+        {
+            notifier.OnCheckPerformed(
+                new CheckEventArgs(
+                    "_fileToLoad was not set, it is supposed to be set because of IPipelineRequirement<FlatFileToLoad> - maybe this PreInitialize method was not called?",
+                    CheckResult.Fail));
+            return;
+        }
+
         if (_fileToLoad.File == null)
         {
             notifier.OnCheckPerformed(
@@ -374,8 +383,7 @@ This will not help you avoid bad data as the full file structure must still be r
             return;
         }
 
-        if (_fileToLoad != null)
-            CheckExpectedFileExtensions(notifier, _fileToLoad.File.Extension);
+        CheckExpectedFileExtensions(notifier, _fileToLoad.File.Extension);
     }
 
     private void CheckExpectedFileExtensions(ICheckNotifier notifier, string extension)

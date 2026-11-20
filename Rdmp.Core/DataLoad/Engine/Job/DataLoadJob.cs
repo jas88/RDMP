@@ -59,7 +59,7 @@ public class DataLoadJob : IDataLoadJob
     {
         _logManager = logManager;
         RepositoryLocator = repositoryLocator;
-        LoadMetadata = loadMetadata;
+        LoadMetadata = loadMetadata ?? throw new ArgumentNullException(nameof(loadMetadata));
         LoadDirectory = directory;
         Configuration = configuration;
         _listener = listener;
@@ -67,8 +67,7 @@ public class DataLoadJob : IDataLoadJob
 
         var catalogues = LoadMetadata.GetAllCatalogues().ToList();
 
-        if (LoadMetadata != null)
-            _loggingTask = GetLoggingTask(catalogues);
+        _loggingTask = GetLoggingTask(catalogues);
 
         RegularTablesToLoad = catalogues.SelectMany(catalogue => catalogue.GetTableInfoList(false)).Distinct().ToList();
         LookupTablesToLoad = catalogues.SelectMany(catalogue => catalogue.GetLookupTableInfoList()).Distinct().ToList();
