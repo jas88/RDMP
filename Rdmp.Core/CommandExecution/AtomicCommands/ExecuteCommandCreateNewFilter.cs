@@ -244,13 +244,23 @@ where    Optional SQL to set for the filter.  If <basedOn> is not null this will
         if (_host is not SelectedDataSets sds)
             return filters;
 
-        var cohortId = sds.ExtractionConfiguration.Cohort.OriginID;
-        var cic = catalogue.CatalogueRepository.GetObjectByID<CohortIdentificationConfiguration>(cohortId);
-        if (cic == null)
+        // an extraction configuration has no cohort until one is chosen for it
+        var cohort = sds.ExtractionConfiguration.Cohort;
+        if (cohort == null)
             return filters;
 
-        var cicFilters = cic.RootCohortAggregateContainer.GetAllAggregateConfigurationsRecursively()
-            .SelectMany(ac => ac.RootFilterContainer.GetAllFiltersIncludingInSubContainersRecursively())
+        var cic = catalogue.CatalogueRepository.GetObjectByID<CohortIdentificationConfiguration>(cohort.OriginID);
+
+        // a configuration may not have a root container yet, and then it has no cohort sets
+        var root = cic?.RootCohortAggregateContainer;
+        if (root == null)
+            return filters;
+
+        // a cohort set without filters may have no root filter container
+        var cicFilters = root.GetAllAggregateConfigurationsRecursively()
+            .Select(ac => ac.RootFilterContainer)
+            .Where(container => container != null)
+            .SelectMany(container => container.GetAllFiltersIncludingInSubContainersRecursively())
             .Where(f => f.GetCatalogue().ID == catalogue.ID);
         return filters.Concat(cicFilters).ToArray();
     }
