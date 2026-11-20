@@ -88,11 +88,9 @@ public class CohortQueryBuilder
     }
 
     public CohortQueryBuilder(CohortIdentificationConfiguration configuration, ICoreChildProvider childProvider) : this(
-        configuration.GetAllParameters(), childProvider)
+        (configuration ?? throw new QueryBuildingException("Configuration has not been set yet")).GetAllParameters(),
+        childProvider)
     {
-        if (configuration == null)
-            throw new QueryBuildingException("Configuration has not been set yet");
-
         if (configuration.RootCohortAggregateContainer_ID == null)
             throw new QueryBuildingException(
                 $"Root container not set on CohortIdentificationConfiguration {configuration}");

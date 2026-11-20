@@ -35,6 +35,8 @@ public class CohortQueryBuilderHelper
     public static CohortQueryBuilderDependencySql GetSQLForAggregate(AggregateConfiguration aggregate,
         QueryBuilderArgs args)
     {
+        ArgumentNullException.ThrowIfNull(args);
+
         var isJoinAggregate = aggregate.IsCohortIdentificationAggregate;
 
         //make sure it is a valid configuration
@@ -70,7 +72,7 @@ public class CohortQueryBuilderHelper
             if (args.OverrideSelectList != null)
                 selectList = args.OverrideSelectList;
 
-            var limitationSQL = args?.OverrideLimitationSQL ?? "distinct";
+            var limitationSQL = args.OverrideLimitationSQL ?? "distinct";
 
             //select list is either [chi] or [chi],[mycolumn],[myexcitingcol] (in the case of a patient index table)
             builder = new AggregateBuilder(limitationSQL, selectList, aggregate, aggregate.ForcedJoins);

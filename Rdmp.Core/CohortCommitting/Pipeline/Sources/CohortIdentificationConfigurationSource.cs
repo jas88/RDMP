@@ -94,6 +94,10 @@ public class CohortIdentificationConfigurationSource : IPluginDataFlowSource<Dat
                 ? RunRootContainerOnlyNoCaching(cohortCompiler)
                 : RunAllTasksWithRunner(cohortCompiler, listener);
 
+        // CohortCompilerRunner returns no task when the run is cancelled (see Abort)
+        if (rootContainerTask == null)
+            throw new Exception("Root container task was null, was the execution cancelled? / crashed");
+
         if (rootContainerTask.State == CompilationState.Executing)
         {
             listener.OnNotify(this,
@@ -111,9 +115,6 @@ public class CohortIdentificationConfigurationSource : IPluginDataFlowSource<Dat
         if (rootContainerTask.State != CompilationState.Finished)
             throw new Exception($"CohortIdentificationCriteria execution resulted in state '{rootContainerTask.State}'",
                 rootContainerTask.CrashMessage);
-
-        if (rootContainerTask == null)
-            throw new Exception("Root container task was null, was the execution cancelled? / crashed");
 
         var execution = cohortCompiler.Tasks[rootContainerTask];
 
