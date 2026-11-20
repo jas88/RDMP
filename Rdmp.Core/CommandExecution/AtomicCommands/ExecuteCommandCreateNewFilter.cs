@@ -202,20 +202,10 @@ where    Optional SQL to set for the filter.  If <basedOn> is not null this will
         else if (OfferCatalogueFilters)
         {
 
+            // without a Catalogue (e.g. it has been deleted) there are no filters to offer
             var c = GetCatalogue();
-            _offerFilters = c?.GetAllFilters();
-            if (_host is SelectedDataSets sds)
-            {
-                var cohortId = sds.ExtractionConfiguration.Cohort.OriginID;
-                var cic = c.CatalogueRepository.GetObjectByID<CohortIdentificationConfiguration>(cohortId);
-                if (cic != null)
-                {
-                    var filters = cic.RootCohortAggregateContainer.GetAllAggregateConfigurationsRecursively().SelectMany(ac => ac.RootFilterContainer.GetAllFiltersIncludingInSubContainersRecursively());
-                    filters = filters.Where(f => f.GetCatalogue().ID == c.ID);
-                    _offerFilters = _offerFilters.Concat(filters).ToArray();
-                }
-            }
-            if (_offerFilters == null || !_offerFilters.Any())
+            _offerFilters = c == null ? [] : GetFiltersToOffer(c);
+            if (_offerFilters.Length == 0)
                 SetImpossible($"There are no Filters declared in Catalogue '{c?.ToString() ?? "NULL"}'");
 
             // we want user to make decision about what to import
@@ -241,6 +231,28 @@ where    Optional SQL to set for the filter.  If <basedOn> is not null this will
 
         Emphasise(f);
         Activate((DatabaseEntity)f);
+    }
+
+    /// <summary>
+    /// Returns the filters of <paramref name="catalogue"/> and, when the filter is for a dataset in an extraction, the filters on
+    /// that dataset in the cohort's <see cref="CohortIdentificationConfiguration"/>
+    /// </summary>
+    private IFilter[] GetFiltersToOffer(ICatalogue catalogue)
+    {
+        IFilter[] filters = catalogue.GetAllFilters();
+
+        if (_host is not SelectedDataSets sds)
+            return filters;
+
+        var cohortId = sds.ExtractionConfiguration.Cohort.OriginID;
+        var cic = catalogue.CatalogueRepository.GetObjectByID<CohortIdentificationConfiguration>(cohortId);
+        if (cic == null)
+            return filters;
+
+        var cicFilters = cic.RootCohortAggregateContainer.GetAllAggregateConfigurationsRecursively()
+            .SelectMany(ac => ac.RootFilterContainer.GetAllFiltersIncludingInSubContainersRecursively())
+            .Where(f => f.GetCatalogue().ID == catalogue.ID);
+        return filters.Concat(cicFilters).ToArray();
     }
 
     private void ImportExistingFilter(IContainer container)

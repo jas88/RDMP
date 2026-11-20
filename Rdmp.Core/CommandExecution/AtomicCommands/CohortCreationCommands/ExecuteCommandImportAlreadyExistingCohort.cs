@@ -58,7 +58,7 @@ public class ExecuteCommandImportAlreadyExistingCohort : BasicCommandExecution, 
     private int? GetWhichCohortToImport(ExternalCohortTable ect)
     {
         // the cohorts in the database
-        var available = ExtractableCohort.GetImportableCohortDefinitions(ect).Where(c => c.ID.HasValue).ToArray();
+        var available = ExtractableCohort.GetImportableCohortDefinitions(ect).ToArray();
 
 
         // the ones we already know about
@@ -67,8 +67,8 @@ public class ExecuteCommandImportAlreadyExistingCohort : BasicCommandExecution, 
             .GetAllObjectsWhere<ExtractableCohort>("ExternalCohortTable_ID", ect.ID)
             .Select(c => c.OriginID));
 
-        // new ones we don't know about yet
-        available = available.Where(c => !existing.Contains(c.ID.Value)).ToArray();
+        // new ones we don't know about yet (a cohort without an ID cannot be imported)
+        available = available.Where(c => c.ID is { } id && !existing.Contains(id)).ToArray();
 
         // if there are no new ones
         if (!available.Any())

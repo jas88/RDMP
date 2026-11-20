@@ -19,6 +19,21 @@ namespace Rdmp.Core.Tests.CommandExecution;
 internal class ExecuteCommandCreateNewFilterCliTests : CommandCliTests
 {
     [Test]
+    public void OfferCatalogueFilters_ForDatasetWhoseCatalogueWasDeleted_OffersNoFilters()
+    {
+        var sds = WhenIHaveA<SelectedDataSets>();
+
+        // ExtractableDataSet.Catalogue is null once its Catalogue has been deleted
+        sds.ExtractableDataSet.Catalogue_ID = int.MaxValue;
+        Assert.That(sds.GetCatalogue(), Is.Null);
+
+        var cmd = new ExecuteCommandCreateNewFilter(GetMockActivator(), sds) { OfferCatalogueFilters = true };
+
+        Assert.DoesNotThrow(cmd.Execute);
+        Assert.That(cmd.ReasonCommandImpossible, Does.Contain("There are no Filters declared"));
+    }
+
+    [Test]
     public void TestNewFilterForAggregate()
     {
         var ac = WhenIHaveA<AggregateConfiguration>();

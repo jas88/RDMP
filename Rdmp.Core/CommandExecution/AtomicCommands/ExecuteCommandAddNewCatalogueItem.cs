@@ -55,7 +55,7 @@ public class ExecuteCommandAddNewCatalogueItem : BasicCommandExecution, IAtomicC
         return catalogue == null
             ? null
             : new HashSet<int>(_activator.CoreChildProvider.AllCatalogueItems.Where(ci => ci.Catalogue_ID == catalogue.ID).Select(static ci => ci.ColumnInfo_ID)
-                .Where(static col => col.HasValue).Select(static v => v.Value).Distinct());
+                .OfType<int>().Distinct());
     }
 
     public override string GetCommandHelp() =>

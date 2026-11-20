@@ -55,14 +55,14 @@ public sealed class ExecuteCommandChangeExtractionCategory : BasicCommandExecuti
     {
         base.Execute();
 
-        var c = _category;
-        if (c == null && BasicActivator.SelectValueType("New Extraction Category", typeof(ExtractionCategory),
+        var requested = _category;
+        if (requested == null && BasicActivator.SelectValueType("New Extraction Category", typeof(ExtractionCategory),
                 ExtractionCategory.Core, out var category))
         {
-            c = (ExtractionCategory)category;
+            requested = (ExtractionCategory)category;
         }
 
-        if (c == null)
+        if (requested is not { } c)
             return;
         if (_isProjectSpecific && c == ExtractionCategory.Core)
         {
@@ -71,7 +71,7 @@ public sealed class ExecuteCommandChangeExtractionCategory : BasicCommandExecuti
             Show("Cannot set the Extraction Category to 'Core' for a  Project Specific Catalogue item. It will be saved as 'Project Specific'.");
         }
 
-        if (ExecuteWithCommit(() => ExecuteImpl(c.Value), c == ExtractionCategory.NotExtractable ? "Make Not Extractable" : $"Set ExtractionCategory to '{c}'", _extractionInformations))
+        if (ExecuteWithCommit(() => ExecuteImpl(c), c == ExtractionCategory.NotExtractable ? "Make Not Extractable" : $"Set ExtractionCategory to '{c}'", _extractionInformations))
             //publish the root Catalogue
             Publish(_extractionInformations.First());
     }
