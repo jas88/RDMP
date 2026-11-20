@@ -12,6 +12,9 @@ using NLog.Config;
 using NLog.Targets;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
+using Rdmp.Core.Curation.Data.Pipelines;
+using Rdmp.Core.DataExport.DataRelease.Pipeline;
+using Rdmp.Core.DataLoad.Modules.DataProvider;
 using Rdmp.Core.MapsDirectlyToDatabaseTable;
 using Tests.Common;
 
@@ -60,6 +63,60 @@ public class TableRepositorySaveAuditTests : DatabaseTests
             Assert.That(saves.Count(s => s.EndsWith(hidden)), Is.EqualTo(2));
 
             // the passwords, and the encrypted values that the credentials store
+            foreach (var secret in secrets)
+                Assert.That(log.Where(l => l.Contains(secret)), Is.Empty);
+        });
+    }
+
+    [Test]
+    public void SaveToDatabase_DoesNotLogEncryptedArguments()
+    {
+        if (CatalogueRepository is not TableRepository)
+            Assert.Ignore("Only database-backed repositories (TableRepository) log the changes they save");
+
+        var pipeline = new Pipeline(CatalogueRepository, nameof(SaveToDatabase_DoesNotLogEncryptedArguments));
+        var component = new PipelineComponent(CatalogueRepository, pipeline, typeof(BasicDataReleaseDestination), 0);
+        var encryptedString = new PipelineComponentArgument(CatalogueRepository, component);
+        var webService = new PipelineComponentArgument(CatalogueRepository, component);
+        var secrets = new List<string> { "SecretSetting", "WebServicePassword" };
+        string[] log;
+
+        try
+        {
+            log = CaptureLog(() =>
+            {
+                encryptedString.SetType(typeof(EncryptedString));
+                encryptedString.SetValue(secrets[0]);
+                secrets.Add(encryptedString.Value);
+                encryptedString.SaveToDatabase();
+
+                var configuration = new WebServiceConfiguration(CatalogueRepository)
+                {
+                    Endpoint = "https://example.org/service",
+                    Username = "bob",
+                    Password = secrets[1]
+                };
+                secrets.Add(configuration.Password);
+                webService.SetType(typeof(WebServiceConfiguration));
+                webService.SetValue(configuration);
+                webService.SaveToDatabase();
+            });
+        }
+        finally
+        {
+            pipeline.DeleteInDatabase();
+        }
+
+        var hidden = $",System.String Value,{SaveAuditMessage.HiddenValue},{SaveAuditMessage.HiddenValue}";
+
+        Assert.Multiple(() =>
+        {
+            foreach (var argument in new[] { encryptedString, webService })
+                Assert.That(log.Count(l =>
+                    l.StartsWith($"Save,{nameof(PipelineComponentArgument)},{argument.ID},") && l.EndsWith(hidden)),
+                    Is.EqualTo(1));
+
+            // the settings, and the encrypted values that the arguments store
             foreach (var secret in secrets)
                 Assert.That(log.Where(l => l.Contains(secret)), Is.Empty);
         });

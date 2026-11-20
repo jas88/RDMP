@@ -5,35 +5,50 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Rdmp.Core.MapsDirectlyToDatabaseTable.Revertable;
 
 namespace Rdmp.Core.MapsDirectlyToDatabaseTable;
 
 /// <summary>
-/// Describes a change that a <see cref="TableRepository"/> saves, for the audit trail that it writes to its log, without
-/// the values of passwords
+/// Describes the changes that a <see cref="TableRepository"/> saves, for the audit trail that it writes to its log, without
+/// the values of passwords and other secrets
 /// </summary>
 internal static class SaveAuditMessage
 {
     /// <summary>
-    /// Logged instead of the old and new values of a password
+    /// Logged instead of the old and new values of a secret
     /// </summary>
     internal const string HiddenValue = "****";
 
     /// <summary>
-    /// Returns the message to log for the change to one property of <paramref name="saved"/>: its Type, ID, the property and
-    /// its old (database) and new (local) values e.g. "Save,Catalogue,3,System.String Name,Biochem,Biochemistry".  The
-    /// values of passwords (see <see cref="IsPassword"/>) are <see cref="HiddenValue"/>.
+    /// Returns the messages to log for saving <paramref name="changes"/> to <paramref name="saved"/>, one for each property
+    /// that changed: its Type, ID, the property and its old (database) and new (local) values e.g.
+    /// "Save,Catalogue,3,System.String Name,Biochem,Biochemistry".  The values of secrets (see <see cref="IsSecret"/>) are
+    /// <see cref="HiddenValue"/>.
     /// </summary>
-    internal static string For(IMapsDirectlyToDatabaseTable saved, RevertablePropertyDifference change)
+    internal static IEnumerable<string> For(IMapsDirectlyToDatabaseTable saved, RevertableObjectReport changes) =>
+        changes.Differences.Select(change => For(saved, change, IsSecret(saved, change.Property, changes)));
+
+    private static string For(IMapsDirectlyToDatabaseTable saved, RevertablePropertyDifference change, bool hide)
     {
-        var hide = IsPassword(change.Property);
         var databaseValue = hide ? HiddenValue : change.DatabaseValue;
         var localValue = hide ? HiddenValue : change.LocalValue;
 
         return $"Save,{saved.GetType().Name},{saved.ID},{change.Property},{databaseValue},{localValue}";
     }
+
+    /// <summary>
+    /// True if <paramref name="property"/> of <paramref name="saved"/> holds a secret before or after
+    /// <paramref name="changes"/> are saved: a password (see <see cref="IsPassword"/>), or anything else that
+    /// <paramref name="saved"/> says is secret (see <see cref="IMightHoldSecrets"/>), such as an encrypted setting
+    /// </summary>
+    private static bool IsSecret(IMapsDirectlyToDatabaseTable saved, PropertyInfo property,
+        RevertableObjectReport changes) =>
+        IsPassword(property) ||
+        (saved is IMightHoldSecrets mightHoldSecrets && mightHoldSecrets.IsSecret(property, changes));
 
     /// <summary>
     /// True if <paramref name="property"/> holds a password, such as the Password of credentials and servers.  These are

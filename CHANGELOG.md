@@ -69,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: The help text of DelimitedFlatFileDataFlowSource's IgnoreBlankLines property was the one for IgnoreQuotes
 - FIX: The delimited flat file error for a CsvHelper reading exception said `Bad data found on liline` instead of `line`
 - Bump CsvHelper from 33.0.1 to 33.1.0. Its fixes are to features RDMP does not use (writing records asynchronously, and default values for fields that fail to convert), so CSV files are read and written as before
-- FIX: Saving a password (of a [DataAccessCredentials], [ExternalDatabaseServer], [ExternalCohortTable] or RemoteRDMP) logged its old and new values, for example when `rdmp install -u` records the logging, DQE and RAW servers. The rdmp command line writes that log to the console and to `logs/<date>-simple.log` beside the executable. The values are encrypted, but with the default key in RDMP's source code unless an encryption key has been set up, so anyone who could read the log could decrypt them. The log now shows `****` instead
+- FIX: Saving a password (of a [DataAccessCredentials], [ExternalDatabaseServer], [ExternalCohortTable] or RemoteRDMP), or an encrypted setting (a pipeline component, data load task or extended property argument of type EncryptedString or WebServiceConfiguration), logged its old and new values, for example when `rdmp install -u` records the logging, DQE and RAW servers. The rdmp command line writes that log to the console and to `logs/<date>-simple.log` beside the executable. The values are encrypted, but with the default key in RDMP's source code unless an encryption key has been set up, so anyone who could read the log could decrypt them. The log now shows `****` instead
 
 
 ## [9.0.1] - 2025-07-31
