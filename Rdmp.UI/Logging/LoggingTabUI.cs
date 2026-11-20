@@ -304,7 +304,7 @@ public class LoggingTabUI : LoggingTab_Design
 
         Filter = filter;
 
-        //push the old filter (the navigation track and its Back button are created together in SetDatabaseObject)
+        //push the new filter, so that Back returns to the previous one (the navigation track and its Back button are created together in SetDatabaseObject)
         if (_navigationTrack != null)
         {
             _navigationTrack.Append(Filter);
