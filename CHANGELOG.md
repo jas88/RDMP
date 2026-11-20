@@ -73,6 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: Exporting logged data to CSV failed with a NullReferenceException when the choice of logging server or of output file was cancelled
 - FIX: ExecuteCommandCreateNewFilter with OfferCatalogueFilters failed with a NullReferenceException for a dataset of an extraction configuration whose Catalogue had been deleted. It now offers no filters
 - FIX: The MakePatientIndexTableIntoRegularCohortIdentificationSetAgain command failed with a NullReferenceException for an aggregate that is not in a cohort identification configuration. For a cohort set that is not a patient index table, it took the set out of its container and then failed, leaving the set out of the configuration. It now refuses both because the aggregate is not a patient index table
+- FIX: Children that a plugin child provider gave an object at the root of a tree (one with no parents) were not added to the tree, and an error was reported instead
+- FIX: Reading the help text from XML documentation failed with a NullReferenceException when a summary contained a `<see>` tag without a `cref`, such as `<see langword="null"/>` or `<see href="...">`. A `langword` is now shown as its word and the text of an `href` link as its text
+- FIX: JoinHelper.GetJoinSQLPrimaryKeySideOnly failed with a NullReferenceException when given a lookup alias for a join that had no primary key yet
 
 
 ## [9.0.1] - 2025-07-31

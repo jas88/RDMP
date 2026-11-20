@@ -13,6 +13,20 @@ namespace Rdmp.Core.Tests;
 internal class CommentStoreTests
 {
     [Test]
+    public void Test_CommentStoreXmlDoc_SeeWithoutCref()
+    {
+        var store = new CommentStore();
+
+        var doc = new XmlDocument();
+        doc.LoadXml(
+            @"<member name=""T:ResearchDataManagementPlatform.WindowManagement.WindowFactory""><summary>Returns <see langword=""null""/> unless it <see href=""https://example.com"">links</see> somewhere</summary></member>");
+
+        store.AddXmlDoc(doc.FirstChild);
+
+        Assert.That(store["WindowFactory"], Is.EqualTo("Returns null unless it links somewhere"));
+    }
+
+    [Test]
     public void Test_CommentStoreXmlDoc_Basic()
     {
         var store = new CommentStore();

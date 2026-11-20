@@ -1694,9 +1694,6 @@ public class CatalogueChildProvider : ICoreChildProvider
 									: //if the parent is a root level object start a new descendancy list from it
 									parentDescendancy
 										.Add(o); //otherwise keep going down, returns a new DescendancyList so doesn't corrupt the dictionary one
-								newDescendancy =
-									parentDescendancy
-										.Add(o); //otherwise keep going down, returns a new DescendancyList so doesn't corrupt the dictionary one
 
 								//record that
 								foreach (var pluginChild in pluginChildren)

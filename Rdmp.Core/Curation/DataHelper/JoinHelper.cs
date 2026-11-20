@@ -152,9 +152,12 @@ public class JoinHelper
         {
             var lookupAlias = GetLookupTableAlias(aliasNumber);
 
+            //a half set up join has no primary key table name to replace with the alias
+            var aliasedKey2 = pkTable == null ? key2 : key2.Replace(pkTable.Name, lookupAlias);
+
             //the lookup table IS being assigned an alias so append As X after table name and change key2 of the join to X.col instead of tablename.col
             toReturn =
-                $" {join.ExtractionJoinType} JOIN {primaryTable}{GetLookupTableAlias(aliasNumber, true)}{GetOnSql(join, foreignTable, lookupAlias, key1, key2.Replace(pkTable.Name, lookupAlias), out hasCustomSql)}";
+                $" {join.ExtractionJoinType} JOIN {primaryTable}{GetLookupTableAlias(aliasNumber, true)}{GetOnSql(join, foreignTable, lookupAlias, key1, aliasedKey2, out hasCustomSql)}";
         }
 
         toReturn = AppendCollation(toReturn, join);

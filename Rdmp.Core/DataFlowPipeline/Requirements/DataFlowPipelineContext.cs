@@ -265,7 +265,7 @@ public class DataFlowPipelineContext<T> : IDataFlowPipelineContext
     [CanBeNull]
     private static Type PreInitializeComponentWithSingleObject(IDataLoadEventListener listener,
         [NotNull] object component,
-        object value, Dictionary<object, Dictionary<MethodInfo, object>> initializedComponents)
+        [NotNull] object value, Dictionary<object, Dictionary<MethodInfo, object>> initializedComponents)
     {
         var compatibleInterfaces = component.GetType()
             .GetInterfaces().Where(i =>
@@ -305,7 +305,7 @@ public class DataFlowPipelineContext<T> : IDataFlowPipelineContext
         catch (Exception e)
         {
             throw new Exception(
-                $"Exception invoking {GetFullName(component.GetType())}.PreInitialize({GetFullName(value?.GetType() ?? typeof(object))}:{value ?? "null"},{listener?.ToString() ?? "null"})",
+                $"Exception invoking {GetFullName(component.GetType())}.PreInitialize({GetFullName(value.GetType())}:{value},{listener?.ToString() ?? "null"})",
                 e);
         }
 
