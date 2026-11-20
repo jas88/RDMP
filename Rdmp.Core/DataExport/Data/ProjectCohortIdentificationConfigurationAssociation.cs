@@ -81,7 +81,7 @@ public class ProjectCohortIdentificationConfigurationAssociation : DatabaseEntit
             { "CohortIdentificationConfiguration_ID", cic.ID }
         });
 
-        if (ID == 0 || Repository != repository)
+        if (ID == 0 || !ReferenceEquals(Repository, repository))
             throw new ArgumentException("Repository failed to properly hydrate this class");
 
         ClearAllInjections();
