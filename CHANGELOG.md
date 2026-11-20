@@ -72,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: Aborting CohortIdentificationConfigurationSource while it ran a cohort identification configuration that has a query cache failed with a NullReferenceException instead of saying that the run was cancelled
 - FIX: Exporting logged data to CSV failed with a NullReferenceException when the choice of logging server or of output file was cancelled
 - FIX: ExecuteCommandCreateNewFilter with OfferCatalogueFilters failed with a NullReferenceException for a dataset of an extraction configuration whose Catalogue had been deleted. It now offers no filters
+- FIX: The MakePatientIndexTableIntoRegularCohortIdentificationSetAgain command failed with a NullReferenceException for an aggregate that is not in a cohort identification configuration. For a cohort set that is not a patient index table, it took the set out of its container and then failed, leaving the set out of the configuration. It now refuses both because the aggregate is not a patient index table
 
 
 ## [9.0.1] - 2025-07-31

@@ -31,8 +31,15 @@ public class ExecuteCommandMakePatientIndexTableIntoRegularCohortIdentificationS
         _sourceAggregateCommand = sourceAggregateCommand;
         _targetCohortAggregateContainer = targetCohortAggregateContainer;
 
-        if (!_sourceAggregateCommand.CohortIdentificationConfigurationIfAny.Equals(_targetCohortAggregateContainer
-                .GetCohortIdentificationConfiguration()))
+        // Execute deletes the joinable declaration, which only a patient index table (of a CohortIdentificationConfiguration) has
+        if (_sourceAggregateCommand.JoinableDeclarationIfAny == null)
+        {
+            SetImpossible("Aggregate is not a patient index table");
+            return;
+        }
+
+        if (!Equals(_sourceAggregateCommand.CohortIdentificationConfigurationIfAny,
+                _targetCohortAggregateContainer.GetCohortIdentificationConfiguration()))
             SetImpossible("Aggregate belongs to a different CohortIdentificationConfiguration");
 
         if (_sourceAggregateCommand.JoinableUsersIfAny.Any())
