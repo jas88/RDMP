@@ -71,7 +71,8 @@ public class PlatformDatabaseCreationOptions
     public int NightmareFactor { get; set; } = 1;
 
     [Option(Required = false, Default = false,
-        HelpText = "Set to true to validate the SSL certificate of the server you are installing into")]
+        HelpText =
+            "Set to true to validate the SSL certificate of the server you are installing into.  Otherwise it is trusted unless OtherKeywords sets TrustServerCertificate")]
     public bool ValidateCertificate { get; set; }
 
     [Option(Required = false, Default = 30,
@@ -140,7 +141,12 @@ public class PlatformDatabaseCreationOptions
 
         builder.DataSource = ServerName;
         builder.InitialCatalog = (Prefix ?? "") + databaseName;
-        builder.TrustServerCertificate = !ValidateCertificate;
+
+        // Trust the server's certificate unless asked to validate it, or OtherKeywords says whether to trust it
+        if (ValidateCertificate)
+            builder.TrustServerCertificate = false;
+        else if (!builder.ShouldSerialize(nameof(builder.TrustServerCertificate)))
+            builder.TrustServerCertificate = true;
 
         // Increase connection timeout from default 15s to 60s for CI environments
         // where LocalDB can be slow during post-login phase on busy VMs
