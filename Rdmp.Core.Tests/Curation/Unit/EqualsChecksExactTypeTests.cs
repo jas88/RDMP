@@ -6,15 +6,18 @@
 
 using System.Collections.Generic;
 using NUnit.Framework;
+using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Providers.Nodes;
 using Rdmp.Core.Providers.Nodes.PipelineNodes;
+using Rdmp.Core.QueryBuilding;
 using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Unit;
 
 /// <summary>
-/// Tests that a <see cref="SingletonNode"/> is only equal to a node of exactly its own Type, so that a different kind
-/// of node with the same caption is a different object.
+/// Tests that <see cref="SingletonNode"/>, <see cref="FolderNode{T}"/> and <see cref="QueryTimeColumn"/> are only equal
+/// to objects of exactly their own Type, so that a subclass (or a different kind of node) with the same caption, name
+/// or column is a different object.
 /// </summary>
 public class EqualsChecksExactTypeTests : UnitTests
 {
@@ -51,6 +54,50 @@ public class EqualsChecksExactTypeTests : UnitTests
             Assert.That(folder.Equals(extractionFolder), Is.False);
             Assert.That(new HashSet<object> { allPipelines, folderCalledPipelines, folder, extractionFolder },
                 Has.Count.EqualTo(4));
+        }
+    }
+
+    [Test]
+    public void FolderNodes_AreEqualOnlyWithTheSameTypeAndFullName()
+    {
+        var folder = new FolderNode<Catalogue>("research");
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(new FolderNode<Catalogue>("research").Equals(folder), Is.True);
+            Assert.That(new FolderNode<Catalogue>("research").GetHashCode(), Is.EqualTo(folder.GetHashCode()));
+            Assert.That(new FolderNode<Catalogue>("other").Equals(folder), Is.False);
+            Assert.That(new SubFolderNode("research").Equals(folder), Is.False);
+            Assert.That(folder.Equals(new SubFolderNode("research")), Is.False);
+        }
+    }
+
+    [Test]
+    public void QueryTimeColumns_AreEqualOnlyWithTheSameTypeAndColumn()
+    {
+        var column = WhenIHaveA<ExtractionInformation>();
+        var queryTimeColumn = new QueryTimeColumn(column);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(new QueryTimeColumn(column).Equals(queryTimeColumn), Is.True);
+            Assert.That(new QueryTimeColumn(column).GetHashCode(), Is.EqualTo(queryTimeColumn.GetHashCode()));
+            Assert.That(new SubQueryTimeColumn(column).Equals(queryTimeColumn), Is.False);
+            Assert.That(queryTimeColumn.Equals(new SubQueryTimeColumn(column)), Is.False);
+        }
+    }
+
+    private sealed class SubFolderNode : FolderNode<Catalogue>
+    {
+        public SubFolderNode(string name) : base(name)
+        {
+        }
+    }
+
+    private sealed class SubQueryTimeColumn : QueryTimeColumn
+    {
+        public SubQueryTimeColumn(IColumn column) : base(column)
+        {
         }
     }
 }

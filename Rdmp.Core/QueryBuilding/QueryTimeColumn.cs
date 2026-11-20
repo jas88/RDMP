@@ -81,8 +81,8 @@ public class QueryTimeColumn : IComparable
     public override bool Equals(object obj)
     {
         if (obj is QueryTimeColumn other)
-            return
-                other.IColumn.Equals(IColumn);
+            return obj.GetType() == GetType() &&
+                   other.IColumn.Equals(IColumn);
 
         throw new Exception(".Equals only works for objects of type QueryTimeColumn");
     }

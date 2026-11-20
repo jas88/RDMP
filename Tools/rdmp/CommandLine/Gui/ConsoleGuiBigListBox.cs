@@ -81,7 +81,7 @@ internal class ConsoleGuiBigListBox<T>
         _addNull = addNull;
     }
 
-    private class ListViewObject<T2> where T2 : T
+    private sealed class ListViewObject<T2> where T2 : T
     {
         private readonly Func<T2, string> _displayFunc;
         public T2 Object { get; }
