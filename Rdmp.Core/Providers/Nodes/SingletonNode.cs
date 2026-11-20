@@ -29,7 +29,13 @@ public abstract class SingletonNode : Node
     public bool Equals(SingletonNode other) =>
         other != null && other.GetType() == GetType() && string.Equals(_caption, other._caption);
 
-    public override bool Equals(object obj) => Equals(obj as SingletonNode);
+    public override bool Equals(object obj)
+    {
+        if (obj is null) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != GetType()) return false;
+        return Equals((SingletonNode)obj);
+    }
 
     public override int GetHashCode() => _caption.GetHashCode();
 }
