@@ -121,11 +121,8 @@ public partial class PropagateCatalogueItemChangesToSimilarNamedUI : RDMPForm
         menu.Show(Cursor.Position);
     }
 
-    private object CatalogueItemName_AspectGetter(object rowObject)
-    {
-        var ci = rowObject as CatalogueItem;
-        return $"{ci.Catalogue.Name}.{ci.Name}";
-    }
+    private static object CatalogueItemName_AspectGetter(object rowObject) =>
+        rowObject is CatalogueItem ci ? $"{ci.Catalogue.Name}.{ci.Name}" : null;
 
 
     private object CatalogueItemState_AspectGetter(object rowobject)

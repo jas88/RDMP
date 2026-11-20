@@ -121,12 +121,18 @@ public partial class UpdateCatalogueDataLocationUI : Form
     {
     }
 
+    /// <summary>
+    /// The form is opened for either a single ColumnInfo or a Catalogue, whose items the user ticks
+    /// </summary>
+    private CatalogueItem[] GetCatalogueItemsToUpdate() =>
+        _columnInfo is not null
+            ? _columnInfo.CatalogueItems.ToArray()
+            : tlvDatasets.CheckedObjects.Cast<CatalogueItem>().ToArray();
+
     private void Run()
     {
         //should be disabled until things are set
-        var catalogueItems = _catalogue is not null
-            ? tlvDatasets.CheckedObjects.Cast<CatalogueItem>().ToArray()
-            : _columnInfo.CatalogueItems.ToArray();
+        var catalogueItems = GetCatalogueItemsToUpdate();
         var cmd = new ExecuteCommandUpdateCatalogueDataLocation(_activator, catalogueItems,
             serverDatabaseTableSelector1.GetDiscoveredTable(), tbMapping.Text);
         var check = cmd.Check();
@@ -148,9 +154,7 @@ public partial class UpdateCatalogueDataLocationUI : Form
 
     private void btnConfirm_Click(object sender, EventArgs e)
     {
-        var catalogueItems = _catalogue is not null
-            ? tlvDatasets.CheckedObjects.Cast<CatalogueItem>()
-            : _columnInfo.CatalogueItems;
+        var catalogueItems = GetCatalogueItemsToUpdate();
         var location = catalogueItems.Select(ci => DropColumnIdentifierFromName(ci.ColumnInfo.Name)).ToList();
         if (location.Distinct().Skip(1).Any())
         {

@@ -222,9 +222,7 @@ public partial class ReOrderCatalogueItemsUI : ReOrderCatalogueItems_Design
     {
         lock (oDrawLock)
         {
-            var listBox = sender as ListBox;
-
-            if (e.Index == -1)
+            if (sender is not ListBox listBox || e.Index == -1)
                 return;
 
             /*var extractionInformations = olvCurrentOrder.Objects.Cast<ExtractionInformation>().ToArray();

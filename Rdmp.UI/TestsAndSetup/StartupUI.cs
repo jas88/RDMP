@@ -263,12 +263,16 @@ public partial class StartupUI : Form, ICheckNotifier
 
             case RDMPPlatformDatabaseStatus.RequiresPatching:
 
+                // Startup only reports that a database needs patching once it has connected to it
+                var repository = eventArgs.Repository ?? throw new ArgumentException(
+                    $"{eventArgs.Patcher.Name} database requires patching but has no repository", nameof(eventArgs));
+
                 if (MessageBox.Show($"Patching Required on database of type {eventArgs.Patcher.Name}", "Patch RDMP",
                         MessageBoxButtons.OKCancel) == DialogResult.OK)
                 {
                     PatchingUI.ShowIfRequired(
-                        eventArgs.Repository.DiscoveredServer.GetCurrentDatabase(),
-                        eventArgs.Repository, eventArgs.Patcher);
+                        repository.DiscoveredServer.GetCurrentDatabase(),
+                        repository, eventArgs.Patcher);
                     DoNotContinue = true;
                 }
                 else

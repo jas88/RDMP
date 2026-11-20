@@ -95,8 +95,8 @@ public partial class TimePeriodicityChart : RDMPUserControl, IDataQualityReporti
 
         AddUserAnnotations(_currentEvaluation);
 
-        if (cbShowGaps.Checked)
-            AddGapAnnotations(chart1.DataSource as DataTable);
+        if (cbShowGaps.Checked && chart1.DataSource is DataTable dt)
+            AddGapAnnotations(dt);
     }
 
     private void AddGapAnnotations(DataTable dt)
