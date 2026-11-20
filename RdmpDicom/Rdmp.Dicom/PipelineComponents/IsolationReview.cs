@@ -193,7 +193,7 @@ public class IsolationReview
     private bool AreDifferent(object a, object b)
     {
         if (a == null || b == null)
-            return a != b;
+            return !ReferenceEquals(a, b);
 
         if (a == DBNull.Value)
             return b != DBNull.Value;
