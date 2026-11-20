@@ -228,9 +228,6 @@ public class ExtractionInformation : ConcreteColumn, IHasDependencies, IInjectKn
     }
 
     /// <inheritdoc/>
-    public override int GetHashCode() => ID.GetHashCode();
-
-    /// <inheritdoc/>
     public IHasDependencies[] GetObjectsThisDependsOn()
     {
         return ColumnInfo != null ? new IHasDependencies[] { ColumnInfo } : Array.Empty<IHasDependencies>();
