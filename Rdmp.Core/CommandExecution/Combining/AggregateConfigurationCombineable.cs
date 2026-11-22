@@ -95,11 +95,10 @@ public class AggregateConfigurationCombineable : ICombineToMakeCommand
         //if so we should find out all the containers in the tree (Containers are INTERSECT\EXCEPT\UNION)
         AllContainersInTreeIfPartOfOne = new List<CohortAggregateContainer>();
 
-        //if it is part of cohort identification
-        if (CohortIdentificationConfigurationIfAny != null)
+        //if it is part of cohort identification, find all the containers so we can prevent us being copied into one of them.
+        //The configuration of a patient index table need not have a root container yet (see CreateRootContainerIfNotExists)
+        if (CohortIdentificationConfigurationIfAny?.RootCohortAggregateContainer is { } root)
         {
-            //find all the containers so we can prevent us being copied into one of them
-            var root = CohortIdentificationConfigurationIfAny.RootCohortAggregateContainer;
             AllContainersInTreeIfPartOfOne.Add(root);
             AllContainersInTreeIfPartOfOne.AddRange(root.GetAllSubContainersRecursively());
         }

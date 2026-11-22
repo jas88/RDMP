@@ -8,6 +8,7 @@ using NUnit.Framework;
 using Rdmp.Core.CommandExecution.AtomicCommands;
 using Rdmp.Core.Curation.Data.Aggregation;
 using Rdmp.Core.Curation.Data.Cohort;
+using Rdmp.Core.Curation.Data.Cohort.Joinables;
 
 namespace Rdmp.Core.Tests.CommandExecution;
 
@@ -38,5 +39,17 @@ internal class ExecuteCommandMakePatientIndexTableIntoRegularCohortIdentificatio
             aggregate, container);
 
         Assert.That(cmd.ReasonCommandImpossible, Does.Contain("not a patient index table"));
+    }
+
+    [Test]
+    public void Constructor_ForAPatientIndexTableOfAnotherConfiguration_IsImpossible()
+    {
+        var joinable = WhenIHaveA<JoinableCohortAggregateConfiguration>();
+        var containerOfAnotherConfiguration = WhenIHaveA<CohortAggregateContainer>();
+
+        var cmd = new ExecuteCommandMakePatientIndexTableIntoRegularCohortIdentificationSetAgain(GetMockActivator(),
+            joinable.AggregateConfiguration, containerOfAnotherConfiguration);
+
+        Assert.That(cmd.ReasonCommandImpossible, Does.Contain("different CohortIdentificationConfiguration"));
     }
 }
