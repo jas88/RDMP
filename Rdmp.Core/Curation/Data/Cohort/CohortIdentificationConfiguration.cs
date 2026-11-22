@@ -375,6 +375,11 @@ public class CohortIdentificationConfiguration : DatabaseEntity, ICollectSqlPara
                     $"Created clone configuration '{cloneTarget.Name}' with ID {cloneTarget.ID} called {cloneTarget}",
                     CheckResult.Success));
 
+                //a target that has parameters already (a configuration that is reverted to a version of it) keeps none of them.
+                //The database does not let it have two with the same declaration, so it cannot be given a copy as well
+                foreach (var p in cataRepo.GetAllParametersForParentTable(cloneTarget).ToArray())
+                    p.DeleteInDatabase();
+
                 //clone the global parameters
                 foreach (var p in GetAllParameters())
                 {

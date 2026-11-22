@@ -89,6 +89,30 @@ internal class ExecuteCommandRevertToHistoricalCohortVersionTests : CommandCliTe
         });
     }
 
+    [Test]
+    public void Execute_GivesTheConfigurationTheParametersOfTheVersion_InsteadOfThoseItHad()
+    {
+        var cic = WhenIHaveA<CohortIdentificationConfiguration>();
+        var age = new AnyTableSqlParameter(Repository, cic, "DECLARE @age AS int") { Value = "5" };
+        age.SaveToDatabase();
+        var version = WhenIHaveAVersionOf(cic);
+
+        // since the version was saved, the value of the parameter has been changed and another parameter has been added
+        age.Value = "6";
+        age.SaveToDatabase();
+        new AnyTableSqlParameter(Repository, cic, "DECLARE @sex AS varchar(1)") { Value = "'F'" }.SaveToDatabase();
+
+        new ExecuteCommandRevertToHistoricalCohortVersion(GetActivator(), cic, version).Execute();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(DescribeParametersOf(cic), Is.EqualTo(new[] { "DECLARE @age AS int = 5" }));
+
+            // the version is as it was
+            Assert.That(DescribeParametersOf(version), Is.EqualTo(new[] { "DECLARE @age AS int = 5" }));
+        });
+    }
+
     [TestCase(false)]
     [TestCase(true)]
     public void Execute_KeepsTheContainersTheConfigurationHad_IfAnotherConfigurationUsesOneAsItsRootContainer(
@@ -120,6 +144,12 @@ internal class ExecuteCommandRevertToHistoricalCohortVersionTests : CommandCliTe
             Assert.That(subContainer.GetAggregateConfigurations(), Is.EqualTo(new[] { cohortSet }));
         });
     }
+
+    /// <summary>
+    /// Returns the declaration and value of each parameter of <paramref name="cic"/>
+    /// </summary>
+    private static string[] DescribeParametersOf(CohortIdentificationConfiguration cic) =>
+        cic.GetAllParameters().Select(static p => $"{p.ParameterSQL} = {p.Value}").ToArray();
 
     /// <summary>
     /// Saves the current state of <paramref name="cic"/> as a version of it, and returns the version

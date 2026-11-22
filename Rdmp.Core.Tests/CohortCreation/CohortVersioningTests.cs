@@ -164,6 +164,30 @@ public class CohortVersioningTests : CohortQueryBuilderWithCacheTests
     }
 
     [Test]
+    public void TestRestoreACohortVersion_ReplacesTheParametersTheConfigurationHad()
+    {
+        var activator = new ConsoleInputManager(RepositoryLocator, ThrowImmediatelyCheckNotifier.Quiet)
+        { DisallowInput = true };
+        var cic = cohortIdentificationConfiguration;
+        var age = new AnyTableSqlParameter(CatalogueRepository, cic, "DECLARE @age AS int") { Value = "5" };
+        age.SaveToDatabase();
+
+        new ExecuteCommandCreateVersionOfCohortConfiguration(activator, cic, "MyName!").Execute();
+        var version = cic.GetVersions().Single();
+
+        // since the version was saved, the value of the parameter has been changed and another parameter has been added
+        age.Value = "6";
+        age.SaveToDatabase();
+        new AnyTableSqlParameter(CatalogueRepository, cic, "DECLARE @sex AS varchar(1)") { Value = "'F'" }.SaveToDatabase();
+
+        // the database does not let the configuration have a second parameter with the declaration of @age
+        new ExecuteCommandRevertToHistoricalCohortVersion(activator, cic, version).Execute();
+
+        Assert.That(cic.GetAllParameters().Select(static p => $"{p.ParameterSQL} = {p.Value}"),
+            Is.EqualTo(new[] { "DECLARE @age AS int = 5" }));
+    }
+
+    [Test]
     public void TestRestoreACohortVersion_Bad()
     {
         var activator = new ConsoleInputManager(RepositoryLocator, ThrowImmediatelyCheckNotifier.Quiet)
