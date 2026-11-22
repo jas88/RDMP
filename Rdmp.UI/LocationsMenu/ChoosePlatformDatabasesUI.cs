@@ -444,11 +444,11 @@ public partial class ChoosePlatformDatabasesUI : Form
         {
             var result = int.Parse(tb.Text);
 
-            if (sender == tbSeed)
+            if (ReferenceEquals(sender, tbSeed))
                 _seed = result;
-            else if (sender == tbPeopleCount)
+            else if (ReferenceEquals(sender, tbPeopleCount))
                 _peopleCount = result;
-            else if (sender == tbRowCount)
+            else if (ReferenceEquals(sender, tbRowCount))
                 _rowCount = result;
 
             tb.ForeColor = Color.Black;

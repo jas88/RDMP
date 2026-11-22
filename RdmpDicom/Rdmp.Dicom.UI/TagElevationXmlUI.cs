@@ -104,7 +104,7 @@ public partial class TagElevationXmlUI : Form,ICustomUI<DicomSource.TagElevation
 
     private void Btn_Click(object sender, EventArgs e)
     {
-        DialogResult = sender == btnOk ? DialogResult.OK: DialogResult.Cancel;
+        DialogResult = ReferenceEquals(sender, btnOk) ? DialogResult.OK: DialogResult.Cancel;
         Close();
     }
 }

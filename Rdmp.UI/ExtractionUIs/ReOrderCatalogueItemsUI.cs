@@ -238,7 +238,7 @@ public partial class ReOrderCatalogueItemsUI : ReOrderCatalogueItems_Design
                         e.Graphics.FillRectangle(new SolidBrush(listBox.BackColor), e.Bounds);
             }
             */
-            if (sender == lbNewOrder)
+            if (ReferenceEquals(sender, lbNewOrder))
             {
                 if (e.Index == indexOfStartOfReordingInNewOrderListbox)
                     e.Graphics.FillRectangle(new SolidBrush(Color.LawnGreen), e.Bounds);

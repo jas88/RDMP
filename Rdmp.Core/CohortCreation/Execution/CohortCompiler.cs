@@ -288,7 +288,7 @@ public class CohortCompiler
         lock (Tasks)
         {
             //we have seen this entity before (by ID & entity type)
-            foreach (var c in Tasks.Keys.Where(k => k.Child.Equals(obj) && k != task).ToArray())
+            foreach (var c in Tasks.Keys.Where(k => k.Child.Equals(obj) && !ReferenceEquals(k, task)).ToArray())
             {
                 // the task is already setup ready to go somehow
                 if (c.CancellationTokenSource == source)

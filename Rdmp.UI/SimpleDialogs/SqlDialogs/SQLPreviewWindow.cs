@@ -43,7 +43,7 @@ public partial class SQLPreviewWindow : Form
 
     private void btnOk_Click(object sender, EventArgs e)
     {
-        YesToAll = sender == btnOkToAll;
+        YesToAll = ReferenceEquals(sender, btnOkToAll);
 
         DialogResult = DialogResult.OK;
         Close();

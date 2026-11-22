@@ -65,7 +65,7 @@ public class ObjectImport : ReferenceOtherObjectDatabaseEntity
             { "SharingUID", sharingUID }
         });
 
-        if (ID == 0 || Repository != repository)
+        if (ID == 0 || !ReferenceEquals(Repository, repository))
             throw new ArgumentException("Repository failed to properly hydrate this class");
     }
 

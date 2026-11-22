@@ -38,7 +38,7 @@ internal class ExecuteCommandGenerateReleaseDocument : BasicCommandExecution, IA
                 // we don't want to freeze waiting for context menu to pop up on this
                 var eds = _extractionConfiguration.Cohort.GetExternalData(2);
 
-                if (eds == ExternalCohortDefinitionData.Orphan) SetImpossible("Cohort did not exist");
+                if (ReferenceEquals(eds, ExternalCohortDefinitionData.Orphan)) SetImpossible("Cohort did not exist");
             }
             catch (Exception)
             {

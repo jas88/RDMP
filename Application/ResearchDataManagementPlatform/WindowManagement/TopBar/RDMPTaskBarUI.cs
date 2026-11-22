@@ -175,21 +175,21 @@ public partial class RDMPTaskBarUI : UserControl
     {
         RDMPCollection collectionToToggle;
 
-        if (button == btnCatalogues)
+        if (ReferenceEquals(button, btnCatalogues))
             collectionToToggle = RDMPCollection.Catalogue;
-        else if (button == btnCohorts)
+        else if (ReferenceEquals(button, btnCohorts))
             collectionToToggle = RDMPCollection.Cohort;
-        else if (button == btnDataExport)
+        else if (ReferenceEquals(button, btnDataExport))
             collectionToToggle = RDMPCollection.DataExport;
-        else if (button == btnTables)
+        else if (ReferenceEquals(button, btnTables))
             collectionToToggle = RDMPCollection.Tables;
-        else if (button == btnLoads)
+        else if (ReferenceEquals(button, btnLoads))
             collectionToToggle = RDMPCollection.DataLoad;
-        else if (button == btnSavedCohorts)
+        else if (ReferenceEquals(button, btnSavedCohorts))
             collectionToToggle = RDMPCollection.SavedCohorts;
-        else if (button == btnFavourites)
+        else if (ReferenceEquals(button, btnFavourites))
             collectionToToggle = RDMPCollection.Favourites;
-        else if (button == btnConfiguration)
+        else if (ReferenceEquals(button, btnConfiguration))
             collectionToToggle = RDMPCollection.Configurations;
         else
             throw new ArgumentOutOfRangeException(nameof(button));
@@ -250,7 +250,7 @@ public partial class RDMPTaskBarUI : UserControl
     private void btnDelete_Click(object sender, EventArgs e)
     {
         ToolStripComboBox cbx;
-        if (sender == btnDeleteLayout)
+        if (ReferenceEquals(sender, btnDeleteLayout))
             cbx = cbxLayouts;
         else
             throw new Exception("Unexpected sender");

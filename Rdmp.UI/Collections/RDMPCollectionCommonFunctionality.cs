@@ -527,7 +527,7 @@ public sealed class RDMPCollectionCommonFunctionality : IRefreshBusSubscriber
     private void RefreshContextMenuStrip()
     {
         // appropriate menu has already been created recently
-        if (_lastMenuObject == Tree.SelectedObject && DateTime.Now.Subtract(_lastMenuBuilt) < TimeSpan.FromSeconds(2))
+        if (ReferenceEquals(_lastMenuObject, Tree.SelectedObject) && DateTime.Now.Subtract(_lastMenuBuilt) < TimeSpan.FromSeconds(2))
             return;
 
         //clear the old menu strip first so old shortcuts cannot be activated during

@@ -78,7 +78,7 @@ public partial class ViewExtractionSqlUI : ViewExtractionSql_Design
     {
         //treat as radio button
         foreach (var item in new[] { rbCore, rbSupplemental, rbSpecialApproval, rbInternal })
-            item.Checked = item == sender;
+            item.Checked = ReferenceEquals(item, sender);
 
         RefreshUIFromDatabase();
     }

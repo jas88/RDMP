@@ -259,7 +259,7 @@ public partial class ChooseLoggingTaskUI : RDMPUserControl, ICheckNotifier
 
     private void btnClear_Click(object sender, EventArgs e)
     {
-        if (sender == btnClearLive)
+        if (ReferenceEquals(sender, btnClearLive))
             ddLoggingServer.SelectedItem = null;
     }
 }
