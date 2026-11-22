@@ -40,15 +40,17 @@ public class ExecuteCommandExportLoggedDataToCsv : BasicCommandExecution
 
     public override void Execute()
     {
+        // the user cancelled choosing a logging server
         var db = SelectOne(_loggingServers, null, true);
+        if (db == null)
+            return;
+
         var server = db.Discover(DataAccessContext.Logging).Server;
 
-        if (db != null)
-        {
-            using var con = server.GetConnection();
-            con.Open();
+        using var con = server.GetConnection();
+        con.Open();
 
-            var sql = string.Format(@"SELECT * FROM (
+        var sql = string.Format(@"SELECT * FROM (
 SELECT [dataLoadRunID]
       ,eventType
       ,[description]
@@ -69,12 +71,13 @@ SELECT [dataLoadRunID]
  ) as x
 order by time ASC", LoggingTables.ProgressLog, LoggingTables.FatalError, _filter.GetWhereSql());
 
-            var output = BasicActivator.SelectFile("Output CSV file");
+        var output = BasicActivator.SelectFile("Output CSV file");
+        if (output == null)
+            return;
 
-            var extract = new ExtractTableVerbatim(server, sql, output.Name, output.Directory, ",",
-                CultureInfo.CurrentCulture.DateTimeFormat.FullDateTimePattern);
+        var extract = new ExtractTableVerbatim(server, sql, output.Name, output.Directory, ",",
+            CultureInfo.CurrentCulture.DateTimeFormat.FullDateTimePattern);
 
-            extract.DoExtraction();
-        }
+        extract.DoExtraction();
     }
 }

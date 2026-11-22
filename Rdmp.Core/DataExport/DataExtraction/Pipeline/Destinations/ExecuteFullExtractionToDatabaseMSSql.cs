@@ -414,19 +414,20 @@ public class ExecuteFullExtractionToDatabaseMSSql : ExtractionDestination
             _destination.Dispose(listener, pipelineFailureExceptionIfAny);
 
             //if the extraction failed, the table didn't exist in the destination (i.e. the table was created during the extraction) and we are to DropTableIfLoadFails
-            if (pipelineFailureExceptionIfAny != null && _tableDidNotExistAtStartOfLoad && DropTableIfLoadFails)
-                if (_destinationDatabase != null)
-                {
-                    var tbl = _destinationDatabase.ExpectTable(_toProcess.TableName);
+            if (pipelineFailureExceptionIfAny != null && _tableDidNotExistAtStartOfLoad && DropTableIfLoadFails
+                && _destinationDatabase != null
+                && _toProcess != null)
+            {
+                var tbl = _destinationDatabase.ExpectTable(_toProcess.TableName);
 
-                    if (tbl.Exists())
-                    {
-                        listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
-                            $"DropTableIfLoadFails is true so about to drop table {tbl}"));
-                        tbl.Drop();
-                        listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning, $"Dropped table {tbl}"));
-                    }
+                if (tbl.Exists())
+                {
+                    listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
+                        $"DropTableIfLoadFails is true so about to drop table {tbl}"));
+                    tbl.Drop();
+                    listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning, $"Dropped table {tbl}"));
                 }
+            }
 
             if (pipelineFailureExceptionIfAny == null
                 && _request.IsBatchResume
@@ -455,8 +456,9 @@ public class ExecuteFullExtractionToDatabaseMSSql : ExtractionDestination
         if (_request is ExtractDatasetCommand)
         {
             var result = ((IExtractDatasetCommand)_request).CumulativeExtractionResults;
+            // TableLoadInfo is only created once Open succeeds, so without it no rows were written
             if (result != null && _toProcess != null)
-                result.CompleteAudit(GetType(), GetDestinationDescription(), TableLoadInfo.Inserts,
+                result.CompleteAudit(GetType(), GetDestinationDescription(), TableLoadInfo?.Inserts ?? 0,
                     _request.IsBatchResume, pipelineFailureExceptionIfAny != null);
         }
     }

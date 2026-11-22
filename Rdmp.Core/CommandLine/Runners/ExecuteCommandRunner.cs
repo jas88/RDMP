@@ -178,12 +178,12 @@ internal class ExecuteCommandRunner : IRunner
     /// <param name="repositoryLocator"></param>
     private void RunScript(RdmpScript script, IRDMPPlatformRepositoryServiceLocator repositoryLocator)
     {
-        if ((script.Commands?.Length ?? 0) == 0)
+        if (script.Commands is not { Length: > 0 } commands)
             throw new ArgumentException("script was empty", nameof(script));
 
         using (script.UseScope ? NewObjectPool.StartSession() : null)
         {
-            foreach (var s in script.Commands)
+            foreach (var s in commands)
                 try
                 {
                     if (StartsWithEngineVerb(s))

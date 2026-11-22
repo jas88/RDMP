@@ -30,6 +30,9 @@ public partial class ResolveMissingTargetPropertiesUI : Form
         if (validator == null && availableColumns == null)
             return;
 
+        ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(availableColumns);
+
         AvailableColumns = availableColumns.Select(e => e.GetRuntimeName()).ToArray();
 
         AdjustedValidator = validator;

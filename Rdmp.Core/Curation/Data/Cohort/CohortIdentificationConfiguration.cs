@@ -375,6 +375,11 @@ public class CohortIdentificationConfiguration : DatabaseEntity, ICollectSqlPara
                     $"Created clone configuration '{cloneTarget.Name}' with ID {cloneTarget.ID} called {cloneTarget}",
                     CheckResult.Success));
 
+                //a target that has parameters already (a configuration that is reverted to a version of it) keeps none of them.
+                //The database does not let it have two with the same declaration, so it cannot be given a copy as well
+                foreach (var p in cataRepo.GetAllParametersForParentTable(cloneTarget).ToArray())
+                    p.DeleteInDatabase();
+
                 //clone the global parameters
                 foreach (var p in GetAllParameters())
                 {
@@ -395,9 +400,15 @@ public class CohortIdentificationConfiguration : DatabaseEntity, ICollectSqlPara
 
                 if (IncludeClonedFrom)
                     cloneTarget.ClonedFrom_ID = ID;
-                cloneTarget.RootCohortAggregateContainer_ID = RootCohortAggregateContainer
+                //a target that has a root container already (a configuration that is reverted to a version of it) stops using it.
+                //The clone of a configuration that has no root container yet (see CreateRootContainerIfNotExists) has none either
+                var abandoned = cloneTarget.RootCohortAggregateContainer;
+                cloneTarget.RootCohortAggregateContainer_ID = RootCohortAggregateContainer?
                     .CloneEntireTreeRecursively(notifier, this, cloneTarget, parentToCloneJoinablesDictionary).ID;
                 cloneTarget.SaveToDatabase();
+
+                //only now that the target is saved without it: in the database, deleting a root container deletes its configuration
+                abandoned?.DeleteTreeUnlessInUse();
 
                 notifier.OnCheckPerformed(
                     new CheckEventArgs("Clone creation successful, about to commit Super Transaction",
@@ -684,12 +695,12 @@ public class CohortIdentificationConfiguration : DatabaseEntity, ICollectSqlPara
     public TableInfo[] GetDistinctTableInfos()
     {
         return
-            RootCohortAggregateContainer.GetAllAggregateConfigurationsRecursively() //get all the aggregate sets
+            RootCohortAggregateContainer?.GetAllAggregateConfigurationsRecursively() //get all the aggregate sets (there are none without a root container)
                 .SelectMany(a => a
                     .AggregateDimensions //get all the Dimensions (should really be 1 per aggregate which is the IsExtractionIdentifier column but who are we to check)
                     .Select(d => d.ColumnInfo.TableInfo)) //get the TableInfo of the underlying Column for the dimension
                 .Distinct() //return distinct array of them
-                .ToArray();
+                .ToArray() ?? [];
     }
 
     /// <summary>

@@ -4,6 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using FAnsi.Discovery.QuerySyntax.Aggregation;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data.Aggregation;
 using Rdmp.Core.QueryBuilding;
@@ -73,5 +74,46 @@ internal class AggregateConfigurationTests : UnitTests
 
         var ex = Assert.Throws<QueryBuildingException>(() => _ = config.GetQueryBuilder().SQL);
         Assert.That(ex.Message, Does.Contain("is both a PIVOT and has an AXIS configured on it"));
+    }
+
+    [TestCase(null, null)]
+    [TestCase("'2001-01-01'", null)]
+    [TestCase(null, "'2002-02-02'")]
+    [TestCase("'2001-01-01'", "'2002-02-02'")]
+    public void GetQueryBuilder_UsesTheAxisDatesUnlessTheyAreOverridden(string startOverride, string endOverride)
+    {
+        // A graph with an axis may only have the axis column and the count column, which is what this gives
+        var axis = WhenIHaveA<AggregateContinuousDateAxis>();
+        axis.StartDate = "'1990-01-01'";
+        axis.EndDate = "'1995-01-01'";
+        axis.AxisIncrement = AxisIncrement.Year;
+        axis.SaveToDatabase();
+
+        // WhenIHaveA swapped the graph's column for the axis column after the graph had cached its columns
+        var config = axis.AggregateDimension.AggregateConfiguration;
+        config.ClearAllInjections();
+
+        var builder = config.GetQueryBuilder();
+        builder.AxisStartDateOverride = startOverride;
+        builder.AxisEndDateOverride = endOverride;
+        var sql = builder.SQL;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(sql, Does.Contain($"SET @startDate = {startOverride ?? "'1990-01-01'"}"));
+            Assert.That(sql, Does.Contain($"SET @endDate = {endOverride ?? "'1995-01-01'"}"));
+        });
+    }
+
+    [TestCase("'2001-01-01'", null)]
+    [TestCase(null, "'2002-02-02'")]
+    public void GetQueryBuilder_WithAxisDateOverrideButNoAxis_Throws(string startOverride, string endOverride)
+    {
+        var builder = WhenIHaveA<AggregateConfiguration>().GetQueryBuilder();
+        builder.AxisStartDateOverride = startOverride;
+        builder.AxisEndDateOverride = endOverride;
+
+        var ex = Assert.Throws<QueryBuildingException>(() => _ = builder.SQL);
+        Assert.That(ex?.Message, Does.Contain("can only be set when the query has an AggregateContinuousDateAxis"));
     }
 }

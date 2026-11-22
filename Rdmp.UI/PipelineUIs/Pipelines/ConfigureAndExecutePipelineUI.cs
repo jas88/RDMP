@@ -73,6 +73,10 @@ public partial class ConfigureAndExecutePipelineUI : RDMPUserControl, IPipelineR
         //designer mode
         if (useCase == null && activator == null)
             return;
+
+        ArgumentNullException.ThrowIfNull(useCase);
+        ArgumentNullException.ThrowIfNull(activator);
+
         Text = args.WindowTitle;
 
         SetItemActivator(activator);
@@ -204,8 +208,9 @@ public partial class ConfigureAndExecutePipelineUI : RDMPUserControl, IPipelineR
                 }
                 catch (Exception ex)
                 {
-                    fork.OnNotify(this, new NotifyEventArgs(ProgressEventType.Error, "Pipeline execution failed", ex));
+                    // record the failure before reporting it, in case reporting it fails too
                     exception = ex;
+                    fork.OnNotify(this, new NotifyEventArgs(ProgressEventType.Error, "Pipeline execution failed", ex));
                 }
             }
         );
@@ -231,8 +236,14 @@ public partial class ConfigureAndExecutePipelineUI : RDMPUserControl, IPipelineR
                 var worst = progressUI1.GetWorst();
                 progressUI1.SetFatal();
 
+                var failure = exception ?? worst?.Exception;
                 if (UserSettings.ShowPipelineCompletedPopup)
-                    ExceptionViewer.Show("Pipeline Failed", exception ?? worst?.Exception);
+                {
+                    if (failure != null)
+                        ExceptionViewer.Show("Pipeline Failed", failure);
+                    else
+                        WideMessageBox.Show("Pipeline Failed", "Pipeline execution failed", WideMessageBoxTheme.Exception);
+                }
             }
         }, TaskScheduler.FromCurrentSynchronizationContext());
 

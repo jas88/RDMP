@@ -35,16 +35,14 @@ public abstract class GlobalReleasePotential : ICheckable
 
         if (GlobalResult.SQLExecuted != null)
         {
-            var table = RelatedGlobal as SupportingSQLTable;
-            if (table == null)
+            if (RelatedGlobal is not SupportingSQLTable table)
             {
                 notifier.OnCheckPerformed(new CheckEventArgs(
                     $"The executed Global {GlobalResult.ExtractedName} has a SQL script but the extracted type ({GlobalResult.ReferencedObjectType}) is not a SupportingSQLTable",
                     CheckResult.Fail));
                 Releasability = Releaseability.ExtractionSQLDesynchronisation;
             }
-
-            if (table.SQL != GlobalResult.SQLExecuted)
+            else if (table.SQL != GlobalResult.SQLExecuted)
             {
                 notifier.OnCheckPerformed(new CheckEventArgs(
                     $"The executed Global {GlobalResult.ExtractedName} has a SQL script which is different from the current one!",

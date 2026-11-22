@@ -446,10 +446,17 @@ public class AggregateBuilder : ISqlQueryBuilder
         GetGroupBySQL(queryLines, aggregateHelper);
 
         queryLines = queryLines.Where(l => !string.IsNullOrWhiteSpace(l.Text)).ToList();
-        if (AxisStartDateOverride != null)
-            _axis.StartDate = AxisStartDateOverride;
-        if (AxisEndDateOverride != null)
-            _axis.EndDate = AxisEndDateOverride;
+        if (AxisStartDateOverride != null || AxisEndDateOverride != null)
+        {
+            if (_axis == null)
+                throw new QueryBuildingException(
+                    "AxisStartDateOverride and AxisEndDateOverride can only be set when the query has an AggregateContinuousDateAxis");
+
+            if (AxisStartDateOverride != null)
+                _axis.StartDate = AxisStartDateOverride;
+            if (AxisEndDateOverride != null)
+                _axis.EndDate = AxisEndDateOverride;
+        }
 
         _sql = aggregateHelper.BuildAggregate(queryLines, _axis);
     }

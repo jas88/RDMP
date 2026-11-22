@@ -295,6 +295,10 @@ public partial class AggregateGraphUI : AggregateGraph_Design
             var dateColumnName = "joinDt";
             if (isRefresh)
             {
+                // ReloadDataBetweenDates passes both dates: AggregateGraphDateSelector only returns OK when both are valid
+                if (startDateOverride == null || endDateOverride == null)
+                    throw new ArgumentException("Refreshing the graph between dates needs both a start and an end date");
+
                 //wipe out data from dt that is between these dates
 
                 var columnIndex = _dt.Columns.IndexOf(dateColumnName);
@@ -826,7 +830,8 @@ public partial class AggregateGraphUI : AggregateGraph_Design
             foreach (var c in _timeoutControls.GetControls())
                 CommonFunctionality.Add(c);
 
-            if (DatabaseObject.GetType() == typeof(AggregateConfiguration) && ((AggregateConfiguration)DatabaseObject).GetAxisIfAny() != null)
+            // graphs of a collection (e.g. FilterGraphUI) have no DatabaseObject
+            if (DatabaseObject is AggregateConfiguration aggregate && aggregate.GetAxisIfAny() != null)
                 CommonFunctionality.Add(_btnRefreshData);
         }
     }

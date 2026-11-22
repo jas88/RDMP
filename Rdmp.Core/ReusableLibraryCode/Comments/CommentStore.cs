@@ -87,8 +87,11 @@ public class CommentStore : IEnumerable<KeyValuePair<string, string>>
             {
                 switch (n.Name)
                 {
-                    case "see" when n.Attributes != null:
-                        sb.Append($"{GetLastTokens(n.Attributes["cref"]?.Value)} "); // a <see cref="omg"> tag
+                    case "see" when n.Attributes?.GetNamedItem("cref")?.Value is { } cref:
+                        sb.Append($"{GetLastTokens(cref)} "); // a <see cref="omg"> tag
+                        break;
+                    case "see" when n.Attributes?.GetNamedItem("langword")?.Value is { } langword:
+                        sb.Append($"{langword} "); // a <see langword="null"/> tag
                         break;
                     case "para":
                         TrimEndSpace(sb)

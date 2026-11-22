@@ -224,9 +224,9 @@ public class ProcessTaskArgumentTests : DatabaseTests
             pta.SaveToDatabase();
 
             var loadedPta = CatalogueRepository.GetObjectByID<ProcessTaskArgument>(pta.ID);
-            var value = loadedPta.GetValueAsSystemType() as EncryptedString;
-            Assert.That(value, Is.Not.Null);
-            Assert.That(value.GetDecryptedValue(), Is.EqualTo("test123"));
+            var value = loadedPta.GetValueAsSystemType();
+            Assert.That(value, Is.InstanceOf<EncryptedString>());
+            Assert.That(((EncryptedString)value).GetDecryptedValue(), Is.EqualTo("test123"));
         }
         finally
         {

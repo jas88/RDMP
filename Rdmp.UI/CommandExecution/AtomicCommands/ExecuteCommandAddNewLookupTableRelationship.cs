@@ -50,8 +50,10 @@ public class ExecuteCommandAddNewLookupTableRelationship : BasicUICommandExecuti
                 //make sure they really wanted to do this?
                 if (YesNo(GetLookupConfirmationText(), "Create Lookup"))
                 {
-                    //get them to pick a Catalogue the table provides descriptions for
-                    if (!SelectOne(_lookupTableInfoIfKnown.Repository, out cata))
+                    //get them to pick a Catalogue the table provides descriptions for (the constructor ensures the table is known when the Catalogue is not)
+                    var lookupTable = _lookupTableInfoIfKnown ??
+                                      throw new InvalidOperationException("Neither the Catalogue nor the lookup table is known");
+                    if (!SelectOne(lookupTable.Repository, out cata))
                         return;
                 }
                 else

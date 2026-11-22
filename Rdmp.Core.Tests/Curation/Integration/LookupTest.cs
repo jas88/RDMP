@@ -77,7 +77,7 @@ public class LookupTest : DatabaseTests
             //cleanup
             try
             {
-                child.DeleteInDatabase();
+                child?.DeleteInDatabase();
             }
             catch (Exception)
             {
@@ -85,7 +85,7 @@ public class LookupTest : DatabaseTests
 
             try
             {
-                child2.DeleteInDatabase();
+                child2?.DeleteInDatabase();
             }
             catch (Exception)
             {
@@ -93,7 +93,7 @@ public class LookupTest : DatabaseTests
 
             try
             {
-                child3.DeleteInDatabase();
+                child3?.DeleteInDatabase();
             }
             catch (Exception)
             {
@@ -101,7 +101,7 @@ public class LookupTest : DatabaseTests
 
             try
             {
-                parent.DeleteInDatabase();
+                parent?.DeleteInDatabase();
             }
             catch (Exception)
             {
@@ -158,7 +158,7 @@ public class LookupTest : DatabaseTests
             //cleanup
             try
             {
-                child.DeleteInDatabase();
+                child?.DeleteInDatabase();
             }
             catch (Exception)
             {
@@ -166,7 +166,7 @@ public class LookupTest : DatabaseTests
 
             try
             {
-                child2.DeleteInDatabase();
+                child2?.DeleteInDatabase();
             }
             catch (Exception)
             {
@@ -174,7 +174,7 @@ public class LookupTest : DatabaseTests
 
             try
             {
-                child3.DeleteInDatabase();
+                child3?.DeleteInDatabase();
             }
             catch (Exception)
             {
@@ -182,7 +182,7 @@ public class LookupTest : DatabaseTests
 
             try
             {
-                parent.DeleteInDatabase();
+                parent?.DeleteInDatabase();
             }
             catch (Exception)
             {
@@ -190,7 +190,7 @@ public class LookupTest : DatabaseTests
 
             try
             {
-                parent2.DeleteInDatabase();
+                parent2?.DeleteInDatabase();
             }
             catch (Exception)
             {

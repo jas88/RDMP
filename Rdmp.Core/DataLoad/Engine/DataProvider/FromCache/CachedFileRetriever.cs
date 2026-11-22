@@ -127,16 +127,16 @@ public abstract class CachedFileRetriever : ICachedDataProvider
 
     protected void ExtractJobs(IDataLoadJob dataLoadJob)
     {
+        // GetDataLoadWorkload must be called first to say which files are to be retrieved from the cache
+        if (_workload == null)
+            throw new InvalidOperationException(
+                "The workload has not been initialised, don't know what files are to be retrieved from the cache");
+
         // check to see if forLoading has anything in it and bail if it does
         if (dataLoadJob.LoadDirectory.ForLoading.EnumerateFileSystemInfos().Any())
         {
             // RDMPDEV-185
             // There are files in ForLoading, but do they match what we would expect to find? Need to make sure that they aren't from a different dataset and/or there is the expected number of files
-            // We should already have a _workload
-            if (_workload == null)
-                throw new InvalidOperationException(
-                    "The workload has not been initialised, don't know what files are to be retrieved from the cache");
-
             if (!FilesInForLoadingMatchWorkload(dataLoadJob.LoadDirectory))
                 throw new InvalidOperationException(
                     "The files in ForLoading do not match what this job expects to be loading from the cache. Please delete the files in ForLoading before re-attempting the data load.");

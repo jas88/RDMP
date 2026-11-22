@@ -80,6 +80,29 @@ public class PreInitializeTests
         Assert.That(ex.Message, Does.Contain("Penguin"));
     }
 
+    [Test]
+    public void TestNullObject()
+    {
+        var fishUser = new FishUser();
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            context.PreInitialize(ThrowImmediatelyDataLoadEventListener.Quiet, fishUser, fish, null));
+        Assert.That(ex.Message, Does.StartWith("One of the parameters for PreInitialization of"));
+    }
+
+    [Test]
+    public void TestPreInitializeThatThrows()
+    {
+        var ex = Assert.Throws<Exception>(() =>
+            context.PreInitialize(ThrowImmediatelyDataLoadEventListener.Quiet, new FishRejecter(), fish));
+
+        Assert.Multiple(() =>
+        {
+            // says which component rejected which object, and keeps why
+            Assert.That(ex.Message, Does.StartWith("Exception invoking FishRejecter.PreInitialize(Fish:a fish,"));
+            Assert.That(ex.GetBaseException().Message, Is.EqualTo("No fish please"));
+        });
+    }
+
 
     private class FishUser : IPipelineRequirement<IFish>, IDataFlowComponent<DataTable>
     {
@@ -137,6 +160,30 @@ public class PreInitializeTests
         #endregion
     }
 
+    private class FishRejecter : IPipelineRequirement<Fish>, IDataFlowComponent<DataTable>
+    {
+        public void PreInitialize(Fish value, IDataLoadEventListener listener) =>
+            throw new NotSupportedException("No fish please");
+
+        #region boiler plate
+
+        public DataTable ProcessPipelineData(DataTable toProcess, IDataLoadEventListener listener,
+            GracefulCancellationToken cancellationToken) =>
+            throw new NotImplementedException();
+
+        public void Dispose(IDataLoadEventListener listener, Exception pipelineFailureExceptionIfAny)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Abort(IDataLoadEventListener listener)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+    }
+
     private interface IFish
     {
         string GetFish();
@@ -145,6 +192,11 @@ public class PreInitializeTests
     private class Fish : IFish
     {
         public string GetFish() => "fish";
+
+        /// <summary>
+        /// What a message about this object calls it. Without this it would be the name of its Type, which says nothing about the object
+        /// </summary>
+        public override string ToString() => "a fish";
     }
 
     private class Penguin

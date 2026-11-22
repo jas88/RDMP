@@ -82,8 +82,11 @@ public class LogManager : ILogManager
     /// <returns></returns>
     public DataTable GetTable(LogViewerFilter filter, int? topX, bool sortDesc)
     {
+        // the filter says which table to read as well as which rows
+        ArgumentNullException.ThrowIfNull(filter);
+
         var prefix = "";
-        var where = filter == null ? "" : filter.GetWhereSql();
+        var where = filter.GetWhereSql();
 
         if (topX.HasValue)
             prefix = $"TOP {topX.Value}";

@@ -82,9 +82,11 @@ public class CohortIdentificationConfigurationSource : IPluginDataFlowSource<Dat
         listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Information,
             $"About to lookup which server to interrogate for CohortIdentificationConfiguration {_cohortIdentificationConfiguration}"));
 
+        // there is no query to run without a root container. Notifying the listener of an error is not enough to stop
+        // here, because only some listeners throw
         if (_cohortIdentificationConfiguration.RootCohortAggregateContainer_ID == null)
-            listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Error,
-                $"CohortIdentificationConfiguration '{_cohortIdentificationConfiguration}' has no RootCohortAggregateContainer_ID, is it empty?"));
+            throw new Exception(
+                $"CohortIdentificationConfiguration '{_cohortIdentificationConfiguration}' has no RootCohortAggregateContainer_ID, is it empty?");
 
         var cohortCompiler = new CohortCompiler(_cohortIdentificationConfiguration);
 
@@ -93,6 +95,10 @@ public class CohortIdentificationConfigurationSource : IPluginDataFlowSource<Dat
             _cohortIdentificationConfiguration.QueryCachingServer_ID == null
                 ? RunRootContainerOnlyNoCaching(cohortCompiler)
                 : RunAllTasksWithRunner(cohortCompiler, listener);
+
+        // CohortCompilerRunner returns no task when the run is cancelled (see Abort)
+        if (rootContainerTask == null)
+            throw new Exception("Root container task was null, was the execution cancelled? / crashed");
 
         if (rootContainerTask.State == CompilationState.Executing)
         {
@@ -111,9 +117,6 @@ public class CohortIdentificationConfigurationSource : IPluginDataFlowSource<Dat
         if (rootContainerTask.State != CompilationState.Finished)
             throw new Exception($"CohortIdentificationCriteria execution resulted in state '{rootContainerTask.State}'",
                 rootContainerTask.CrashMessage);
-
-        if (rootContainerTask == null)
-            throw new Exception("Root container task was null, was the execution cancelled? / crashed");
 
         var execution = cohortCompiler.Tasks[rootContainerTask];
 

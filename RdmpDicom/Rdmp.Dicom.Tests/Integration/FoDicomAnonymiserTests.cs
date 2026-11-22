@@ -159,24 +159,23 @@ public class FoDicomAnonymiserTests : DatabaseTests
         });
         Assert.That(anoDt.Rows[0]["StudyInstanceUID"].ToString(), Has.Length.EqualTo(56));
 
-        FileInfo expectedFile = null;
+        FileInfo expectedFile;
         if (putterType == typeof(PutInRoot))
             expectedFile = new(Path.Combine(TestContext.CurrentContext.WorkDirectory, "Images",
                 $"{anoDt.Rows[0]["SOPInstanceUID"]}.dcm"));
-
-        if (putterType == typeof(PutInReleaseIdentifierSubfolders))
+        else if (putterType == typeof(PutInReleaseIdentifierSubfolders))
             expectedFile = new(Path.Combine(TestContext.CurrentContext.WorkDirectory, "Images", "Hank",
                 $"{anoDt.Rows[0]["SOPInstanceUID"]}.dcm"));
-
-        if (putterType == typeof(PutInUidSeriesFolders))
+        else if (putterType == typeof(PutInUidSeriesFolders))
             expectedFile = new(Path.Combine(TestContext.CurrentContext.WorkDirectory, "Images", "Hank", anoDt.Rows[0]["SeriesInstanceUID"].ToString(),
                 $"{anoDt.Rows[0]["SOPInstanceUID"]}.dcm"));
-
-        if (putterType == typeof(PutInUidStudySeriesFolders))
+        else if (putterType == typeof(PutInUidStudySeriesFolders))
             expectedFile = new(Path.Combine(TestContext.CurrentContext.WorkDirectory, "Images", "Hank", anoDt.Rows[0]["StudyInstanceUID"].ToString(), anoDt.Rows[0]["SeriesInstanceUID"].ToString(),
                 $"{anoDt.Rows[0]["SOPInstanceUID"]}.dcm"));
+        else
+            throw new ArgumentOutOfRangeException(nameof(putterType), putterType, "No expected file location for this putter");
 
-        Assert.That(expectedFile?.Exists, Is.EqualTo(true));
+        Assert.That(expectedFile.Exists);
         var anoDicom = DicomFile.Open(expectedFile.FullName);
 
         Assert.Multiple(() =>

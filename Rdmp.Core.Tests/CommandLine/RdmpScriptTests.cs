@@ -4,6 +4,7 @@
 // RDMP is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
+using System;
 using System.Linq;
 using NUnit.Framework;
 using Rdmp.Core.CommandLine.Options;
@@ -81,6 +82,26 @@ internal class RdmpScriptTests : UnitTests
         var ci = RepositoryLocator.CatalogueRepository.GetAllObjects<Catalogue>().Single().CatalogueItems.Single();
 
         Assert.That(ci.Name, Is.EqualTo(expectedCataItemName));
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void RdmpScript_WithoutCommands_IsRejected(bool hasEmptyCommandsList)
+    {
+        // a script file with no Commands, or with an empty list of them
+        var runner = new ExecuteCommandRunner(new ExecuteCommandOptions
+        {
+            Script = new RdmpScript
+            {
+                Commands = hasEmptyCommandsList ? [] : null
+            }
+        });
+
+        var ex = Assert.Throws<ArgumentException>(() => runner.Run(RepositoryLocator,
+            ThrowImmediatelyDataLoadEventListener.Quiet, ThrowImmediatelyCheckNotifier.Quiet,
+            new GracefulCancellationToken()));
+
+        Assert.That(ex?.Message, Does.StartWith("script was empty"));
     }
 
     [Test]

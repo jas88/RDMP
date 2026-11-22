@@ -437,8 +437,8 @@ public class DataTableUploadDestination : IPluginDataFlowComponent<DataTable>, I
         {
             _managedConnection.ManagedTransaction.AbandonAndCloseConnection();
 
-            if (LoggingServer != null)
-                _dataLoadInfo.LogFatalError(GetType().Name, ExceptionHelper.ExceptionToListOfInnerMessages(e, true));
+            // there is only an audit to log to when there is a LoggingServer (see StartAuditIfExists)
+            _dataLoadInfo?.LogFatalError(GetType().Name, ExceptionHelper.ExceptionToListOfInnerMessages(e, true));
 
             throw new Exception($"Failed to write rows (in transaction) to table {TargetTableName}", e);
         }

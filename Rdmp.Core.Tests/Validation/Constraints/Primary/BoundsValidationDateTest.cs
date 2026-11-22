@@ -160,10 +160,8 @@ internal class BoundsValidationDateTest : ValidationTests
 
         var v = CreateAdmissionDateValidator(b);
 
-        var result = v.Validate(TestConstants.AdmissionDateOccursBeforeDob);
-
-        if (result == null)
-            Assert.Fail();
+        var result = v.Validate(TestConstants.AdmissionDateOccursBeforeDob) ??
+                     throw new AssertionException("Expected the admission date to fail validation");
 
         var l = result.GetExceptionList();
 
@@ -216,10 +214,8 @@ internal class BoundsValidationDateTest : ValidationTests
 
         var v = CreateParentDobValidator(b);
 
-        var result = v.Validate(TestConstants.ParentDobOccursAfterDob);
-
-        if (result == null)
-            Assert.Fail();
+        var result = v.Validate(TestConstants.ParentDobOccursAfterDob) ??
+                     throw new AssertionException("Expected the parent's date of birth to fail validation");
 
         var l = result.GetExceptionList();
 

@@ -247,9 +247,11 @@ public class CohortCompiler
         }
         else
         {
-            task = new AggregationContainerTask(container, this);
-            queryBuilder = new CohortQueryBuilder(container, globals, CoreChildProvider);
-            parent = container.GetParentContainerIfAny();
+            // obj is not null, so a runnable that is neither an aggregate nor a joinable is a container
+            var aggregateContainer = (CohortAggregateContainer)runnable;
+            task = new AggregationContainerTask(aggregateContainer, this);
+            queryBuilder = new CohortQueryBuilder(aggregateContainer, globals, CoreChildProvider);
+            parent = aggregateContainer.GetParentContainerIfAny();
         }
 
         //if there is a parent

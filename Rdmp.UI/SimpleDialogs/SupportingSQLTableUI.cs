@@ -116,8 +116,7 @@ public partial class SupportingSQLTableUI : SupportingSQLTableUI_Design, ISaveab
         ddExternalServers.Items.AddRange(_supportingSQLTable.Repository.GetAllObjects<ExternalDatabaseServer>()
             .ToArray());
 
-        if (_supportingSQLTable != null)
-            ddExternalServers.SelectedItem = _supportingSQLTable.ExternalDatabaseServer;
+        ddExternalServers.SelectedItem = _supportingSQLTable.ExternalDatabaseServer;
     }
 
     private bool _bLoading;
