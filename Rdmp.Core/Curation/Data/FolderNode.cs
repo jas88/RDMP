@@ -80,6 +80,7 @@ public class
 
     public override bool Equals(object obj) =>
         obj is FolderNode<T> node &&
+        obj.GetType() == GetType() &&
         FullName == node.FullName;
 
     public override int GetHashCode() => HashCode.Combine(FullName);

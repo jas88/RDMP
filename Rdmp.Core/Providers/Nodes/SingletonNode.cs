@@ -21,10 +21,21 @@ public abstract class SingletonNode : Node
 
     public override string ToString() => _caption;
 
-    public bool Equals(SingletonNode other) => string.Equals(_caption, other._caption);
+    /// <summary>
+    /// Returns true if <paramref name="other"/> is the same kind of node (exactly the same Type) with the same caption
+    /// </summary>
+    /// <param name="other"></param>
+    /// <returns></returns>
+    public bool Equals(SingletonNode other) =>
+        other != null && other.GetType() == GetType() && string.Equals(_caption, other._caption);
 
-    public override bool Equals(object obj) => obj is SingletonNode sn &&
-                                               Equals(sn);
+    public override bool Equals(object obj)
+    {
+        if (obj is null) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != GetType()) return false;
+        return Equals((SingletonNode)obj);
+    }
 
     public override int GetHashCode() => _caption.GetHashCode();
 }

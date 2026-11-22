@@ -127,9 +127,9 @@ public abstract class TableRepository : ITableRepository, IDisposable
         if (e.Cancel)
             return;
 
-        foreach (var c in changes.Differences)
-            _logger.Debug(
-                $"Save,{oTableWrapperObject.GetType().Name},{oTableWrapperObject.ID},{c.Property},{c.DatabaseValue},{c.LocalValue}");
+        //do not log passwords or other secrets
+        foreach (var message in SaveAuditMessage.For(oTableWrapperObject, changes))
+            _logger.Debug(message);
 
         lock (_oLockUpdateCommands)
         {

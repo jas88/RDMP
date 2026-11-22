@@ -78,14 +78,10 @@ public class QueryTimeColumn : IComparable
     public override int GetHashCode() => IColumn == null ? -1 : IColumn.ID;
 
     /// <inheritdoc/>
-    public override bool Equals(object obj)
-    {
-        if (obj is QueryTimeColumn other)
-            return
-                other.IColumn.Equals(IColumn);
-
-        throw new Exception(".Equals only works for objects of type QueryTimeColumn");
-    }
+    public override bool Equals(object obj) =>
+        obj is QueryTimeColumn other &&
+        obj.GetType() == GetType() &&
+        Equals(other.IColumn, IColumn);
 
     /// <inheritdoc/>
     public int CompareTo(object obj) =>
