@@ -41,7 +41,7 @@ public class CachedFileRetrieverWorkloadTests
     public void ExtractJobs_BeforeTheWorkloadIsKnown_Throws()
     {
         // ForLoading is empty, so there are no files in it to compare with the workload
-        var forLoading = Directory.CreateDirectory(Path.Combine(TestContext.CurrentContext.WorkDirectory,
+        var forLoading = Directory.CreateDirectory(Path.Join(TestContext.CurrentContext.WorkDirectory,
             nameof(CachedFileRetrieverWorkloadTests), Path.GetRandomFileName()));
 
         try

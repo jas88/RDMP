@@ -40,7 +40,7 @@ internal class ExecuteFullExtractionToDatabaseMSSqlDisposeTests : UnitTests
         var results = new CumulativeExtractionResults(Repository, config, sds.ExtractableDataSet, "SELECT 1");
         var project = (Project)config.Project;
         project.ProjectNumber = 1234;
-        project.ExtractionDirectory = Directory.CreateDirectory(Path.Combine(TestContext.CurrentContext.WorkDirectory,
+        project.ExtractionDirectory = Directory.CreateDirectory(Path.Join(TestContext.CurrentContext.WorkDirectory,
             nameof(ExecuteFullExtractionToDatabaseMSSqlDisposeTests))).FullName;
         project.SaveToDatabase();
 

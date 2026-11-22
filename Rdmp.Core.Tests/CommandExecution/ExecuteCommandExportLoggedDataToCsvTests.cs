@@ -23,9 +23,9 @@ internal class ExecuteCommandExportLoggedDataToCsvTests : CommandCliTests
         _ = new ExternalDatabaseServer(Repository.CatalogueRepository, "Logging", new LoggingDatabasePatcher());
 
         // SelectOne returns null when the user cancels choosing a server
+        IMapsDirectlyToDatabaseTable noServerChosen = null;
         var activator = GetMockActivator();
-        activator.SelectOne(Arg.Any<DialogArgs>(), Arg.Any<IMapsDirectlyToDatabaseTable[]>())
-            .Returns((IMapsDirectlyToDatabaseTable)null);
+        activator.SelectOne(Arg.Any<DialogArgs>(), Arg.Any<IMapsDirectlyToDatabaseTable[]>()).Returns(noServerChosen);
         var cmd = new ExecuteCommandExportLoggedDataToCsv(activator, new LogViewerFilter(LoggingTables.DataLoadTask));
 
         Assert.DoesNotThrow(cmd.Execute);

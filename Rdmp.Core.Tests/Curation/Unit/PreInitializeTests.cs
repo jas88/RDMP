@@ -98,7 +98,7 @@ public class PreInitializeTests
         Assert.Multiple(() =>
         {
             // says which component rejected which object, and keeps why
-            Assert.That(ex.Message, Does.StartWith($"Exception invoking FishRejecter.PreInitialize(Fish:{fish},"));
+            Assert.That(ex.Message, Does.StartWith("Exception invoking FishRejecter.PreInitialize(Fish:a fish,"));
             Assert.That(ex.GetBaseException().Message, Is.EqualTo("No fish please"));
         });
     }
@@ -192,6 +192,11 @@ public class PreInitializeTests
     private class Fish : IFish
     {
         public string GetFish() => "fish";
+
+        /// <summary>
+        /// What a message about this object calls it. Without this it would be the name of its Type, which says nothing about the object
+        /// </summary>
+        public override string ToString() => "a fish";
     }
 
     private class Penguin

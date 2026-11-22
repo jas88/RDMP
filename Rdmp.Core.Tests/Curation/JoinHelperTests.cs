@@ -18,9 +18,10 @@ internal class JoinHelperTests : UnitTests
     public void GetJoinSQLPrimaryKeySideOnly_WithAliasButNoPrimaryKey_DescribesTheHalfSetUpJoin()
     {
         // a join can be described before its primary key has been chosen
+        ColumnInfo noPrimaryKey = null;
         var join = Substitute.For<IJoin>();
         join.ForeignKey.Returns(WhenIHaveA<ColumnInfo>());
-        join.PrimaryKey.Returns((ColumnInfo)null);
+        join.PrimaryKey.Returns(noPrimaryKey);
         join.GetSupplementalJoins().Returns([]);
 
         var sql = JoinHelper.GetJoinSQLPrimaryKeySideOnly(join, 1);

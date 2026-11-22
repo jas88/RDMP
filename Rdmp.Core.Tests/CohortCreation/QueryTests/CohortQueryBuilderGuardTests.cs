@@ -22,8 +22,9 @@ internal class CohortQueryBuilderGuardTests : UnitTests
     [Test]
     public void Constructor_WithoutAConfiguration_Throws()
     {
-        var ex = Assert.Throws<QueryBuildingException>(() =>
-            _ = new CohortQueryBuilder((CohortIdentificationConfiguration)null, null));
+        CohortIdentificationConfiguration noConfiguration = null;
+
+        var ex = Assert.Throws<QueryBuildingException>(() => _ = new CohortQueryBuilder(noConfiguration, null));
 
         Assert.That(ex?.Message, Is.EqualTo("Configuration has not been set yet"));
     }

@@ -27,8 +27,9 @@ public class ExecuteCommandExportLoggedDataToCsvDatabaseTests : DatabaseTests
     public void Execute_WhenNoOutputFileIsChosen_DoesNothing()
     {
         // SelectFile returns null when the user cancels choosing the output file
+        FileInfo noFileChosen = null;
         var activator = GetActivatorChoosingTheLoggingServer();
-        activator.SelectFile(Arg.Any<string>()).Returns((FileInfo)null);
+        activator.SelectFile(Arg.Any<string>()).Returns(noFileChosen);
         var cmd = new ExecuteCommandExportLoggedDataToCsv(activator, new LogViewerFilter(LoggingTables.DataLoadTask));
 
         Assert.DoesNotThrow(cmd.Execute);
@@ -38,9 +39,9 @@ public class ExecuteCommandExportLoggedDataToCsvDatabaseTests : DatabaseTests
     [Test]
     public void Execute_WritesTheLoggedEventsToTheChosenFile()
     {
-        var dir = Directory.CreateDirectory(Path.Combine(TestContext.CurrentContext.WorkDirectory,
+        var dir = Directory.CreateDirectory(Path.Join(TestContext.CurrentContext.WorkDirectory,
             nameof(Execute_WritesTheLoggedEventsToTheChosenFile)));
-        var output = new FileInfo(Path.Combine(dir.FullName, "logs.csv"));
+        var output = new FileInfo(Path.Join(dir.FullName, "logs.csv"));
         if (output.Exists)
             output.Delete();
 

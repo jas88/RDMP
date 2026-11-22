@@ -17,7 +17,8 @@ internal class LogManagerFilterTests
     public void GetTable_WithoutAFilter_Throws()
     {
         // the filter is checked before the logging server is used, so the test needs no server
-        var logManager = new LogManager((DiscoveredServer)null);
+        DiscoveredServer noServer = null;
+        var logManager = new LogManager(noServer);
 
         var ex = Assert.Throws<ArgumentNullException>(() => logManager.GetTable(null, null, false));
 
