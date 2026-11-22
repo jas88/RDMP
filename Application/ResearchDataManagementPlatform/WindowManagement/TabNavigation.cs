@@ -12,7 +12,7 @@ namespace ResearchDataManagementPlatform.WindowManagement;
 /// <summary>
 /// Records the fact that the user visited a specific <see cref="DockContent"/> (Tab)
 /// </summary>
-public class TabNavigation : INavigation
+public sealed class TabNavigation : INavigation
 {
     public DockContent Tab { get; }
 
