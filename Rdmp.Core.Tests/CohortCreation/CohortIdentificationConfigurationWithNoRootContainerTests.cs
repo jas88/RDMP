@@ -10,6 +10,8 @@ using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Aggregation;
 using Rdmp.Core.Curation.Data.Cohort;
 using Rdmp.Core.Curation.Data.Cohort.Joinables;
+using Rdmp.Core.Providers;
+using Rdmp.Core.QueryBuilding;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Tests.Common;
 
@@ -63,19 +65,31 @@ internal class CohortIdentificationConfigurationWithNoRootContainerTests : UnitT
     }
 
     [Test]
-    public void Merge_TreatsItLikeAConfigurationWithAnEmptyRootContainer()
+    public void Merge_LeavesItOut()
     {
-        var withRoot = WhenIHaveA<CohortAggregateContainer>().GetCohortIdentificationConfiguration();
+        var withRoot = WhenIHaveAConfigurationWithTwoCohortSets();
         var withoutRoot = WhenIHaveAConfigurationWithNoRootContainer();
         var configurationsBefore = Repository.GetAllObjects<CohortIdentificationConfiguration>().Length;
 
         var merged = new CohortIdentificationConfigurationMerger(Repository)
             .Merge([withRoot, withoutRoot], SetOperation.UNION);
 
+        var mergedRoot = merged.RootCohortAggregateContainer;
+        var problems = new CatalogueProblemProvider();
+        problems.RefreshProblems(new CatalogueChildProvider(Repository, null, ThrowImmediatelyCheckNotifier.Quiet, null));
+
         Assert.Multiple(() =>
         {
-            // one subcontainer for each configuration that was merged
-            Assert.That(merged.RootCohortAggregateContainer.GetSubContainers(), Has.Length.EqualTo(2));
+            // the only subcontainer is the root container of the configuration that has one
+            Assert.That(mergedRoot.GetSubContainers(), Has.Length.EqualTo(1));
+            Assert.That(mergedRoot.GetAllAggregateConfigurationsRecursively(), Has.Count.EqualTo(2));
+
+            // so the cohort builder can run the merged configuration: an empty subcontainer is a problem to it, and stops
+            // the query being built
+            Assert.That(
+                mergedRoot.GetAllSubContainersRecursively().Prepend(mergedRoot)
+                    .Select(container => problems.DescribeProblem(container)), Is.All.Null);
+            Assert.That(() => new CohortQueryBuilder(merged, null).SQL, Does.Contain("UNION"));
 
             // the merge works on clones: the original is as it was, and the clones are gone
             Assert.That(withoutRoot.RootCohortAggregateContainer_ID, Is.Null);
@@ -85,20 +99,28 @@ internal class CohortIdentificationConfigurationWithNoRootContainerTests : UnitT
     }
 
     [Test]
-    public void Import_AddsAnEmptyContainerForIt()
+    public void Import_LeavesItOut()
     {
         var into = WhenIHaveA<CohortAggregateContainer>();
-        var withoutRoot = WhenIHaveAConfigurationWithNoRootContainer();
+        var withRoot = WhenIHaveAConfigurationWithTwoCohortSets();
+        var patientIndexTable = WhenIHaveA<JoinableCohortAggregateConfiguration>();
+        var withoutRoot = WhenIHaveAConfigurationWithNoRootContainer(patientIndexTable.CohortIdentificationConfiguration);
         var configurationsBefore = Repository.GetAllObjects<CohortIdentificationConfiguration>().Length;
+        var aggregatesBefore = Repository.GetAllObjects<AggregateConfiguration>().Length;
+        var patientIndexTablesBefore = Repository.GetAllObjects<JoinableCohortAggregateConfiguration>().Length;
 
-        new CohortIdentificationConfigurationMerger(Repository).Import([withoutRoot], into);
+        new CohortIdentificationConfigurationMerger(Repository).Import([withoutRoot, withRoot], into);
 
         Assert.Multiple(() =>
         {
+            // the only subcontainer is the root container of the configuration that has one
             Assert.That(into.GetSubContainers(), Has.Length.EqualTo(1));
-            Assert.That(into.GetAllAggregateConfigurationsRecursively(), Is.Empty);
+            Assert.That(into.GetAllAggregateConfigurationsRecursively(), Has.Count.EqualTo(2));
 
-            // the import works on a clone: the original is as it was, and the clone is gone
+            // nothing is cloned for the configuration that is left out, so nothing of it is left behind
+            Assert.That(Repository.GetAllObjects<AggregateConfiguration>(), Has.Length.EqualTo(aggregatesBefore + 2));
+            Assert.That(Repository.GetAllObjects<JoinableCohortAggregateConfiguration>(),
+                Has.Length.EqualTo(patientIndexTablesBefore));
             Assert.That(withoutRoot.RootCohortAggregateContainer_ID, Is.Null);
             Assert.That(Repository.GetAllObjects<CohortIdentificationConfiguration>(),
                 Has.Length.EqualTo(configurationsBefore));
@@ -121,6 +143,36 @@ internal class CohortIdentificationConfigurationWithNoRootContainerTests : UnitT
         var tables = container.GetCohortIdentificationConfiguration().GetDistinctTableInfos();
 
         Assert.That(tables, Is.EqualTo(new[] { cohortSet.AggregateDimensions.Single().ColumnInfo.TableInfo }));
+    }
+
+    /// <summary>
+    /// Returns a new configuration whose root container has two cohort sets, which the cohort builder has no problem with
+    /// </summary>
+    private CohortIdentificationConfiguration WhenIHaveAConfigurationWithTwoCohortSets()
+    {
+        var root = WhenIHaveA<CohortAggregateContainer>();
+        var cic = root.GetCohortIdentificationConfiguration();
+
+        for (var order = 1; order <= 2; order++)
+        {
+            var cohortSet = WhenIHaveA<AggregateConfiguration>();
+
+            // a cohort set can be cloned only when it is clear which of its Catalogue's columns identifies the patient
+            var identifier = cohortSet.AggregateDimensions.Single().ExtractionInformation;
+            identifier.IsExtractionIdentifier = true;
+            identifier.SaveToDatabase();
+
+            // and cohort sets can be combined in one query only when their tables are known to be on the same server
+            var table = identifier.ColumnInfo.TableInfo;
+            table.Server = "localhost";
+            table.Database = "MyDb";
+            table.SaveToDatabase();
+
+            cic.EnsureNamingConvention(cohortSet);
+            root.AddChild(cohortSet, order);
+        }
+
+        return cic;
     }
 
     /// <summary>

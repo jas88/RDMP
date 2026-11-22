@@ -38,11 +38,12 @@ public class CohortIdentificationConfigurationMerger
             throw new ArgumentException("You must select at least 2 cics to merge", nameof(cics));
 
         //clone them
-        var cicClones = new CohortIdentificationConfiguration[cics.Length];
+        var toMerge = GetThoseWithARootContainer(cics);
+        var cicClones = new CohortIdentificationConfiguration[toMerge.Length];
         try
         {
-            for (var i = 0; i < cics.Length; i++)
-                cicClones[i] = cics[i].CreateClone(ThrowImmediatelyCheckNotifier.Quiet);
+            for (var i = 0; i < toMerge.Length; i++)
+                cicClones[i] = toMerge[i].CreateClone(ThrowImmediatelyCheckNotifier.Quiet);
         }
         catch (Exception ex)
         {
@@ -64,8 +65,6 @@ public class CohortIdentificationConfigurationMerger
             //Grab the root container of each of the input cics
             foreach (var cic in cicClones)
             {
-                //the clone of a configuration that has no root container yet has none either, so it gets an empty one
-                cic.CreateRootContainerIfNotExists();
                 var container = cic.RootCohortAggregateContainer;
 
                 //clear them to avoid dual parentage
@@ -101,11 +100,12 @@ public class CohortIdentificationConfigurationMerger
                       throw new ArgumentException($"Cannot import into orphan container '{into}'", nameof(into));
 
         //clone them
-        var cicClones = new CohortIdentificationConfiguration[cics.Length];
+        var toImport = GetThoseWithARootContainer(cics);
+        var cicClones = new CohortIdentificationConfiguration[toImport.Length];
         try
         {
-            for (var i = 0; i < cics.Length; i++)
-                cicClones[i] = cics[i].CreateClone(ThrowImmediatelyCheckNotifier.Quiet);
+            for (var i = 0; i < toImport.Length; i++)
+                cicClones[i] = toImport[i].CreateClone(ThrowImmediatelyCheckNotifier.Quiet);
         }
         catch (Exception ex)
         {
@@ -118,8 +118,6 @@ public class CohortIdentificationConfigurationMerger
             //Grab the root container of each of the input cics
             foreach (var cic in cicClones)
             {
-                //the clone of a configuration that has no root container yet has none either, so it gets an empty one
-                cic.CreateRootContainerIfNotExists();
                 var container = cic.RootCohortAggregateContainer;
 
                 //clear them to avoid dual parentage
@@ -142,6 +140,17 @@ public class CohortIdentificationConfigurationMerger
         }
     }
 
+
+    /// <summary>
+    /// Returns the <paramref name="cics"/> that have a root container.  Merging and importing take the root container of a
+    /// configuration, with the subcontainers and cohort sets in it, and nothing else.  So a configuration that has no root
+    /// container yet (see <see cref="CohortIdentificationConfiguration.CreateRootContainerIfNotExists"/>) has nothing to
+    /// merge or import.  It is left out rather than given an empty container, which the cohort builder reports as a
+    /// problem and, with its default strict validation, refuses to run
+    /// </summary>
+    private static CohortIdentificationConfiguration[] GetThoseWithARootContainer(
+        CohortIdentificationConfiguration[] cics) =>
+        cics.Where(static c => c.RootCohortAggregateContainer_ID != null).ToArray();
 
     private static void EnsureNamingConvention(CohortIdentificationConfiguration cic, AggregateConfiguration ac)
     {
