@@ -80,6 +80,29 @@ public class PreInitializeTests
         Assert.That(ex.Message, Does.Contain("Penguin"));
     }
 
+    [Test]
+    public void TestNullObject()
+    {
+        var fishUser = new FishUser();
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            context.PreInitialize(ThrowImmediatelyDataLoadEventListener.Quiet, fishUser, fish, null));
+        Assert.That(ex.Message, Does.StartWith("One of the parameters for PreInitialization of"));
+    }
+
+    [Test]
+    public void TestPreInitializeThatThrows()
+    {
+        var ex = Assert.Throws<Exception>(() =>
+            context.PreInitialize(ThrowImmediatelyDataLoadEventListener.Quiet, new FishRejecter(), fish));
+
+        Assert.Multiple(() =>
+        {
+            // says which component rejected which object, and keeps why
+            Assert.That(ex.Message, Does.StartWith($"Exception invoking FishRejecter.PreInitialize(Fish:{fish},"));
+            Assert.That(ex.GetBaseException().Message, Is.EqualTo("No fish please"));
+        });
+    }
+
 
     private class FishUser : IPipelineRequirement<IFish>, IDataFlowComponent<DataTable>
     {
@@ -117,6 +140,30 @@ public class PreInitializeTests
         {
             IFish = value;
         }
+
+        #region boiler plate
+
+        public DataTable ProcessPipelineData(DataTable toProcess, IDataLoadEventListener listener,
+            GracefulCancellationToken cancellationToken) =>
+            throw new NotImplementedException();
+
+        public void Dispose(IDataLoadEventListener listener, Exception pipelineFailureExceptionIfAny)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Abort(IDataLoadEventListener listener)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+    }
+
+    private class FishRejecter : IPipelineRequirement<Fish>, IDataFlowComponent<DataTable>
+    {
+        public void PreInitialize(Fish value, IDataLoadEventListener listener) =>
+            throw new NotSupportedException("No fish please");
 
         #region boiler plate
 
