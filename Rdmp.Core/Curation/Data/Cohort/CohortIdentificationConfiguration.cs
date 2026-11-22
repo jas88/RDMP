@@ -685,12 +685,12 @@ public class CohortIdentificationConfiguration : DatabaseEntity, ICollectSqlPara
     public TableInfo[] GetDistinctTableInfos()
     {
         return
-            RootCohortAggregateContainer.GetAllAggregateConfigurationsRecursively() //get all the aggregate sets
+            RootCohortAggregateContainer?.GetAllAggregateConfigurationsRecursively() //get all the aggregate sets (there are none without a root container)
                 .SelectMany(a => a
                     .AggregateDimensions //get all the Dimensions (should really be 1 per aggregate which is the IsExtractionIdentifier column but who are we to check)
                     .Select(d => d.ColumnInfo.TableInfo)) //get the TableInfo of the underlying Column for the dimension
                 .Distinct() //return distinct array of them
-                .ToArray();
+                .ToArray() ?? [];
     }
 
     /// <summary>

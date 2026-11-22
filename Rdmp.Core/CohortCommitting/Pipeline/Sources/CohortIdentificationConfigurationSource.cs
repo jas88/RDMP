@@ -82,9 +82,11 @@ public class CohortIdentificationConfigurationSource : IPluginDataFlowSource<Dat
         listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Information,
             $"About to lookup which server to interrogate for CohortIdentificationConfiguration {_cohortIdentificationConfiguration}"));
 
+        // there is no query to run without a root container. Notifying the listener of an error is not enough to stop
+        // here, because only some listeners throw
         if (_cohortIdentificationConfiguration.RootCohortAggregateContainer_ID == null)
-            listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Error,
-                $"CohortIdentificationConfiguration '{_cohortIdentificationConfiguration}' has no RootCohortAggregateContainer_ID, is it empty?"));
+            throw new Exception(
+                $"CohortIdentificationConfiguration '{_cohortIdentificationConfiguration}' has no RootCohortAggregateContainer_ID, is it empty?");
 
         var cohortCompiler = new CohortCompiler(_cohortIdentificationConfiguration);
 

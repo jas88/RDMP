@@ -7,6 +7,7 @@
 using System.Linq;
 using NUnit.Framework;
 using Rdmp.Core.Curation.Data;
+using Rdmp.Core.Curation.Data.Aggregation;
 using Rdmp.Core.Curation.Data.Cohort;
 using Rdmp.Core.Curation.Data.Cohort.Joinables;
 using Rdmp.Core.ReusableLibraryCode.Checks;
@@ -15,9 +16,10 @@ using Tests.Common;
 namespace Rdmp.Core.Tests.CohortCreation;
 
 /// <summary>
-/// Tests for cloning, merging and importing a <see cref="CohortIdentificationConfiguration"/> that has no root container.
-/// A configuration has none until <see cref="CohortIdentificationConfiguration.CreateRootContainerIfNotExists"/> is called,
-/// which creating one with the NewObject command or its constructor does not do
+/// Tests for cloning, merging, importing and listing the tables of a <see cref="CohortIdentificationConfiguration"/> that
+/// has no root container. A configuration has none until
+/// <see cref="CohortIdentificationConfiguration.CreateRootContainerIfNotExists"/> is called, which creating one with the
+/// NewObject command or its constructor does not do
 /// </summary>
 internal class CohortIdentificationConfigurationWithNoRootContainerTests : UnitTests
 {
@@ -101,6 +103,24 @@ internal class CohortIdentificationConfigurationWithNoRootContainerTests : UnitT
             Assert.That(Repository.GetAllObjects<CohortIdentificationConfiguration>(),
                 Has.Length.EqualTo(configurationsBefore));
         });
+    }
+
+    [Test]
+    public void GetDistinctTableInfos_FindsNoTables()
+    {
+        Assert.That(WhenIHaveAConfigurationWithNoRootContainer().GetDistinctTableInfos(), Is.Empty);
+    }
+
+    [Test]
+    public void GetDistinctTableInfos_WithARootContainer_FindsTheTablesOfItsCohortSets()
+    {
+        var container = WhenIHaveA<CohortAggregateContainer>();
+        var cohortSet = WhenIHaveA<AggregateConfiguration>();
+        container.AddChild(cohortSet, 0);
+
+        var tables = container.GetCohortIdentificationConfiguration().GetDistinctTableInfos();
+
+        Assert.That(tables, Is.EqualTo(new[] { cohortSet.AggregateDimensions.Single().ColumnInfo.TableInfo }));
     }
 
     /// <summary>

@@ -10,6 +10,7 @@ using Rdmp.Core.CohortCommitting.Pipeline.Sources;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Cohort;
 using Rdmp.Core.Databases;
+using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 using Tests.Common;
 
@@ -34,5 +35,28 @@ internal class CohortIdentificationConfigurationSourceTests : UnitTests
 
         var ex = Assert.Throws<Exception>(() => source.TryGetPreview());
         Assert.That(ex?.Message, Does.Contain("was the execution cancelled"));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void GetChunk_ForAConfigurationWithNoRootContainer_StopsAndSaysSo(bool hasQueryCache)
+    {
+        var cic = WhenIHaveA<CohortIdentificationConfiguration>();
+        Assert.That(cic.RootCohortAggregateContainer_ID, Is.Null);
+
+        if (hasQueryCache)
+        {
+            cic.QueryCachingServer_ID =
+                new ExternalDatabaseServer(Repository.CatalogueRepository, "Cache", new QueryCachingPatcher()).ID;
+            cic.SaveToDatabase();
+        }
+
+        // a listener that records errors and carries on, as the window that runs a pipeline does
+        var listener = new ToMemoryDataLoadEventListener(false);
+        var source = new CohortIdentificationConfigurationSource();
+        source.PreInitialize(cic, listener);
+
+        var ex = Assert.Throws<Exception>(() => source.GetChunk(listener, new GracefulCancellationToken()));
+        Assert.That(ex?.Message, Does.Contain("has no RootCohortAggregateContainer_ID"));
     }
 }
