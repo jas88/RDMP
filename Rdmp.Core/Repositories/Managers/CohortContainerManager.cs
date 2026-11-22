@@ -61,11 +61,10 @@ internal class CohortContainerManager : ICohortContainerManager
 
     public int? GetOrderIfExistsFor(AggregateConfiguration configuration)
     {
-        if (!ReferenceEquals(configuration.Repository, CatalogueRepository))
-            if (((CatalogueRepository)configuration.Repository).ConnectionString !=
-                CatalogueRepository.ConnectionString)
-                throw new NotSupportedException(
-                    "AggregateConfiguration is from a different repository than this with a different connection string");
+        if (!ReferenceEquals(configuration.Repository, CatalogueRepository) &&
+            ((CatalogueRepository)configuration.Repository).ConnectionString != CatalogueRepository.ConnectionString)
+            throw new NotSupportedException(
+                "AggregateConfiguration is from a different repository than this with a different connection string");
 
         using var con = CatalogueRepository.GetConnection();
         using var cmd = DatabaseCommandHelper.GetCommand(

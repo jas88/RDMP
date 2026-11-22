@@ -297,6 +297,42 @@ public class UITests : UnitTests
     }
 
     /// <summary>
+    /// Returns the control of type T called <paramref name="name"/> in the currently shown user interface
+    /// (<see cref="LastUserInterfaceLaunched"/>).  Fails the test unless there is exactly one.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="name">The <see cref="Control.Name"/> to look for</param>
+    /// <returns></returns>
+    protected T GetControl<T>(string name) where T : Control
+    {
+        var matches = GetControl<T>().Where(c => c.Name == name).ToList();
+        Assert.That(matches, Has.Count.EqualTo(1), $"Expected exactly one {typeof(T).Name} called '{name}'");
+
+        return matches[0];
+    }
+
+    /// <summary>
+    /// Clicks <paramref name="control"/> as the user would.  The user interfaces in these tests are never shown, and
+    /// <see cref="Button.PerformClick"/> does nothing unless the button is visible, so this raises the click directly.
+    /// Fails the test if the control is disabled, because the user could not have clicked it.  It cannot tell
+    /// whether the user could see the control: nothing is visible in a user interface that has not been shown.
+    /// </summary>
+    /// <param name="control"></param>
+    protected static void Click(Control control)
+    {
+        // controls created in code often have no Name
+        var described = string.IsNullOrEmpty(control.Name) ? control.Text : control.Name;
+        Assert.That(control.Enabled, $"'{described}' is disabled so the user could not click it");
+
+        var onClick = typeof(Control).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic,
+            new[] { typeof(EventArgs) });
+        Assert.That(onClick, Is.Not.Null, "Control.OnClick(EventArgs) not found");
+
+        // not wrapped, so that what a click handler throws fails the test as itself
+        onClick.Invoke(control, BindingFlags.DoNotWrapExceptions, null, new object[] { EventArgs.Empty }, null);
+    }
+
+    /// <summary>
     /// Triggers a refresh message for the given <paramref name="o"/>.  This will update any user interfaces displaying it.
     /// </summary>
     /// <param name="o"></param>
