@@ -5,10 +5,13 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System.Linq;
+using System.Windows.Forms;
+using FAnsi.Discovery.QuerySyntax.Aggregation;
 using NUnit.Framework;
 using Rdmp.Core.CommandExecution.AtomicCommands;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Aggregation;
+using Rdmp.Core.MapsDirectlyToDatabaseTable.Revertable;
 using Rdmp.UI.AggregationUIs.Advanced;
 
 namespace Rdmp.UI.Tests;
@@ -126,6 +129,94 @@ internal class AggregateEditorUITests : UITests
         });
     }
 
+    /// <summary>
+    /// The Clear button of the pivot saves the aggregate without its pivot and publishes the change
+    /// </summary>
+    [Test]
+    [UITimeout(50000)]
+    public void Test_AggregateEditorUI_ClearPivot_SavesAndPublishes()
+    {
+        var config = GetAggregateConfigurationWithAPivot(false, out var pivot);
+
+        var ui = AndLaunch<AggregateEditorUI>(config);
+        Assert.That(ui.ddPivotDimension.SelectedItem, Is.EqualTo(pivot));
+
+        var publishes = 0;
+        ItemActivator.RefreshBus.BeforePublish += (_, _) => publishes++;
+
+        Click(GetControl<Button>("btnClearPivotDimension"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ui.ddPivotDimension.SelectedItem, Is.Null);
+            Assert.That(config.PivotOnDimensionID, Is.Null);
+            Assert.That(config.HasLocalChanges().Evaluation, Is.EqualTo(ChangeDescription.NoChanges),
+                "The aggregate should have been saved without its pivot");
+            Assert.That(publishes, Is.EqualTo(1), "The change should have been published");
+        });
+    }
+
+    /// <summary>
+    /// The Clear button of the axis deletes the axis and clears the pivot too.  It clears the pivot through the click
+    /// handler of the pivot's own Clear button, which then leaves the refreshing to its caller: only this user
+    /// interface is refreshed.
+    /// </summary>
+    [Test]
+    [UITimeout(50000)]
+    public void Test_AggregateEditorUI_ClearAxis_DeletesTheAxisAndClearsThePivot()
+    {
+        var config = GetAggregateConfigurationWithAPivot(true, out var pivot);
+        var axis = config.GetAxisIfAny();
+
+        var ui = AndLaunch<AggregateEditorUI>(config);
+        Assert.Multiple(() =>
+        {
+            Assert.That(ui.ddPivotDimension.SelectedItem, Is.EqualTo(pivot));
+            Assert.That(ui.ddAxisDimension.SelectedItem, Is.EqualTo(axis.AggregateDimension));
+        });
+
+        var publishes = 0;
+        ItemActivator.RefreshBus.BeforePublish += (_, _) => publishes++;
+
+        Click(GetControl<Button>("btnClearAxis"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(axis.Exists(), Is.False, "The axis should have been deleted");
+            Assert.That(ui.ddAxisDimension.SelectedItem, Is.Null);
+            Assert.That(ui.ddPivotDimension.SelectedItem, Is.Null);
+            Assert.That(config.PivotOnDimensionID, Is.Null);
+            Assert.That(publishes, Is.Zero, "Only this user interface should have been refreshed");
+        });
+    }
+
+    /// <summary>
+    /// Returns an aggregate with a date dimension and one other dimension, which is its pivot
+    /// </summary>
+    /// <param name="withAxis">True to make the date dimension the aggregate's axis</param>
+    /// <param name="pivot">The dimension the aggregate pivots on</param>
+    private AggregateConfiguration GetAggregateConfigurationWithAPivot(bool withAxis, out AggregateDimension pivot)
+    {
+        var config = GetAggregateConfigurationWithNoDimensions(out var dateEi, out var otherEi);
+
+        var dimDate = new AggregateDimension(Repository, dateEi, config);
+        pivot = new AggregateDimension(Repository, otherEi, config);
+
+        if (withAxis)
+        {
+            var axis = new AggregateContinuousDateAxis(Repository, dimDate)
+            {
+                AxisIncrement = AxisIncrement.Month
+            };
+            axis.SaveToDatabase();
+        }
+
+        config.PivotOnDimensionID = pivot.ID;
+        config.SaveToDatabase();
+        config.ClearAllInjections();
+
+        return config;
+    }
 
     private AggregateConfiguration GetAggregateConfigurationWithNoDimensions() =>
         GetAggregateConfigurationWithNoDimensions(out _, out _);
