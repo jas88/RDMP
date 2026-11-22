@@ -52,4 +52,26 @@ internal class ExecuteCommandMakePatientIndexTableIntoRegularCohortIdentificatio
 
         Assert.That(cmd.ReasonCommandImpossible, Does.Contain("different CohortIdentificationConfiguration"));
     }
+
+    [Test]
+    public void Execute_ForAPatientIndexTable_MakesItACohortSetOfTheContainer()
+    {
+        var joinable = WhenIHaveA<JoinableCohortAggregateConfiguration>();
+        var aggregate = joinable.AggregateConfiguration;
+        var cic = joinable.CohortIdentificationConfiguration;
+        cic.CreateRootContainerIfNotExists();
+        var container = cic.RootCohortAggregateContainer;
+
+        var cmd = new ExecuteCommandMakePatientIndexTableIntoRegularCohortIdentificationSetAgain(GetMockActivator(),
+            aggregate, container);
+        Assert.That(cmd.IsImpossible, Is.False, cmd.ReasonCommandImpossible);
+
+        cmd.Execute();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(container.GetAggregateConfigurations(), Does.Contain(aggregate));
+            Assert.That(cic.GetAllJoinables(), Is.Empty, "the aggregate should no longer be a patient index table");
+        });
+    }
 }

@@ -27,4 +27,20 @@ internal class JoinHelperTests : UnitTests
 
         Assert.That(sql, Does.Contain("AS lookup_1"));
     }
+
+    [Test]
+    public void GetJoinSQLPrimaryKeySideOnly_WithAlias_JoinsOnThePrimaryKeyOfTheAliasedTable()
+    {
+        var lookupTable = new TableInfo(Repository, "[MyDb]..[MyLookup]");
+        lookupTable.SaveToDatabase();
+
+        var join = Substitute.For<IJoin>();
+        join.ForeignKey.Returns(WhenIHaveA<ColumnInfo>());
+        join.PrimaryKey.Returns(new ColumnInfo(Repository, "[MyDb]..[MyLookup].[Code]", "varchar(10)", lookupTable));
+        join.GetSupplementalJoins().Returns([]);
+
+        var sql = JoinHelper.GetJoinSQLPrimaryKeySideOnly(join, 1);
+
+        Assert.That(sql, Does.EndWith(" JOIN [MyDb]..[MyLookup] AS lookup_1 ON My_Col = lookup_1.[Code]"));
+    }
 }

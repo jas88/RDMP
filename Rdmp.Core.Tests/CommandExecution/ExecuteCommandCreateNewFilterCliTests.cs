@@ -11,6 +11,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Rdmp.Core.CommandExecution;
 using Rdmp.Core.CommandExecution.AtomicCommands;
+using Rdmp.Core.Curation;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Aggregation;
 using Rdmp.Core.Curation.Data.Cohort;
@@ -37,6 +38,15 @@ internal class ExecuteCommandCreateNewFilterCliTests : CommandCliTests
 
         Assert.DoesNotThrow(cmd.Execute);
         Assert.That(cmd.ReasonCommandImpossible, Does.Contain("There are no Filters declared"));
+    }
+
+    [Test]
+    public void OfferCatalogueFilters_ForAggregate_OffersCatalogueFilters()
+    {
+        var aggregate = WhenIHaveA<AggregateConfiguration>();
+        var catalogueFilter = AddCatalogueFilter(aggregate);
+
+        Assert.That(GetFiltersOffered(aggregate), Is.EquivalentTo(new[] { catalogueFilter }));
     }
 
     [Test]
@@ -90,9 +100,9 @@ internal class ExecuteCommandCreateNewFilterCliTests : CommandCliTests
         Assert.That(GetFiltersOffered(sds), Is.EquivalentTo(new IFilter[] { catalogueFilter, cohortSetFilter }));
     }
 
-    private ExtractionFilter AddCatalogueFilter(SelectedDataSets sds) =>
+    private ExtractionFilter AddCatalogueFilter(IRootFilterContainerHost host) =>
         new(Repository, "Catalogue filter",
-            sds.GetCatalogue().GetAllExtractionInformation(ExtractionCategory.Any).First());
+            host.GetCatalogue().GetAllExtractionInformation(ExtractionCategory.Any).First());
 
     /// <summary>
     /// Gives the extraction configuration of <paramref name="sds"/> a cohort which <see cref="ExecuteCommandCreateNewFilter"/>
@@ -115,9 +125,9 @@ internal class ExecuteCommandCreateNewFilterCliTests : CommandCliTests
 
     /// <summary>
     /// Runs <see cref="ExecuteCommandCreateNewFilter"/> with <see cref="ExecuteCommandCreateNewFilter.OfferCatalogueFilters"/>
-    /// for <paramref name="sds"/>, and returns the filters it offers to import. None of them is chosen.
+    /// for <paramref name="host"/>, and returns the filters it offers to import. None of them is chosen.
     /// </summary>
-    private IMapsDirectlyToDatabaseTable[] GetFiltersOffered(SelectedDataSets sds)
+    private IMapsDirectlyToDatabaseTable[] GetFiltersOffered(IRootFilterContainerHost host)
     {
         IMapsDirectlyToDatabaseTable[] offered = null;
 
@@ -130,7 +140,7 @@ internal class ExecuteCommandCreateNewFilterCliTests : CommandCliTests
                 return null;
             });
 
-        new ExecuteCommandCreateNewFilter(activator, sds) { OfferCatalogueFilters = true }.Execute();
+        new ExecuteCommandCreateNewFilter(activator, host) { OfferCatalogueFilters = true }.Execute();
 
         return offered ?? throw new AssertionException("No filters were offered for import");
     }
