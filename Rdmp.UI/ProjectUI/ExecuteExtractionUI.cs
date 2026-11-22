@@ -160,13 +160,13 @@ public partial class ExecuteExtractionUI : ExecuteExtractionUI_Design
 
     private IEnumerable ChildrenGetter(object model)
     {
-        if (model == _globalsFolder)
+        if (ReferenceEquals(model, _globalsFolder))
             return _globals;
 
-        if (model == _coreDatasetsFolder)
+        if (ReferenceEquals(model, _coreDatasetsFolder))
             return _datasets.Where(sds => !sds.ExtractableDataSet.Projects.Any());
 
-        if (model == _projectSpecificDatasetsFolder)
+        if (ReferenceEquals(model, _projectSpecificDatasetsFolder))
             return _datasets.Where(sds => sds.ExtractableDataSet.Projects.Any());
 
         return _bundledStuff != null && model is ISelectedDataSets sds2
@@ -190,7 +190,7 @@ public partial class ExecuteExtractionUI : ExecuteExtractionUI_Design
     {
         var extractionRunner = checkAndExecuteUI1.CurrentRunner as ExtractionRunner;
 
-        if (rowObject == _globalsFolder && extractionRunner != null)
+        if (ReferenceEquals(rowObject, _globalsFolder) && extractionRunner != null)
             return extractionRunner.GetGlobalsState();
 
         return extractionRunner != null && rowObject is SelectedDataSets sds
@@ -202,7 +202,7 @@ public partial class ExecuteExtractionUI : ExecuteExtractionUI_Design
     {
         var extractionRunner = checkAndExecuteUI1.CurrentRunner as ExtractionRunner;
 
-        if (rowObject == _globalsFolder && extractionRunner != null)
+        if (ReferenceEquals(rowObject, _globalsFolder) && extractionRunner != null)
             return extractionRunner.GetGlobalCheckNotifier();
 
         return extractionRunner != null && rowObject is SelectedDataSets sds

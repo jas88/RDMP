@@ -152,7 +152,7 @@ internal class LoadProgressAnnotation
 
     public void OnAnnotationPositionChanged(object sender, EventArgs eventArgs)
     {
-        if (sender == LineAnnotationOrigin)
+        if (ReferenceEquals(sender, LineAnnotationOrigin))
         {
             var newDate = GetDateFromX((int)LineAnnotationOrigin.X);
 
@@ -164,7 +164,7 @@ internal class LoadProgressAnnotation
             }
         }
 
-        if (sender == LineAnnotationFillProgress)
+        if (ReferenceEquals(sender, LineAnnotationFillProgress))
         {
             var newDate = GetDateFromX((int)LineAnnotationFillProgress.X);
 
@@ -176,7 +176,7 @@ internal class LoadProgressAnnotation
             }
         }
 
-        if (sender == LineAnnotationCacheProgress)
+        if (ReferenceEquals(sender, LineAnnotationCacheProgress))
         {
             var cp = _lp.CacheProgress;
 

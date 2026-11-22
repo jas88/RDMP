@@ -130,7 +130,7 @@ public partial class FindAndReplaceUI : RDMPUserControl
             olvAllObjects.ClearObjects();
             olvAllObjects.SuspendLayout();
 
-            olvAllObjects.AddObjects(sender == rbLocationsAttribute ? _locationNodes : _sqlNodes);
+            olvAllObjects.AddObjects(ReferenceEquals(sender, rbLocationsAttribute) ? _locationNodes : _sqlNodes);
 
             olvAllObjects.ResumeLayout();
         }

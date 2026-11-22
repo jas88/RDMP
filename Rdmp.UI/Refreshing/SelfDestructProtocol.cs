@@ -39,7 +39,7 @@ internal class SelfDestructProtocol<T> : IRefreshBusSubscriber where T : Databas
             o = (T)descendancy.Parents.LastOrDefault(p => p is T);
 
         //don't respond to events raised by the user themself!
-        if (sender == User)
+        if (ReferenceEquals(sender, User))
             return;
 
         //if the original object does not exist anymore (could be a CASCADE event so we do have to check it every time regardless of what object type is refreshing)

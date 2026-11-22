@@ -114,7 +114,7 @@ public partial class AggregateContinuousDateAxisUI : UserControl
             _errorProvider.SetError(s, "Field cannot be blank");
             _errorProvider.Tag = s;
         }
-        else if (_errorProvider.Tag == s)
+        else if (ReferenceEquals(_errorProvider.Tag, s))
         {
             _errorProvider.Clear();
         }
