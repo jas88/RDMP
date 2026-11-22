@@ -62,6 +62,18 @@ internal class ExecuteCommandCreateNewFilterCliTests : CommandCliTests
     }
 
     [Test]
+    public void OfferCatalogueFilters_WhenNoConfigurationIsFoundForTheCohort_OffersCatalogueFilters()
+    {
+        var sds = WhenIHaveA<SelectedDataSets>();
+        var catalogueFilter = AddCatalogueFilter(sds);
+
+        // looking up a configuration by an ID of 0 finds none, instead of failing as it does for any other missing ID
+        SetCohortWithOriginID(sds, 0);
+
+        Assert.That(GetFiltersOffered(sds), Is.EquivalentTo(new[] { catalogueFilter }));
+    }
+
+    [Test]
     public void OfferCatalogueFilters_ForCohortIdentificationConfigurationWithNoRootContainer_OffersCatalogueFilters()
     {
         var sds = WhenIHaveA<SelectedDataSets>();
@@ -109,12 +121,19 @@ internal class ExecuteCommandCreateNewFilterCliTests : CommandCliTests
     /// takes to come from <paramref name="cic"/>, because it looks the configuration up by the cohort's
     /// <see cref="ExtractableCohort.OriginID"/>
     /// </summary>
-    private void SetCohortFrom(SelectedDataSets sds, CohortIdentificationConfiguration cic)
+    private void SetCohortFrom(SelectedDataSets sds, CohortIdentificationConfiguration cic) =>
+        SetCohortWithOriginID(sds, cic.ID);
+
+    /// <summary>
+    /// Gives the extraction configuration of <paramref name="sds"/> a cohort with the given
+    /// <see cref="ExtractableCohort.OriginID"/>
+    /// </summary>
+    private void SetCohortWithOriginID(SelectedDataSets sds, int originId)
     {
         var cohort = new ExtractableCohort();
         Repository.InsertAndHydrate(cohort, new Dictionary<string, object>
         {
-            { nameof(ExtractableCohort.OriginID), cic.ID },
+            { nameof(ExtractableCohort.OriginID), originId },
             { nameof(ExtractableCohort.ExternalCohortTable_ID), WhenIHaveA<ExternalCohortTable>().ID }
         });
 
