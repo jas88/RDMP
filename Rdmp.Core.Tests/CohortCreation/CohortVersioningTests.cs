@@ -121,6 +121,49 @@ public class CohortVersioningTests : CohortQueryBuilderWithCacheTests
 
     }
     [Test]
+    public void TestRestoreACohortVersion_DeletesTheContainersTheConfigurationHad()
+    {
+        var activator = new ConsoleInputManager(RepositoryLocator, ThrowImmediatelyCheckNotifier.Quiet)
+        { DisallowInput = true };
+
+        // a cohort set in the root container, and another in a subcontainer
+        var cic = cohortIdentificationConfiguration;
+        rootcontainer.AddChild(aggregate1, 1);
+        rootcontainer.AddChild(container1);
+        container1.AddChild(aggregate2, 1);
+
+        new ExecuteCommandCreateVersionOfCohortConfiguration(activator, cic, "MyName!").Execute();
+        var version = cic.GetVersions().Single();
+
+        new ExecuteCommandRevertToHistoricalCohortVersion(activator, cic, version).Execute();
+
+        // in the database, deleting a root container deletes the configuration that uses it
+        var reverted = CatalogueRepository.GetAllObjectsWhere<CohortIdentificationConfiguration>("ID", cic.ID);
+        Assert.That(reverted, Has.Length.EqualTo(1));
+        var newRoot = reverted.Single().RootCohortAggregateContainer;
+        Assert.Multiple(() =>
+        {
+            // the configuration has a copy of what the version has, in containers of its own
+            Assert.That(newRoot.ID, Is.Not.EqualTo(rootcontainer.ID).And.Not.EqualTo(version.RootCohortAggregateContainer_ID));
+            Assert.That(newRoot.GetAggregateConfigurations(), Has.Length.EqualTo(1));
+            Assert.That(newRoot.GetSubContainers().Single().GetAggregateConfigurations(), Has.Length.EqualTo(1));
+
+            // the containers it had are deleted
+            Assert.That(rootcontainer.Exists(), Is.False);
+            Assert.That(container1.Exists(), Is.False);
+
+            // their cohort sets are left as orphans, like those of any container that is deleted
+            Assert.That(aggregate1.Exists());
+            Assert.That(aggregate2.Exists());
+            Assert.That(aggregate1.GetCohortAggregateContainerIfAny(), Is.Null);
+            Assert.That(aggregate2.GetCohortAggregateContainerIfAny(), Is.Null);
+
+            // the version is as it was
+            Assert.That(version.RootCohortAggregateContainer.GetAllAggregateConfigurationsRecursively(), Has.Count.EqualTo(2));
+        });
+    }
+
+    [Test]
     public void TestRestoreACohortVersion_Bad()
     {
         var activator = new ConsoleInputManager(RepositoryLocator, ThrowImmediatelyCheckNotifier.Quiet)
