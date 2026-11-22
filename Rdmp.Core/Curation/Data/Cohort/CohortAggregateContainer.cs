@@ -200,6 +200,30 @@ public class CohortAggregateContainer : DatabaseEntity, IOrderable, INamed, IDis
         base.DeleteInDatabase();
     }
 
+    /// <summary>
+    /// Deletes this container and its subcontainers, once the <see cref="CohortIdentificationConfiguration"/> that had this as its root
+    /// container uses another, or none.  The cohort sets in them are taken out first and are not deleted: they are left as orphans,
+    /// as when a container is deleted.  (The database takes the contents out of a container that is deleted; the other repositories
+    /// do not.)
+    /// <para>Does nothing if a configuration uses one of the containers as its root container: in the database, deleting a root container
+    /// deletes its configuration too.</para>
+    /// </summary>
+    internal void DeleteTreeUnlessInUse()
+    {
+        var tree = GetAllSubContainersRecursively().Prepend(this).ToArray();
+        var rootContainers = Repository.GetAllObjects<CohortIdentificationConfiguration>()
+            .Select(static c => c.RootCohortAggregateContainer_ID).ToHashSet();
+
+        if (tree.Any(c => rootContainers.Contains(c.ID)))
+            return;
+
+        foreach (var container in tree)
+            foreach (var cohortSet in container.GetAggregateConfigurations())
+                container.RemoveChild(cohortSet);
+
+        DeleteInDatabase();
+    }
+
     /// <inheritdoc/>
     public override string ToString() => Name;
 

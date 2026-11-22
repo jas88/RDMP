@@ -395,10 +395,16 @@ public class CohortIdentificationConfiguration : DatabaseEntity, ICollectSqlPara
 
                 if (IncludeClonedFrom)
                     cloneTarget.ClonedFrom_ID = ID;
-                //the clone of a configuration that has no root container yet (see CreateRootContainerIfNotExists) has none either
-                cloneTarget.RootCohortAggregateContainer_ID = RootCohortAggregateContainer?
-                    .CloneEntireTreeRecursively(notifier, this, cloneTarget, parentToCloneJoinablesDictionary).ID;
+                //the clone of a configuration that has no root container yet (see CreateRootContainerIfNotExists) has none either,
+                //so a target that has one (a configuration that is reverted to a version of it) stops using it
+                var root = RootCohortAggregateContainer;
+                var abandoned = root == null ? cloneTarget.RootCohortAggregateContainer : null;
+                cloneTarget.RootCohortAggregateContainer_ID =
+                    root?.CloneEntireTreeRecursively(notifier, this, cloneTarget, parentToCloneJoinablesDictionary).ID;
                 cloneTarget.SaveToDatabase();
+
+                //only now that the target is saved without it: in the database, deleting a root container deletes its configuration
+                abandoned?.DeleteTreeUnlessInUse();
 
                 notifier.OnCheckPerformed(
                     new CheckEventArgs("Clone creation successful, about to commit Super Transaction",

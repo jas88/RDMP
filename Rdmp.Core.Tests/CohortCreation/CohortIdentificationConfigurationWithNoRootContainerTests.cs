@@ -65,6 +65,31 @@ internal class CohortIdentificationConfigurationWithNoRootContainerTests : UnitT
     }
 
     [Test]
+    public void CloneIntoExistingConfiguration_DeletesTheContainersTheTargetHad_ButNotTheirCohortSets()
+    {
+        var source = WhenIHaveAConfigurationWithNoRootContainer();
+        var root = WhenIHaveA<CohortAggregateContainer>();
+        var target = root.GetCohortIdentificationConfiguration();
+        var subContainer = new CohortAggregateContainer(Repository, SetOperation.INTERSECT);
+        root.AddChild(subContainer);
+        var cohortSet = WhenIHaveA<AggregateConfiguration>();
+        subContainer.AddChild(cohortSet, 1);
+
+        source.CloneIntoExistingConfiguration(ThrowImmediatelyCheckNotifier.Quiet, target, false);
+
+        Assert.Multiple(() =>
+        {
+            // nothing uses the containers any more, and there is nowhere they could be seen or deleted
+            Assert.That(root.Exists(), Is.False);
+            Assert.That(subContainer.Exists(), Is.False);
+
+            // the cohort set is left as an orphan, like that of any container that is deleted
+            Assert.That(cohortSet.Exists());
+            Assert.That(cohortSet.GetCohortAggregateContainerIfAny(), Is.Null);
+        });
+    }
+
+    [Test]
     public void Merge_LeavesItOut()
     {
         var withRoot = WhenIHaveAConfigurationWithTwoCohortSets();
