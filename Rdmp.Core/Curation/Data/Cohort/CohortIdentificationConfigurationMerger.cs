@@ -64,6 +64,8 @@ public class CohortIdentificationConfigurationMerger
             //Grab the root container of each of the input cics
             foreach (var cic in cicClones)
             {
+                //the clone of a configuration that has no root container yet has none either, so it gets an empty one
+                cic.CreateRootContainerIfNotExists();
                 var container = cic.RootCohortAggregateContainer;
 
                 //clear them to avoid dual parentage
@@ -116,6 +118,8 @@ public class CohortIdentificationConfigurationMerger
             //Grab the root container of each of the input cics
             foreach (var cic in cicClones)
             {
+                //the clone of a configuration that has no root container yet has none either, so it gets an empty one
+                cic.CreateRootContainerIfNotExists();
                 var container = cic.RootCohortAggregateContainer;
 
                 //clear them to avoid dual parentage

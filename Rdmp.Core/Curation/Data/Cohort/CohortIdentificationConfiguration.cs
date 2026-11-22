@@ -395,7 +395,8 @@ public class CohortIdentificationConfiguration : DatabaseEntity, ICollectSqlPara
 
                 if (IncludeClonedFrom)
                     cloneTarget.ClonedFrom_ID = ID;
-                cloneTarget.RootCohortAggregateContainer_ID = RootCohortAggregateContainer
+                //the clone of a configuration that has no root container yet (see CreateRootContainerIfNotExists) has none either
+                cloneTarget.RootCohortAggregateContainer_ID = RootCohortAggregateContainer?
                     .CloneEntireTreeRecursively(notifier, this, cloneTarget, parentToCloneJoinablesDictionary).ID;
                 cloneTarget.SaveToDatabase();
 
