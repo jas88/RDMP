@@ -5,11 +5,13 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System;
+using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using CsvHelper;
+using System.Text;
 using NUnit.Framework;
+using Rdmp.Core.DataFlowPipeline.Requirements;
 using Rdmp.Core.DataLoad.Modules.DataFlowSources;
 using Rdmp.Core.DataLoad.Modules.DataFlowSources.SubComponents;
 using Rdmp.Core.DataLoad.Modules.Exceptions;
@@ -435,21 +437,99 @@ to be honest",
     }
 
     /// <summary>
-    /// CsvHelper does not raise ReadingExceptionOccurred with the settings the source uses, so the handler is called directly
+    /// CsvHelper recovers from bad quoting by itself, so the only reading failures are ones it cannot carry on from.  The stand in
+    /// character of a multi character separator appearing in the file is one of those
     /// </summary>
-    [Test]
-    public void ReadingException_ThrowException_ReportsLineNumber()
+    [TestCase(BadDataHandlingStrategy.ThrowException)]
+    [TestCase(BadDataHandlingStrategy.IgnoreRows)]
+    [TestCase(BadDataHandlingStrategy.DivertRows)]
+    public void ReadingException_IsFatalWhateverTheStrategy(BadDataHandlingStrategy strategy)
     {
-        using var reader = new CsvReader(new StringReader($"Name,Age{Environment.NewLine}Frank,100"),
-            CultureInfo.InvariantCulture);
-        reader.Read();
-        reader.Read();
+        var file = CreateTestFile(
+            "Name||Age",
+            "Frank||100",
+            "Bo\u001fb||30");
 
-        var handlers = new FlatFileEventHandlers(null, null, true, BadDataHandlingStrategy.ThrowException,
-            ThrowImmediatelyDataLoadEventListener.Quiet, 100, false);
-        var args = new ReadingExceptionOccurredArgs(new CsvHelperException(reader.Context, "Test exception"));
+        var ex = Assert.Throws<FlatFileLoadException>(() => RunGetChunk(file, s =>
+        {
+            s.Separator = "||";
+            s.BadDataHandlingStrategy = strategy;
+        }));
 
-        var ex = Assert.Throws<FlatFileLoadException>(() => handlers.ReadingExceptionOccurred(args));
-        Assert.That(ex?.Message, Is.EqualTo("Bad data found on line 2"));
+        Assert.That(ex?.Message, Does.StartWith($"Could not read file '{file.File.FullName}'"));
+    }
+
+    [TestCase("||")]
+    [TestCase("¬")]
+    [TestCase("\u00a7\u00a7")]
+    public void SeparatorThatIsNotASingleAsciiCharacter(string separator)
+    {
+        var file = CreateTestFile(
+            $"Name{separator}Description{separator}Age",
+            $"Frank{separator}\"Likes {separator} a lot\"{separator}100",
+            $"Bob{separator}Short{separator}30");
+
+        var dt = RunGetChunk(file, s => s.Separator = separator);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(dt.Columns.Cast<DataColumn>().Select(c => c.ColumnName),
+                Is.EqualTo(new[] { "Name", "Description", "Age" }));
+            Assert.That(dt.Rows, Has.Count.EqualTo(2));
+            Assert.That(dt.Rows[0]["Description"], Is.EqualTo($"Likes {separator} a lot"));
+            Assert.That(dt.Rows[1]["Age"], Is.EqualTo(30));
+        });
+    }
+
+    [Test]
+    public void MultiCharacterSeparator_DivertedRowsKeepTheirSeparator()
+    {
+        var file = CreateTestFile(
+            "Name||Description||Age",
+            "Frank||Is the greatest||100",
+            "Bob||He's also dynamite||seen him do a lot of good work||30",
+            "Dennis||Hes ok||35");
+
+        var dt = RunGetChunk(file, s =>
+        {
+            s.Separator = "||";
+            s.BadDataHandlingStrategy = BadDataHandlingStrategy.DivertRows;
+        });
+
+        Assert.That(dt.Rows, Has.Count.EqualTo(2));
+        AssertDivertFileIsExactly($"Bob||He's also dynamite||seen him do a lot of good work||30{Environment.NewLine}");
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public void MultiCharacterSeparator_Utf16File(bool bigEndian)
+    {
+        var filename = Path.Join(TestContext.CurrentContext.TestDirectory, "DelimitedFileSourceTests.txt");
+        File.WriteAllText(filename, $"Name||Age{Environment.NewLine}Zo\u00eb||30{Environment.NewLine}",
+            new UnicodeEncoding(bigEndian, true));
+
+        var dt = RunGetChunk(new FlatFileToLoad(new FileInfo(filename)), s => s.Separator = "||");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(dt.Columns[0].ColumnName, Is.EqualTo("Name"));
+            Assert.That(dt.Rows, Has.Count.EqualTo(1));
+            Assert.That(dt.Rows[0]["Name"], Is.EqualTo("Zo\u00eb"));
+        });
+    }
+
+    [Test]
+    public void HeaderOnlyFile_IsEmpty()
+    {
+        var file = CreateTestFile("Name,Age");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                Assert.Throws<FlatFileLoadException>(() =>
+                    RunGetChunk(file, BadDataHandlingStrategy.ThrowException, true))?.Message,
+                Does.EndWith("is empty"));
+            Assert.That(RunGetChunk(file, BadDataHandlingStrategy.ThrowException, false), Is.Null);
+        });
     }
 }

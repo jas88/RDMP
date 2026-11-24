@@ -103,7 +103,13 @@ public class FlatFileColumnCollection
     public int Length => _headers.Length;
 
 
-    public void GetHeadersFromFile(CsvReader r)
+    /// <summary>
+    /// Reads the headers from <paramref name="r"/> (or from the forced headers).  <paramref name="separator"/> is the separator of the
+    /// file, it is used to split the forced headers and the list of columns to ignore
+    /// </summary>
+    /// <param name="r"></param>
+    /// <param name="separator"></param>
+    public void GetHeadersFromFile(CsvReader r, string separator)
     {
         //check state
         if (_state != State.Start)
@@ -115,29 +121,27 @@ public class FlatFileColumnCollection
         //if we are not forcing headers we must get them from the file
         if (string.IsNullOrWhiteSpace(_forceHeaders))
         {
-            //read the first record from the file (this will read the header and first row
-            var empty = !r.Read();
+            //get headers from first line of the file (CsvHelper reads it when the headers are first asked for)
+            var headers = r.Headers;
 
-            if (empty)
+            if (headers.Count == 0)
             {
                 FileIsEmpty = true;
                 return;
             }
 
-            //get headers from first line of the file
-            r.ReadHeader();
-            _headers = r.HeaderRecord;
+            _headers = headers.ToArray();
         }
         else
         {
             //user has some specific headers he wants to override with
-            _headers = _forceHeaders.Split(new[] { r.Configuration.Delimiter }, StringSplitOptions.None);
+            _headers = _forceHeaders.Split(new[] { separator }, StringSplitOptions.None);
         }
 
         //ignore these columns (trimmed and ignoring case)
         if (!string.IsNullOrWhiteSpace(_ignoreColumns))
             IgnoreColumnsList = new HashSet<string>(
-                _ignoreColumns.Split(new[] { r.Configuration.Delimiter }, StringSplitOptions.None)
+                _ignoreColumns.Split(new[] { separator }, StringSplitOptions.None)
                     .Select(h => h.Trim())
                 , StringComparer.CurrentCultureIgnoreCase);
         else
@@ -353,7 +357,7 @@ public class FlatFileColumnCollection
     /// </summary>
     /// <param name="row"></param>
     /// <param name="listener"></param>
-    public void ShowForceHeadersAsciiArt(IReaderRow row, IDataLoadEventListener listener)
+    public void ShowForceHeadersAsciiArt(string[] row, IDataLoadEventListener listener)
     {
         if (_state < State.AfterHeadersRead)
             throw new Exception($"Illegal state:{_state}");
@@ -370,22 +374,22 @@ public class FlatFileColumnCollection
         for (var i = 0; i < _headers.Length; i++)
         {
             asciiArt.Append($"[{i}]{_headers[i]}>>>");
-            asciiArt.AppendLine(i < row.ColumnCount ? row[i] : "???");
+            asciiArt.AppendLine(i < row.Length ? row[i] : "???");
         }
 
-        for (var i = _headers.Length; i < row.ColumnCount; i++)
+        for (var i = _headers.Length; i < row.Length; i++)
             asciiArt.AppendLine($"[{i}]???>>>{row[i]}");
 
         listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Information,
             $"Your attacher has ForceHeaders and ForceHeadersReplacesFirstLineInFile=true, I will now tell you about the first line of data in the file that you skipped (and how it related to your forced headers).  Replacement headers are {Environment.NewLine}{Environment.NewLine}{asciiArt}"));
 
-        if (row.ColumnCount != _headers.Length)
+        if (row.Length != _headers.Length)
             listener.OnNotify(this,
                 new NotifyEventArgs(ProgressEventType.Warning,
                     "The number of ForceHeader replacement headers specified does not match the number of headers in the file (being replaced)"));
 
         var discarded = new StringBuilder();
-        for (var i = 0; i < row.ColumnCount; i++)
+        for (var i = 0; i < row.Length; i++)
         {
             if (i > 0)
                 discarded.Append(',');

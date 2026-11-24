@@ -13,7 +13,6 @@ using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.Curation;
 using CsvHelper;
 using System.IO;
-using System.Globalization;
 using System.Threading;
 using DicomTypeTranslation;
 using FellowOakDicom.Network.Client;
@@ -68,7 +67,7 @@ public class CFindSource : SMICacheSource
         var filepath = Path.Combine(workingDirectory.FullName, filename);
 
         var sw = new StreamWriter(filepath);
-        using var writer = new CsvWriter(sw, CultureInfo.CurrentCulture);
+        using var writer = CsvWriter.Create(sw);
 
         WriteHeaders(writer);
 
@@ -109,7 +108,7 @@ public class CFindSource : SMICacheSource
             writer.WriteField(colName);
         }
 
-        writer.NextRecord();
+        writer.EndRecord();
     }
 
     private void WriteResult(CsvWriter writer, DicomCFindResponse response)
@@ -122,7 +121,7 @@ public class CFindSource : SMICacheSource
             WriteValue(writer, response, t);
         }
 
-        writer.NextRecord();
+        writer.EndRecord();
     }
 
     private void WriteValue(CsvWriter writer, DicomCFindResponse response, DicomTag tag)

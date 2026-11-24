@@ -32,7 +32,8 @@ internal class DelimitedFileSourceTests_Unresolveable : DelimitedFileSourceTests
         {
             case BadDataHandlingStrategy.ThrowException:
                 var ex = Assert.Throws<FlatFileLoadException>(() => RunGetChunk(file, Adjust));
-                Assert.That(ex?.Message, Is.EqualTo("Bad data found on line 9"));
+                //the record is reported by the line it starts on (the one with the unclosed quote)
+                Assert.That(ex?.Message, Is.EqualTo("Bad data found on line 4"));
                 break;
             case BadDataHandlingStrategy.IgnoreRows:
                 var dt = RunGetChunk(file, Adjust);
