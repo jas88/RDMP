@@ -6,7 +6,6 @@
 
 using System;
 using System.IO;
-using CsvHelper;
 using Rdmp.Core.DataFlowPipeline.Requirements;
 using Rdmp.Core.DataLoad.Modules.Exceptions;
 using Rdmp.Core.ReusableLibraryCode.Progress;
@@ -51,37 +50,6 @@ public class FlatFileEventHandlers
             throw new FlatFileLoadException($"File {_fileToLoad} is empty");
 
         _listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning, $"File {_fileToLoad} is empty"));
-    }
-
-    public bool ReadingExceptionOccurred(ReadingExceptionOccurredArgs args)
-    {
-        var line = new FlatFileLine(args.Exception.Context);
-
-        switch (_strategy)
-        {
-            case BadDataHandlingStrategy.IgnoreRows:
-                if (_maximumErrorsToReport-- > 0)
-                    _listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
-                        $"Ignored ReadingException on {line.GetLineDescription()}", args.Exception));
-
-                //move to next line
-                _dataPusher.BadLines.Add(args.Exception.Context.Parser.RawRow);
-
-                break;
-            case BadDataHandlingStrategy.DivertRows:
-
-                DivertErrorRow(new FlatFileLine(args.Exception.Context), args.Exception);
-                break;
-
-            case BadDataHandlingStrategy.ThrowException:
-                throw new FlatFileLoadException($"Bad data found on {line.GetLineDescription()}", args.Exception);
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        //todo should this return true or false? not clear, this was an API change in CSV.
-        return true;
     }
 
     public void BadDataFound(FlatFileLine line, bool isFromCsvHelper = false)
@@ -141,7 +109,11 @@ public class FlatFileEventHandlers
             _listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
                 $"Diverting Error on {line.GetLineDescription()} to '{DivertErrorsFile.FullName}'", ex));
 
-        File.AppendAllText(DivertErrorsFile.FullName, line.RawRecord);
+        //the raw record does not include the line break that ended it (a record with an unclosed quote runs to the end of the
+        //file, so that one can end with a line break of its own)
+        var rawRecord = line.RawRecord ?? string.Empty;
+        File.AppendAllText(DivertErrorsFile.FullName,
+            rawRecord.EndsWith('\n') ? rawRecord : rawRecord + Environment.NewLine);
 
         //move to next line
         _dataPusher.BadLines.Add(line.LineNumber);

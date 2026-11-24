@@ -10,14 +10,14 @@ using CsvHelper;
 namespace Rdmp.Core.DataLoad.Modules.DataFlowSources.SubComponents;
 
 /// <summary>
-/// Point in time record of a line read from CsvHelper including ReadingContext information such as <see cref="LineNumber"/>.  Can include multiple lines
+/// Point in time record of a line read from CsvHelper including its <see cref="LineNumber"/>.  Can include multiple lines
 /// of the underlying file if there is proper qualifying quotes and newlines in the csv e.g. when including free text columns.
 /// </summary>
 public class FlatFileLine
 {
     /// <summary>
     /// The RAW file line number that this line reflects.  Where a record spans multiple lines (e.g. when it has newlines in quote qualified fields) it
-    /// seems to be the last line number in the record
+    /// is the line number the record starts on
     /// </summary>
     public int LineNumber { get; private set; }
 
@@ -27,32 +27,39 @@ public class FlatFileLine
     public string[] Cells { get; set; }
 
     /// <summary>
-    /// The absolute text as it appears in the flat file being read for this 'line'
+    /// The absolute text as it appears in the flat file being read for this 'line', without the line break that ends it
     /// </summary>
     public string RawRecord { get; set; }
 
     /// <summary>
-    /// The state of the CSVReader when the line was read
+    /// Records the line that <paramref name="reader"/> is currently on
     /// </summary>
-    public CsvContext ReadingContext { get; set; }
-
-    public FlatFileLine(CsvContext context)
+    /// <param name="reader"></param>
+    /// <param name="restoreRawRecord">Optional function that undoes any change made to the raw text before CsvHelper read it (e.g. the
+    /// stand in character used for a multi character separator)</param>
+    public FlatFileLine(CsvReader reader, Func<string, string> restoreRawRecord = null)
     {
-        LineNumber = context.Parser.RawRow;
-        Cells = context.Parser.Record;
-        RawRecord = context.Parser.RawRecord;
-        ReadingContext = context;
+        LineNumber = checked((int)reader.LineNumber);
 
-        //Doesn't seem to be correct:  StartPosition = context.RawRecordStartPosition;
+        var current = reader.Current;
+        Cells = current.ToArray();
+        RawRecord = Restore(current.ToString(), restoreRawRecord);
     }
 
-    public FlatFileLine(BadDataFoundArgs bad)
+    /// <summary>
+    /// Records a line that CsvHelper reported as malformed (e.g. a quote in the middle of a cell)
+    /// </summary>
+    /// <param name="bad"></param>
+    /// <param name="restoreRawRecord">See <see cref="FlatFileLine(CsvReader,Func{string,string})"/></param>
+    public FlatFileLine(CsvMalformedRecord bad, Func<string, string> restoreRawRecord = null)
     {
-        LineNumber = bad.Context.Parser.RawRow;
+        LineNumber = checked((int)bad.LineNumber);
         Cells = Array.Empty<string>();
-        RawRecord = bad.RawRecord;
-        ReadingContext = bad.Context;
+        RawRecord = Restore(bad.RawRecord, restoreRawRecord);
     }
+
+    private static string Restore(string raw, Func<string, string> restoreRawRecord) =>
+        raw == null || restoreRawRecord == null ? raw : restoreRawRecord(raw);
 
     public string this[int i] => Cells[i];
 

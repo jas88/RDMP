@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -214,20 +213,24 @@ internal partial class ConsoleGuiSqlEditor : Window
             if (sfd.FilePath != null)
             {
                 using (var writer = new StreamWriter(File.OpenWrite(sfd.FilePath.ToString())))
-                using (var w = new CsvWriter(writer, CultureInfo.CurrentCulture))
+                using (var w = CsvWriter.Create(writer))
                 {
-                    // write headers
-                    foreach (DataColumn c in tbl.Columns)
-                        w.WriteField(c.ColumnName);
-
-                    w.NextRecord();
-
-                    // write rows
-                    foreach (DataRow r in tbl.Rows)
+                    // a record must have at least one field
+                    if (tbl.Columns.Count > 0)
                     {
-                        foreach (var item in r.ItemArray) w.WriteField(item);
+                        // write headers
+                        foreach (DataColumn c in tbl.Columns)
+                            w.WriteField(c.ColumnName);
 
-                        w.NextRecord();
+                        w.EndRecord();
+
+                        // write rows
+                        foreach (DataRow r in tbl.Rows)
+                        {
+                            foreach (var item in r.ItemArray) w.WriteField(item);
+
+                            w.EndRecord();
+                        }
                     }
                 }
 

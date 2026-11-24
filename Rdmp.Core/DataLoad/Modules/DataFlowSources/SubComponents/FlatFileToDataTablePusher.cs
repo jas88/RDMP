@@ -47,6 +47,12 @@ public class FlatFileToDataTablePusher
     public HashSet<int> BadLines = new();
 
     /// <summary>
+    /// Optional function applied to the raw text of every line read, to undo any change made to it before CsvHelper read it.  Set by
+    /// <see cref="DelimitedFlatFileDataFlowSource"/> when the separator is not a single character
+    /// </summary>
+    public Func<string, string> RestoreRawRecord { get; set; }
+
+    /// <summary>
     /// This is incremented when too many values are read from the file to match the header count BUT the values read were null/empty
     /// </summary>
     private long _bufferOverrunsWhereColumnValueWasBlank;
@@ -86,7 +92,7 @@ public class FlatFileToDataTablePusher
             if (!_haveComplainedAboutColumnMismatch)
             {
                 listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
-                    $"Flat file '{_fileToLoad.File.Name}' line number '{reader.Context.Parser.RawRow}' had  {headerCount} columns while the destination DataTable had {dt.Columns.Count} columns.  This message appears only once per file"));
+                    $"Flat file '{_fileToLoad.File.Name}' line number '{reader.LineNumber}' had  {headerCount} columns while the destination DataTable had {dt.Columns.Count} columns.  This message appears only once per file"));
                 _haveComplainedAboutColumnMismatch = true;
             }
 
@@ -116,7 +122,7 @@ public class FlatFileToDataTablePusher
                 else
                 {
                     var errorMessage =
-                        $"Column mismatch on line {reader.Context.Parser.RawRow} of file '{dt.TableName}', it has too many columns (expected {_headers.Length} columns but line had  {lineToPush.Cells.Length})";
+                        $"Column mismatch on line {reader.LineNumber} of file '{dt.TableName}', it has too many columns (expected {_headers.Length} columns but line had  {lineToPush.Cells.Length})";
 
                     if (_bufferOverrunsWhereColumnValueWasBlank > 0)
                         errorMessage +=
@@ -135,7 +141,7 @@ public class FlatFileToDataTablePusher
             if (_headers[i].IsBasicallyNull())
                 if (!lineToPush[i].IsBasicallyNull())
                     throw new FileLoadException(
-                        $"The header at index {i} in flat file '{dt.TableName}' had no name but there was a value in the data column (on Line number {reader.Context.Parser.RawRow})");
+                        $"The header at index {i} in flat file '{dt.TableName}' had no name but there was a value in the data column (on Line number {reader.LineNumber})");
                 else
                     continue;
 
@@ -162,13 +168,13 @@ public class FlatFileToDataTablePusher
                 catch (Exception e)
                 {
                     throw new FileLoadException(
-                        $"Error reading file '{dt.TableName}'.  Problem loading value {lineToPush[i]} into data table (on Line number {reader.Context.Parser.RawRow}) the header we were trying to populate was {_headers[i]} and was of datatype {dt.Columns[_headers[i]].DataType}",
+                        $"Error reading file '{dt.TableName}'.  Problem loading value {lineToPush[i]} into data table (on Line number {reader.LineNumber}) the header we were trying to populate was {_headers[i]} and was of datatype {dt.Columns[_headers[i]].DataType}",
                         e);
                 }
             }
         }
 
-        if (!BadLines.Contains(reader.Context.Parser.RawRow))
+        if (!BadLines.Contains(checked((int)reader.LineNumber)))
         {
             var currentRow = dt.Rows.Add();
             foreach (var kvp in rowValues)
@@ -187,7 +193,7 @@ public class FlatFileToDataTablePusher
         {
             //we read too little cell count but we don't want to solve the problem
             listener.OnNotify(this, new NotifyEventArgs(ProgressEventType.Warning,
-                $"Too few columns on line {reader.Context.Parser.RawRow} of file '{_fileToLoad}', it has too many columns (expected {_headers.Length} columns but line had {lineToPush.Cells.Length}).{(_bufferOverrunsWhereColumnValueWasBlank > 0 ? $"( {_bufferOverrunsWhereColumnValueWasBlank} Previously lines also suffered from buffer overruns but the overrunning values were empty so we had ignored them up until now)" : "")}"));
+                $"Too few columns on line {reader.LineNumber} of file '{_fileToLoad}', it has too many columns (expected {_headers.Length} columns but line had {lineToPush.Cells.Length}).{(_bufferOverrunsWhereColumnValueWasBlank > 0 ? $"( {_bufferOverrunsWhereColumnValueWasBlank} Previously lines also suffered from buffer overruns but the overrunning values were empty so we had ignored them up until now)" : "")}"));
             eventHandlers.BadDataFound(lineToPush);
 
             //didn't bother trying to fix the problem
@@ -209,7 +215,7 @@ public class FlatFileToDataTablePusher
             //try adding the next row
             if (reader.Read())
             {
-                peekedLine = new FlatFileLine(reader.Context);
+                peekedLine = new FlatFileLine(reader, RestoreRawRecord);
 
                 //peeked line was 'valid' on its own
                 if (peekedLine.Cells.Length >= _headers.Length)

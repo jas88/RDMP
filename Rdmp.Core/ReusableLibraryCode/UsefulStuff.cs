@@ -413,18 +413,22 @@ public static partial class UsefulStuff
     {
         var sb = new StringBuilder();
 
-        using var w = new CsvWriter(new StringWriter(sb), CultureInfo.CurrentCulture);
+        // a record must have at least one field
+        if (dt.Columns.Count == 0)
+            return string.Empty;
+
+        using var w = CsvWriter.Create(new StringWriter(sb));
         foreach (DataColumn column in dt.Columns)
             w.WriteField(column.ColumnName);
 
-        w.NextRecord();
+        w.EndRecord();
 
         foreach (DataRow row in dt.Rows)
         {
             foreach (var cellObject in row.ItemArray)
                 w.WriteField(cellObject);
 
-            w.NextRecord();
+            w.EndRecord();
         }
 
         w.Flush();
