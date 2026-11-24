@@ -23,6 +23,13 @@ namespace Rdmp.Core.CohortCreation.Execution;
 /// </summary>
 public class CohortCompilerRunner
 {
+    /// <summary>
+    /// How often <see cref="RunAsync"/> looks at the tasks it launched to see whether they have all finished.  Each
+    /// phase of <see cref="Run"/> waits at least this long, so it is kept short: at one second a run of three phases
+    /// took three seconds however quick its queries were.
+    /// </summary>
+    private const int PollIntervalMilliseconds = 50;
+
     private readonly int _timeout;
     public CohortCompiler Compiler { get; set; }
     public Phase ExecutionPhase = Phase.None;
@@ -148,7 +155,7 @@ public class CohortCompilerRunner
 
         //while there are executing tasks
         while (tasks.Any(t => t.State == CompilationState.Scheduled || t.State == CompilationState.Executing))
-            Thread.Sleep(1000);
+            Thread.Sleep(PollIntervalMilliseconds);
     }
 
     private void CacheAsync(IEnumerable<ICacheableTask> toCache, CancellationToken token)
