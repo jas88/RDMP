@@ -108,8 +108,10 @@ public class DiffSizeTests
     [Test]
     public void DiffText_ReversedLines_FollowTheRules()
     {
-        // Only one line can be kept, so the search goes through about twice as many edits as there are lines
-        const int count = 10_000;
+        // Only one line can be kept, so the search goes through about twice as many edits as there are lines. The time
+        // this takes grows with the square of the line count, and code coverage makes the search many times slower, so
+        // the text is no longer than the largest one in the growth check for reversed lines below.
+        const int count = 2000;
         var (before, after) = ReversedLines(count);
 
         Assert.That(FindViolations(before, after, Diff.DiffText(before, after), 2 * (count - 1)), Is.Empty);
