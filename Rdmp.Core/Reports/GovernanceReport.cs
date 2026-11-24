@@ -48,7 +48,20 @@ public class GovernanceReport : DocXHelper
 
         using (var s = new StreamWriter(f.FullName))
         {
-            using var writer = CsvWriter.Create(s, CsvOptions);
+            WriteReport(s);
+        }
+
+        ShowFile(f);
+    }
+
+    /// <summary>
+    /// Writes the report to <paramref name="s"/>
+    /// </summary>
+    /// <param name="s"></param>
+    public void WriteReport(TextWriter s)
+    {
+        {
+            using var writer = CsvWriter.Create(s, CsvOptions, true);
             writer.WriteField("Extractable Datasets");
             writer.EndRecord();
 
@@ -111,15 +124,13 @@ public class GovernanceReport : DocXHelper
 
             OutputGovernanceList(govs, writer, true);
         }
-
-        ShowFile(f);
     }
 
     /// <summary>
     /// Writes an empty line to <paramref name="underlying"/>, the stream that <paramref name="writer"/> writes to.  The
     /// <see cref="CsvWriter"/> cannot do this itself: a record needs at least one field, and an empty field is written as "".
     /// </summary>
-    private static void WriteBlankLine(CsvWriter writer, StreamWriter underlying)
+    private static void WriteBlankLine(CsvWriter writer, TextWriter underlying)
     {
         // the writer buffers its records, so they must reach the stream before the blank line does
         writer.Flush();
