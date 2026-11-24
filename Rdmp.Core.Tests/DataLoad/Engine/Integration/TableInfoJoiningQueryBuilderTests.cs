@@ -30,7 +30,7 @@ public class TableInfoJoiningQueryBuilderTests : UnitTests
         var result = new TableInfo(Repository, "[biochemistry]..[Result]");
         var col3 = new ColumnInfo(Repository, "FK", "int", result);
         var col4 = new ColumnInfo(Repository, "Code", "varchar(10)", result);
-        var col5 = new ColumnInfo(Repository, "[biochemistry]..[Result].[OmgBob]", "varchar(10)", result);
+        _ = new ColumnInfo(Repository, "[biochemistry]..[Result].[OmgBob]", "varchar(10)", result);
 
         //we can join on col2 = col3
         new JoinInfo(Repository, col3, col2, ExtractionJoinType.Right, "");

@@ -44,8 +44,8 @@ internal class ExtendedPropertyTests : UnitTests
         var prop2 = Repository.GetObjectByID<ExtendedProperty>(prop.ID);
         Assert.Multiple(() =>
         {
-            Assert.That(prop.GetValueAsSystemType(), Is.EqualTo(10));
-            Assert.That(prop.IsReferenceTo(cata));
+            Assert.That(prop2.GetValueAsSystemType(), Is.EqualTo(10));
+            Assert.That(prop2.IsReferenceTo(cata));
         });
     }
 }

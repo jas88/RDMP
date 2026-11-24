@@ -41,7 +41,7 @@ public class GatherAndShareDatabaseTests : DatabaseTests
         catalogueItem1.ColumnInfo_ID = colInfo.ID;
         catalogueItem1.SaveToDatabase();
 
-        var ei = new ExtractionInformation(CatalogueRepository, catalogueItem1, colInfo, "UPPER(C1) as Fish");
+        _ = new ExtractionInformation(CatalogueRepository, catalogueItem1, colInfo, "UPPER(C1) as Fish");
 
         //the logging server has a system default so should have been populated
         Assert.That(cata.LiveLoggingServer_ID, Is.Not.Null);
