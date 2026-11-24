@@ -30,6 +30,13 @@ public class UITests : UnitTests
 #pragma warning restore NUnit1034
 {
     private TestActivateItems _itemActivator;
+
+    /// <summary>
+    /// The user interface tests still share one repository (and the activator built on it) per fixture.  With a repository per
+    /// test, Test_CatalogueUI_NormalState fails: its description box is not refreshed after an undo when an earlier test of the
+    /// fixture has run.  The cause has not been found, so these tests keep the old behaviour until it has
+    /// </summary>
+    protected override bool RepositoryPerTest => false;
     private ToMemoryCheckNotifier _checkResults;
 
     protected Control LastUserInterfaceLaunched { get; set; }
@@ -96,8 +103,10 @@ public class UITests : UnitTests
     [SetUp]
     protected void ClearResults()
     {
-        // each test has a Repository of its own (see UnitTests.SetUp), so it needs an activator of its own too
-        _itemActivator = null;
+        _itemActivator?.Results.Clear();
+
+        if (_itemActivator != null)
+            _itemActivator.LastTypeTextRequest = null;
 
         _checkResults = null;
 

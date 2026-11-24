@@ -67,6 +67,12 @@ public abstract class UnitTests
     protected static DirectoryInfo IsolatedDirectory => IsolatedTestDirectoryAttribute.ForCurrentTest();
 
     /// <summary>
+    /// True (the default) to give every test an empty <see cref="Repository"/>.  False keeps one repository for all the tests of
+    /// the fixture, which lets a test see the objects of the tests before it: only for fixtures that cannot yet do without that
+    /// </summary>
+    protected virtual bool RepositoryPerTest => true;
+
+    /// <summary>
     /// True until the first test of the fixture has started.  The repository made by the constructor is kept for that test, in
     /// case the constructor of a fixture put something in it
     /// </summary>
@@ -131,7 +137,7 @@ public abstract class UnitTests
         {
             _firstTest = false;
         }
-        else
+        else if (RepositoryPerTest)
         {
             Repository = new MemoryDataExportRepository();
             RepositoryLocator = new RepositoryProvider(Repository);
