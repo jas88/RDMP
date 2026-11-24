@@ -29,6 +29,12 @@ namespace Rdmp.Core.Tests.QueryCaching;
 
 internal class QueryCachingCrossServerTests : TestsRequiringA
 {
+    // How many people each test generates, and how many rows of each dataset it creates for them. These tests are about
+    // where queries run and whether the cache is used, not about volume, so the data is only large enough for every
+    // query (including the joins against the patient index table) to return some patients.
+    private const int PeopleCount = 500;
+    private const int RowCount = 1000;
+
     private static IEnumerable<object[]> CreateQueryCacheCases =>
         All.DatabaseTypes.Select(static t => new object[] { t, typeof(QueryCachingPatcher) })
             .Append(new object[] { DatabaseType.MicrosoftSQLServer, typeof(DataQualityEnginePatcher) });
@@ -73,7 +79,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
         var ac1 = SetupAggregateConfigurationWithFilter(server1, people, r, cic, useParameter, "@date_of_max",
@@ -129,7 +135,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
 
@@ -205,7 +211,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
 
@@ -279,7 +285,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
 
@@ -350,7 +356,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
 
@@ -410,7 +416,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
 
@@ -462,7 +468,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
 
@@ -524,7 +530,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
 
@@ -585,7 +591,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
 
         var r = new Random(500);
         var people = new PersonCollection();
-        people.GeneratePeople(5000, r);
+        people.GeneratePeople(PeopleCount, r);
 
         var cic = new CohortIdentificationConfiguration(CatalogueRepository, "cic");
 
@@ -646,7 +652,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
     {
         var syntax = db.Server.GetQuerySyntaxHelper();
 
-        var tbl = CreateDataset<Biochemistry>(db, people, 10000, r);
+        var tbl = CreateDataset<Biochemistry>(db, people, RowCount, r);
         var cata = Import(tbl, out _, out _, out _, out var eis);
 
         var chi = eis.Single(ei => ei.GetRuntimeName().Equals("chi", StringComparison.CurrentCultureIgnoreCase));
@@ -777,7 +783,7 @@ internal class QueryCachingCrossServerTests : TestsRequiringA
         CohortIdentificationConfiguration cic)
     {
         var existingTbl = db.ExpectTable("HospitalAdmissions");
-        var tbl = existingTbl.Exists() ? existingTbl : CreateDataset<HospitalAdmissions>(db, people, 10000, r);
+        var tbl = existingTbl.Exists() ? existingTbl : CreateDataset<HospitalAdmissions>(db, people, RowCount, r);
         var cata = Import(tbl, out _, out _, out _, out var eis);
 
         var chi = eis.Single(ei => ei.GetRuntimeName().Equals("chi", StringComparison.CurrentCultureIgnoreCase));
