@@ -16,7 +16,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
-public class SingleJobPipelineTests : DatabaseTests
+public class SingleJobPipelineTests : UnitTests
 {
     public static void LoadNotRequiredStopsPipelineGracefully()
     {

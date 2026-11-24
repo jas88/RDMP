@@ -12,16 +12,16 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration.Validation;
 
-public class StandardRegexTests : DatabaseTests
+public class StandardRegexTests : UnitTests
 {
     [Test]
     public void CreateNew_UseConstraint()
     {
         // Clean SetUp any existing regexes
-        CatalogueRepository.GetAllObjects<StandardRegex>().Where(r => r.ConceptName == "Fish").ToList()
+        Repository.GetAllObjects<StandardRegex>().Where(r => r.ConceptName == "Fish").ToList()
             .ForEach(r => r.DeleteInDatabase());
 
-        var regex = new StandardRegex(CatalogueRepository);
+        var regex = new StandardRegex(Repository);
         try
         {
             Assert.Multiple(() =>
@@ -34,7 +34,7 @@ public class StandardRegexTests : DatabaseTests
             regex.Regex = "^(Fish)$";
             regex.SaveToDatabase();
 
-            var constraint = new StandardRegexConstraint(CatalogueRepository)
+            var constraint = new StandardRegexConstraint(Repository)
             {
                 CatalogueStandardRegex = regex
             };

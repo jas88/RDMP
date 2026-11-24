@@ -15,7 +15,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration;
 
-internal class DitaExtractorTests : DatabaseTests
+internal class DitaExtractorTests : UnitTests
 {
     private Exception _setupException;
 
@@ -35,13 +35,13 @@ internal class DitaExtractorTests : DatabaseTests
             var random = new Random();
 
             //delete all catalogues with duplicate names
-            var catalogues = CatalogueRepository.GetAllObjects<Catalogue>().ToArray();
+            var catalogues = Repository.GetAllObjects<Catalogue>().ToArray();
 
             foreach (var cata in catalogues.GroupBy(c => c.Name).Where(g => g.Count() > 1).SelectMany(y => y))
                 cata.DeleteInDatabase();
 
             //make sure all Catalogues have acronyms, if they don't then assign them a super random one
-            foreach (var cata in CatalogueRepository.GetAllObjects<Catalogue>()
+            foreach (var cata in Repository.GetAllObjects<Catalogue>()
                          .Where(c => string.IsNullOrWhiteSpace(c.Acronym)))
             {
                 cata.Acronym = $"RANDOMACRONYM_{random.Next(10000)}";
@@ -73,12 +73,12 @@ internal class DitaExtractorTests : DatabaseTests
         var testDir = _directoryHelper.Directory;
 
         //get rid of any old copies lying around
-        var oldCatalogueVersion = CatalogueRepository.GetAllObjects<Catalogue>()
+        var oldCatalogueVersion = Repository.GetAllObjects<Catalogue>()
             .SingleOrDefault(c => c.Name.Equals("DitaExtractorConstructor_ExtractTestCatalogue_FilesExist"));
         oldCatalogueVersion?.DeleteInDatabase();
 
         var ditaTestCatalogue =
-            new Catalogue(CatalogueRepository, "DitaExtractorConstructor_ExtractTestCatalogue_FilesExist")
+            new Catalogue(Repository, "DitaExtractorConstructor_ExtractTestCatalogue_FilesExist")
             {
                 Acronym = "DITA_TEST",
                 Description =
@@ -90,7 +90,7 @@ internal class DitaExtractorTests : DatabaseTests
 
         try
         {
-            var extractor = new DitaCatalogueExtractor(CatalogueRepository, testDir);
+            var extractor = new DitaCatalogueExtractor(Repository, testDir);
 
             extractor.Extract(ThrowImmediatelyDataLoadEventListener.Quiet);
 
@@ -128,7 +128,7 @@ internal class DitaExtractorTests : DatabaseTests
         try
         {
             //create a new Catalogue in the test datbaase that doesnt have a acronym (should crash Dita Extractor)
-            var myNewCatalogue = new Catalogue(CatalogueRepository, "UnitTestCatalogue")
+            var myNewCatalogue = new Catalogue(Repository, "UnitTestCatalogue")
             {
                 Acronym = ""
             };
@@ -136,7 +136,7 @@ internal class DitaExtractorTests : DatabaseTests
 
             try
             {
-                var extractor = new DitaCatalogueExtractor(CatalogueRepository, testDir);
+                var extractor = new DitaCatalogueExtractor(Repository, testDir);
                 var ex = Assert.Throws<Exception>(() => extractor.Extract(ThrowImmediatelyDataLoadEventListener.Quiet));
                 Assert.That(
                     ex.Message, Is.EqualTo("Dita Extraction requires that each catalogue have a unique Acronym, the catalogue UnitTestCatalogue is missing an Acronym"));

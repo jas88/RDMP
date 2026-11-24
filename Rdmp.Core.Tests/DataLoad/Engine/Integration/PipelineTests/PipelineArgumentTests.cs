@@ -11,7 +11,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration.PipelineTests;
 
-public class PipelineArgumentTests : DatabaseTests
+public class PipelineArgumentTests : UnitTests
 {
     [Test]
     [TestCase(typeof(int?), null)]
@@ -30,12 +30,12 @@ public class PipelineArgumentTests : DatabaseTests
             value = new DateTime(2001, 01, 01, 3, 20,
                 11); //hey btw when you put in milliseconds into DateTime IArgument it drops them... due to DateTime.Parse? or DateTime.ToString()?
 
-        var p = new Pipeline(CatalogueRepository);
-        var pc = new PipelineComponent(CatalogueRepository, p,
+        var p = new Pipeline(Repository);
+        var pc = new PipelineComponent(Repository, p,
             GetType() //Normally this would be the PipelineComponent hosted class which would be a proper class declared as a MEF export with DemandsInitialization etc but we don't need all that
             , 0
             , "My imaginary Pipe Component");
-        var arg = new PipelineComponentArgument(CatalogueRepository, pc);
+        var arg = new PipelineComponentArgument(Repository, pc);
         try
         {
             arg.SetType(nullableType);

@@ -20,7 +20,7 @@ namespace Rdmp.Core.Tests.Repositories;
 /// <summary>
 /// Integration tests for MEF optimization system, testing real-world scenarios and fallback mechanisms
 /// </summary>
-internal class MEFOptimizedTests : DatabaseTests
+internal class MEFOptimizedTests : UnitTests
 {
     private ICatalogueRepository _catalogueRepository;
     private IRDMPPlatformRepositoryServiceLocator _repositoryLocator;
@@ -28,7 +28,7 @@ internal class MEFOptimizedTests : DatabaseTests
     [SetUp]
     public void IntegrationSetup()
     {
-        _catalogueRepository = CatalogueRepository;
+        _catalogueRepository = Repository;
         _repositoryLocator = RepositoryLocator;
     }
 

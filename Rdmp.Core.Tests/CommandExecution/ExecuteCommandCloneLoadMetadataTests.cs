@@ -12,21 +12,21 @@ using System.Linq;
 
 namespace Rdmp.Core.Tests.CommandExecution
 {
-    public class ExecuteCommandCloneLoadMetadataTests: DatabaseTests
+    public class ExecuteCommandCloneLoadMetadataTests: UnitTests
     {
 
         [Test]
         public void TestCloneLoadMetadata()
         {
-            var lmd1 = new LoadMetadata(CatalogueRepository, "MyLmd");
+            var lmd1 = new LoadMetadata(Repository, "MyLmd");
             lmd1.Description = "Desc!";
-            var cata = new Catalogue(CatalogueRepository, "myCata")
+            var cata = new Catalogue(Repository, "myCata")
             {
                 LoggingDataTask = "B"
             };
             cata.SaveToDatabase();
             lmd1.LinkToCatalogue(cata);
-            var pt1 = new ProcessTask(CatalogueRepository, lmd1, LoadStage.Mounting)
+            var pt1 = new ProcessTask(Repository, lmd1, LoadStage.Mounting)
             {
                 ProcessTaskType = ProcessTaskType.Attacher,
                 LoadStage = LoadStage.Mounting,

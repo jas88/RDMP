@@ -11,8 +11,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataExport;
 
-[Category("Database")]
-public class ExtractionConfigurationTest : DatabaseTests
+public class ExtractionConfigurationTest : UnitTests
 {
     [Test]
     public void ExtractableColumnTest()
@@ -31,21 +30,21 @@ public class ExtractionConfigurationTest : DatabaseTests
         try
         {
             //setup catalogue side of things
-            cata = new Catalogue(CatalogueRepository, "unit_test_ExtractableColumnTest_Cata");
-            cataItem = new CatalogueItem(CatalogueRepository, cata, "unit_test_ExtractableColumnTest_CataItem");
-            table = new TableInfo(CatalogueRepository, "DaveTable");
-            column = new ColumnInfo(CatalogueRepository, "Name", "string", table);
+            cata = new Catalogue(Repository, "unit_test_ExtractableColumnTest_Cata");
+            cataItem = new CatalogueItem(Repository, cata, "unit_test_ExtractableColumnTest_CataItem");
+            table = new TableInfo(Repository, "DaveTable");
+            column = new ColumnInfo(Repository, "Name", "string", table);
             cataItem.SetColumnInfo(column);
 
-            extractionInformation = new ExtractionInformation(CatalogueRepository, cataItem, column, "Hashme(Name)");
+            extractionInformation = new ExtractionInformation(Repository, cataItem, column, "Hashme(Name)");
 
             //setup extractor side of things
-            dataSet = new ExtractableDataSet(DataExportRepository, cata);
-            project = new Project(DataExportRepository, "unit_test_ExtractableColumnTest_Proj");
+            dataSet = new ExtractableDataSet(Repository, cata);
+            project = new Project(Repository, "unit_test_ExtractableColumnTest_Proj");
 
-            configuration = new ExtractionConfiguration(DataExportRepository, project);
+            configuration = new ExtractionConfiguration(Repository, project);
 
-            _ = new ExtractableColumn(DataExportRepository, dataSet, configuration, extractionInformation, 0,
+            _ = new ExtractableColumn(Repository, dataSet, configuration, extractionInformation, 0,
                 "Hashme2(Name)");
             Assert.That(configuration.GetAllExtractableColumnsFor(dataSet), Has.Length.EqualTo(1));
         }

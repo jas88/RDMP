@@ -14,14 +14,14 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration;
 
-public class PasswordEncryptionKeyLocationTests : DatabaseTests
+public class PasswordEncryptionKeyLocationTests : UnitTests
 {
     [SetUp]
     protected override void SetUp()
     {
         base.SetUp();
 
-        var keyLocation = new PasswordEncryptionKeyLocation(CatalogueRepository);
+        var keyLocation = new PasswordEncryptionKeyLocation(Repository);
 
         if (keyLocation.GetKeyFileLocation() != null)
             Assert.Inconclusive();
@@ -30,7 +30,7 @@ public class PasswordEncryptionKeyLocationTests : DatabaseTests
     [Test]
     public void NoKeyFileToStartWith()
     {
-        var keyLocation = new PasswordEncryptionKeyLocation(CatalogueRepository);
+        var keyLocation = new PasswordEncryptionKeyLocation(Repository);
 
         //there shouldn't already be a key
         Assert.That(keyLocation.GetKeyFileLocation(), Is.Null);
@@ -42,7 +42,7 @@ public class PasswordEncryptionKeyLocationTests : DatabaseTests
     [Test]
     public void CreateKeyFile()
     {
-        var keyLocation = new PasswordEncryptionKeyLocation(CatalogueRepository);
+        var keyLocation = new PasswordEncryptionKeyLocation(Repository);
         var file = keyLocation.CreateNewKeyFile(Path.Combine(TestContext.CurrentContext.TestDirectory, "my.key"));
 
         Console.WriteLine($"Key file location is:{file.FullName}");
@@ -66,7 +66,7 @@ public class PasswordEncryptionKeyLocationTests : DatabaseTests
 
         Console.WriteLine($"String is:{value}");
 
-        var encrypter = new EncryptedString(CatalogueRepository);
+        var encrypter = new EncryptedString(Repository);
         Assert.That(encrypter.IsStringEncrypted(value), Is.False);
 
         //should do pass through encryption
@@ -80,13 +80,13 @@ public class PasswordEncryptionKeyLocationTests : DatabaseTests
         Console.WriteLine($"Encrypted (stock) is:{encrypter.Value}");
         Console.WriteLine($"Decrypted (stock) is:{encrypter.GetDecryptedValue()}");
 
-        var keyLocation = new PasswordEncryptionKeyLocation(CatalogueRepository);
+        var keyLocation = new PasswordEncryptionKeyLocation(Repository);
         keyLocation.CreateNewKeyFile(Path.Combine(TestContext.CurrentContext.TestDirectory, "my.key"));
         var p = keyLocation.OpenKeyFile();
 
-        CatalogueRepository.EncryptionManager.ClearAllInjections();
+        Repository.EncryptionManager.ClearAllInjections();
 
-        var s = CatalogueRepository.EncryptionManager.GetEncrypter();
+        var s = Repository.EncryptionManager.GetEncrypter();
         var exception = Assert.Throws<CryptographicException>(() => s.Decrypt(encrypter.Value));
         Assert.That(exception.Message, Does.StartWith("Could not decrypt an encrypted string, possibly you are trying to decrypt it after having changed the PrivateKey "));
 

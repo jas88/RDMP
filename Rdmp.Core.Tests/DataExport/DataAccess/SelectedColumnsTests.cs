@@ -12,28 +12,28 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataExport.DataAccess;
 
-public class SelectedColumnsTests : DatabaseTests
+public class SelectedColumnsTests : UnitTests
 {
     //Simple test SelectedColumns in which an extraction configuration is built for a test dataset with a single column configured for extraction
     [Test]
     public void CreateAndAssociateColumns()
     {
-        var cata = new Catalogue(CatalogueRepository, "MyCat");
-        var cataItem = new CatalogueItem(CatalogueRepository, cata, "MyCataItem");
-        var TableInfo = new TableInfo(CatalogueRepository, "Cata");
-        var ColumnInfo = new ColumnInfo(CatalogueRepository, "Col", "varchar(10)", TableInfo);
-        var ExtractionInfo = new ExtractionInformation(CatalogueRepository, cataItem, ColumnInfo, "fish");
+        var cata = new Catalogue(Repository, "MyCat");
+        var cataItem = new CatalogueItem(Repository, cata, "MyCataItem");
+        var TableInfo = new TableInfo(Repository, "Cata");
+        var ColumnInfo = new ColumnInfo(Repository, "Col", "varchar(10)", TableInfo);
+        var ExtractionInfo = new ExtractionInformation(Repository, cataItem, ColumnInfo, "fish");
 
-        var ds = new ExtractableDataSet(DataExportRepository, cata);
+        var ds = new ExtractableDataSet(Repository, cata);
 
-        var proj = new Project(DataExportRepository, "MyProj");
-        var config = new ExtractionConfiguration(DataExportRepository, proj);
+        var proj = new Project(Repository, "MyProj");
+        var config = new ExtractionConfiguration(Repository, proj);
 
-        var extractableColumn = new ExtractableColumn(DataExportRepository, ds, config, ExtractionInfo, 1, "fish");
+        var extractableColumn = new ExtractableColumn(Repository, ds, config, ExtractionInfo, 1, "fish");
 
         try
         {
-            _ = new SelectedDataSets(DataExportRepository, config, ds, null);
+            _ = new SelectedDataSets(Repository, config, ds, null);
 
             var cols = config.GetAllExtractableColumnsFor(ds);
 

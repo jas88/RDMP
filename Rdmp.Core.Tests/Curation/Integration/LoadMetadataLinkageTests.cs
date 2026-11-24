@@ -16,13 +16,13 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration;
 
-public class LoadMetadataLinkageTests: DatabaseTests
+public class LoadMetadataLinkageTests: UnitTests
 {
     [Test]
     public void BasicLoadMetadataLinkage()
     {
-        var loadMetadata = new LoadMetadata(CatalogueRepository);
-        var catalogue = new Catalogue(CatalogueRepository, "catalogue");
+        var loadMetadata = new LoadMetadata(Repository);
+        var catalogue = new Catalogue(Repository, "catalogue");
         loadMetadata.LinkToCatalogue(catalogue);
         Assert.That(catalogue.LoadMetadatas().Length, Is.EqualTo(1));
         Assert.That(catalogue.LoadMetadatas().First(), Is.EqualTo(loadMetadata));
@@ -32,8 +32,8 @@ public class LoadMetadataLinkageTests: DatabaseTests
     [Test]
     public void BasicLoadMetadataLinkageUnlink()
     {
-        var loadMetadata = new LoadMetadata(CatalogueRepository);
-        var catalogue = new Catalogue(CatalogueRepository, "catalogue");
+        var loadMetadata = new LoadMetadata(Repository);
+        var catalogue = new Catalogue(Repository, "catalogue");
         loadMetadata.LinkToCatalogue(catalogue);
         Assert.That(catalogue.LoadMetadatas().Length, Is.EqualTo(1));
         Assert.That(catalogue.LoadMetadatas().First(), Is.EqualTo(loadMetadata));
@@ -45,9 +45,9 @@ public class LoadMetadataLinkageTests: DatabaseTests
     [Test]
     public void BasicLoadMetadataLinkage_Multiple()
     {
-        var loadMetadata = new LoadMetadata(CatalogueRepository);
-        var catalogue = new Catalogue(CatalogueRepository, "catalogue");
-        var catalogue2 = new Catalogue(CatalogueRepository, "catalogue2");
+        var loadMetadata = new LoadMetadata(Repository);
+        var catalogue = new Catalogue(Repository, "catalogue");
+        var catalogue2 = new Catalogue(Repository, "catalogue2");
         loadMetadata.LinkToCatalogue(catalogue);
         loadMetadata.LinkToCatalogue(catalogue2);
         Assert.That(catalogue.LoadMetadatas().Length, Is.EqualTo(1));
@@ -60,9 +60,9 @@ public class LoadMetadataLinkageTests: DatabaseTests
     [Test]
     public void BasicLoadMetadataLinkage_MultipleUnlink()
     {
-        var loadMetadata = new LoadMetadata(CatalogueRepository);
-        var catalogue = new Catalogue(CatalogueRepository, "catalogue");
-        var catalogue2 = new Catalogue(CatalogueRepository, "catalogue2");
+        var loadMetadata = new LoadMetadata(Repository);
+        var catalogue = new Catalogue(Repository, "catalogue");
+        var catalogue2 = new Catalogue(Repository, "catalogue2");
         loadMetadata.LinkToCatalogue(catalogue);
         loadMetadata.LinkToCatalogue(catalogue2);
         loadMetadata.UnlinkFromCatalogue(catalogue2);

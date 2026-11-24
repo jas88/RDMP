@@ -20,7 +20,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration.PipelineTests;
 
-public class ArchiveFilesTests : DatabaseTests
+public class ArchiveFilesTests : UnitTests
 {
     [Test]
     public void TestAllFilesAreArchived()

@@ -15,7 +15,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
-public class TableInfoJoiningQueryBuilderTests : DatabaseTests
+public class TableInfoJoiningQueryBuilderTests : UnitTests
 {
     [Test]
     public void OpportunisticJoinRequired()
@@ -23,17 +23,17 @@ public class TableInfoJoiningQueryBuilderTests : DatabaseTests
         var memory = new MemoryRepository();
 
         //tables and columns
-        var head = new TableInfo(CatalogueRepository, "Head");
-        var col1 = new ColumnInfo(CatalogueRepository, "TestResultSetNumber", "int", head);
-        var col2 = new ColumnInfo(CatalogueRepository, "PK", "int", head);
+        var head = new TableInfo(Repository, "Head");
+        var col1 = new ColumnInfo(Repository, "TestResultSetNumber", "int", head);
+        var col2 = new ColumnInfo(Repository, "PK", "int", head);
 
-        var result = new TableInfo(CatalogueRepository, "[biochemistry]..[Result]");
-        var col3 = new ColumnInfo(CatalogueRepository, "FK", "int", result);
-        var col4 = new ColumnInfo(CatalogueRepository, "Code", "varchar(10)", result);
-        var col5 = new ColumnInfo(CatalogueRepository, "[biochemistry]..[Result].[OmgBob]", "varchar(10)", result);
+        var result = new TableInfo(Repository, "[biochemistry]..[Result]");
+        var col3 = new ColumnInfo(Repository, "FK", "int", result);
+        var col4 = new ColumnInfo(Repository, "Code", "varchar(10)", result);
+        var col5 = new ColumnInfo(Repository, "[biochemistry]..[Result].[OmgBob]", "varchar(10)", result);
 
         //we can join on col2 = col3
-        new JoinInfo(CatalogueRepository, col3, col2, ExtractionJoinType.Right, "");
+        new JoinInfo(Repository, col3, col2, ExtractionJoinType.Right, "");
 
         //CASE 1 : Only 1 column used so no join needed
         var queryBuilder = new QueryBuilder(null, null);

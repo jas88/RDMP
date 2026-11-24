@@ -12,7 +12,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Unit;
 
-public class PermissionWindowTests : DatabaseTests
+public class PermissionWindowTests : UnitTests
 {
     [Test]
     public void TestSerialisation()
@@ -21,7 +21,7 @@ public class PermissionWindowTests : DatabaseTests
         var period2 =
             new PermissionWindowPeriod((int)DayOfWeek.Monday, new TimeSpan(17, 0, 0), new TimeSpan(23, 59, 59));
 
-        var permissionWindow = new PermissionWindow(CatalogueRepository);
+        var permissionWindow = new PermissionWindow(Repository);
         permissionWindow.SetPermissionWindowPeriods(new List<PermissionWindowPeriod>
         {
             period1,
@@ -30,7 +30,7 @@ public class PermissionWindowTests : DatabaseTests
 
         var permissionPeriodConfig = permissionWindow.PermissionPeriodConfig;
 
-        var newPermissionWindow = new PermissionWindow(CatalogueRepository)
+        var newPermissionWindow = new PermissionWindow(Repository)
         {
             PermissionPeriodConfig = permissionPeriodConfig
         };
@@ -64,7 +64,7 @@ public class PermissionWindowTests : DatabaseTests
         var period1 = new PermissionWindowPeriod((int)DateTime.UtcNow.DayOfWeek, utcTime.Subtract(fiveMinutes),
             utcTime.Add(fiveMinutes));
 
-        var permissionWindow = new PermissionWindow(CatalogueRepository);
+        var permissionWindow = new PermissionWindow(Repository);
         permissionWindow.SetPermissionWindowPeriods(new List<PermissionWindowPeriod> { period1 });
         Assert.That(permissionWindow.WithinPermissionWindow());
     }
@@ -82,7 +82,7 @@ public class PermissionWindowTests : DatabaseTests
         var period1 =
             new PermissionWindowPeriod((int)DateTime.Now.DayOfWeek, utcTime.Add(oneMinute), utcTime.Add(oneMinute));
 
-        var permissionWindow = new PermissionWindow(CatalogueRepository);
+        var permissionWindow = new PermissionWindow(Repository);
         permissionWindow.SetPermissionWindowPeriods(new List<PermissionWindowPeriod> { period1 });
         Assert.That(permissionWindow.WithinPermissionWindow(), Is.False);
     }

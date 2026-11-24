@@ -11,13 +11,13 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration.ArgumentTests;
 
-public class ProcessTaskTests : DatabaseTests
+public class ProcessTaskTests : UnitTests
 {
     [Test]
     public void CloneProcessTask_ToSameLoadMetadataWithoutArguments()
     {
-        var test = new LoadMetadata(CatalogueRepository);
-        var processTask1 = new ProcessTask(CatalogueRepository, test, LoadStage.AdjustRaw)
+        var test = new LoadMetadata(Repository);
+        var processTask1 = new ProcessTask(Repository, test, LoadStage.AdjustRaw)
         {
             Name = "Franky",
             Order = 999
@@ -35,8 +35,8 @@ public class ProcessTaskTests : DatabaseTests
             });
 
             //get fresh copy out of database to ensure it is still there
-            var orig = CatalogueRepository.GetObjectByID<ProcessTask>(processTask1.ID);
-            clone = CatalogueRepository.GetObjectByID<ProcessTask>(clone.ID);
+            var orig = Repository.GetObjectByID<ProcessTask>(processTask1.ID);
+            clone = Repository.GetObjectByID<ProcessTask>(clone.ID);
 
             Assert.Multiple(() =>
             {
@@ -63,15 +63,15 @@ public class ProcessTaskTests : DatabaseTests
     public void CloneProcessTask_ToNewLoadMetadataWithArguments()
     {
         //setup parents
-        var parent1 = new LoadMetadata(CatalogueRepository);
-        var parent2 = new LoadMetadata(CatalogueRepository);
+        var parent1 = new LoadMetadata(Repository);
+        var parent2 = new LoadMetadata(Repository);
 
         //make sure we didn't magically create the same ID somehow
         Assert.That(parent2.ID, Is.Not.EqualTo(parent1.ID));
 
         //setup things to clone in parent1
-        var processTask1 = new ProcessTask(CatalogueRepository, parent1, LoadStage.AdjustRaw);
-        var arg = new ProcessTaskArgument(CatalogueRepository, processTask1)
+        var processTask1 = new ProcessTask(Repository, parent1, LoadStage.AdjustRaw);
+        var arg = new ProcessTaskArgument(Repository, processTask1)
         {
             Name = "TestArg"
         };
@@ -95,8 +95,8 @@ public class ProcessTaskTests : DatabaseTests
 
             //////////////////////////////////////////////////////////////////CHECK CLONAGE OF PROCESS TASK ////////////////////////////////////////////////////////////
             //get fresh copy out of database to ensure it is still there
-            var orig = CatalogueRepository.GetObjectByID<ProcessTask>(processTask1.ID);
-            clone = CatalogueRepository.GetObjectByID<ProcessTask>(clone.ID);
+            var orig = Repository.GetObjectByID<ProcessTask>(processTask1.ID);
+            clone = Repository.GetObjectByID<ProcessTask>(clone.ID);
 
             Assert.Multiple(() =>
             {

@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using FAnsi;
 using FAnsi.Implementation;
 using FAnsi.Implementations.MicrosoftSQL;
@@ -52,7 +53,7 @@ namespace Tests.Common;
 [Category("Unit")]
 [NonParallelizable] // Disable parallel execution to identify deadlocks
 [CancelAfter(60000)] // 60 second timeout per test to identify hanging tests
-public abstract class UnitTests
+public abstract partial class UnitTests
 {
     protected MemoryDataExportRepository Repository = new();
     protected IRDMPPlatformRepositoryServiceLocator RepositoryLocator { get; private set; }
@@ -114,6 +115,17 @@ public abstract class UnitTests
         Console.WriteLine($"[TEST START] {TestContext.CurrentContext.Test.FullName}");
         Console.Out.Flush();
     }
+
+    /// <summary>
+    /// Returns a trimmed string in which every run of whitespace (including newlines) has been replaced by a single
+    /// space.  Useful for comparing the SQL built by query builders without worrying about indentation or line endings.
+    /// </summary>
+    /// <param name="sql"></param>
+    /// <returns></returns>
+    protected static string CollapseWhitespace(string sql) => Spaces().Replace(sql, " ").Trim();
+
+    [GeneratedRegex("\\s+")]
+    private static partial Regex Spaces();
 
     /// <summary>
     /// Creates a minimum viable object of Type T.  This includes the object and any dependencies e.g. a

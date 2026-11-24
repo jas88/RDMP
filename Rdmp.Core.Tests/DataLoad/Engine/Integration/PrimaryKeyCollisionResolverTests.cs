@@ -14,7 +14,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
-public class PrimaryKeyCollisionResolverTests : DatabaseTests
+public class PrimaryKeyCollisionResolverTests : UnitTests
 {
     [Test]
     public void PrimaryKeyCollisionResolverMultilation_Check_Passes()
@@ -164,10 +164,10 @@ public class PrimaryKeyCollisionResolverTests : DatabaseTests
 
     private void SetupTableInfos(out TableInfo tableInfo, out ColumnInfo c1, out ColumnInfo c2, out ColumnInfo c3)
     {
-        tableInfo = new TableInfo(CatalogueRepository, "PrimaryKeyCollisionResolverTests");
+        tableInfo = new TableInfo(Repository, "PrimaryKeyCollisionResolverTests");
 
-        c1 = new ColumnInfo(CatalogueRepository, "col1", "varchar(100)", tableInfo);
-        c2 = new ColumnInfo(CatalogueRepository, "col2", "float", tableInfo);
-        c3 = new ColumnInfo(CatalogueRepository, "col3", "int", tableInfo);
+        c1 = new ColumnInfo(Repository, "col1", "varchar(100)", tableInfo);
+        c2 = new ColumnInfo(Repository, "col2", "float", tableInfo);
+        c3 = new ColumnInfo(Repository, "col3", "int", tableInfo);
     }
 }

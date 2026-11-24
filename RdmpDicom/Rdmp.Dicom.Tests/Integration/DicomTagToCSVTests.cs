@@ -23,7 +23,7 @@ using Tests.Common;
 
 namespace Rdmp.Dicom.Tests.Integration
 {
-    public class DicomTagToCSVTests : DatabaseTests
+    public class DicomTagToCSVTests : UnitTests
     {
         [OneTimeSetUp]
         public void Init()
