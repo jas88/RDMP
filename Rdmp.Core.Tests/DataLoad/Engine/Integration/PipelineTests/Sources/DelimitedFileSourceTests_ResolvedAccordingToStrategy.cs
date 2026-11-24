@@ -504,7 +504,7 @@ to be honest",
     [TestCase(true)]
     public void MultiCharacterSeparator_Utf16File(bool bigEndian)
     {
-        var filename = Path.Combine(TestContext.CurrentContext.TestDirectory, "DelimitedFileSourceTests.txt");
+        var filename = Path.Join(TestContext.CurrentContext.TestDirectory, "DelimitedFileSourceTests.txt");
         File.WriteAllText(filename, $"Name||Age{Environment.NewLine}Zo\u00eb||30{Environment.NewLine}",
             new UnicodeEncoding(bigEndian, true));
 

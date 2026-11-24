@@ -96,7 +96,7 @@ internal class DataTableExtensionsTests
     [Test]
     public void SaveAsCsv_GermanCulture_WritesInvariantValues()
     {
-        var path = Path.Combine(TestContext.CurrentContext.TestDirectory, "outInvariant.csv");
+        var path = Path.Join(TestContext.CurrentContext.TestDirectory, "outInvariant.csv");
 
         using var dt = new DataTable();
         dt.Columns.Add("When", typeof(DateTime));
