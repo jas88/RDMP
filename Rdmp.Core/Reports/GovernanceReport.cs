@@ -5,11 +5,9 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using CsvHelper;
-using CsvHelper.Configuration;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.Curation.Data.Governance;
 using Rdmp.Core.Repositories;
@@ -25,10 +23,18 @@ public class GovernanceReport : DocXHelper
     private readonly IDetermineDatasetTimespan _timespanCalculator;
     private readonly ICatalogueRepository _repository;
 
-    private readonly CsvConfiguration _csvConfig = new(CultureInfo.CurrentCulture)
+    /// <summary>
+    /// The report has sections whose rows differ in length, which the writer rejects unless told otherwise
+    /// </summary>
+    private static readonly CsvWriterOptions CsvOptions = new()
     {
-        Delimiter = ","
+        ValidateFieldCount = false
     };
+
+    /// <summary>
+    /// The line ending the <see cref="CsvWriter"/> uses by default, used for the blank lines between sections
+    /// </summary>
+    private const string NewLine = "\r\n";
 
     public GovernanceReport(IDetermineDatasetTimespan timespanCalculator, ICatalogueRepository repository)
     {
@@ -42,16 +48,16 @@ public class GovernanceReport : DocXHelper
 
         using (var s = new StreamWriter(f.FullName))
         {
-            using var writer = new CsvWriter(s, _csvConfig);
+            using var writer = CsvWriter.Create(s, CsvOptions);
             writer.WriteField("Extractable Datasets");
-            writer.NextRecord();
+            writer.EndRecord();
 
             writer.WriteField("Folder");
             writer.WriteField("Catalogue");
             writer.WriteField("Current Governance");
             writer.WriteField("Dataset Period");
             writer.WriteField("Description");
-            writer.NextRecord();
+            writer.EndRecord();
 
 
             var govs = _repository.GetAllObjects<GovernancePeriod>()
@@ -88,17 +94,18 @@ public class GovernanceReport : DocXHelper
                 writer.WriteField(_timespanCalculator.GetHumanReadableTimespanIfKnownOf(catalogue, true, out _));
                 writer.WriteField(ShortenDescription(catalogue.Description));
 
-                writer.NextRecord();
+                writer.EndRecord();
             }
 
-            writer.NextRecord();
+            WriteBlankLine(writer, s);
 
             // next section header
             writer.WriteField("Active Governance");
 
             OutputGovernanceList(govs, writer, false);
 
-            writer.NextRecord();
+            WriteBlankLine(writer, s);
+
             // next section header
             writer.WriteField("Expired Governance");
 
@@ -106,6 +113,17 @@ public class GovernanceReport : DocXHelper
         }
 
         ShowFile(f);
+    }
+
+    /// <summary>
+    /// Writes an empty line to <paramref name="underlying"/>, the stream that <paramref name="writer"/> writes to.  The
+    /// <see cref="CsvWriter"/> cannot do this itself: a record needs at least one field, and an empty field is written as "".
+    /// </summary>
+    private static void WriteBlankLine(CsvWriter writer, StreamWriter underlying)
+    {
+        // the writer buffers its records, so they must reach the stream before the blank line does
+        writer.Flush();
+        underlying.Write(NewLine);
     }
 
     private static string ShortenDescription(string description)
@@ -135,7 +153,7 @@ public class GovernanceReport : DocXHelper
         writer.WriteField("Approval Start");
         writer.WriteField("Approval End");
         writer.WriteField("Documents");
-        writer.NextRecord();
+        writer.EndRecord();
 
         foreach (var kvp in govs)
         {
@@ -150,10 +168,16 @@ public class GovernanceReport : DocXHelper
             writer.WriteField(kvp.Key.Name);
             writer.WriteField(string.Join(",", kvp.Value.Select(cata => cata.Name)));
             writer.WriteField(kvp.Key.StartDate);
-            writer.WriteField(kvp.Key.EndDate == null ? "Never Expires" : kvp.Key.EndDate.ToString());
+
+            // written as a date (not EndDate.ToString()) so that it has the same format as the start date
+            if (kvp.Key.EndDate == null)
+                writer.WriteField("Never Expires");
+            else
+                writer.WriteField(kvp.Key.EndDate.Value);
+
             writer.WriteField(string.Join(",", kvp.Key.GovernanceDocuments.Select(doc => doc.GetFilenameOnly())));
 
-            writer.NextRecord();
+            writer.EndRecord();
         }
     }
 }

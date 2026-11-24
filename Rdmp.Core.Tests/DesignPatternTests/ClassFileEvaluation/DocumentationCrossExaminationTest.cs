@@ -351,7 +351,8 @@ internal class DocumentationCrossExaminationTest
 
         // Deprecated classes that were removed
         "FilenameColumnName",
-        "CsvContextAdapter",
+        "ReadingContext",
+        "ReadingExceptionOccurred",
 
         // Generic terms used in documentation
         "BaseClass",

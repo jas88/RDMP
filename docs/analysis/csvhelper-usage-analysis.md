@@ -1,600 +1,118 @@
 # CsvHelper Usage Analysis in RDMP
 
-## Executive Summary
+This describes how RDMP uses [CsvHelper](https://github.com/JoshClose/CsvHelper) as of version 34.1.0.  Version 34 is a
+rewrite of the library, so anything written about RDMP's use of version 33 and earlier (including the earlier version of
+this document, which planned a move to CsvHandler against the version 33 API) no longer applies.
+
+## Summary
+
+RDMP uses CsvHelper in two ways:
+
+- **Reading** delimited flat files in the data load engine.  This is the complicated use: it depends on line numbers,
+  the raw text of each record, records of differing lengths and reports of badly quoted cells.
+- **Writing** small CSV files, one field at a time.
 
-**Overall Complexity**: **Moderate to Complex**
-**Migration Risk**: **Low to Moderate**
-**CsvHandler Compatibility**: **High (95%+)**
+RDMP does not use record mapping (reading or writing whole objects, with or without converters), dynamic records, the
+data reader wrapper or the async methods, so the source generator that comes in the CsvHelper package has nothing to generate.
+
+## Where it is used
+
+| File | Use |
+|---|---|
+| `Rdmp.Core/DataLoad/Modules/DataFlowSources/DelimitedFlatFileDataFlowSource.cs` | Opens the file and reads its records in batches |
+| `Rdmp.Core/DataLoad/Modules/DataFlowSources/SubComponents/FlatFileColumnCollection.cs` | Reads the headers |
+| `Rdmp.Core/DataLoad/Modules/DataFlowSources/SubComponents/FlatFileLine.cs` | Copy of one record: line number, cells and raw text |
+| `Rdmp.Core/DataLoad/Modules/DataFlowSources/SubComponents/FlatFileToDataTablePusher.cs` | Reads ahead to join records broken by line breaks |
+| `Rdmp.Core/ReusableLibraryCode/Extensions/DataTableExtensions.cs` | `SaveAsCsv`, used by ExcelToCSVFilesConverter and to save the data of an aggregate graph |
+| `Rdmp.Core/ReusableLibraryCode/UsefulStuff.cs` | `DataTableToCsv`, used to copy the data of an aggregate graph |
+| `Rdmp.Core/Reports/GovernanceReport.cs` | Writes the governance report |
+| `Tools/rdmp/CommandLine/Gui/ConsoleGuiSqlEditor.cs` | Saves query results |
+| `RdmpDicom/Rdmp.Dicom/Cache/Pipeline/CFindSource.cs` | Writes C-FIND results |
+
+`FlatFileEventHandlers.cs` decides what happens to bad records but does not call CsvHelper itself.  The extraction
+destination (`CSVOutputFormat`) and `DicomTagToCSV` write their files by hand and do not use CsvHelper.
+
+## Reading
+
+### Settings
+
+`DelimitedFlatFileDataFlowSource.OpenFile` creates the reader with these options:
+
+| RDMP setting | CsvHelper option |
+|---|---|
+| Separator | `Separator` when it is a single printable ASCII character or tab, otherwise a `CsvSeparatorStream` (see below) |
+| ForceHeaders | `HasHeader` is false when headers are forced |
+| ForceHeadersReplacesFirstLineInFile | `ShouldSkipRecord`, which skips the first record it is offered |
+| IgnoreBlankLines | `SkipEmptyLines` |
+| IgnoreQuotes | `Mode` is `NoEscape`, otherwise `Rfc4180` |
+| IgnoreBadReads, BadDataHandlingStrategy | `OnMalformedRecord` passes each badly quoted record to `FlatFileEventHandlers.BadDataFound` |
+
+`TrackLineNumbers` is always on, because every warning and error names a line, and `DetectSeparatorHint` is always off,
+because the separator is the one the user chose.  Everything else is left at its default: in particular the reader
+recovers from malformed data and allows records whose field count differs from the header, so it gives RDMP every
+record, however long, and RDMP decides what is bad.
+
+The culture and date format settings of the source are not given to CsvHelper.  It only supplies strings; TypeGuesser
+turns them into typed values.
+
+### Separators
+
+CsvHelper splits on one printable ASCII character or tab.  For any other separator (several characters such as `||`, or
+a character that is not ASCII such as `¬`) the file is read through a `CsvSeparatorStream`, which puts a stand in
+character (U+001F) where each separator was and leaves the separators inside quoted cells alone.  The stream is only
+created when the separator needs it.  Three things follow from using it:
+
+- The raw text of a record has the stand in character where the separator was.  `FlatFileLine` puts the separator back
+  (`FlatFileToDataTablePusher.RestoreRawRecord`) so that diverted rows look as they did in the file.
+- The stream reads UTF-8 only, so a file that starts with a UTF-16 or UTF-32 byte order mark is converted to UTF-8 as
+  it is read.
+- A file that has the stand in character outside a quoted cell cannot be read, and the load fails.
+
+### What RDMP relies on
+
+- `Headers` is available before the first `Read` and gives the header cells as they are in the file (padding, empty and
+  duplicate names included).  It is empty when the file is empty.  `FlatFileColumnCollection` trims and renames them.
+- `Read` returns false for a file that has only a header.
+- `LineNumber` is the line a record starts on.  The lines that could not be loaded are remembered by this number.
+- `Current.ToArray()` gives the cells of a record and `Current.ToString()` its raw text, without the line break that
+  ends it.  `CsvRow` cannot be kept (it is a ref struct), which is why `FlatFileLine` copies both.
+- A record may have fewer or more cells than the header.  `FlatFileToDataTablePusher` reads further records to complete
+  a short one when AttemptToResolveNewLinesInRecords is on.
+- `OnMalformedRecord` is called before `Read` returns the record it is about, with the same line number.
+- `ShouldSkipRecord` is offered every record of a file that has no header, including the first.  Records it skips are
+  not counted in the reader's row number, so the source keeps its own flag for the first record.
+
+### Errors
+
+Badly quoted cells do not throw: CsvHelper recovers and reports them, and RDMP ignores the report or applies the
+BadDataHandlingStrategy.  A `CsvFormatException` from `Read` or `Headers` is therefore something CsvHelper could not
+carry on from, and the load fails with a `FlatFileLoadException` whatever the strategy.
+
+## Writing
+
+Every writer is created with `CsvWriter.Create` and writes with `WriteField` and `EndRecord`.  The output does not depend
+on the regional settings of the computer: the separator is a comma, numbers use `.` and dates are ISO 8601.
+
+Things to keep in mind when changing these:
+
+- `EndRecord` throws when the record has no fields, so tables with no columns are not written at all.
+- The writer checks that every record has as many fields as the first.  The governance report has sections of differing
+  widths, so it turns that off (`ValidateFieldCount`).
+- An empty field is written as `""`, so the blank lines between the sections of the governance report are written to the
+  underlying stream after a `Flush`.
+- Nothing reaches the underlying writer until `Flush` or `Dispose`.  `DataTableToCsv` flushes before it reads the text.
 
-CsvHelper is used extensively in RDMP's core data loading pipeline and several supporting features. The usage patterns are sophisticated but well-contained, making migration to CsvHandler feasible with minimal code changes.
+## Tests
 
----
+- Reading: the `DelimitedFileSourceTests*` classes in
+  `Rdmp.Core.Tests/DataLoad/Engine/Integration/PipelineTests/Sources/`, and the attacher tests that need a database
+  (`Test_CSV_Attachment`, `Test_FlatFileAttacher_AmbiguousDates`, `TabTestWithOverrideHeaders`).
+- Writing: `DataTableExtensionsTests` and `ExcelConversionTest`.  The governance report has no tests.
 
-## Usage Overview
+## Replacing CsvHelper
 
-### Total Files Analyzed: 12
-
-1. **Core Data Loading Pipeline** (5 files)
-   - DelimitedFlatFileDataFlowSource.cs
-   - FlatFileLine.cs
-   - FlatFileToDataTablePusher.cs
-   - FlatFileColumnCollection.cs
-   - FlatFileEventHandlers.cs
-
-2. **Utility Functions** (2 files)
-   - DataTableExtensions.cs
-   - UsefulStuff.cs
-
-3. **Reporting** (1 file)
-   - GovernanceReport.cs
-
-4. **CLI Tools** (1 file)
-   - ConsoleGuiSqlEditor.cs
-
-5. **Plugins** (3 files)
-   - DrsMultiVolumeRarAttacher.cs (HicPlugin)
-   - CFindSource.cs (RdmpDicom)
-   - DicomTagToCSV.cs (RdmpDicom)
-
----
-
-## Detailed Feature Usage
-
-### 1. CSV Reading (Primary Use Case)
-
-#### Complexity: **HIGH**
-#### Files: DelimitedFlatFileDataFlowSource.cs, FlatFileToDataTablePusher.cs, FlatFileColumnCollection.cs
-
-**Features Used:**
-- `CsvReader` with `StreamReader`
-- `CsvConfiguration` with extensive customization:
-  - Custom delimiter (comma, tab, or user-specified)
-  - Header handling (`HasHeaderRecord`)
-  - Record skipping (`ShouldSkipRecord` callback)
-  - Blank line handling (`IgnoreBlankLines`)
-  - Quote mode (`CsvMode.NoEscape` vs `CsvMode.RFC4180`)
-  - Bad data callbacks (`BadDataFound`, `ReadingExceptionOccurred`)
-- `CsvContext` for tracking parsing state
-- Manual header reading (`ReadHeader()`, `HeaderRecord`)
-- Row-by-row reading (`Read()`)
-- Access to parser internals (`Context.Parser.RawRow`, `Context.Parser.Record`, `Context.Parser.RawRecord`)
-
-**Critical Pattern:**
-```csharp
-_reader = new CsvReader(sr, new CsvConfiguration(Culture)
-{
-    Delimiter = Separator,
-    HasHeaderRecord = string.IsNullOrWhiteSpace(ForceHeaders),
-    ShouldSkipRecord = ShouldSkipRecord,
-    IgnoreBlankLines = IgnoreBlankLines,
-    Mode = IgnoreQuotes ? CsvMode.NoEscape : CsvMode.RFC4180,
-    BadDataFound = s => EventHandlers.BadDataFound(new FlatFileLine(s), true),
-    ReadingExceptionOccurred = EventHandlers.ReadingExceptionOccurred
-});
-```
-
-**Critical for:**
-- Production data loading pipeline
-- Batch processing of large CSV files (100,000+ rows)
-- Complex error handling with configurable strategies
-- Multi-line record support (quoted newlines)
-
-**CsvHandler Compatibility**: ✅ **HIGH**
-- CsvHandler supports custom delimiters
-- Header handling available
-- Row-by-row reading supported
-- Error handling via exceptions (simpler than CsvHelper callbacks)
-- **Gap**: No direct equivalent to `ShouldSkipRecord` callback (would need manual filtering)
-- **Gap**: No `CsvContext` equivalent (would need to track row numbers manually)
-
----
-
-### 2. CSV Writing (Secondary Use Case)
-
-#### Complexity: **LOW**
-#### Files: DataTableExtensions.cs, UsefulStuff.cs, GovernanceReport.cs, ConsoleGuiSqlEditor.cs, CFindSource.cs
-
-**Features Used:**
-- `CsvWriter` with `StreamWriter`
-- `WriteField()` for cell writing
-- `NextRecord()` for row termination
-- `CultureInfo` configuration
-- Simple sequential writing pattern
-
-**Typical Pattern:**
-```csharp
-using var writer = new CsvWriter(stream, CultureInfo.CurrentCulture);
-foreach (DataColumn column in dt.Columns)
-    writer.WriteField(column.ColumnName);
-writer.NextRecord();
-
-foreach (DataRow row in dt.Rows)
-{
-    foreach (var cellObject in row.ItemArray)
-        writer.WriteField(cellObject);
-    writer.NextRecord();
-}
-```
-
-**CsvHandler Compatibility**: ✅ **VERY HIGH**
-- CsvHandler has equivalent `Write()` API
-- Same pattern: write cells, call next record
-- No complex features used
-
----
-
-### 3. Plugin Usage
-
-#### Complexity: **LOW to MODERATE**
-
-**DrsMultiVolumeRarAttacher.cs:**
-- Simple manifest file reading
-- Header detection (`ReadHeader()`)
-- Column access by name (`csvReader[FilenameColumnName]`)
-- **Compatibility**: ✅ High
-
-**CFindSource.cs:**
-- Write DICOM metadata to CSV
-- Sequential field writing
-- **Compatibility**: ✅ Very High
-
-**DicomTagToCSV.cs:**
-- Simple CSV writing (direct `StreamWriter.WriteLine`)
-- **NOTE**: Doesn't actually use CsvWriter! Already manual CSV generation
-- **Compatibility**: ✅ N/A (no migration needed)
-
----
-
-## Critical Path Analysis
-
-### Hot Paths (Performance Critical)
-
-1. **DelimitedFlatFileDataFlowSource.cs**
-   - Used for loading large medical datasets (millions of rows)
-   - Batch processing with configurable batch sizes
-   - Memory-efficient streaming (not loading entire file)
-   - **Performance Impact**: HIGH
-
-2. **FlatFileToDataTablePusher.cs**
-   - Type inference for CSV columns
-   - Handles complex data quality issues
-   - **Performance Impact**: MODERATE to HIGH
-
-### Cold Paths (Less Critical)
-
-1. **Reporting** (GovernanceReport.cs)
-   - Infrequent, small datasets
-   - Performance not critical
-
-2. **CLI Tools** (ConsoleGuiSqlEditor.cs)
-   - User-initiated exports
-   - Small to medium datasets
-
-3. **Plugins**
-   - Specialized workflows
-   - Moderate datasets
-
----
-
-## CsvHelper Features NOT Used
-
-✅ Good news for migration:
-
-- **NOT USED**: Type mapping/converters
-- **NOT USED**: Class mapping (automatic object deserialization)
-- **NOT USED**: Attributes for configuration
-- **NOT USED**: Async I/O
-- **NOT USED**: Memory pooling optimizations
-
-The code uses **low-level, manual CSV processing**, which maps well to CsvHandler's API.
-
----
-
-## Migration Complexity Assessment
-
-### Easy Migrations (Low Risk)
-
-1. **CSV Writing**
-   - DataTableExtensions.cs
-   - UsefulStuff.cs
-   - GovernanceReport.cs
-   - ConsoleGuiSqlEditor.cs
-   - CFindSource.cs
-   - **Effort**: 1-2 hours
-   - **Risk**: Very Low
-
-2. **Simple Reading** (Plugins)
-   - DrsMultiVolumeRarAttacher.cs
-   - **Effort**: 1 hour
-   - **Risk**: Low
-
-### Complex Migrations (Moderate Risk)
-
-3. **Core Pipeline**
-   - DelimitedFlatFileDataFlowSource.cs
-   - FlatFileToDataTablePusher.cs
-   - FlatFileColumnCollection.cs
-   - FlatFileEventHandlers.cs
-   - FlatFileLine.cs
-   - **Effort**: 1-2 days
-   - **Risk**: Moderate
-   - **Challenges**:
-     - Need to replicate callback-based error handling
-     - Manual row number tracking (no `CsvContext`)
-     - Multi-line record detection needs custom logic
-     - Batch processing coordination
-
----
-
-## CsvHandler Feature Gaps
-
-Based on CsvHandler README review, these gaps exist:
-
-### 1. **Error Callbacks**
-**CsvHelper:**
-```csharp
-BadDataFound = s => EventHandlers.BadDataFound(...),
-ReadingExceptionOccurred = EventHandlers.ReadingExceptionOccurred
-```
-
-**CsvHandler Alternative:**
-```csharp
-// Use try-catch around Read() calls
-try {
-    while (reader.Read()) { ... }
-} catch (CsvHandler.MalformedRowException ex) {
-    // Handle error
-}
-```
-
-**Impact**: Need to refactor error handling from callbacks to exception-based
-
-### 2. **CsvContext / Parser State**
-**CsvHelper:**
-```csharp
-reader.Context.Parser.RawRow      // Current row number
-reader.Context.Parser.Record       // Parsed cell values
-reader.Context.Parser.RawRecord    // Raw line text
-```
-
-**CsvHandler Alternative:**
-```csharp
-// Manual tracking needed
-int rowNumber = 0;
-while (reader.Read()) {
-    rowNumber++;
-    var cells = reader.CurrentRecord;
-    // No raw record access - need to track separately
-}
-```
-
-**Impact**: Need to add manual row tracking and raw record caching
-
-### 3. **ShouldSkipRecord Callback**
-**CsvHelper:**
-```csharp
-ShouldSkipRecord = args => {
-    if (condition) return true; // Skip this row
-    return false;
-}
-```
-
-**CsvHandler Alternative:**
-```csharp
-while (reader.Read()) {
-    if (shouldSkip(reader.CurrentRecord)) continue;
-    // Process row
-}
-```
-
-**Impact**: Minor - move logic from callback to loop body
-
-### 4. **Multi-line Record Detection**
-**Current**: CsvHelper automatically handles quoted newlines
-**CsvHandler**: Should also handle this via RFC 4180 mode, but needs verification
-
-**Impact**: Needs thorough testing with real-world data containing multi-line fields
-
----
-
-## Performance Comparison
-
-Based on CsvHandler benchmarks (from README):
-
-| Operation | CsvHelper | CsvHandler | Improvement |
-|-----------|-----------|------------|-------------|
-| Reading | ~1.2s | ~0.4s | **3x faster** |
-| Writing | ~1.5s | ~0.5s | **3x faster** |
-| Memory | Baseline | -20% to -40% | **Lower** |
-
-**Impact for RDMP:**
-- Large dataset loads (10M+ rows) could see 2-3x speedup
-- Memory pressure reduced (important for batch processing)
-- Native AOT potential (future optimization)
-
----
-
-## Recommended Migration Strategy
-
-### Phase 1: Low-Risk Replacements (Week 1)
-1. Migrate all CSV **writing** code first:
-   - DataTableExtensions.cs
-   - UsefulStuff.cs
-   - GovernanceReport.cs
-   - ConsoleGuiSqlEditor.cs
-   - CFindSource.cs
-
-**Validation**: Compare output files byte-for-byte
-
-### Phase 2: Plugin Readers (Week 1-2)
-2. Migrate plugin CSV **reading**:
-   - DrsMultiVolumeRarAttacher.cs
-
-**Validation**: Process test manifests, compare results
-
-### Phase 3: Core Pipeline (Week 2-3)
-3. Migrate core data loading pipeline:
-   - Create CsvHandler wrapper class to emulate CsvContext
-   - Implement error handling adapter
-   - Add row number tracking
-   - Port configuration mapping
-
-**Validation**:
-- Unit tests with existing test CSV files
-- Integration tests with real medical data loads
-- Performance benchmarking
-
-### Phase 4: Production Testing (Week 3-4)
-4. Parallel testing:
-   - Run dual pipeline (CsvHelper + CsvHandler)
-   - Compare outputs
-   - Monitor performance
-   - Fix edge cases
-
-### Phase 5: Rollout (Week 4+)
-5. Gradual migration:
-   - Enable CsvHandler by default
-   - Keep CsvHelper fallback for one release
-   - Full removal after validation period
-
----
-
-## Code Changes Required
-
-### Minimal Example: DataTableExtensions.cs
-
-**Before (CsvHelper):**
-```csharp
-using var csvWriter = new CsvWriter(stream, CultureInfo.CurrentCulture);
-foreach (DataColumn column in dt.Columns)
-    csvWriter.WriteField(column.ColumnName);
-csvWriter.NextRecord();
-
-foreach (DataRow row in dt.Rows)
-{
-    for (var i = 0; i < dt.Columns.Count; i++)
-        csvWriter.WriteField(row[i]);
-    csvWriter.NextRecord();
-}
-```
-
-**After (CsvHandler):**
-```csharp
-using var csvWriter = new CsvHandler.CsvWriter(stream);
-// Write headers
-csvWriter.Write(dt.Columns.Cast<DataColumn>()
-    .Select(c => c.ColumnName));
-
-// Write rows
-foreach (DataRow row in dt.Rows)
-{
-    csvWriter.Write(row.ItemArray);
-}
-```
-
-**Lines Changed**: ~10
-**Behavior Change**: None (identical output)
-
-### Complex Example: DelimitedFlatFileDataFlowSource.cs
-
-**Before (CsvHelper):**
-```csharp
-_reader = new CsvReader(sr, new CsvConfiguration(Culture)
-{
-    Delimiter = Separator,
-    HasHeaderRecord = !string.IsNullOrWhiteSpace(ForceHeaders),
-    BadDataFound = s => EventHandlers.BadDataFound(new FlatFileLine(s), true),
-    ReadingExceptionOccurred = EventHandlers.ReadingExceptionOccurred
-});
-
-while (_reader.Read())
-{
-    var currentRow = new FlatFileLine(_reader.Context);
-    ProcessRow(currentRow);
-}
-```
-
-**After (CsvHandler with adapter):**
-```csharp
-var config = new CsvHandler.CsvConfiguration
-{
-    Delimiter = Separator,
-    // CsvHandler doesn't have HasHeaderRecord, need to handle manually
-};
-
-_reader = new CsvHandler.CsvReader(sr, config);
-int rowNumber = 0;
-string[] rawRecord = null;
-
-// Manual header handling if needed
-if (!string.IsNullOrWhiteSpace(ForceHeaders))
-{
-    _reader.ReadHeader();
-}
-
-try
-{
-    while (_reader.Read())
-    {
-        rowNumber++;
-        rawRecord = _reader.CurrentRecord;
-
-        // Create adapter to emulate CsvContext
-        var context = new CsvContextAdapter(rowNumber, rawRecord);
-        var currentRow = new FlatFileLine(context);
-        ProcessRow(currentRow);
-    }
-}
-catch (CsvHandler.MalformedRowException ex)
-{
-    // Convert to callback-style error handling
-    EventHandlers.BadDataFound(
-        new FlatFileLine(rowNumber, rawRecord), true);
-}
-```
-
-**Lines Changed**: ~50-100
-**New Classes Needed**:
-- `CsvContextAdapter` (wrapper to emulate `CsvContext`)
-- Error handling shim
-
----
-
-## Risk Mitigation
-
-### High-Risk Areas
-
-1. **Multi-line record handling**
-   - **Mitigation**: Create comprehensive test suite with quoted newlines
-   - **Validation**: Process real medical data with free-text fields
-
-2. **Error handling changes**
-   - **Mitigation**: Create error handling adapter layer
-   - **Validation**: Inject malformed data, verify same errors caught
-
-3. **Performance regression**
-   - **Mitigation**: Benchmark before/after with large files
-   - **Validation**: Load 10M+ row datasets, compare timings
-
-### Edge Cases to Test
-
-1. ✅ Empty files
-2. ✅ Files with only headers
-3. ✅ Multi-line records (quoted newlines)
-4. ✅ Mixed encodings
-5. ✅ Very long lines (>1MB)
-6. ✅ Batch boundary conditions
-7. ✅ Malformed quotes
-8. ✅ Delimiter inside quotes
-9. ✅ Unicode characters
-10. ✅ Trailing/leading whitespace
-
----
-
-## Testing Strategy
-
-### Unit Tests
-- Port existing CsvHelper tests to CsvHandler
-- Add adapter tests (CsvContextAdapter)
-- Error handling coverage
-
-### Integration Tests
-- Full pipeline tests with real data
-- Compare output DataTables byte-for-byte
-- Performance benchmarking
-
-### Regression Tests
-- Process historical load files
-- Verify identical results
-- Check error handling produces same outcomes
-
----
-
-## Dependencies to Update
-
-```xml
-<!-- Remove -->
-<PackageReference Include="CsvHelper" Version="X.Y.Z" />
-
-<!-- Add -->
-<PackageReference Include="CsvHandler" Version="A.B.C" />
-```
-
-**Files to Update**:
-- Rdmp.Core/Rdmp.Core.csproj
-- Plugins/HicPlugin/HicPlugin.csproj
-- Plugins/RdmpDicom/Rdmp.Dicom.csproj
-
----
-
-## Conclusion
-
-### Summary
-
-**Total Complexity**: Moderate
-**Migration Effort**: 1-2 weeks for full migration
-**Risk Level**: Low to Moderate
-**Performance Gain**: 2-3x speedup expected
-**CsvHandler Compatibility**: 95%+
-
-### Recommendation
-
-✅ **PROCEED WITH MIGRATION**
-
-**Rationale:**
-1. CsvHandler supports all critical features (reading, writing, configuration)
-2. Performance improvements (2-3x) will benefit large dataset loads
-3. Lower memory usage helps with batch processing
-4. Migration is incremental and can be tested in phases
-5. Most usage is straightforward (writing), complex reading is well-isolated
-
-### Key Success Factors
-
-1. ✅ Create `CsvContextAdapter` wrapper early
-2. ✅ Build comprehensive test suite
-3. ✅ Migrate in phases (write → simple read → complex read)
-4. ✅ Keep both libraries during transition period
-5. ✅ Benchmark performance at each phase
-
-### Timeline Estimate
-
-- **Week 1**: Low-risk migrations (writing, simple reading)
-- **Week 2**: Core pipeline migration
-- **Week 3**: Testing and validation
-- **Week 4**: Production rollout with monitoring
-- **Total**: 4 weeks to full production deployment
-
----
-
-## Appendix: Feature Mapping
-
-| CsvHelper Feature | Used? | CsvHandler Equivalent | Gap? |
-|-------------------|-------|-----------------------|------|
-| `CsvReader` | ✅ Yes | `CsvReader` | ❌ No |
-| `CsvWriter` | ✅ Yes | `CsvWriter` | ❌ No |
-| `CsvConfiguration` | ✅ Yes | `CsvConfiguration` | ⚠️ Partial |
-| Custom delimiter | ✅ Yes | Supported | ❌ No |
-| Header handling | ✅ Yes | Supported | ❌ No |
-| `Read()` | ✅ Yes | Supported | ❌ No |
-| `WriteField()` | ✅ Yes | `Write()` | ❌ No |
-| `NextRecord()` | ✅ Yes | `Write()` auto-advances | ❌ No |
-| `CsvContext` | ✅ Yes | None | ✅ **YES** |
-| `ShouldSkipRecord` | ✅ Yes | None | ✅ **YES** |
-| `BadDataFound` | ✅ Yes | Exception-based | ⚠️ Pattern change |
-| `ReadingExceptionOccurred` | ✅ Yes | Exception-based | ⚠️ Pattern change |
-| Type converters | ❌ No | N/A | ❌ No |
-| Class mapping | ❌ No | N/A | ❌ No |
-| Async I/O | ❌ No | N/A | ❌ No |
-
-**Legend:**
-- ✅ YES = Feature gap exists, needs workaround
-- ⚠️ Partial = Different pattern, but achievable
-- ❌ NO = No gap, direct replacement available
-
----
-
-*Analysis completed: 2025-01-23*
-*Analyzer: Code Analysis Agent*
-*RDMP Repository: /Users/jas88/Developer/Github/RDMP*
+A library that replaced CsvHelper would have to do everything under "What RDMP relies on": report the line a record
+starts on, give its raw text, allow records of differing lengths, recover from bad quoting and say that it did, and read
+separators that are not a single character.  The writers need nothing unusual.
 
 [Pipeline]: ../../Documentation/CodeTutorials/Glossary.md#Pipeline

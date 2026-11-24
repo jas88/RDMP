@@ -9,14 +9,15 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using CsvHelper;
-using CsvHelper.Configuration;
 using FAnsi.Discovery;
 using Rdmp.Core.Curation.Data;
 using Rdmp.Core.DataFlowPipeline;
 using Rdmp.Core.DataFlowPipeline.Requirements;
 using Rdmp.Core.DataLoad.Engine.Attachers;
 using Rdmp.Core.DataLoad.Modules.DataFlowSources.SubComponents;
+using Rdmp.Core.DataLoad.Modules.Exceptions;
 using Rdmp.Core.ReusableLibraryCode.Checks;
 using Rdmp.Core.ReusableLibraryCode.Progress;
 
@@ -34,6 +35,11 @@ public class DelimitedFlatFileDataFlowSource : IPluginDataFlowSource<DataTable>,
     private CsvReader _reader;
 
     private bool _dataAvailable;
+
+    /// <summary>
+    /// True once the first record of the file has been offered to <see cref="ShouldSkipRecord"/>
+    /// </summary>
+    private bool _firstRecordSeen;
     private IDataLoadEventListener _listener;
 
     /// <summary>
@@ -424,36 +430,126 @@ This will not help you avoid bad data as the full file structure must still be r
             throw new Exception(
                 $"Could not open file {fileToLoad.FullName} because the file Separator has not been set yet, make sure to set all relevant [DemandsInitialization] properties");
 
-        var sr = new StreamReader(fileToLoad.FullName);
-        _reader = new CsvReader(sr, new CsvConfiguration(Culture)
+        var options = new CsvReaderOptions
         {
-            Delimiter = Separator,
-            HasHeaderRecord = string.IsNullOrWhiteSpace(ForceHeaders),
-            ShouldSkipRecord = ShouldSkipRecord,
-            IgnoreBlankLines = IgnoreBlankLines,
-            Mode = IgnoreQuotes ? CsvMode.NoEscape : CsvMode.RFC4180,
-            BadDataFound = s => EventHandlers.BadDataFound(new FlatFileLine(s), true),
-            ReadingExceptionOccurred = EventHandlers.ReadingExceptionOccurred
-        });
+            HasHeader = string.IsNullOrWhiteSpace(ForceHeaders),
+            SkipEmptyLines = IgnoreBlankLines,
+            Mode = IgnoreQuotes ? CsvMode.NoEscape : CsvMode.Rfc4180,
+            TrackLineNumbers = true,
+            DetectSeparatorHint = false,
+            OnMalformedRecord = bad =>
+                EventHandlers.BadDataFound(new FlatFileLine(bad, DataPusher.RestoreRawRecord), true)
+        };
 
-        Headers.GetHeadersFromFile(_reader);
-    }
+        //the first line of the file is only skipped when the forced headers replace it
+        _firstRecordSeen = false;
+        if (!string.IsNullOrWhiteSpace(ForceHeaders) && ForceHeadersReplacesFirstLineInFile)
+            options = options with { ShouldSkipRecord = ShouldSkipRecord };
 
-
-    private bool ShouldSkipRecord(ShouldSkipRecordArgs args)
-    {
-        if (_reader.Context.Parser.RawRow == 1 //first line of file
-            && !string.IsNullOrWhiteSpace(ForceHeaders) //and we are forcing headers
-            && ForceHeadersReplacesFirstLineInFile) //and those headers replace the first line of the file
+        if (IsSingleCharacterSeparator(Separator))
         {
-            Headers.ShowForceHeadersAsciiArt(args.Row, _listener);
+            DataPusher.RestoreRawRecord = null;
+            _reader = CsvReader.FromFile(fileToLoad.FullName, options with { Separator = Separator[0] });
+        }
+        else
+        {
+            //CsvHelper only splits on a single ASCII character, so for any other separator the file is read through a stream
+            //that puts a stand in character where each separator was (but leaves separators in quoted cells alone)
+            var separatorStream = new CsvSeparatorStream(OpenAsUtf8(fileToLoad), Separator);
+            var standIn = separatorStream.Replacement.ToString();
+            var separator = Separator;
 
-            //skip the line
-            return true;
+            DataPusher.RestoreRawRecord = raw => raw.Replace(standIn, separator);
+
+            try
+            {
+                _reader = CsvReader.Create(separatorStream, options);
+            }
+            catch (Exception)
+            {
+                separatorStream.Dispose();
+                throw;
+            }
         }
 
-        //otherwise don't skip lines
-        return false;
+        try
+        {
+            Headers.GetHeadersFromFile(_reader, Separator);
+        }
+        catch (CsvFormatException e)
+        {
+            throw ReadingFailed(e);
+        }
+    }
+
+    /// <summary>
+    /// True if <paramref name="separator"/> is one CsvHelper can split on directly (a single printable ASCII character or tab)
+    /// </summary>
+    private static bool IsSingleCharacterSeparator(string separator) =>
+        separator.Length == 1 && (separator[0] == '\t' || separator[0] is >= ' ' and <= '~');
+
+    /// <summary>
+    /// Opens the file for <see cref="CsvSeparatorStream"/>, which reads UTF-8 only: a file that starts with a UTF-16 or UTF-32 byte
+    /// order mark is converted to UTF-8 as it is read
+    /// </summary>
+    private static Stream OpenAsUtf8(FileInfo fileToLoad)
+    {
+        var stream = fileToLoad.OpenRead();
+
+        try
+        {
+            Span<byte> start = stackalloc byte[4];
+            var read = stream.ReadAtLeast(start, start.Length, false);
+            stream.Position = 0;
+
+            Encoding encoding = start[..read] switch
+            {
+                [0xFF, 0xFE, 0x00, 0x00] => new UTF32Encoding(false, true),
+                [0x00, 0x00, 0xFE, 0xFF] => new UTF32Encoding(true, true),
+                [0xFF, 0xFE, ..] => new UnicodeEncoding(false, true),
+                [0xFE, 0xFF, ..] => new UnicodeEncoding(true, true),
+                _ => null
+            };
+
+            return encoding == null ? stream : Encoding.CreateTranscodingStream(stream, encoding, Encoding.UTF8);
+        }
+        catch (Exception)
+        {
+            stream.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// CsvHelper recovers from badly quoted cells by itself (see <see cref="IgnoreBadReads"/>), so an exception while reading means
+    /// it cannot carry on with the file whatever the <see cref="BadDataHandlingStrategy"/>
+    /// </summary>
+    private FlatFileLoadException ReadingFailed(CsvFormatException e) =>
+        new($"Could not read file '{_fileToLoad.File.FullName}' (line {e.LineNumber}): {e.Message}", e);
+
+    private bool ShouldSkipRecord(CsvRow row)
+    {
+        if (_firstRecordSeen)
+            return false;
+
+        _firstRecordSeen = true;
+
+        Headers.ShowForceHeadersAsciiArt(row.ToArray(), _listener);
+
+        //skip the line
+        return true;
+    }
+
+    private bool Read()
+    {
+        try
+        {
+            return _reader.Read();
+        }
+        catch (CsvFormatException e)
+        {
+            throw ReadingFailed(e);
+        }
     }
 
     protected int IterativelyBatchLoadDataIntoDataTable(DataTable dt, int batchSize)
@@ -470,7 +566,7 @@ This will not help you avoid bad data as the full file structure must still be r
         while
             (_dataAvailable =
              DataPusher.PeekedRecord != null ||
-             _reader.Read()) //while we can read data -- also record whether the data was exhausted by this Read() because  CSVReader blows up if you ask it to Read() after Read() has already returned a false once
+             Read()) //while we can read data -- also record whether the data was exhausted by this Read() because  CSVReader blows up if you ask it to Read() after Read() has already returned a false once
         {
             FlatFileLine currentRow;
 
@@ -481,10 +577,10 @@ This will not help you avoid bad data as the full file structure must still be r
             }
             else
             {
-                currentRow = new FlatFileLine(_reader.Context);
+                currentRow = new FlatFileLine(_reader, DataPusher.RestoreRawRecord);
 
                 //if there is bad data on the current row just read the next
-                if (DataPusher.BadLines.Contains(_reader.Context.Parser.RawRow))
+                if (DataPusher.BadLines.Contains(currentRow.LineNumber))
                     continue;
             }
 

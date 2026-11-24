@@ -5,7 +5,6 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using System.Data;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using CsvHelper;
@@ -15,24 +14,30 @@ namespace Rdmp.Core.ReusableLibraryCode.Extensions;
 public static class DataTableExtensions
 {
     /// <summary>
-    /// Formats the data in the <paramref name="dt"/> to CSV format to the given <paramref name="stream"/>
+    /// Formats the data in the <paramref name="dt"/> to CSV format to the given <paramref name="stream"/>.  The output does not depend
+    /// on the regional settings of the computer: the separator is a comma, numbers use '.' and dates are ISO 8601.
     /// </summary>
     /// <param name="dt"></param>
     /// <param name="stream"></param>
     public static void SaveAsCsv(this DataTable dt, StreamWriter stream)
     {
-        using var csvWriter = new CsvWriter(stream, CultureInfo.CurrentCulture);
+        using var csvWriter = CsvWriter.Create(stream);
+
+        // a record must have at least one field
+        if (dt.Columns.Count == 0)
+            return;
+
         foreach (DataColumn column in dt.Columns)
             csvWriter.WriteField(column.ColumnName);
 
-        csvWriter.NextRecord();
+        csvWriter.EndRecord();
 
         foreach (DataRow row in dt.Rows)
         {
             for (var i = 0; i < dt.Columns.Count; i++)
                 csvWriter.WriteField(row[i]);
 
-            csvWriter.NextRecord();
+            csvWriter.EndRecord();
         }
     }
 
