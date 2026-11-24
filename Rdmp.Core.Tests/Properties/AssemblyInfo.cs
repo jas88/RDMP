@@ -5,10 +5,12 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 using System.Runtime.InteropServices;
 using NUnit.Framework;
+using Tests.Common;
 
 // Disable parallel test execution to work around MTP/NUnit hang on shutdown
 // See: https://github.com/nunit/nunit3-vs-adapter/issues/1282
 [assembly: NonParallelizable]
+[assembly: IsolatedTestDirectory]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from

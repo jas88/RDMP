@@ -183,7 +183,8 @@ public class CatalogueTests : UnitTests
         var newCatalogue = new Catalogue(Repository, "fishing");
         var expectedID = newCatalogue.ID;
 
-        Assert.That(expectedID, Is.GreaterThan(1));
+        // the repository of the test starts empty, so this can be the first Catalogue
+        Assert.That(expectedID, Is.GreaterThan(0));
 
 
         var catasAfter = Repository.GetAllObjects<Catalogue>().ToArray();

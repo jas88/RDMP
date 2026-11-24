@@ -55,8 +55,29 @@ namespace Tests.Common;
 [CancelAfter(60000)] // 60 second timeout per test to identify hanging tests
 public abstract partial class UnitTests
 {
+    /// <summary>
+    /// The repository of the current test.  Every test gets an empty one of its own (see <see cref="SetUp"/>), so it never sees the
+    /// objects that another test created
+    /// </summary>
     protected MemoryDataExportRepository Repository = new();
     protected IRDMPPlatformRepositoryServiceLocator RepositoryLocator { get; private set; }
+
+    /// <summary>
+    /// A directory for the files of the current test, which no other test uses and which is deleted when the test ends
+    /// </summary>
+    protected static DirectoryInfo IsolatedDirectory => IsolatedTestDirectoryAttribute.ForCurrentTest();
+
+    /// <summary>
+    /// True (the default) to give every test an empty <see cref="Repository"/>.  False keeps one repository for all the tests of
+    /// the fixture, which lets a test see the objects of the tests before it: only for fixtures that cannot yet do without that
+    /// </summary>
+    protected virtual bool RepositoryPerTest => true;
+
+    /// <summary>
+    /// True until the first test of the fixture has started.  The repository made by the constructor is kept for that test, in
+    /// case the constructor of a fixture put something in it
+    /// </summary>
+    private bool _firstTest = true;
 
     //These types do not have to be supported by the method WhenIHaveA
     protected HashSet<string> SkipTheseTypes = new(new string[]
@@ -105,13 +126,24 @@ public abstract partial class UnitTests
     }
 
     /// <summary>
-    /// Loads FAnsi implementations for all supported DBMS platforms into memory
+    /// Gives the test an empty <see cref="Repository"/> of its own
     /// </summary>
     [SetUp]
     protected virtual void SetUp()
     {
         // Check cancellation token at start of setup (for [CancelAfter] to work)
         TestContext.CurrentContext.CancellationToken.ThrowIfCancellationRequested();
+
+        if (_firstTest)
+        {
+            _firstTest = false;
+        }
+        else if (RepositoryPerTest)
+        {
+            Repository = new MemoryDataExportRepository();
+            RepositoryLocator = new RepositoryProvider(Repository);
+        }
+
         Console.WriteLine($"[TEST START] {TestContext.CurrentContext.Test.FullName}");
         Console.Out.Flush();
     }
