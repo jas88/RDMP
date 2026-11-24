@@ -17,12 +17,12 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataExport;
 
-public class ProjectChecksTestsSimple : DatabaseTests
+public class ProjectChecksTestsSimple : UnitTests
 {
     [Test]
     public void Project_NoConfigurations()
     {
-        var p = new Project(DataExportRepository, "Fish");
+        var p = new Project(Repository, "Fish");
 
         try
         {
@@ -176,18 +176,18 @@ public class ProjectChecksTestsSimple : DatabaseTests
 
     private Project GetProjectWithConfig(out ExtractionConfiguration config)
     {
-        var p = new Project(DataExportRepository, "Fish")
+        var p = new Project(Repository, "Fish")
         {
             ProjectNumber = -5000
         };
-        config = new ExtractionConfiguration(DataExportRepository, p);
+        config = new ExtractionConfiguration(Repository, p);
         return p;
     }
 
     private Project GetProjectWithConfigDirectory(out ExtractionConfiguration config, out DirectoryInfo dir)
     {
-        var p = new Project(DataExportRepository, "Fish");
-        config = new ExtractionConfiguration(DataExportRepository, p);
+        var p = new Project(Repository, "Fish");
+        config = new ExtractionConfiguration(Repository, p);
 
         var projectFolder = Path.Combine(TestContext.CurrentContext.WorkDirectory, "ProjectCheckerTestDir");
 

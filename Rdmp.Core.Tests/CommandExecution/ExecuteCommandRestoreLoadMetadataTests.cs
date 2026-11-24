@@ -14,21 +14,21 @@ using Rdmp.Core.CommandExecution;
 
 namespace Rdmp.Core.Tests.CommandExecution
 {
-    public class ExecuteCommandRestoreLoadMetadataTests : DatabaseTests
+    public class ExecuteCommandRestoreLoadMetadataTests : UnitTests
     {
 
         [Test]
         public void TestRestoreLoadMetadataVersion()
         {
-            var lmd1 = new LoadMetadata(CatalogueRepository, "MyLmd");
+            var lmd1 = new LoadMetadata(Repository, "MyLmd");
             lmd1.Description = "Desc!";
-            var cata = new Catalogue(CatalogueRepository, "myCata")
+            var cata = new Catalogue(Repository, "myCata")
             {
                 LoggingDataTask = "B"
             };
             cata.SaveToDatabase();
             lmd1.LinkToCatalogue(cata);
-            var pt1 = new ProcessTask(CatalogueRepository, lmd1, LoadStage.Mounting)
+            var pt1 = new ProcessTask(Repository, lmd1, LoadStage.Mounting)
             {
                 ProcessTaskType = ProcessTaskType.Attacher,
                 LoadStage = LoadStage.Mounting,
@@ -47,12 +47,12 @@ namespace Rdmp.Core.Tests.CommandExecution
             Assert.That(clonedLmd.Description, Is.EqualTo(lmd1.Description));
             Assert.That(clonedLmd.ProcessTasks.First().ProcessTaskArguments.First().Value, Is.EqualTo(lmd1.ProcessTasks.First().ProcessTaskArguments.First().Value));
             pt1.DeleteInDatabase();
-            var fetchedlmd = CatalogueRepository.GetObjectByID<LoadMetadata>(lmd1.ID);
+            var fetchedlmd = Repository.GetObjectByID<LoadMetadata>(lmd1.ID);
             Assert.That(fetchedlmd.ProcessTasks.Count(), Is.EqualTo(0));
             var activator = new ThrowImmediatelyActivator(RepositoryLocator);
             var cmd = new ExecuteCommandRestoreLoadMetadataVersion(activator, clonedLmd);
             Assert.DoesNotThrow(()=>cmd.Execute());
-            fetchedlmd = CatalogueRepository.GetObjectByID<LoadMetadata>(lmd1.ID);
+            fetchedlmd = Repository.GetObjectByID<LoadMetadata>(lmd1.ID);
             Assert.That(fetchedlmd.ProcessTasks.Count(), Is.EqualTo(1));
         }
     }

@@ -12,30 +12,31 @@ using Rdmp.Core.DataLoad.Engine.Pipeline.Components.Anonymisation;
 using Rdmp.Core.DataLoad.Engine.Pipeline.Destinations;
 using Rdmp.Core.DataLoad.Modules.Attachers;
 using Rdmp.Core.DataLoad.Modules.DataFlowOperations;
+using Rdmp.Core.Repositories;
 using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration;
 
-public class PipelineTests : DatabaseTests
+public class PipelineTests : UnitTests
 {
     [Test]
     public void SetupAndSaveAPipeline()
     {
-        var pipeline = new Pipeline(CatalogueRepository, "Bob");
+        var pipeline = new Pipeline(Repository, "Bob");
 
         try
         {
             Assert.That(pipeline.Name, Is.EqualTo("Bob"));
 
             var pipelineComponent =
-                new PipelineComponent(CatalogueRepository, pipeline, typeof(BasicAnonymisationEngine), 0);
+                new PipelineComponent(Repository, pipeline, typeof(BasicAnonymisationEngine), 0);
 
             try
             {
                 Assert.That(typeof(BasicAnonymisationEngine).FullName, Is.EqualTo(pipelineComponent.Class));
 
                 var argument1 = (PipelineComponentArgument)pipelineComponent.CreateNewArgument();
-                var argument2 = new PipelineComponentArgument(CatalogueRepository, pipelineComponent);
+                var argument2 = new PipelineComponentArgument(Repository, pipelineComponent);
 
                 try
                 {
@@ -51,7 +52,7 @@ public class PipelineTests : DatabaseTests
                     argument2.SetValue(dt);
                     argument2.SaveToDatabase();
 
-                    var argument2Copy = CatalogueRepository.GetObjectByID<PipelineComponentArgument>(argument2.ID);
+                    var argument2Copy = Repository.GetObjectByID<PipelineComponentArgument>(argument2.ID);
                     Assert.That(argument2Copy.GetValueAsSystemType(), Is.EqualTo(dt));
                 }
                 finally
@@ -74,7 +75,7 @@ public class PipelineTests : DatabaseTests
     [Test]
     public void ClonePipelineNaming()
     {
-        var p = new Pipeline(CatalogueRepository)
+        var p = new Pipeline(Repository)
         {
             Name = "My Pipe"
         };
@@ -110,26 +111,29 @@ public class PipelineTests : DatabaseTests
     [Test]
     public void CloneAPipeline()
     {
-        var p = new Pipeline(CatalogueRepository);
+        // counts every component and argument in the repository, so must not see those of the other tests
+        var repository = new MemoryDataExportRepository();
 
-        var source = new PipelineComponent(CatalogueRepository, p, typeof(DelimitedFlatFileAttacher), 0);
+        var p = new Pipeline(repository);
+
+        var source = new PipelineComponent(repository, p, typeof(DelimitedFlatFileAttacher), 0);
         source.CreateArgumentsForClassIfNotExists<DelimitedFlatFileAttacher>();
 
-        var middle = new PipelineComponent(CatalogueRepository, p, typeof(ColumnRenamer), 1);
+        var middle = new PipelineComponent(repository, p, typeof(ColumnRenamer), 1);
         middle.CreateArgumentsForClassIfNotExists<ColumnRenamer>();
 
-        var middle2 = new PipelineComponent(CatalogueRepository, p, typeof(ColumnForbidder), 1);
+        var middle2 = new PipelineComponent(repository, p, typeof(ColumnForbidder), 1);
         middle2.CreateArgumentsForClassIfNotExists<ColumnForbidder>();
 
-        var destination = new PipelineComponent(CatalogueRepository, p, typeof(DataTableUploadDestination), 2);
+        var destination = new PipelineComponent(repository, p, typeof(DataTableUploadDestination), 2);
         destination.CreateArgumentsForClassIfNotExists<DataTableUploadDestination>();
 
         p.SourcePipelineComponent_ID = source.ID;
         p.DestinationPipelineComponent_ID = destination.ID;
         p.SaveToDatabase();
 
-        var componentsBefore = RepositoryLocator.CatalogueRepository.GetAllObjects<PipelineComponent>().Length;
-        var argumentsBefore = RepositoryLocator.CatalogueRepository.GetAllObjects<PipelineComponentArgument>().Length;
+        var componentsBefore = repository.GetAllObjects<PipelineComponent>().Length;
+        var argumentsBefore = repository.GetAllObjects<PipelineComponentArgument>().Length;
 
         var arg = p.PipelineComponents.Single(c => c.Class == typeof(ColumnRenamer).ToString())
             .PipelineComponentArguments.Single(a => a.Name == "ColumnNameToFind");
@@ -146,8 +150,8 @@ public class PipelineTests : DatabaseTests
 
             Assert.That($"{p.Name} (Clone)", Is.EqualTo(p2.Name));
 
-            Assert.That(RepositoryLocator.CatalogueRepository.GetAllObjects<PipelineComponent>(), Has.Length.EqualTo(componentsBefore * 2));
-            Assert.That(RepositoryLocator.CatalogueRepository.GetAllObjects<PipelineComponentArgument>(), Has.Length.EqualTo(argumentsBefore * 2));
+            Assert.That(repository.GetAllObjects<PipelineComponent>(), Has.Length.EqualTo(componentsBefore * 2));
+            Assert.That(repository.GetAllObjects<PipelineComponentArgument>(), Has.Length.EqualTo(argumentsBefore * 2));
 
             //p the original should have a pipeline component that has the value we set earlier
             Assert.That(
@@ -180,10 +184,10 @@ public class PipelineTests : DatabaseTests
     [Test]
     public void CloneAPipeline_BrokenPipes()
     {
-        var p = new Pipeline(CatalogueRepository);
+        var p = new Pipeline(Repository);
 
         //Setup a pipeline with a source component type that doesn't exist
-        var source = new PipelineComponent(CatalogueRepository, p, typeof(DelimitedFlatFileAttacher), 0)
+        var source = new PipelineComponent(Repository, p, typeof(DelimitedFlatFileAttacher), 0)
         {
             Class = "Trollololol"
         };
@@ -215,10 +219,10 @@ public class PipelineTests : DatabaseTests
     [Test]
     public void DeletePipelineSource_ClearsReference()
     {
-        var p = new Pipeline(CatalogueRepository);
+        var p = new Pipeline(Repository);
 
         //Setup a pipeline with a source component
-        var source = new PipelineComponent(CatalogueRepository, p, typeof(DelimitedFlatFileAttacher), 0)
+        var source = new PipelineComponent(Repository, p, typeof(DelimitedFlatFileAttacher), 0)
         {
             Class = "Trollololol"
         };
@@ -236,10 +240,10 @@ public class PipelineTests : DatabaseTests
     [Test]
     public void DeletePipelineDestination_ClearsReference()
     {
-        var p = new Pipeline(CatalogueRepository);
+        var p = new Pipeline(Repository);
 
         //Setup a pipeline with a source component
-        var dest = new PipelineComponent(CatalogueRepository, p, typeof(DelimitedFlatFileAttacher), 0)
+        var dest = new PipelineComponent(Repository, p, typeof(DelimitedFlatFileAttacher), 0)
         {
             Class = "Trollololol"
         };

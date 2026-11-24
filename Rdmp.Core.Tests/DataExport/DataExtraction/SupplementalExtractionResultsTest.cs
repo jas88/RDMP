@@ -11,21 +11,21 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataExport.DataExtraction;
 
-internal class SupplementalExtractionResultsTest : DatabaseTests
+internal class SupplementalExtractionResultsTest : UnitTests
 {
     [Test]
     public void TestCreating()
     {
-        var p = new Project(DataExportRepository, "MyProj");
+        var p = new Project(Repository, "MyProj");
 
-        var ec = new ExtractionConfiguration(DataExportRepository, p);
+        var ec = new ExtractionConfiguration(Repository, p);
 
-        var cata = new Catalogue(CatalogueRepository, "MyCata");
-        var tbl = new SupportingSQLTable(CatalogueRepository, cata, "Some global data");
+        var cata = new Catalogue(Repository, "MyCata");
+        var tbl = new SupportingSQLTable(Repository, cata, "Some global data");
 
-        var othertbl = new SupportingSQLTable(CatalogueRepository, cata, "Some global data");
+        var othertbl = new SupportingSQLTable(Repository, cata, "Some global data");
 
-        var result = new SupplementalExtractionResults(DataExportRepository, ec, "select * from Globalsglba", tbl);
+        var result = new SupplementalExtractionResults(Repository, ec, "select * from Globalsglba", tbl);
 
         Assert.Multiple(() =>
         {

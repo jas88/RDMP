@@ -10,16 +10,16 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration.Dependencies;
 
-public class DependencyTests : DatabaseTests
+public class DependencyTests : UnitTests
 {
     [Test]
     public void ExtractionInformationTriangle()
     {
-        var t = new TableInfo(CatalogueRepository, "t");
-        var col = new ColumnInfo(CatalogueRepository, "mycol", "varchar(10)", t);
+        var t = new TableInfo(Repository, "t");
+        var col = new ColumnInfo(Repository, "mycol", "varchar(10)", t);
 
-        var cat = new Catalogue(CatalogueRepository, "MyCat");
-        var ci = new CatalogueItem(CatalogueRepository, cat, "myci");
+        var cat = new Catalogue(Repository, "MyCat");
+        var ci = new CatalogueItem(Repository, cat, "myci");
 
 
         try

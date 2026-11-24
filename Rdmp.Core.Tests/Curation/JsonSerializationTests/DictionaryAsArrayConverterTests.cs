@@ -19,7 +19,7 @@ namespace Rdmp.Core.Tests.Curation.JsonSerializationTests;
 /// Comprehensive tests for DictionaryAsArrayConverter focusing on complex key scenarios
 /// </summary>
 [TestFixture]
-public class DictionaryAsArrayConverterTests : DatabaseTests
+public class DictionaryAsArrayConverterTests : UnitTests
 {
     #region Basic Functionality
 

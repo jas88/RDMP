@@ -11,7 +11,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration;
 
-public class ExtractionFilterTests : DatabaseTests
+public class ExtractionFilterTests : UnitTests
 {
     [Test]
     public void TestExtractionFilterDeleting_WhenItHas_ExtractionFilterParameterSet_DirectlyFails()
@@ -23,20 +23,20 @@ public class ExtractionFilterTests : DatabaseTests
 
     private ExtractionFilter GetFilterWithParameterSet()
     {
-        var cata = new Catalogue(CatalogueRepository, "myCata");
-        var cataItem = new CatalogueItem(CatalogueRepository, cata, "MyCol");
+        var cata = new Catalogue(Repository, "myCata");
+        var cataItem = new CatalogueItem(Repository, cata, "MyCol");
 
-        var table = new TableInfo(CatalogueRepository, "myTbl");
-        var col = new ColumnInfo(CatalogueRepository, "myCol", "varchar(10)", table);
+        var table = new TableInfo(Repository, "myTbl");
+        var col = new ColumnInfo(Repository, "myCol", "varchar(10)", table);
 
-        var ei = new ExtractionInformation(CatalogueRepository, cataItem, col, "[myTbl].[mycol]");
-        var filter = new ExtractionFilter(CatalogueRepository, "Age", ei)
+        var ei = new ExtractionInformation(Repository, cataItem, col, "[myTbl].[mycol]");
+        var filter = new ExtractionFilter(Repository, "Age", ei)
         {
             WhereSQL = "Age >= @age"
         };
-        new ExtractionFilterParameter(CatalogueRepository, "DECLARE @age int", filter);
+        new ExtractionFilterParameter(Repository, "DECLARE @age int", filter);
 
-        var paramSet = new ExtractionFilterParameterSet(CatalogueRepository, filter, "Old");
+        var paramSet = new ExtractionFilterParameterSet(Repository, filter, "Old");
         paramSet.CreateNewValueEntries();
 
         return filter;

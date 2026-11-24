@@ -13,7 +13,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration.ObscureDependencyTests;
 
-public class ObjectSharingObscureDependencyFinderTests : DatabaseTests
+public class ObjectSharingObscureDependencyFinderTests : UnitTests
 {
     private ShareManager _share;
 
@@ -27,13 +27,13 @@ public class ObjectSharingObscureDependencyFinderTests : DatabaseTests
     [Test]
     public void TestPruning()
     {
-        var c = new Catalogue(CatalogueRepository, "Catapault");
-        var ci = new CatalogueItem(CatalogueRepository, c, "string");
+        var c = new Catalogue(Repository, "Catapault");
+        var ci = new CatalogueItem(Repository, c, "string");
 
-        var c2 = new Catalogue(CatalogueRepository, "Catapault (Import)");
-        var ci2 = new CatalogueItem(CatalogueRepository, c2, "string (Import)");
+        var c2 = new Catalogue(Repository, "Catapault (Import)");
+        var ci2 = new CatalogueItem(Repository, c2, "string (Import)");
 
-        Assert.That(CatalogueRepository.GetAllObjects<ObjectExport>(), Is.Empty);
+        Assert.That(Repository.GetAllObjects<ObjectExport>(), Is.Empty);
         var ec = _share.GetNewOrExistingExportFor(c);
         var eci = _share.GetNewOrExistingExportFor(ci);
 
@@ -42,12 +42,12 @@ public class ObjectSharingObscureDependencyFinderTests : DatabaseTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(CatalogueRepository.GetAllObjects<ObjectExport>(), Has.Length.EqualTo(2));
-            Assert.That(CatalogueRepository.GetAllObjects<ObjectImport>(), Has.Length.EqualTo(2));
+            Assert.That(Repository.GetAllObjects<ObjectExport>(), Has.Length.EqualTo(2));
+            Assert.That(Repository.GetAllObjects<ObjectImport>(), Has.Length.EqualTo(2));
         });
-        Assert.That(CatalogueRepository.GetAllObjects<ObjectImport>()
+        Assert.That(Repository.GetAllObjects<ObjectImport>()
 , Has.Length.EqualTo(2)); //successive calls shouldn't generate extra entries since they are same obj
-        Assert.That(CatalogueRepository.GetAllObjects<ObjectImport>(), Has.Length.EqualTo(2));
+        Assert.That(Repository.GetAllObjects<ObjectImport>(), Has.Length.EqualTo(2));
 
         //cannot delete the shared object
         Assert.Throws<Exception>(c.DeleteInDatabase);
@@ -56,7 +56,7 @@ public class ObjectSharingObscureDependencyFinderTests : DatabaseTests
         Assert.DoesNotThrow(c2.DeleteInDatabase);
 
         //now that we deleted the import it should have deleted everything else including the CatalogueItem import which magically disappeared when we deleted the Catalogue via database level cascade events
-        Assert.That(CatalogueRepository.GetAllObjects<ObjectImport>(), Is.Empty);
+        Assert.That(Repository.GetAllObjects<ObjectImport>(), Is.Empty);
 
         _share.GetImportAs(eci.SharingUID, ci2);
     }
@@ -65,7 +65,7 @@ public class ObjectSharingObscureDependencyFinderTests : DatabaseTests
     public void CannotDeleteSharedObjectTest()
     {
         //create a test catalogue
-        var c = new Catalogue(CatalogueRepository, "blah");
+        var c = new Catalogue(Repository, "blah");
 
         Assert.That(_share.IsExportedObject(c), Is.False);
 
@@ -90,11 +90,11 @@ public class ObjectSharingObscureDependencyFinderTests : DatabaseTests
     [Test]
     public void CascadeDeleteImportDefinitions()
     {
-        var p = new Project(DataExportRepository, "prah");
+        var p = new Project(Repository, "prah");
 
         var exportDefinition = _share.GetNewOrExistingExportFor(p);
 
-        var p2 = new Project(DataExportRepository, "prah2");
+        var p2 = new Project(Repository, "prah2");
 
         var importDefinition = _share.GetImportAs(exportDefinition.SharingUID, p2);
 

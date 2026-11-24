@@ -10,13 +10,13 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation;
 
-internal class ExtendedPropertyTests : DatabaseTests
+internal class ExtendedPropertyTests : UnitTests
 {
     [Test]
     public void ExtendedProperty_Catalogue()
     {
-        var cata = new Catalogue(CatalogueRepository, "My cata");
-        var prop = new ExtendedProperty(CatalogueRepository, cata, "Fish", 5);
+        var cata = new Catalogue(Repository, "My cata");
+        var prop = new ExtendedProperty(Repository, cata, "Fish", 5);
 
         Assert.Multiple(() =>
         {
@@ -41,11 +41,11 @@ internal class ExtendedPropertyTests : DatabaseTests
             Assert.That(prop.IsReferenceTo(cata));
         });
 
-        var prop2 = CatalogueRepository.GetObjectByID<ExtendedProperty>(prop.ID);
+        var prop2 = Repository.GetObjectByID<ExtendedProperty>(prop.ID);
         Assert.Multiple(() =>
         {
-            Assert.That(prop.GetValueAsSystemType(), Is.EqualTo(10));
-            Assert.That(prop.IsReferenceTo(cata));
+            Assert.That(prop2.GetValueAsSystemType(), Is.EqualTo(10));
+            Assert.That(prop2.IsReferenceTo(cata));
         });
     }
 }

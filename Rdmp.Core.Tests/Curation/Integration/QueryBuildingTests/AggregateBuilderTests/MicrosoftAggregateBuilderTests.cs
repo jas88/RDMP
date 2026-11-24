@@ -99,8 +99,8 @@ Col2")));
     [Test]
     public void TwoTopXObjects()
     {
-        var topX1 = new AggregateTopX(CatalogueRepository, _configuration, 10);
-        var ex = Assert.Throws<Exception>(() => new AggregateTopX(CatalogueRepository, _configuration, 10));
+        var topX1 = new AggregateTopX(Repository, _configuration, 10);
+        var ex = Assert.Throws<Exception>(() => new AggregateTopX(Repository, _configuration, 10));
 
         Assert.That(ex.Message, Is.EqualTo("AggregateConfiguration MyConfig already has a TopX"));
         topX1.DeleteInDatabase();
@@ -112,7 +112,7 @@ Col2")));
     [TestCase("max(Col2)", false)]
     public void TestAggregateBuilding_NoConfigurationTwoDimension_Top10(string countColField, bool asc)
     {
-        var topX = new AggregateTopX(CatalogueRepository, _configuration, 10)
+        var topX = new AggregateTopX(Repository, _configuration, 10)
         {
             OrderByDirection = asc
                 ? AggregateTopXOrderByDirection.Ascending
@@ -148,7 +148,7 @@ order by
     [TestCase(false)]
     public void TestAggregateBuilding_NoConfigurationTwoDimension_Top10DimensionOrder(bool asc)
     {
-        var topX = new AggregateTopX(CatalogueRepository, _configuration, 10)
+        var topX = new AggregateTopX(Repository, _configuration, 10)
         {
             OrderByDimensionIfAny_ID = _dimension1.ID,
             OrderByDirection = asc

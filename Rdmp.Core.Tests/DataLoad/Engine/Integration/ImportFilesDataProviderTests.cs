@@ -19,7 +19,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
-public class ImportFilesDataProviderTests : DatabaseTests
+public class ImportFilesDataProviderTests : UnitTests
 {
     [Test]
     public void CopyFiles()

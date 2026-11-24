@@ -23,7 +23,7 @@ using Tests.Common.Helpers;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
-public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
+public class JobDateGenerationStrategyFactoryTestsIntegration : UnitTests
 {
     private CacheProgress _cp;
     private LoadProgress _lp;
@@ -35,15 +35,15 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
     {
         base.SetUp();
 
-        _lmd = new LoadMetadata(CatalogueRepository, "JobDateGenerationStrategyFactoryTestsIntegration");
-        _lp = new LoadProgress(CatalogueRepository, _lmd)
+        _lmd = new LoadMetadata(Repository, "JobDateGenerationStrategyFactoryTestsIntegration");
+        _lp = new LoadProgress(Repository, _lmd)
         {
             DataLoadProgress = new DateTime(2001, 1, 1)
         };
 
         _lp.SaveToDatabase();
 
-        _cp = new CacheProgress(CatalogueRepository, _lp);
+        _cp = new CacheProgress(Repository, _lp);
 
         _factory =new JobDateGenerationStrategyFactory(new SingleLoadProgressSelectionStrategy(_lp));
     }
@@ -60,7 +60,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
     [Test]
     public void CacheProvider_NonCachingOne()
     {
-        var pt = new ProcessTask(CatalogueRepository, _lmd, LoadStage.GetFiles)
+        var pt = new ProcessTask(Repository, _lmd, LoadStage.GetFiles)
         {
             Path = typeof(DoNothingDataProvider).FullName,
             ProcessTaskType = ProcessTaskType.DataProvider,
@@ -77,7 +77,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
     [Test]
     public void CacheProvider_TwoCachingOnes()
     {
-        var pt1 = new ProcessTask(CatalogueRepository, _lmd, LoadStage.GetFiles)
+        var pt1 = new ProcessTask(Repository, _lmd, LoadStage.GetFiles)
         {
             Path = typeof(TestCachedFileRetriever).FullName,
             ProcessTaskType = ProcessTaskType.DataProvider,
@@ -85,7 +85,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
         };
         pt1.SaveToDatabase();
 
-        var pt2 = new ProcessTask(CatalogueRepository, _lmd, LoadStage.GetFiles)
+        var pt2 = new ProcessTask(Repository, _lmd, LoadStage.GetFiles)
         {
             Path = typeof(TestCachedFileRetriever).FullName,
             ProcessTaskType = ProcessTaskType.DataProvider,
@@ -102,7 +102,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
     [Test]
     public void CacheProvider_NoPipeline()
     {
-        var pt1 = new ProcessTask(CatalogueRepository, _lmd, LoadStage.GetFiles)
+        var pt1 = new ProcessTask(Repository, _lmd, LoadStage.GetFiles)
         {
             Path = typeof(TestCachedFileRetriever).FullName,
             ProcessTaskType = ProcessTaskType.DataProvider,
@@ -134,7 +134,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
     [Test]
     public void CacheProvider_NoCacheProgress()
     {
-        var pt1 = new ProcessTask(CatalogueRepository, _lmd, LoadStage.GetFiles)
+        var pt1 = new ProcessTask(Repository, _lmd, LoadStage.GetFiles)
         {
             Path = typeof(BasicCacheDataProvider).FullName,
             ProcessTaskType = ProcessTaskType.DataProvider,
@@ -147,7 +147,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
                 true, _lmd);
         _lmd.SaveToDatabase();
 
-        var pipeAssembler = new TestDataPipelineAssembler("CacheProvider_Normal", CatalogueRepository);
+        var pipeAssembler = new TestDataPipelineAssembler("CacheProvider_Normal", Repository);
         pipeAssembler.ConfigureCacheProgressToUseThePipeline(_cp);
 
         try
@@ -168,7 +168,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
     [Test]
     public void CacheProvider_Normal()
     {
-        var pt1 = new ProcessTask(CatalogueRepository, _lmd, LoadStage.GetFiles)
+        var pt1 = new ProcessTask(Repository, _lmd, LoadStage.GetFiles)
         {
             Path = typeof(BasicCacheDataProvider).FullName,
             ProcessTaskType = ProcessTaskType.DataProvider,
@@ -184,7 +184,7 @@ public class JobDateGenerationStrategyFactoryTestsIntegration : DatabaseTests
                 true, _lmd);
         _lmd.SaveToDatabase();
 
-        var pipeAssembler = new TestDataPipelineAssembler("CacheProvider_Normal", CatalogueRepository);
+        var pipeAssembler = new TestDataPipelineAssembler("CacheProvider_Normal", Repository);
         pipeAssembler.ConfigureCacheProgressToUseThePipeline(_cp);
 
         try

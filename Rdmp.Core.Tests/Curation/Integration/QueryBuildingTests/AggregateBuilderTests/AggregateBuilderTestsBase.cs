@@ -12,7 +12,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration.QueryBuildingTests.AggregateBuilderTests;
 
-public abstract class AggregateBuilderTestsBase : DatabaseTests
+public abstract class AggregateBuilderTestsBase : UnitTests
 {
     protected Catalogue _c;
     protected CatalogueItem _cataItem1;
@@ -31,24 +31,24 @@ public abstract class AggregateBuilderTestsBase : DatabaseTests
     {
         base.SetUp();
 
-        _c = new Catalogue(CatalogueRepository, "AggregateBuilderTests");
-        _cataItem1 = new CatalogueItem(CatalogueRepository, _c, "Col1");
-        _cataItem2 = new CatalogueItem(CatalogueRepository, _c, "Col2");
+        _c = new Catalogue(Repository, "AggregateBuilderTests");
+        _cataItem1 = new CatalogueItem(Repository, _c, "Col1");
+        _cataItem2 = new CatalogueItem(Repository, _c, "Col2");
 
-        _ti = new TableInfo(CatalogueRepository, "T1");
+        _ti = new TableInfo(Repository, "T1");
         // Ensure TableInfo is visible before creating dependent ColumnInfo objects
         _ti.SaveAndFlush();
 
-        _columnInfo1 = new ColumnInfo(CatalogueRepository, "Col1", "varchar(100)", _ti);
-        _columnInfo2 = new ColumnInfo(CatalogueRepository, "Col2", "date", _ti);
+        _columnInfo1 = new ColumnInfo(Repository, "Col1", "varchar(100)", _ti);
+        _columnInfo2 = new ColumnInfo(Repository, "Col2", "date", _ti);
 
-        _ei1 = new ExtractionInformation(CatalogueRepository, _cataItem1, _columnInfo1, _columnInfo1.Name);
-        _ei2 = new ExtractionInformation(CatalogueRepository, _cataItem2, _columnInfo2, _columnInfo2.Name);
+        _ei1 = new ExtractionInformation(Repository, _cataItem1, _columnInfo1, _columnInfo1.Name);
+        _ei2 = new ExtractionInformation(Repository, _cataItem2, _columnInfo2, _columnInfo2.Name);
 
-        _configuration = new AggregateConfiguration(CatalogueRepository, _c, "MyConfig");
+        _configuration = new AggregateConfiguration(Repository, _c, "MyConfig");
 
-        _dimension1 = new AggregateDimension(CatalogueRepository, _ei1, _configuration);
-        _dimension2 = new AggregateDimension(CatalogueRepository, _ei2, _configuration);
+        _dimension1 = new AggregateDimension(Repository, _ei1, _configuration);
+        _dimension2 = new AggregateDimension(Repository, _ei2, _configuration);
 
         _dimension1.Order = 1;
         _dimension1.SaveToDatabase();

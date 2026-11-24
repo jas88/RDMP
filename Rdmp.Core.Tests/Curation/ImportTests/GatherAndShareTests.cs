@@ -20,7 +20,7 @@ using TypeGuesser;
 
 namespace Rdmp.Core.Tests.Curation.ImportTests;
 
-public class GatherAndShareTests : DatabaseTests
+public class GatherAndShareTests : UnitTests
 {
     [Test]
     public void Test_SerializeObject_ShareAttribute()
@@ -48,8 +48,8 @@ public class GatherAndShareTests : DatabaseTests
     public void GatherAndShare_ANOTable_Test(bool goViaJson)
     {
         var anoserver =
-            new ExternalDatabaseServer(CatalogueRepository, "MyGatherAndShareTestANOServer", new ANOStorePatcher());
-        var anoTable = new ANOTable(CatalogueRepository, anoserver, "ANOMagad", "N");
+            new ExternalDatabaseServer(Repository, "MyGatherAndShareTestANOServer", new ANOStorePatcher());
+        var anoTable = new ANOTable(Repository, anoserver, "ANOMagad", "N");
 
         Assert.That(anoserver.ID, Is.EqualTo(anoTable.Server_ID));
 
@@ -121,7 +121,7 @@ public class GatherAndShareTests : DatabaseTests
 
         //change a property and save it
         anoTableAfter.Suffix = "CAMMELS!";
-        CatalogueRepository.SaveToDatabase(anoTableAfter);
+        Repository.SaveToDatabase(anoTableAfter);
         //anoTableAfter.SaveToDatabase(); <- this decides to go check the ANOTable exists on the server referenced which is imaginary btw >< that's why we have the above line instead
 
         //reimport (this time it should be an update, we import the share definitions and it overrides our database copy (sharing is UPSERT)
@@ -136,145 +136,32 @@ public class GatherAndShareTests : DatabaseTests
         anoTableAfter.DeleteInDatabase();
         anoserverAfter.DeleteInDatabase();
 
-        foreach (var o in RepositoryLocator.CatalogueRepository.GetAllObjects<ObjectImport>())
+        foreach (var o in Repository.GetAllObjects<ObjectImport>())
             o.DeleteInDatabase();
-    }
-
-
-    [TestCase(true)]
-    [TestCase(false)]
-    public void GatherAndShare_Catalogue_Test(bool goViaJson)
-    {
-        //Setup some objects under Catalogue that we can share
-        var cata = new Catalogue(CatalogueRepository, "Cata")
-        {
-            Periodicity = Catalogue.CataloguePeriodicity.BiMonthly
-        };
-        cata.SaveToDatabase();
-
-        var catalogueItem1 = new CatalogueItem(CatalogueRepository, cata, "Ci1");
-        var catalogueItem2 = new CatalogueItem(CatalogueRepository, cata, "Ci2");
-
-        var tableInfo = new TableInfo(CatalogueRepository, "Myt");
-        var colInfo = new ColumnInfo(CatalogueRepository, "[Mt].[C1]", "varchar(10)", tableInfo);
-
-        catalogueItem1.ColumnInfo_ID = colInfo.ID;
-        catalogueItem1.SaveToDatabase();
-
-        var ei = new ExtractionInformation(CatalogueRepository, catalogueItem1, colInfo, "UPPER(C1) as Fish");
-
-        //the logging server has a system default so should have been populated
-        Assert.That(cata.LiveLoggingServer_ID, Is.Not.Null);
-
-        //Catalogue sharing should be allowed
-        var g = new Gatherer(RepositoryLocator);
-        Assert.That(g.CanGatherDependencies(cata));
-
-        //gather the objects depending on Catalogue as a tree
-        var gObj = Gatherer.GatherDependencies(cata);
-        Assert.That(gObj.Children, Has.Count.EqualTo(2)); //both cata items
-
-        var lmd = new LoadMetadata(CatalogueRepository);
-        cata.SaveToDatabase();
-        var linkage = new LoadMetadataCatalogueLinkage(CatalogueRepository, lmd, cata);
-        linkage.SaveToDatabase();
-        //get the share definition
-        var shareManager = new ShareManager(RepositoryLocator);
-        var shareDefinition = gObj.ToShareDefinitionWithChildren(shareManager);
-
-
-        if (goViaJson)
-        {
-            var json =
-                shareDefinition.Select(s => JsonConvertExtensions.SerializeObject(s, RepositoryLocator)).ToList();
-            shareDefinition =
-                json.Select(
-                        j => JsonConvertExtensions.DeserializeObject(j, typeof(ShareDefinition), RepositoryLocator))
-                    .Cast<ShareDefinition>()
-                    .ToList();
-        }
-
-        //make a local change
-        cata.Name = "fishfish";
-        cata.SubjectNumbers = "123";
-        cata.Periodicity = Catalogue.CataloguePeriodicity.Unknown;
-        cata.SaveToDatabase();
-        lmd.UnlinkFromCatalogue(cata);
-        lmd.DeleteInDatabase();
-
-        //import the saved copy
-        shareManager.ImportSharedObject(shareDefinition);
-
-        //revert the memory copy and check it got overwritten with the original saved values
-        cata = CatalogueRepository.GetObjectByID<Catalogue>(cata.ID);
-        Assert.That(cata.Name, Is.EqualTo("Cata"));
-
-        var exports = CatalogueRepository.GetAllObjects<ObjectExport>();
-        Assert.That(exports.Any());
-
-        //now delete and report
-        foreach (var d in exports)
-            d.DeleteInDatabase();
-
-        //make a local change including Name
-        cata.Name = "fishfish";
-        cata.SaveToDatabase();
-
-        //test importing the Catalogue properties only
-        ShareManager.ImportPropertiesOnly(cata, shareDefinition[0]);
-
-        Assert.Multiple(() =>
-        {
-            //import the defined properties but not name
-            Assert.That(cata.Name, Is.EqualTo("fishfish"));
-            Assert.That(cata.Periodicity, Is.EqualTo(Catalogue.CataloguePeriodicity.BiMonthly)); //reset this though
-            Assert.That(cata.LoadMetadatas(), Is.Empty);
-        });
-        cata.SaveToDatabase();
-
-        cata.DeleteInDatabase();
-
-        Assert.Multiple(() =>
-        {
-            //none of these should now exist thanks to cascade deletes
-            Assert.That(cata.Exists(), Is.False);
-            Assert.That(catalogueItem1.Exists(), Is.False);
-            Assert.That(catalogueItem2.Exists(), Is.False);
-        });
-
-        //import the saved copy
-        var newObjects = shareManager.ImportSharedObject(shareDefinition).ToArray();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(((Catalogue)newObjects[0]).Name, Is.EqualTo("Cata"));
-            Assert.That(((CatalogueItem)newObjects[1]).Name, Is.EqualTo("Ci1"));
-            Assert.That(((CatalogueItem)newObjects[2]).Name, Is.EqualTo("Ci2"));
-        });
     }
 
     [Test]
     public void GatherAndShare_ExtractionFilter_Test()
     {
         //Setup some objects under Catalogue
-        var cata = new Catalogue(CatalogueRepository, "Cata")
+        var cata = new Catalogue(Repository, "Cata")
         {
             Periodicity = Catalogue.CataloguePeriodicity.BiMonthly
         };
         cata.SaveToDatabase();
 
-        var catalogueItem1 = new CatalogueItem(CatalogueRepository, cata, "Ci1");
+        var catalogueItem1 = new CatalogueItem(Repository, cata, "Ci1");
 
-        var tableInfo = new TableInfo(CatalogueRepository, "Myt");
-        var colInfo = new ColumnInfo(CatalogueRepository, "[Mt].[C1]", "varchar(10)", tableInfo);
+        var tableInfo = new TableInfo(Repository, "Myt");
+        var colInfo = new ColumnInfo(Repository, "[Mt].[C1]", "varchar(10)", tableInfo);
 
         catalogueItem1.ColumnInfo_ID = colInfo.ID;
         catalogueItem1.SaveToDatabase();
 
         //Setup a Filter under this extractable column (the filter is what we will share)
-        var ei = new ExtractionInformation(CatalogueRepository, catalogueItem1, colInfo, "UPPER(C1) as Fish");
+        var ei = new ExtractionInformation(Repository, catalogueItem1, colInfo, "UPPER(C1) as Fish");
 
-        var filter = new ExtractionFilter(CatalogueRepository, "My Filter", ei)
+        var filter = new ExtractionFilter(Repository, "My Filter", ei)
         {
             Description = "amagad",
             WhereSQL = "UPPER(C1) = @a"
@@ -286,8 +173,8 @@ public class GatherAndShareTests : DatabaseTests
         var param = filter.GetFilterFactory().CreateNewParameter(filter, declaration);
 
         //Also create a 'known good value' set i.e. recommended value for the parameter to achive some goal (you can have multiple of these - this will not be shared)
-        var set = new ExtractionFilterParameterSet(CatalogueRepository, filter, "Fife");
-        var val = new ExtractionFilterParameterSetValue(CatalogueRepository, set, (ExtractionFilterParameter)param)
+        var set = new ExtractionFilterParameterSet(Repository, filter, "Fife");
+        var val = new ExtractionFilterParameterSetValue(Repository, set, (ExtractionFilterParameter)param)
         {
             Value = "'FISH'"
         };

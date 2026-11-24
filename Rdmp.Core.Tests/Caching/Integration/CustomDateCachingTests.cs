@@ -29,7 +29,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Caching.Integration;
 
-public class CustomDateCachingTests : DatabaseTests
+public class CustomDateCachingTests : UnitTests
 {
     [TestCase(false)]
     [TestCase(true)]
@@ -47,10 +47,10 @@ public class CustomDateCachingTests : DatabaseTests
         destinationComponent.GetAllArguments().Returns(Array.Empty<IArgument>());
 
         var pipeline = Substitute.For<IPipeline>();
-        pipeline.Repository.Returns(CatalogueRepository);
+        pipeline.Repository.Returns(Repository);
         pipeline.Source.Returns(sourceComponent);
         pipeline.Destination.Returns(destinationComponent);
-        pipeline.Repository.Returns(CatalogueRepository);
+        pipeline.Repository.Returns(Repository);
         pipeline.PipelineComponents.Returns(Enumerable.Empty<IPipelineComponent>().OrderBy(o => o).ToList());
         var lmd = Substitute.For<ILoadMetadata>();
 
@@ -67,11 +67,11 @@ public class CustomDateCachingTests : DatabaseTests
         cacheProgress.Pipeline.Returns(pipeline);
         cacheProgress.ChunkPeriod.Returns(new TimeSpan(1, 0, 0, 0));
         cacheProgress.LoadProgress_ID.Returns(-1);
-        cacheProgress.Repository.Returns(CatalogueRepository);
+        cacheProgress.Repository.Returns(Repository);
         cacheProgress.LoadProgress.Returns(loadProgress);
         cacheProgress.CacheFillProgress.Returns(new DateTime(2020, 1, 1));
 
-        var caching = new CustomDateCaching(cacheProgress, RepositoryLocator.CatalogueRepository);
+        var caching = new CustomDateCaching(cacheProgress, Repository);
         var startDate = new DateTime(2016, 1, 1);
         var endDate = singleDay ? new DateTime(2016, 1, 1) : new DateTime(2016, 1, 3);
 

@@ -10,12 +10,12 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
-public class WebServiceConfigurationTests : DatabaseTests
+public class WebServiceConfigurationTests : UnitTests
 {
     [Test]
     public void TestXmlSerialization()
     {
-        var config = new WebServiceConfiguration(CatalogueRepository) { Username = "foo", Password = "bar" };
+        var config = new WebServiceConfiguration(Repository) { Username = "foo", Password = "bar" };
         var state = config.SaveStateToString();
         config.RestoreStateFrom(state);
     }

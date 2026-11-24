@@ -19,7 +19,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation.Integration.ArgumentTests;
 
-public class ProcessTaskArgumentTests : DatabaseTests
+public class ProcessTaskArgumentTests : UnitTests
 {
     [Test]
     [TestCase(true)]
@@ -28,27 +28,27 @@ public class ProcessTaskArgumentTests : DatabaseTests
     {
         var tableInfoName = $"TableInfoFor_{new StackTrace().GetFrame(0).GetMethod().Name}";
 
-        var toCleanup = CatalogueRepository.GetAllObjects<TableInfo>()
+        var toCleanup = Repository.GetAllObjects<TableInfo>()
             .SingleOrDefault(t => t.Name.Equals(tableInfoName));
 
         toCleanup?.DeleteInDatabase();
 
-        var loadMetadata = new LoadMetadata(CatalogueRepository);
+        var loadMetadata = new LoadMetadata(Repository);
 
         try
         {
-            var pt = new ProcessTask(CatalogueRepository, loadMetadata, LoadStage.AdjustStaging);
-            var pta = new ProcessTaskArgument(CatalogueRepository, pt);
+            var pt = new ProcessTask(Repository, loadMetadata, LoadStage.AdjustStaging);
+            var pta = new ProcessTaskArgument(Repository, pt);
 
             pta.SetType(declareAsInterface ? typeof(ITableInfo) : typeof(TableInfo));
 
-            var tableInfo = new TableInfo(CatalogueRepository, tableInfoName);
+            var tableInfo = new TableInfo(Repository, tableInfoName);
             try
             {
                 pta.SetValue(tableInfo);
                 pta.SaveToDatabase();
 
-                var newInstanceOfPTA = CatalogueRepository.GetObjectByID<ProcessTaskArgument>(pta.ID);
+                var newInstanceOfPTA = Repository.GetObjectByID<ProcessTaskArgument>(pta.ID);
 
                 Assert.That(pta.Value, Is.EqualTo(newInstanceOfPTA.Value));
 
@@ -75,9 +75,9 @@ public class ProcessTaskArgumentTests : DatabaseTests
         var tableInfoName = $"TableInfoFor_{methodName}";
         var preLoadDiscardedColumnName = $"PreLoadDiscardedColumnFor_{methodName}";
 
-        var toCleanup = CatalogueRepository.GetAllObjects<TableInfo>()
+        var toCleanup = Repository.GetAllObjects<TableInfo>()
             .SingleOrDefault(t => t.Name.Equals(tableInfoName));
-        var toCleanupCol = CatalogueRepository.GetAllObjects<PreLoadDiscardedColumn>()
+        var toCleanupCol = Repository.GetAllObjects<PreLoadDiscardedColumn>()
             .SingleOrDefault(c => c.RuntimeColumnName.Equals(preLoadDiscardedColumnName));
 
         //must delete pre load discarded first
@@ -85,25 +85,25 @@ public class ProcessTaskArgumentTests : DatabaseTests
 
         toCleanup?.DeleteInDatabase();
 
-        var lmd = new LoadMetadata(CatalogueRepository);
+        var lmd = new LoadMetadata(Repository);
 
         try
         {
-            var pt = new ProcessTask(CatalogueRepository, lmd, LoadStage.AdjustStaging);
-            var pta = new ProcessTaskArgument(CatalogueRepository, pt);
+            var pt = new ProcessTask(Repository, lmd, LoadStage.AdjustStaging);
+            var pta = new ProcessTaskArgument(Repository, pt);
 
             pta.SetType(typeof(PreLoadDiscardedColumn));
 
-            var tableInfo = new TableInfo(CatalogueRepository, tableInfoName);
+            var tableInfo = new TableInfo(Repository, tableInfoName);
 
             var preloadDiscardedColumn =
-                new PreLoadDiscardedColumn(CatalogueRepository, tableInfo, preLoadDiscardedColumnName);
+                new PreLoadDiscardedColumn(Repository, tableInfo, preLoadDiscardedColumnName);
             try
             {
                 pta.SetValue(preloadDiscardedColumn);
                 pta.SaveToDatabase();
 
-                var newInstanceOfPTA = CatalogueRepository.GetObjectByID<ProcessTaskArgument>(pta.ID);
+                var newInstanceOfPTA = Repository.GetObjectByID<ProcessTaskArgument>(pta.ID);
                 Assert.That(pta.Value, Is.EqualTo(newInstanceOfPTA.Value));
 
                 var p1 = (PreLoadDiscardedColumn)pta.GetValueAsSystemType();
@@ -128,22 +128,22 @@ public class ProcessTaskArgumentTests : DatabaseTests
     {
         var tableInfoName = $"TableInfoFor_{new StackTrace().GetFrame(0).GetMethod().Name}";
 
-        var toCleanup = CatalogueRepository.GetAllObjects<TableInfo>()
+        var toCleanup = Repository.GetAllObjects<TableInfo>()
             .SingleOrDefault(t => t.Name.Equals(tableInfoName));
 
         toCleanup?.DeleteInDatabase();
 
-        var lmd = new LoadMetadata(CatalogueRepository);
+        var lmd = new LoadMetadata(Repository);
 
         try
         {
-            var pt = new ProcessTask(CatalogueRepository, lmd, LoadStage.AdjustStaging);
-            var pta = new ProcessTaskArgument(CatalogueRepository, pt);
+            var pt = new ProcessTask(Repository, lmd, LoadStage.AdjustStaging);
+            var pta = new ProcessTaskArgument(Repository, pt);
 
             //Prepare to receive a TableInfo object
             pta.SetType(typeof(TableInfo));
 
-            var tableInfo = new TableInfo(CatalogueRepository, tableInfoName);
+            var tableInfo = new TableInfo(Repository, tableInfoName);
 
             //Heres the TableInfo object
             pta.SetValue(tableInfo);
@@ -170,18 +170,18 @@ public class ProcessTaskArgumentTests : DatabaseTests
     {
         var tableInfoName = $"TableInfoFor_{new StackTrace().GetFrame(0).GetMethod().Name}";
 
-        var toCleanup = CatalogueRepository.GetAllObjects<TableInfo>()
+        var toCleanup = Repository.GetAllObjects<TableInfo>()
             .SingleOrDefault(t => t.Name.Equals(tableInfoName));
 
         toCleanup?.DeleteInDatabase();
 
-        var lmd = new LoadMetadata(CatalogueRepository);
+        var lmd = new LoadMetadata(Repository);
 
         try
         {
-            var pt = new ProcessTask(CatalogueRepository, lmd, LoadStage.AdjustStaging);
-            var pta = new ProcessTaskArgument(CatalogueRepository, pt);
-            var tableInfo = new TableInfo(CatalogueRepository, tableInfoName);
+            var pt = new ProcessTask(Repository, lmd, LoadStage.AdjustStaging);
+            var pta = new ProcessTaskArgument(Repository, pt);
+            var tableInfo = new TableInfo(Repository, tableInfoName);
             try
             {
                 //tell it that we are going to give it a PreLoadDiscardedColumn
@@ -204,10 +204,10 @@ public class ProcessTaskArgumentTests : DatabaseTests
 
     private ProcessTaskArgument CreateNewProcessTaskArgumentInDatabase(out LoadMetadata lmd)
     {
-        lmd = new LoadMetadata(CatalogueRepository);
+        lmd = new LoadMetadata(Repository);
 
-        var pt = new ProcessTask(CatalogueRepository, lmd, LoadStage.AdjustStaging);
-        return new ProcessTaskArgument(CatalogueRepository, pt);
+        var pt = new ProcessTask(Repository, lmd, LoadStage.AdjustStaging);
+        return new ProcessTaskArgument(Repository, pt);
     }
 
     [Test]
@@ -220,10 +220,10 @@ public class ProcessTaskArgumentTests : DatabaseTests
         {
             pta = CreateNewProcessTaskArgumentInDatabase(out lmd);
             pta.SetType(typeof(EncryptedString));
-            pta.SetValue(new EncryptedString(CatalogueRepository) { Value = "test123" });
+            pta.SetValue(new EncryptedString(Repository) { Value = "test123" });
             pta.SaveToDatabase();
 
-            var loadedPta = CatalogueRepository.GetObjectByID<ProcessTaskArgument>(pta.ID);
+            var loadedPta = Repository.GetObjectByID<ProcessTaskArgument>(pta.ID);
             var value = loadedPta.GetValueAsSystemType();
             Assert.That(value, Is.InstanceOf<EncryptedString>());
             Assert.That(((EncryptedString)value).GetDecryptedValue(), Is.EqualTo("test123"));
@@ -232,7 +232,7 @@ public class ProcessTaskArgumentTests : DatabaseTests
         {
             if (pta != null)
             {
-                var processTask = CatalogueRepository.GetObjectByID<ProcessTask>(pta.ProcessTask_ID);
+                var processTask = Repository.GetObjectByID<ProcessTask>(pta.ProcessTask_ID);
                 processTask.DeleteInDatabase();
             }
 
@@ -243,8 +243,8 @@ public class ProcessTaskArgumentTests : DatabaseTests
     [Test]
     public void TestArgumentCreation()
     {
-        var lmd = new LoadMetadata(CatalogueRepository, "TestArgumentCreation");
-        var pt = new ProcessTask(CatalogueRepository, lmd, LoadStage.AdjustRaw);
+        var lmd = new LoadMetadata(Repository, "TestArgumentCreation");
+        var pt = new ProcessTask(Repository, lmd, LoadStage.AdjustRaw);
         pt.CreateArgumentsForClassIfNotExists<TestArgumentedClass>();
         try
         {
@@ -269,8 +269,8 @@ public class ProcessTaskArgumentTests : DatabaseTests
     [Test]
     public void TestNestedDemandsGetPutIntoDatabaseAndCanBeBroughtBack()
     {
-        var pipe = new Pipeline(CatalogueRepository, "NestedPipe");
-        var pc = new PipelineComponent(CatalogueRepository, pipe, typeof(BasicDataReleaseDestination), -1,
+        var pipe = new Pipeline(Repository, "NestedPipe");
+        var pc = new PipelineComponent(Repository, pipe, typeof(BasicDataReleaseDestination), -1,
             "Coconuts");
         pipe.DestinationPipelineComponent_ID = pc.ID;
         pipe.SaveToDatabase();
@@ -308,11 +308,11 @@ public class ProcessTaskArgumentTests : DatabaseTests
     [Test]
     public void TestArgumentWithTypeThatIsEnum()
     {
-        var pipe = new Pipeline(CatalogueRepository, "p");
-        var pc = new PipelineComponent(CatalogueRepository, pipe, typeof(BasicDataReleaseDestination), -1,
+        var pipe = new Pipeline(Repository, "p");
+        var pc = new PipelineComponent(Repository, pipe, typeof(BasicDataReleaseDestination), -1,
             "c");
 
-        var arg = new PipelineComponentArgument(CatalogueRepository, pc);
+        var arg = new PipelineComponentArgument(Repository, pc);
 
         try
         {
@@ -338,13 +338,13 @@ public class ProcessTaskArgumentTests : DatabaseTests
     [TestCase(false)]
     public void TestArgumentWithTypeThatIsInterface(bool useInterfaceDeclaration)
     {
-        var pipe = new Pipeline(CatalogueRepository, "p");
-        var pc = new PipelineComponent(CatalogueRepository, pipe, typeof(BasicDataReleaseDestination), -1,
+        var pipe = new Pipeline(Repository, "p");
+        var pc = new PipelineComponent(Repository, pipe, typeof(BasicDataReleaseDestination), -1,
             "c");
 
-        var arg = new PipelineComponentArgument(CatalogueRepository, pc);
+        var arg = new PipelineComponentArgument(Repository, pc);
 
-        var server = new ExternalDatabaseServer(CatalogueRepository, "fish", null);
+        var server = new ExternalDatabaseServer(Repository, "fish", null);
 
         try
         {
@@ -370,13 +370,13 @@ public class ProcessTaskArgumentTests : DatabaseTests
     [Test]
     public void TestArgumentThatIsDictionary()
     {
-        var pipe = new Pipeline(CatalogueRepository, "p");
-        var pc = new PipelineComponent(CatalogueRepository, pipe, typeof(BasicDataReleaseDestination), -1,
+        var pipe = new Pipeline(Repository, "p");
+        var pc = new PipelineComponent(Repository, pipe, typeof(BasicDataReleaseDestination), -1,
             "c");
 
         try
         {
-            var arg = new PipelineComponentArgument(CatalogueRepository, pc)
+            var arg = new PipelineComponentArgument(Repository, pc)
             {
                 Name = "MyNames"
             };
@@ -385,8 +385,8 @@ public class ProcessTaskArgumentTests : DatabaseTests
 
             Assert.That(arg.GetConcreteSystemType(), Is.EqualTo(typeof(Dictionary<TableInfo, string>)));
 
-            var ti1 = new TableInfo(CatalogueRepository, "test1");
-            var ti2 = new TableInfo(CatalogueRepository, "test2");
+            var ti1 = new TableInfo(Repository, "test1");
+            var ti2 = new TableInfo(Repository, "test2");
 
             var val = new Dictionary<TableInfo, string>
             {

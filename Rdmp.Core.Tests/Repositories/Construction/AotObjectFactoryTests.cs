@@ -21,7 +21,7 @@ namespace Rdmp.Core.Tests.Repositories.Construction;
 /// <summary>
 /// Comprehensive tests for the AOT Object Factory system and construction patterns
 /// </summary>
-internal class AotObjectFactoryTests : DatabaseTests
+internal class AotObjectFactoryTests : UnitTests
 {
     private ICatalogueRepository _catalogueRepository;
     private IRDMPPlatformRepositoryServiceLocator _repositoryLocator;
@@ -29,7 +29,7 @@ internal class AotObjectFactoryTests : DatabaseTests
     [SetUp]
     public void FactorySetup()
     {
-        _catalogueRepository = CatalogueRepository;
+        _catalogueRepository = Repository;
         _repositoryLocator = RepositoryLocator;
     }
 

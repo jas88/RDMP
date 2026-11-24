@@ -16,7 +16,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.CohortCreation.QueryTests;
 
-public class CohortSummaryQueryBuilderTests : DatabaseTests
+public class CohortSummaryQueryBuilderTests : UnitTests
 {
     private Catalogue c;
     private CatalogueItem ci;
@@ -44,19 +44,19 @@ public class CohortSummaryQueryBuilderTests : DatabaseTests
     {
         base.SetUp();
 
-        c = new Catalogue(CatalogueRepository, "MyCata");
-        ci = new CatalogueItem(CatalogueRepository, c, "MyCataItem");
-        ci2 = new CatalogueItem(CatalogueRepository, c, "YearColumn");
-        t = new TableInfo(CatalogueRepository, "MyTable");
-        col = new ColumnInfo(CatalogueRepository, "mycol", "varchar(10)", t);
-        col2 = new ColumnInfo(CatalogueRepository, "myOtherCol", "varchar(10)", t);
+        c = new Catalogue(Repository, "MyCata");
+        ci = new CatalogueItem(Repository, c, "MyCataItem");
+        ci2 = new CatalogueItem(Repository, c, "YearColumn");
+        t = new TableInfo(Repository, "MyTable");
+        col = new ColumnInfo(Repository, "mycol", "varchar(10)", t);
+        col2 = new ColumnInfo(Repository, "myOtherCol", "varchar(10)", t);
 
 
-        acCohort = new AggregateConfiguration(CatalogueRepository, c,
+        acCohort = new AggregateConfiguration(Repository, c,
             $"{CohortIdentificationConfiguration.CICPrefix}Agg1_Cohort");
-        acDataset = new AggregateConfiguration(CatalogueRepository, c, "Agg2_Dataset");
+        acDataset = new AggregateConfiguration(Repository, c, "Agg2_Dataset");
 
-        ei_Year = new ExtractionInformation(CatalogueRepository, ci2, col2, "Year")
+        ei_Year = new ExtractionInformation(Repository, ci2, col2, "Year")
         {
             IsExtractionIdentifier = true
         };
@@ -66,7 +66,7 @@ public class CohortSummaryQueryBuilderTests : DatabaseTests
         acDataset.SaveToDatabase();
 
 
-        ei_Chi = new ExtractionInformation(CatalogueRepository, ci, col, "CHI")
+        ei_Chi = new ExtractionInformation(Repository, ci, col, "CHI")
         {
             IsExtractionIdentifier = true
         };
@@ -74,7 +74,7 @@ public class CohortSummaryQueryBuilderTests : DatabaseTests
 
         acCohort.AddDimension(ei_Chi);
 
-        cic = new CohortIdentificationConfiguration(CatalogueRepository, "mycic");
+        cic = new CohortIdentificationConfiguration(Repository, "mycic");
         cic.CreateRootContainerIfNotExists();
         cic.RootCohortAggregateContainer.AddChild(acCohort, 0);
     }
@@ -201,7 +201,7 @@ Year"));
     {
         CreateParameters("'bob'", "'fish'");
 
-        var global = new AnyTableSqlParameter(CatalogueRepository, cic, "DECLARE @bob AS varchar(50);")
+        var global = new AnyTableSqlParameter(Repository, cic, "DECLARE @bob AS varchar(50);")
         {
             Value = "'zomber'"
         };
@@ -258,11 +258,11 @@ Year")));
 
     private void CreateParameters(string param1Value, string param2Value)
     {
-        container1 = new AggregateFilterContainer(CatalogueRepository, FilterContainerOperation.AND);
+        container1 = new AggregateFilterContainer(Repository, FilterContainerOperation.AND);
         acDataset.RootFilterContainer_ID = container1.ID;
         acDataset.SaveToDatabase();
 
-        var filter1 = new AggregateFilter(CatalogueRepository, "Filter1", container1)
+        var filter1 = new AggregateFilter(Repository, "Filter1", container1)
         {
             WhereSQL = "@bob = 'bob'"
         };
@@ -271,11 +271,11 @@ Year")));
         var paramCreator = new ParameterCreator(filter1.GetFilterFactory(), null, null);
         paramCreator.CreateAll(filter1, null);
 
-        container2 = new AggregateFilterContainer(CatalogueRepository, FilterContainerOperation.AND);
+        container2 = new AggregateFilterContainer(Repository, FilterContainerOperation.AND);
         acCohort.RootFilterContainer_ID = container2.ID;
         acCohort.SaveToDatabase();
 
-        var filter2 = new AggregateFilter(CatalogueRepository, "Filter2", container2)
+        var filter2 = new AggregateFilter(Repository, "Filter2", container2)
         {
             WhereSQL = "@bob = 'fish'"
         };

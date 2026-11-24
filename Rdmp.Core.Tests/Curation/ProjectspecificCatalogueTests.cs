@@ -22,7 +22,7 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.Curation
 {
-    class ProjectSpecificCatalogueTests : DatabaseTests
+    class ProjectSpecificCatalogueTests : UnitTests
     {
         private Catalogue _catalogue;
         private Project _project1;
@@ -34,18 +34,18 @@ namespace Rdmp.Core.Tests.Curation
         {
             _activator = new ConsoleInputManager(RepositoryLocator, ThrowImmediatelyCheckNotifier.Quiet);
 
-            _catalogue = new Catalogue(CatalogueRepository, "Dataset1");
+            _catalogue = new Catalogue(Repository, "Dataset1");
             _catalogue.SaveToDatabase();
-            var _t1 = new TableInfo(CatalogueRepository, "T1");
+            var _t1 = new TableInfo(Repository, "T1");
             _t1.SaveToDatabase();
             _activator.Publish(_t1);
-            var _c1 = new ColumnInfo(CatalogueRepository, "PrivateIdentifierA", "varchar(10)", _t1);
+            var _c1 = new ColumnInfo(Repository, "PrivateIdentifierA", "varchar(10)", _t1);
             _c1.SaveToDatabase();
             _activator.Publish(_c1);
-            var _ci1 = new CatalogueItem(CatalogueRepository, _catalogue, "PrivateIdentifierA");
+            var _ci1 = new CatalogueItem(Repository, _catalogue, "PrivateIdentifierA");
             _ci1.SaveToDatabase();
             _activator.Publish(_ci1);
-            var _extractionInfo1 = new ExtractionInformation(CatalogueRepository, _ci1, _c1, _c1.ToString())
+            var _extractionInfo1 = new ExtractionInformation(Repository, _ci1, _c1, _c1.ToString())
             {
                 Order = 123,
                 ExtractionCategory = ExtractionCategory.Core,
@@ -55,14 +55,14 @@ namespace Rdmp.Core.Tests.Curation
             _activator.Publish(_extractionInfo1);
             if (projectCount > 0)
             {
-                _project1 = new Project(DataExportRepository, "Project1");
+                _project1 = new Project(Repository, "Project1");
                 _project1.SaveToDatabase();
                 _activator.Publish(_project1);
                 
             }
             if (projectCount > 1)
             {
-                _project2 = new Project(DataExportRepository, "Project1");
+                _project2 = new Project(Repository, "Project1");
                 _project2.SaveToDatabase();
                 _activator.Publish(_project2);
 
@@ -88,13 +88,13 @@ namespace Rdmp.Core.Tests.Curation
           
             if (extractionCount > 0)
             {
-                var ec = new ExtractionConfiguration(DataExportRepository, _project1, "ec1");
+                var ec = new ExtractionConfiguration(Repository, _project1, "ec1");
                 Assert.DoesNotThrow(() => ec.AddDatasetToConfiguration(_activator.RepositoryLocator.DataExportRepository.GetAllObjectsWhere<ExtractableDataSet>("Catalogue_ID", _catalogue.ID).First()));
                 ec.SaveToDatabase();
             }
             if (extractionCount > 1)
             {
-                var ec = new ExtractionConfiguration(DataExportRepository, _project2, "ec2");
+                var ec = new ExtractionConfiguration(Repository, _project2, "ec2");
                 Assert.DoesNotThrow(() => ec.AddDatasetToConfiguration(_activator.RepositoryLocator.DataExportRepository.GetAllObjectsWhere<ExtractableDataSet>("Catalogue_ID", _catalogue.ID).First()));
                 ec.SaveToDatabase();
             }

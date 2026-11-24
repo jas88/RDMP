@@ -13,22 +13,22 @@ using Tests.Common;
 
 namespace Rdmp.Core.Tests.DataLoad.Engine.Integration;
 
-internal class ExecutableProcessTaskTests : DatabaseTests
+internal class ExecutableProcessTaskTests : UnitTests
 {
     [Test]
     public void TestConstructionFromProcessTaskUsingDatabase()
     {
         const string expectedPath = @"\\a\fake\path.exe";
 
-        var loadMetadata = new LoadMetadata(CatalogueRepository);
-        var processTask = new ProcessTask(CatalogueRepository, loadMetadata, LoadStage.Mounting)
+        var loadMetadata = new LoadMetadata(Repository);
+        var processTask = new ProcessTask(Repository, loadMetadata, LoadStage.Mounting)
         {
             Name = "Test process task",
             Path = expectedPath
         };
         processTask.SaveToDatabase();
 
-        var argument = new ProcessTaskArgument(CatalogueRepository, processTask)
+        var argument = new ProcessTaskArgument(Repository, processTask)
         {
             Name = "DatabaseName",
             Value = @"Foo_STAGING"

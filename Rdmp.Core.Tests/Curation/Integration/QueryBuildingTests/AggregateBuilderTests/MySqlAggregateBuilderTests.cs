@@ -23,7 +23,7 @@ public class MySqlAggregateBuilderTests : AggregateBuilderTestsBase
         var builder = new AggregateBuilder(null, "count(*)", null);
         builder.AddColumn(_dimension1);
 
-        var topx = new AggregateTopX(CatalogueRepository, _configuration, 32)
+        var topx = new AggregateTopX(Repository, _configuration, 32)
         {
             OrderByDimensionIfAny_ID = _dimension1.ID
         };
@@ -60,7 +60,7 @@ LIMIT 32")));
         var builder = new AggregateBuilder(null, "count(*)", null);
         builder.AddColumn(_dimension1);
 
-        var topx = new AggregateTopX(CatalogueRepository, _configuration, 31)
+        var topx = new AggregateTopX(Repository, _configuration, 31)
         {
             OrderByDirection = AggregateTopXOrderByDirection.Ascending
         };
