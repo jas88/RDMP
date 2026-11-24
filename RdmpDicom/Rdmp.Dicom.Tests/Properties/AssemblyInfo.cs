@@ -5,7 +5,9 @@
 // You should have received a copy of the GNU General Public License along with RDMP. If not, see <https://www.gnu.org/licenses/>.
 
 using NUnit.Framework;
+using Tests.Common;
 
 // Disable parallel test execution to work around MTP/NUnit hang on shutdown
 // See: https://github.com/nunit/nunit3-vs-adapter/issues/1282
 [assembly: NonParallelizable]
+[assembly: IsolatedTestDirectory]

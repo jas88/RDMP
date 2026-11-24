@@ -32,6 +32,16 @@ public class CatalogueTests : UnitTests
 ```
 _Example Unit Test_
 
+Every test that inherits from `UnitTests` starts with an empty `Repository` of its own, so it cannot see the objects that another test created.  Do not write tests that rely on objects created by an earlier test.
+
+Tests that write files should put them in `IsolatedDirectory` (or call `IsolatedTestDirectoryAttribute.ForCurrentTest()` when the test has no base class).  Each test gets a different, empty directory which is deleted when the test ends, so two tests can use the same file name without affecting each other.
+
+To run only the tests that do not need a database:
+
+```
+dotnet test Rdmp.Core.Tests/Rdmp.Core.Tests.csproj --filter "TestCategory!=Database"
+```
+
 ## User Interface Tests
 
 User interface tests which confirm behaviours of RDMP client user interfaces e.g. `CatalogueUI`.  These tests create instances of Forms/Controls but do not actually show them (we do not use UI automation).

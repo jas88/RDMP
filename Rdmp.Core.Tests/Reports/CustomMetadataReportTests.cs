@@ -77,12 +77,8 @@ internal class CustomMetadataReportTests : UnitTests
         cata.Description = null;
         cata.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -110,12 +106,8 @@ internal class CustomMetadataReportTests : UnitTests
         cata.Description = null;
         cata.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -150,12 +142,8 @@ internal class CustomMetadataReportTests : UnitTests
         cata.TimeCoverage_ExtractionInformation_ID = ei.ID;
         cata.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -200,12 +188,8 @@ resultText.TrimEnd(), Is.EqualTo(@"| Name | Desc| StartYear | EndYear | StartMon
         cata2.Description = "trollolol";
         cata2.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.xml"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.xml"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -288,12 +272,8 @@ resultText2.Trim(), Is.EqualTo(@"<DataSet>
         };
         cataItem2.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -326,12 +306,8 @@ A cool dataset with interesting stuff
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -375,12 +351,8 @@ Price: $30
         cata.Description = "A cool dataset with interesting stuff";
         cata.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -409,12 +381,8 @@ $foreach CatalogueItem
         cata.Description = "A cool dataset with interesting stuff";
         cata.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -486,12 +454,8 @@ about column 2"
         };
         cataItem2.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -527,12 +491,8 @@ A cool<br/>dataset with interesting stuff
         cata.Description = "A cool dataset with interesting stuff";
         cata.SaveToDatabase();
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -568,12 +528,8 @@ Description: A cool dataset with interesting stuff").IgnoreCase);
         ei.ColumnInfo.TableInfo.SaveToDatabase();
 
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -600,12 +556,8 @@ Description: A cool dataset with interesting stuff").IgnoreCase);
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -664,12 +616,8 @@ Price: $30
         ei1.CatalogueItem.ColumnInfo.Data_type = "varchar(10)";
         ei2.CatalogueItem.ColumnInfo.Data_type = "datetime2";
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -726,12 +674,8 @@ Price: $30
         ei1.CatalogueItem.Name = "Cata1Col1";
         ei2.CatalogueItem.Name = "Cata2Col1";
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -791,12 +735,8 @@ Number of Records:
         ei1.CatalogueItem.Name = "Cata1Col1";
         ei2.CatalogueItem.Name = "Cata2Col1";
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -876,12 +816,8 @@ Accurate as of : 01/01/0001 00:00:00").IgnoreCase);
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -928,12 +864,8 @@ Get in touch with us at noreply@nobody.com").IgnoreCase);
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -989,12 +921,8 @@ Get in touch with us at noreply@nobody.com").IgnoreCase);
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -1066,12 +994,8 @@ Get in touch with us at noreply@nobody.com").IgnoreCase);
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -1099,12 +1023,8 @@ some more text
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -1133,12 +1053,8 @@ some more text
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -1167,12 +1083,8 @@ some more text
     {
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName,
@@ -1206,12 +1118,8 @@ $Name
 $Comma";
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName, templateCode);
@@ -1243,12 +1151,8 @@ $end
 
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName, templateCode);
@@ -1311,12 +1215,8 @@ $end
 
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName, templateCode);
@@ -1424,12 +1324,8 @@ $DQE_StartYear";
 
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName, templateCode);
@@ -1487,12 +1383,8 @@ $end";
 
         Setup2Catalogues(out var c1, out var c2);
 
-        var template = new FileInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "template.md"));
-        var outDir = new DirectoryInfo(Path.Combine(TestContext.CurrentContext.WorkDirectory, "outDir"));
-
-        if (outDir.Exists)
-            outDir.Delete(true);
-
+        var template = new FileInfo(Path.Join(IsolatedDirectory.FullName, "template.md"));
+        var outDir = new DirectoryInfo(Path.Join(IsolatedDirectory.FullName, "outDir"));
         outDir.Create();
 
         File.WriteAllText(template.FullName, templateCode);

@@ -96,10 +96,8 @@ public class UITests : UnitTests
     [SetUp]
     protected void ClearResults()
     {
-        _itemActivator?.Results.Clear();
-
-        if (_itemActivator != null)
-            _itemActivator.LastTypeTextRequest = null;
+        // each test has a Repository of its own (see UnitTests.SetUp), so it needs an activator of its own too
+        _itemActivator = null;
 
         _checkResults = null;
 
