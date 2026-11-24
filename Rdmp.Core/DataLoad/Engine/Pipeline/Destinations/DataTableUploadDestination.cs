@@ -114,6 +114,7 @@ public class DataTableUploadDestination : IPluginDataFlowComponent<DataTable>, I
     public List<DatabaseColumnRequest> ExplicitTypes { get; set; }
 
     private bool _firstTime = true;
+    private bool _indexCreationAttempted;
     private HashSet<string> _primaryKey = new(StringComparer.CurrentCultureIgnoreCase);
     private DiscoveredTable _discoveredTable;
     private readonly string _extractionTimeStamp = "extraction_timestamp";
@@ -284,8 +285,12 @@ public class DataTableUploadDestination : IPluginDataFlowComponent<DataTable>, I
             _discoveredTable.AddColumn(_extractionTimeStamp, new DatabaseTypeRequest(typeof(DateTime)), true, 30000);
         }
 
-        if (IndexTables)
+        // Only before the first upload. The index is created on its own connection, and once a chunk has been uploaded
+        // the transaction of this destination holds a lock on the table, so creating the index again for a later chunk
+        // waited for that lock until the command timed out (30 seconds for every chunk after the first).
+        if (IndexTables && !_indexCreationAttempted)
         {
+            _indexCreationAttempted = true;
             var indexes = UserDefinedIndexes.Count != 0 ? UserDefinedIndexes : pkColumns.Select(c => c.ColumnName);
             try
             {

@@ -91,7 +91,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIX: Checking a ticketing system configuration that has no Type reported a NullReferenceException. It now says that the configuration has no Type
 - FIX: Clicking the button that locks in the extraction identifier in the simple cohort set step of the cohort wizard before a column was selected failed with a NullReferenceException. It now does nothing
 - FIX: In the window that runs a pipeline, if showing the progress of a failed run failed too, the 'Pipeline Failed' popup could fail with a NullReferenceException instead of showing the error
-
+- FIX: DataTableUploadDestination with IndexTables set tried to create the index before every chunk. From the second chunk on that waited for a lock held by the destination's own transaction until the command timed out (30 seconds per chunk) and then gave a warning. The index is now only created before the first chunk
+- FIX: Cohort compilation (`CohortCompilerRunner`) checked whether its tasks had finished once a second, so each of its up to three phases took at least a second however quick the queries were. It now checks every 50 milliseconds
+- FIX: A cohort compilation task could be seen as crashed before its crash message was set
 
 ## [9.0.1] - 2025-07-31
 - Improve Right-click performance

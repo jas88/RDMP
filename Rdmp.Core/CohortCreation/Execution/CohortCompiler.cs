@@ -124,8 +124,11 @@ public class CohortCompiler
         catch (Exception ex)
         {
             task.Stopwatch.Stop();
-            task.State = CompilationState.Crashed;
+
+            // Set the message before the state: CohortCompilerRunner polls the state from another thread, and its
+            // callers read the message as soon as they see that the task has crashed
             task.CrashMessage = ex;
+            task.State = CompilationState.Crashed;
         }
     }
 

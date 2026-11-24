@@ -1516,6 +1516,36 @@ ALTER TABLE DroppedColumnsTable add color varchar(1)
             destination.Dispose(ThrowImmediatelyDataLoadEventListener.Quiet, ex);
             throw;
         }
+
+        // The index is only created for the first chunk of a destination, so use a second destination to try to
+        // create it again on the table that now has it. That must fail with no more than a warning.
+        var recreate = new DataTableUploadDestination
+        {
+            IndexTables = true,
+            IndexTableName = "CreateIndex_OK",
+            UserDefinedIndexes = new List<string>() { "name" },
+            AppendDataIfTableExists = true
+        };
+        recreate.PreInitialize(db, toConsole);
+
+        var toMemory = new ToMemoryDataLoadEventListener(true);
+        try
+        {
+            recreate.ProcessPipelineData(dt1, toMemory, token);
+            recreate.Dispose(ThrowImmediatelyDataLoadEventListener.Quiet, null);
+        }
+        catch (Exception ex)
+        {
+            recreate.Dispose(ThrowImmediatelyDataLoadEventListener.Quiet, ex);
+            throw;
+        }
+
+        Assert.That(
+            toMemory.EventsReceivedBySender[recreate].Any(static e =>
+                e.ProgressEventType == ProgressEventType.Warning &&
+                e.Message.Contains("index", StringComparison.OrdinalIgnoreCase)),
+            "Expected a warning that the index could not be created again");
+
         using (var con = db.Server.GetConnection())
         {
             con.Open();
