@@ -25,7 +25,7 @@
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
     <PackageVersion Include="Autoupdater.NET.Official" Version="1.9.3" />
     <PackageVersion Include="DockPanelSuite.ThemeVS2015" Version="3.1.1" />
-    <PackageVersion Include="WeCantSpell.Hunspell" Version="6.0.0" />
+    <PackageVersion Include="WeCantSpell.Hunspell" Version="7.0.1" />
     <PackageVersion Include="NUnit" Version="5.0.0" />
     <PackageVersion Include="ObjectListView.Repack.NET6Plus" Version="2.9.5" />
     <PackageVersion Include="Scintilla5.NET" Version="6.1.2" />
